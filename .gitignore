@@ -18,6 +18,12 @@ dist-ssr
 .env*
 !.env.example
 
+# Claude Code personal settings. The .local suffix means machine-specific by
+# convention, so this file should never be shared. Deliberately narrow: a broad
+# .claude/ rule would also block a shared settings.json or project hooks, both
+# of which are meant to be committed.
+.claude/settings.local.json
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
