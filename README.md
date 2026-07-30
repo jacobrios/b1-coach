@@ -2,6 +2,10 @@
 
 A proof-of-concept AI coaching layer for TrackMan B1 baseball hitting data.
 
+**Live demo: https://b1-coach.vercel.app**
+
+The demo runs on a server that sleeps when idle, so the first load after a quiet spell can take a few extra seconds.
+
 TrackMan already does data collection and visualization well. B1 Coach is the interpretation layer — it takes per-session hitting metrics and delivers them the way a coach would after batting practice: a few specific observations grounded in the actual numbers, two concrete tips for next session, and a conversational AI coach the player can ask follow-up questions.
 
 ## What it does
@@ -22,6 +26,8 @@ The Anthropic API key is protected server-side via a Vercel serverless function.
 ## Status
 
 Proof-of-concept running on mock data structured to match the real TrackMan B1 API. Real API integration is a defined next step.
+
+A note on what this repo does and does not show. B1 Coach was my first experiment in AI-assisted development, built solo and locally across ten sessions in spring 2026. There are no pull requests from that period, no tests, and no project brief, because I had not yet worked out the process I use now. What it does reflect is the product work: the design, the prompt engineering, the use cases and audience, and the reasoning behind every decision, recorded session by session in the Product Decisions Log below. For how I run the engineering side of a project, see my later work.
 
 ## Documentation
 

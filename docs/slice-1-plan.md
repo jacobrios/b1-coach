@@ -125,12 +125,12 @@ started: normalize model output before it drives control flow.
 Note for a future slice, do not fix here: the same trust problem exists for the
 chat path's single `chart` key.
 
-### 4. Live URL in the README
+### 4. (DONE, do not repeat) Live URL in the README
 
-`README.md` body contains no URL anywhere. The deployed address exists only in
-the GitHub repo homepage field, so anyone reading the README itself cannot reach
-the working app. One line, near the top. Highest value-per-character change
-remaining in this repo.
+Moved out of this slice and already landed in the CLAUDE.md documentation pull
+request on 30 July 2026, so that one docs change touched `README.md` rather than
+a docs change and a code change both touching it. The README now carries the
+live URL and a cold-start warning. Nothing to do here.
 
 ---
 
