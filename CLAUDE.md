@@ -18,17 +18,65 @@ takes per-session hitting metrics and delivers them the way a coach would after
 batting practice: a few specific observations grounded in the real numbers, two
 concrete tips, and a conversational coach the player can ask follow-ups.
 
-**Mode: proof of concept, but publicly deployed as a portfolio piece.** This is
-not production software and should not be built as though it were. But it is not
-a throwaway either. It lives at https://b1-coach.vercel.app and its audience is
-hiring engineers and recruiters clicking a cold link.
+**Mode: proof of concept, publicly deployed as a portfolio piece.** This is not
+production software and should not be built as though it were. It is not a
+throwaway either. It lives at https://b1-coach.vercel.app, and a stranger's
+first click is the entire downside risk of the project, so reliability on that
+first click matters more here than it normally would this early.
 
-That single fact decides most tradeoffs here. The question to ask of a change is
-"would a hiring engineer respect this," not "would this scale to ten thousand
-users." Reliability on a first click from a stranger matters more than it
-normally would at this stage, because a broken first impression is the entire
-downside risk of the project. Scale, multi-user support, and real persistence do
-not matter at all.
+The audience is people deciding whether to hire the author, across a wide range.
+Principal-level product roles where he would build prototypes and MVPs himself,
+with an engineer gut-checking the work. Product leadership roles, up to VP, where
+the job is to lead engineers credibly rather than to write code. Some readers
+will be engineers, some product leaders, some neither.
+
+The author is a product manager, is not trying to become an engineer, and cannot
+defend this code line by line. What he can defend is the process that produced
+it, which is the same process he would run with a team of people. That is the
+differentiator this repo exists to demonstrate. Not code a staff engineer would
+write, and not the undisciplined output of a weekend of prompting, but visible
+evidence that a real process was run by someone who knew which questions to ask.
+
+The deciding question for any change: **does this demonstrate sound judgment,
+honestly reported, and could an engineer gut-check it in five minutes?**
+
+This rules in:
+
+- Reasoning recorded where a future reader will find it, in the decision log and
+  in pull request descriptions. Those are deliverables here, not paperwork
+  wrapped around the real work.
+- Technical debt named in product language the moment it is created, including
+  when it is deliberately accepted. Tradeoffs in speed, latency, and complexity
+  are surfaced as decisions for the product manager, never absorbed silently. He
+  cannot read the diff, so the report is the only place his judgment can be
+  applied.
+- A clear line between what was verified and what was assumed.
+- Simple, consistent code that matches the patterns already in the file it lives
+  in.
+- Careful handling of what a reviewer checks first: secrets, failure states, and
+  anything a stranger hits on a cold click.
+- Refactoring, tests, and QA tooling when there is a product reason for them: a
+  better experience for the user, faster or safer future changes, less QA
+  burden, lower cost. These are not indulgences on a proof of concept, they are
+  how it stays workable. Propose them as their own slice, with the reason
+  stated, rather than folding them into unrelated work.
+
+This rules out:
+
+- The same work with no stated product reason. "It would be cleaner" is not a
+  reason. Sophistication the author cannot explain is a liability in an
+  interview, not an asset.
+- Doing any of it silently inside an unrelated change. A refactor worth doing is
+  worth proposing, so the product manager can decide whether it is worth the time
+  now or belongs on the debt list.
+- Scale, multi-user support, and real persistence. None of it matters here.
+
+The failure mode to avoid, in the author's words, is AI slop. Concretely in this
+repo that means: code with no recorded reason for existing, patterns that
+contradict each other from file to file, dead code left behind, documentation
+claiming more than was checked, and half-built features nobody ever decided to
+stop building. Each one is visible to a reviewer, and each is prevented by
+process rather than by talent.
 
 ## Plugins in play
 
