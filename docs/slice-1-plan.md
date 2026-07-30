@@ -196,6 +196,14 @@ Server and config, verifiable only against a deployed preview URL:
 - Reject request shapes the app never sends.
 - Pin the function timeout in a `vercel.json`. It currently exists only in the
   Vercel dashboard, invisible to the repo and lost if the project is recreated.
+- Answer a GET with 200 instead of 405. The cold-start prevention is an external
+  uptime monitor pinging this endpoint every five minutes, which wakes the
+  function without spending any tokens. A GET currently returns 405, and most
+  monitors read anything outside 2xx as "site down" and alert on it constantly.
+  Returning 200 to a GET makes any monitor work without special configuration,
+  and turns the warmer into a real uptime check at the same time. Keep it a bare
+  liveness response: no Anthropic call, no request body, nothing that costs
+  money. POST behavior must not change.
 
 Spend exposure is capped at roughly $35 with auto-reload off, so the realistic
 worst case is a drained balance and a dead demo, not a runaway bill.
