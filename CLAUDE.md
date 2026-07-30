@@ -313,9 +313,12 @@ owner's own use explains. Do not build rate limiting without that signal.
   top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
   well over a hundred turns, so nothing a real visitor does should reach it, but
   the growth itself has no ceiling of its own.
-- Nothing in `api/coach.js` can be verified against a Vercel preview URL while
-  Vercel Deployment Protection is on, because every preview request is redirected
-  to a Vercel login. Raised on 30 July 2026 during Slice 2.
+- Vercel Deployment Protection redirects every preview request to a Vercel login,
+  so nothing in `api/coach.js` can be verified against a preview URL while it is
+  on. This project's plan has no "protect production only" option, so the only
+  lever is the Require Log In toggle in Project Settings, Deployment Protection.
+  Slice 2 verified against the preview by turning it off for a few minutes and
+  back on afterwards. Expect to do the same for any future server-side slice.
 
 ## Where decisions get recorded
 
