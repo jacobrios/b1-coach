@@ -668,6 +668,7 @@ export default function App() {
 
   const [sessionHistory, setSessionHistory] = useState([])
   const [viewingSession, setViewingSession] = useState(null)
+  const [wakingUp, setWakingUp] = useState(false)
 
   const computeStats = (swings) => {
     const total = swings.length
@@ -723,28 +724,26 @@ export default function App() {
     setScreen('goal')
   }
 
-  const handleEndSession = () => {
-    const stats = computeStats(activeSwings)
-    const newEntry = { sessionNumber, swings: activeSwings, stats, messages: [] }
-    const updatedHistory = [...sessionHistory, newEntry]
-
-    setSessionHistory(updatedHistory)
-    setViewingSession(sessionNumber)
+  // Split out of handleEndSession so the error screen's "Try again" can re-run the
+  // same request without adding the session to history a second time.
+  const runDebrief = (history, forSessionNumber) => {
+    setWakingUp(false)
     setScreen('loading')
 
-    const sessionsForDebrief = updatedHistory.filter((s) => s.sessionNumber <= sessionNumber)
+    const sessionsForDebrief = history.filter((s) => s.sessionNumber <= forSessionNumber)
 
     generateDebrief({
       goal: selectedGoal,
       player,
       sessions: sessionsForDebrief,
-      viewingSessionNumber: sessionNumber,
+      viewingSessionNumber: forSessionNumber,
+      onRetry: () => setWakingUp(true),
     })
       .then((result) => {
         if (result.nextSessionTips?.length > 0) {
           setSessionHistory((prev) =>
             prev.map((s) =>
-              s.sessionNumber === sessionNumber
+              s.sessionNumber === forSessionNumber
                 ? { ...s, messages: [{ role: 'coach', content: '__tips__', tipsIntro: result.tipsIntro ?? null, tips: result.nextSessionTips }] }
                 : s
             )
@@ -752,16 +751,30 @@ export default function App() {
         }
         setSessionHistory((prev) =>
           prev.map((s) =>
-            s.sessionNumber === sessionNumber
+            s.sessionNumber === forSessionNumber
               ? { ...s, debrief: result }
               : s
           )
         )
+        setWakingUp(false)
         setScreen('debrief')
       })
       .catch(() => {
-        setScreen('debrief')
+        // Never advance to the debrief without a debrief. An empty results screen
+        // reads as a finished product with nothing to say.
+        setWakingUp(false)
+        setScreen('coachUnavailable')
       })
+  }
+
+  const handleEndSession = () => {
+    const stats = computeStats(activeSwings)
+    const newEntry = { sessionNumber, swings: activeSwings, stats, messages: [] }
+    const updatedHistory = [...sessionHistory, newEntry]
+
+    setSessionHistory(updatedHistory)
+    setViewingSession(sessionNumber)
+    runDebrief(updatedHistory, sessionNumber)
   }
 
   if (screen === 'goal') {
@@ -873,9 +886,50 @@ export default function App() {
           fontFamily: "'Barlow', sans-serif",
           fontSize: 14, color: 'rgba(255,255,255,0.35)',
           letterSpacing: '0.02em',
+          maxWidth: 420, textAlign: 'center', lineHeight: 1.6,
+          paddingInline: 24,
         }}>
-          Your coach is reviewing the session…
+          {wakingUp
+            ? 'Waking up the coach. This demo runs on a server that sleeps when idle, so the first request after a quiet spell takes a few extra seconds.'
+            : 'Your coach is reviewing the session…'}
         </div>
+      </div>
+    )
+  }
+
+  if (screen === 'coachUnavailable') {
+    return (
+      <div style={{
+        width: '100vw', height: '100vh',
+        background: 'linear-gradient(155deg, #141518 0%, #0C0D0F 55%, #0E0D12 100%)',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        gap: 24,
+      }}>
+        <TrackManLogo color={ACCENT} />
+        <div style={{
+          fontFamily: "'Barlow', sans-serif",
+          fontSize: 15, color: 'rgba(255,255,255,0.55)',
+          letterSpacing: '0.02em',
+          maxWidth: 420, textAlign: 'center', lineHeight: 1.6,
+          paddingInline: 24,
+        }}>
+          The coach didn't wake up in time. This demo sleeps when idle and sometimes needs a second try.
+        </div>
+        <button
+          onClick={() => runDebrief(sessionHistory, viewingSession)}
+          style={{
+            height: 42, paddingInline: 24, borderRadius: 12, border: 'none',
+            background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT}CC 100%)`,
+            color: '#fff',
+            fontFamily: "'Barlow Condensed', sans-serif",
+            fontWeight: 800, fontSize: 15, letterSpacing: '0.08em',
+            textTransform: 'uppercase', cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(255,107,26,0.35)',
+          }}
+        >
+          Try again
+        </button>
       </div>
     )
   }
