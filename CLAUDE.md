@@ -31,11 +31,30 @@ the job is to lead engineers credibly rather than to write code. Some readers
 will be engineers, some product leaders, some neither.
 
 The author is a product manager, is not trying to become an engineer, and cannot
-defend this code line by line. What he can defend is the process that produced
-it, which is the same process he would run with a team of people. That is the
-differentiator this repo exists to demonstrate. Not code a staff engineer would
-write, and not the undisciplined output of a weekend of prompting, but visible
-evidence that a real process was run by someone who knew which questions to ask.
+defend this code line by line. What he can defend is the process he runs, which
+is the same process he would run with a team of people. That is the
+differentiator, and it is what separates this work from the undisciplined output
+of a weekend of prompting.
+
+**Be careful about claiming that differentiator for this particular repo.**
+b1-coach was the author's first experiment in AI-assisted coding, and its
+history shows exactly that. Every commit before 30 July 2026 went straight to
+main. There were no pull requests until that date, no code review, no tests, and
+no project brief until this file was written, roughly three months after the app
+was finished. A reviewer can confirm all of that in about thirty seconds. So
+never present this repo as an example of engineering process, in its README, in
+a pull request, or anywhere else.
+
+What b1-coach does demonstrate is product judgment, and that part is real and
+substantial: the design work, the prompt engineering, the use case and audience
+thinking, and the reasoning recorded across all ten build sessions in
+`docs/product-decisions-log.md`. That log is the artifact to point at here.
+
+The process standard described below applies from 30 July 2026 forward, not
+backward. The author's engineering process is demonstrated in later projects,
+beginning with interplanetary-groups. Where that gap comes up, state it plainly
+rather than smoothing it over. Being straightforward about what an early project
+does and does not show is itself the honesty this file asks for everywhere else.
 
 The deciding question for any change: **does this demonstrate sound judgment,
 honestly reported, and could an engineer gut-check it in five minutes?**
