@@ -198,11 +198,16 @@ The only valid keys are:
 
     scatter_ev_la  trend_ev  bar_distance  spray_direction  zone_breakdown  pitch_location
 
-`normalizeChart` at `src/DebriefScreen.jsx:917` wraps a string into `{type}`
-before dispatch, which is the right habit, but it does not check the string
-against that list. An invented key becomes a valid-looking object and then fails
-silently twice, falling back to the label 'Chart' at :1144 and to the empty
-"Chart renders here" box at :1195. Validating against the allowlist is planned.
+`normalizeChart` at `src/DebriefScreen.jsx:937` validates the key against
+`CHART_KEYS` and drops anything else, and a rejected or missing slot is filled
+from `FALLBACK_CHART_KEYS` so it renders a real chart on real session data.
+Landed in Slice 1 on 30 July 2026. Before that, an invented key became a
+valid-looking object and failed silently twice, falling back to the label
+'Chart' and to an empty "Chart renders here" box. Both fallbacks still exist at
+:1175 and :1226 as a last resort, but nothing should reach them now.
+
+The chat path's single `chart` key is still unvalidated. Same problem, not yet
+fixed.
 
 `callApi` at `src/coachApi.js:71-98` is the single choke point for both calls. It
 already strips markdown code fences before parsing. Anything that should apply to
@@ -238,6 +243,15 @@ Anthropic on the project's key and was rejected only for a missing `model`
 field. The key itself is not exposed; it is spendable, not readable. Pinning the
 model and length server-side is planned.
 
+Rate limiting was considered on 30 July 2026 and deliberately deferred. Once the
+model, length, and input size are pinned server-side, the cost of any single
+request is capped, but nothing caps how many requests a stranger can make,
+because there is still no authentication. Accepted because the prepaid balance
+means the worst case is a dead demo rather than a bill, and the realistic risk
+to a portfolio piece is an accident or a curious engineer rather than an
+attacker. The trigger for revisiting is the balance moving faster than the
+owner's own use explains. Do not build rate limiting without that signal.
+
 ---
 
 ## Deliberate decisions, do not "fix" these
@@ -259,10 +273,8 @@ model and length server-side is planned.
   shrinks at all. Unresolved whether the comment or the formula reflects intent.
 - `.claude/settings.local.json` is tracked. Normally machine-local. Raised on
   30 July 2026, deliberately left alone, still unanswered.
-- Stale comments at `src/DebriefScreen.jsx:868` and `:1133` describe `charts` as
-  `{type, data}` objects rendered as placeholders. Both halves are now wrong.
 - The chat path's single `chart` key has the same unvalidated-model-output
-  problem as `charts`.
+  problem the debrief path had before Slice 1. A candidate for a future slice.
 - A "whole site shows up blank" symptom has been reported but never reproduced.
   It is distinct from the silent-placeholder cold start. Do not fold the two
   together without evidence.
@@ -274,3 +286,14 @@ model and length server-side is planned.
 `docs/product-decisions-log.md`, most recent first, written in product language.
 A slice is not done until its entry is written. `docs/proof-of-concept.md`
 carries the original product framing.
+
+**Slice plans travel with the work they describe, and are never deleted.** Write
+the plan to `docs/slice-N-plan.md` and leave it untracked while planning. It gets
+committed on the slice branch when that work begins, and reaches GitHub only in
+the pull request that carries the finished build. Never open a pull request for a
+plan on its own, and never delete a plan after the work lands: kept alongside the
+result, it shows what was intended next to what actually shipped, which is worth
+more than either alone. This matches the convention in the owner's other
+projects. Corrected on 30 July 2026, after the Slice 1 plan was committed and
+then deleted, and after a standalone plan pull request was opened for Slice 2 and
+withdrawn.
