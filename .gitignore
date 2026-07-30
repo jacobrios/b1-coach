@@ -12,6 +12,12 @@ dist
 dist-ssr
 *.local
 
+# Environment files: never commit real secrets, but keep the example template.
+# The negation is load-bearing; without it a bare .env* silently swallows
+# .env.example and the repo loses its only record of what keys are required.
+.env*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
