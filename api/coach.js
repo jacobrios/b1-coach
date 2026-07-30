@@ -72,7 +72,7 @@ export default async function handler(req, res) {
   } catch {
     return reject(res)
   }
-  if (Buffer.byteLength(forwarded, 'utf8') > MAX_INPUT_BYTES) {
+  if (new TextEncoder().encode(forwarded).length > MAX_INPUT_BYTES) {
     return reject(res)
   }
 
