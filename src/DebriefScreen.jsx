@@ -12,6 +12,21 @@ const ACCENT = '#FF6B1A'
 const PAD = 14
 const GAP = 8
 
+// The only chart keys this screen can actually render. Kept in sync with the list
+// the coach prompt offers the model in coachApi.js.
+const CHART_KEYS = [
+  'scatter_ev_la',
+  'trend_ev',
+  'bar_distance',
+  'spray_direction',
+  'zone_breakdown',
+  'pitch_location',
+]
+
+// Stand-ins when the model names a chart that does not exist. Both work for every
+// goal, so a slot always shows real session data instead of an empty box.
+const FALLBACK_CHART_KEYS = ['scatter_ev_la', 'trend_ev']
+
 // ── TrackMan logo ──────────────────────────────────────────────────────────
 function TMLogo() {
   return (
@@ -865,7 +880,9 @@ function ZoneBreakdown({ swings }) {
 //   sessionData      — { avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings }
 //   coachingSummary  — string for the Session Summary body (from Anthropic API)
 //   whatThisMeans    — string for the What This Means body (from Anthropic API)
-//   charts           — array of { type, data } objects (up to 2); rendered as placeholders
+//   charts           — array of up to 2 chart keys (strings) chosen by the model,
+//                      each naming one of CHART_KEYS; an unrecognized key is
+//                      replaced with a fallback chart
 //   sessions         — array of session numbers available, e.g. [1, 2, 3]
 //   onSessionToggle  — callback(sessionNumber)
 //   rawSwings        — array of swing objects for the Raw Data modal
@@ -913,9 +930,23 @@ export default function DebriefScreen({
   const inZone   = sessionData?.inZoneCount     ?? null
   const total    = sessionData?.totalSwings     ?? null
 
-  // Normalize charts array to exactly 2 slots for the bottom row
-  const normalizeChart = (c) => c == null ? null : typeof c === 'string' ? { type: c } : c
+  // Normalize charts array to exactly 2 slots for the bottom row. The model names
+  // the charts it wants, so a key it invents is a claim to be rejected, not a
+  // fact: anything outside CHART_KEYS is dropped and a real chart takes its place
+  // rather than an empty box.
+  const normalizeChart = (c) => {
+    const type = c == null ? null : typeof c === 'string' ? c : c.type
+    return CHART_KEYS.includes(type) ? { type } : null
+  }
+
   const chartSlots = [normalizeChart(charts[0]), normalizeChart(charts[1])]
+  chartSlots.forEach((chart, i) => {
+    if (chart) return
+    const used = chartSlots.filter(Boolean).map((c) => c.type)
+    // Preferred fallbacks first, then any remaining real chart, so a slot can
+    // never end up with an undefined type and the two slots never collide.
+    chartSlots[i] = { type: [...FALLBACK_CHART_KEYS, ...CHART_KEYS].find((k) => !used.includes(k)) }
+  })
 
   const headerButtonStyle = {
     display: 'flex', alignItems: 'center', gap: 6,
@@ -1130,7 +1161,7 @@ export default function DebriefScreen({
             </div>
           </Panel>
 
-          {/* BOTTOM PANELS — chart placeholders */}
+          {/* BOTTOM PANELS — the two charts the coach selected */}
           <div style={{ flexShrink: 0, display: 'flex', gap: GAP, height: 340 }}>
             {chartSlots.map((chart, i) => {
               const CHART_LABELS = {

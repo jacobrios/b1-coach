@@ -68,18 +68,36 @@ Respond ONLY with valid JSON matching this exact shape, no preamble, no markdown
 
 Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zone_breakdown, pitch_location. Only include a chart key if it directly helps answer the player's question. Otherwise set chart to null.`
 
-async function callApi(body) {
+const RETRY_DELAY_MS = 1500
+
+async function callApi(body, { onRetry } = {}) {
   const url = '/api/coach'
   const headers = { 'content-type': 'application/json' }
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  })
+  const send = async () => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    })
 
-  if (!response.ok) {
-    throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+    }
+
+    return response
+  }
+
+  let response
+  try {
+    response = await send()
+  } catch {
+    // The server answering this call sleeps when idle, and the request that wakes
+    // it is the one that fails. One retry covers that. A second would only make a
+    // genuinely dead server take longer to say so.
+    onRetry?.()
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    response = await send()
   }
 
   const data = await response.json()
@@ -97,7 +115,7 @@ async function callApi(body) {
   }
 }
 
-export async function generateDebrief({ goal, player, sessions, viewingSessionNumber }) {
+export async function generateDebrief({ goal, player, sessions, viewingSessionNumber, onRetry }) {
   const filteredSessions = sessions.filter((s) => s.sessionNumber <= viewingSessionNumber)
 
   const userMessage = `Player: ${player.firstName}
@@ -128,7 +146,7 @@ Current session being debriefed: Session ${viewingSessionNumber}`
     max_tokens: MAX_TOKENS,
     system: DEBRIEF_SYSTEM,
     messages: [{ role: 'user', content: userMessage }],
-  })
+  }, { onRetry })
 }
 
 export async function sendChatMessage({ goal, player, sessions, viewingSessionNumber, messages }) {

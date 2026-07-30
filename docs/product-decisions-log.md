@@ -6,6 +6,38 @@
 
 ---
 
+## B1 Coach: Product Decisions Log — Slice 1 (July 30)
+
+*What we built:* The app no longer hands a visitor a results screen with nothing on it. A failed coach request now retries once, explains itself while it retries, and offers a way to try again if it still does not work. The model can also no longer name a chart that does not exist and leave an empty box in its place.
+
+*Key product decisions and the thinking behind them:*
+
+**A failed request is retried once, automatically.** The server that answers the coach request goes to sleep when nobody has used the app for a while, and the request that wakes it up is the one that fails. Every observed failure of this kind has succeeded on a second attempt. One retry is the whole fix. We deliberately stopped at one: a second and third would only make a genuinely dead server take longer to admit it, and the visitor is already waiting.
+
+**Retries are for a server that did not answer, not for an answer we did not like.** If the coach responds but the response cannot be read, we do not ask again. That is a bad answer, and asking twice produces two bad answers more slowly.
+
+**Two honest messages replaced one silent failure.** Before this, a failed debrief sent the visitor to the results screen anyway, where they saw an empty shell that looked like a finished product with nothing to say. For a recruiter clicking this link for the first time, that is the worst possible outcome: it reads as a builder who did not notice. Now, while the retry is running, the loading screen says the demo runs on a server that sleeps when idle and the first request takes a few extra seconds. If the retry also fails, the visitor gets a short explanation and a Try again button rather than a dead end.
+
+**Both explanation screens are set noticeably larger than the ordinary loading text.** The first version set the waking-up message at the same small, dim size as the "your coach is reviewing the session" line, and in QA it was easy to skim past. That defeats the whole point: the message only works if it gets read. Both the waking-up copy and the failure copy now use a larger, brighter treatment, while the ordinary waiting line stays quiet and ambient. The two exceptional screens deliberately match each other, because making the warning louder than the actual failure would have read as the wrong priority.
+
+**The error copy does not name the hosting provider.** Naming a vendor in an error message reads as blame-shifting, and it tells a non-technical reader nothing. "A server that sleeps when idle" conveys a cold start to any engineer without the finger-point. The purpose of this copy is narrow and specific: stop a visitor concluding the builder is incompetent.
+
+**The coach can no longer point at a chart that does not exist.** The model picks which two charts appear by naming them. Nothing was checking those names against the six charts that actually exist, so an invented name produced a panel labelled "Chart" containing the words "Chart renders here." That failed twice over, silently, and looked exactly like an unfinished feature. Names are now checked against the real list, and anything unrecognized is replaced with a real chart showing real session data. The visitor sees a working screen either way.
+
+**The failure screen offers Try again and nothing else, deliberately.** A "Start over" control returning the visitor to the goal screen was proposed and rejected. It would not reduce how often anyone lands on that screen, because starting over means running another session against the same sleeping server. Its only real value would be picking a different goal, which is not what a visitor stuck on an error wants. Try again is the only control that addresses the actual cause, so it is the only one there.
+
+**Accepted tradeoff: a retry can cost a second API call for a request that already succeeded upstream.** If the coach's answer was generated but the response never reached the browser, the retry pays for the same answer twice. Spend is capped by a prepaid balance with auto-reload off, so the ceiling on this is a drained demo rather than a bill, and the alternative (no retry) means visitors see a broken app. Worth revisiting only if the balance starts moving faster than expected.
+
+**Known gap, not fixed here: the explanation only appears once the first attempt has failed.** If a cold start shows up as a request that hangs for a long time and then fails, rather than one that fails quickly, the visitor sees the ordinary "your coach is reviewing the session" message for that whole wait before the explanation appears. We chose not to trigger the explanation on a timer instead, because a normal successful debrief already takes around twelve seconds, and a timer would tell every visitor something was wrong when nothing was.
+
+**Em-dashes in the coach's voice are deliberately accepted.** Both system prompts tell the model never to use em-dashes and the model ignores it. That rule governs the product manager's own writing, not B1's character voice, and B1 sounds fine. A fix that stripped them after the fact was considered and rejected: it adds one more place a rewrite can go wrong for no gain a player would ever notice. The ignored prompt line stays as it is. This is not a bug to be found and fixed later.
+
+**Cold starts are handled in two layers, and this slice is only the second one.** A free external uptime monitor pinging the app every five minutes keeps the server awake and prevents most cold starts from ever happening. The retry and the copy above catch the ones that slip through. Neither layer alone is enough.
+
+**Why this slice stopped where it did.** Everything in it can be checked by running the app on a laptop and looking at the screen. The server-side work (pinning the model and length so a caller cannot choose them, pinning the function timeout in the repo, answering the uptime monitor correctly) cannot be, because local development never runs the serverless function at all. Splitting there means "verified" means the same thing for every claim in this pull request. That work is Slice 2.
+
+---
+
 ## B1 Coach: Product Decisions Log — Session 10 (May 8)
 
 *What we built:* Final pre-deployment QA pass, prompt engineering refinements, chart and tooltip improvements, data quality fixes, markdown rendering in chat, model switch to Sonnet, and dead code cleanup.
