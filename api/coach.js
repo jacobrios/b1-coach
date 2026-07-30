@@ -1,6 +1,79 @@
+// The model and the response length are pinned here, on the server, so that a
+// caller cannot choose what this endpoint spends on the project's key.
+//
+// They are ALSO set at the top of src/coachApi.js, deliberately, and the two
+// must be kept in step. Local development never runs this file: vite.config.js
+// proxies /api/coach straight to api.anthropic.com, and Anthropic requires model
+// and max_tokens in the body. Change one of these places without the other and
+// local development quietly tests a different model than production ships.
+const MODEL = 'claude-sonnet-4-6'
+const MAX_TOKENS = 4096
+
+// Measured on 30 July 2026 by running four real sessions: a session 4 debrief,
+// the largest request the app sends on its own, is 13.7 KB, and each further
+// chat turn adds roughly 0.9 KB on top. 128 KB is about nine times the largest
+// real request and leaves room for well over a hundred chat turns, so it caps
+// what a stranger can push through this key without ever being reachable by a
+// visitor who simply went further than anyone else.
+const MAX_INPUT_BYTES = 128 * 1024
+
+// One shape for every refusal. A caller learns that the request was refused and
+// nothing else: not what was wrong with it, not that a size limit exists, not
+// where that limit sits.
+const reject = (res) => res.status(400).json({ error: 'Invalid request' })
+
 export default async function handler(req, res) {
+  // Liveness only, for the uptime monitor that keeps this function warm. It must
+  // never read the body or call Anthropic, so a ping every five minutes is free.
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    res.status(200)
+    return req.method === 'HEAD' ? res.end() : res.json({ ok: true })
+  }
+
   if (req.method !== 'POST') {
+    res.setHeader('Allow', 'GET, HEAD, POST')
     return res.status(405).json({ error: 'Method not allowed' })
+  }
+
+  const body = req.body
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return reject(res)
+  }
+  if (typeof body.system !== 'string') {
+    return reject(res)
+  }
+  if (!Array.isArray(body.messages) || body.messages.length === 0) {
+    return reject(res)
+  }
+  // Plain text only. Anthropic also accepts content blocks that point at a URL,
+  // and it fetches and bills those itself, which would put the cost of a request
+  // back in the caller's hands no matter what the size cap below says. This app
+  // has only ever sent a string.
+  for (const message of body.messages) {
+    if (!message || typeof message !== 'object' || typeof message.content !== 'string') {
+      return reject(res)
+    }
+  }
+
+  // Rebuild the payload from scratch rather than editing the caller's copy, so
+  // only the two fields this app actually sends can ever reach Anthropic.
+  const payload = {
+    model: MODEL,
+    max_tokens: MAX_TOKENS,
+    system: body.system,
+    messages: body.messages,
+  }
+
+  // Deeply nested input parses fine and then blows the stack on the way back
+  // out, so serializing is inside the guard rather than assumed safe.
+  let forwarded
+  try {
+    forwarded = JSON.stringify(payload)
+  } catch {
+    return reject(res)
+  }
+  if (new TextEncoder().encode(forwarded).length > MAX_INPUT_BYTES) {
+    return reject(res)
   }
 
   try {
@@ -11,7 +84,7 @@ export default async function handler(req, res) {
         'anthropic-version': '2023-06-01',
         'content-type': 'application/json',
       },
-      body: JSON.stringify(req.body),
+      body: forwarded,
     })
 
     const data = await response.json()
