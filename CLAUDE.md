@@ -209,7 +209,7 @@ valid-looking object and failed silently twice, falling back to the label
 The chat path's single `chart` key is still unvalidated. Same problem, not yet
 fixed.
 
-`callApi` at `src/coachApi.js:71-98` is the single choke point for both calls. It
+`callApi` at `src/coachApi.js:80-123` is the single choke point for both calls. It
 already strips markdown code fences before parsing. Anything that should apply to
 every model response belongs there, once, not in both call sites.
 
@@ -220,14 +220,24 @@ serverless function sleeps when idle and takes several extra seconds to wake,
 which reads to a visitor as a hang or a broken app.
 
 The prevention is a free external uptime monitor pinging `/api/coach` every five
-minutes with a plain GET, which the handler rejects with 405 before ever calling
-Anthropic, so it wakes the function and costs nothing.
+minutes with a plain GET, which the handler answers with a bare 200 before ever
+reading the body or calling Anthropic, so it wakes the function and costs
+nothing. HEAD is answered the same way, since some monitors use it instead.
+Anything that is not GET, HEAD, or POST still gets a 405. Slice 2 changed the
+GET from a 405 on 30 July 2026, because most monitors read anything outside the
+200 range as the site being down and alert on it, which made the warmer useless
+as an uptime check.
 
-The function timeout currently exists only in the Vercel dashboard, not in the
-repo. There is no `vercel.json`. Pinning it in a file is planned.
+The function timeout is pinned in `vercel.json` at 60 seconds, and the repo is
+now the source of truth for that value. The Vercel dashboard still displays 300
+seconds, deliberately left there and superseded: once `vercel.json` exists the
+file wins. A future reader who finds the two numbers disagreeing should trust the
+file.
 
-A full debrief takes roughly 12 seconds on the smallest session. Later sessions
-send more history and take longer. Nobody has tested where the ceiling is.
+Measured on 30 July 2026 across four real sessions: a debrief takes 11 seconds on
+the smallest session and 14 seconds on session 4, which is the largest one the
+app can produce. A chat reply takes 6 to 11 seconds. That is what 60 seconds was
+chosen against.
 
 ## Cost exposure
 
@@ -236,12 +246,25 @@ off. A runaway bill is therefore impossible. The realistic bad outcome is a
 drained balance and a dead demo, with no alert, discovered by a recruiter rather
 than by the owner.
 
-`api/coach.js` forwards the request body to Anthropic unchanged, so the caller
-chooses the model and response length, and there is no authentication or rate
-limiting. Confirmed live on 30 July 2026: an unauthenticated POST reached
-Anthropic on the project's key and was rejected only for a missing `model`
-field. The key itself is not exposed; it is spendable, not readable. Pinning the
-model and length server-side is planned.
+`api/coach.js` used to forward the request body to Anthropic unchanged, so the
+caller chose the model and response length. Confirmed live on 30 July 2026: an
+unauthenticated POST reached Anthropic on the project's key and was rejected only
+for a missing `model` field. The key itself is not exposed; it is spendable, not
+readable.
+
+Slice 2 closed that on 30 July 2026. The function now rebuilds the payload from
+scratch, keeping only the `system` and `messages` the caller sent and supplying
+its own model and response length, so nothing a caller asks for can change what a
+request costs. Requests that are not shaped like anything this app sends are
+refused with a plain 400 before any spending: `messages` must be a non-empty
+array, `system` must be a string, and the forwarded payload must be under 128 KB.
+That cap is roughly nine times the largest request the app actually sends, a
+session 4 debrief measured at 13.7 KB. There is still no authentication.
+
+The model and the response length now live in two places on purpose,
+`api/coach.js` and `src/coachApi.js:8-9`, because local development bypasses the
+function and talks to Anthropic directly, which requires both fields in the body.
+Both files say so. Do not tidy either one away.
 
 Rate limiting was considered on 30 July 2026 and deliberately deferred. Once the
 model, length, and input size are pinned server-side, the cost of any single
@@ -263,7 +286,9 @@ owner's own use explains. Do not build rate limiting without that signal.
   wrong for no product gain. The ignored prompt line stays as-is.
 - **Sonnet, not Opus.** Switched during session 10 for latency and cost, with no
   meaningful quality loss on this structured task. Set via the `MODEL` constant
-  at `src/coachApi.js:1`.
+  in TWO places since Slice 2: `src/coachApi.js:8` is what local development
+  runs on, `api/coach.js` is what production actually sends. Change both or
+  local development silently tests a different model than production ships.
 
 ## Known debt and open questions
 
@@ -280,6 +305,17 @@ owner's own use explains. Do not build rate limiting without that signal.
   together without evidence.
 - The 2.8 MB handoff zip was removed from the tree on 30 July 2026 but remains
   in git history. A history rewrite was considered and deliberately rejected.
+- This project has no test suite, no hooks, and no committed reviewer config,
+  while the owner's other projects have all three. Every slice here is verified
+  entirely by hand, which is what let a cold-start bug hide for eleven weeks.
+  Named as the recommended next slice on 30 July 2026.
+- Chat history inside a session grows without bound, roughly 0.9 KB per turn on
+  top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
+  well over a hundred turns, so nothing a real visitor does should reach it, but
+  the growth itself has no ceiling of its own.
+- Nothing in `api/coach.js` can be verified against a Vercel preview URL while
+  Vercel Deployment Protection is on, because every preview request is redirected
+  to a Vercel login. Raised on 30 July 2026 during Slice 2.
 
 ## Where decisions get recorded
 

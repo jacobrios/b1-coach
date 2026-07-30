@@ -1,4 +1,4 @@
-// These two are ALSO pinned in api/coach.js, deliberately, and the two must be
+// These two are ALSO pinned at the top of api/coach.js, deliberately, and must be
 // kept in step. Production ignores whatever is sent here and uses its own copy.
 // These values are what local development actually runs on, because npm run dev
 // never touches api/coach.js: vite.config.js proxies /api/coach straight to
