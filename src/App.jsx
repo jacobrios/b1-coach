@@ -882,11 +882,15 @@ export default function App() {
             }} />
           ))}
         </div>
+        {/* The ordinary waiting line stays quiet and ambient. The waking-up
+            explanation is the one a visitor has to actually read, so it gets the
+            larger, brighter treatment shared with the failure screen. */}
         <div style={{
           fontFamily: "'Barlow', sans-serif",
-          fontSize: 14, color: 'rgba(255,255,255,0.35)',
+          fontSize: wakingUp ? 18 : 14,
+          color: wakingUp ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.35)',
           letterSpacing: '0.02em',
-          maxWidth: 420, textAlign: 'center', lineHeight: 1.6,
+          maxWidth: wakingUp ? 520 : 420, textAlign: 'center', lineHeight: 1.6,
           paddingInline: 24,
         }}>
           {wakingUp
@@ -909,9 +913,9 @@ export default function App() {
         <TrackManLogo color={ACCENT} />
         <div style={{
           fontFamily: "'Barlow', sans-serif",
-          fontSize: 15, color: 'rgba(255,255,255,0.55)',
+          fontSize: 18, color: 'rgba(255,255,255,0.72)',
           letterSpacing: '0.02em',
-          maxWidth: 420, textAlign: 'center', lineHeight: 1.6,
+          maxWidth: 520, textAlign: 'center', lineHeight: 1.6,
           paddingInline: 24,
         }}>
           The coach didn't wake up in time. This demo sleeps when idle and sometimes needs a second try.
