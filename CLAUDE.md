@@ -104,6 +104,22 @@ touches (test-driven development, verification before completion, requesting
 code review, writing and executing plans, finishing a branch), follow the
 plugin's version. Do not silently reconcile two sets of process rules.
 
+## Which `.claude/` files are shared
+
+Settled 31 July 2026, matching the convention in the safety-nets template and in
+the owner's other projects.
+
+- **`.claude/settings.json` is committed and shared.** It carries the hooks, which
+  are part of how this project is built and should apply to anyone working on it.
+- **`.claude/settings.local.json` is machine-specific and untracked.** The
+  `.local` suffix means exactly that by convention. It was untracked in PR #3 on
+  30 July 2026 and `.gitignore` covers it by name. It holds a permissions
+  allowlist and nothing sensitive, which is why the history was left as it is
+  rather than rewritten.
+
+The `.gitignore` rule is deliberately narrow: a broad `.claude/` entry would also
+swallow the shared `settings.json` and the hooks. Do not widen it.
+
 ## Hooks in play
 
 Added in Slice 3, adapted from `~/.claude/templates/project-safety-nets/`. Both
@@ -334,8 +350,12 @@ owner's own use explains. Do not build rate limiting without that signal.
   sessions 2 to 4. The formula on the line below yields 100% / 95% / 90% and
   floors at 85%, so the comment is wrong for every session and variance barely
   shrinks at all. Unresolved whether the comment or the formula reflects intent.
-- `.claude/settings.local.json` is tracked. Normally machine-local. Raised on
-  30 July 2026, deliberately left alone, still unanswered.
+- ~~`.claude/settings.local.json` is tracked. Normally machine-local. Raised on
+  30 July 2026, deliberately left alone, still unanswered.~~ Settled 31 July
+  2026; see the settings convention above. This entry was already stale when
+  written: the file was untracked in PR #3 on 30 July, and this bullet was left
+  saying otherwise, which then got repeated in the Slice 3 pull request as an
+  open question that was not open.
 - The chat path's single `chart` key has the same unvalidated-model-output
   problem the debrief path had before Slice 1. A candidate for a future slice.
 - A "whole site shows up blank" symptom has been reported but never reproduced.
