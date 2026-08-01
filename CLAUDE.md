@@ -229,10 +229,13 @@ GET from a 405 on 30 July 2026, because most monitors read anything outside the
 as an uptime check.
 
 The function timeout is pinned in `vercel.json` at 60 seconds, and the repo is
-now the source of truth for that value. The Vercel dashboard still displays 300
-seconds, deliberately left there and superseded: once `vercel.json` exists the
-file wins. A future reader who finds the two numbers disagreeing should trust the
-file.
+the source of truth for that value: once `vercel.json` exists the file wins, so a
+future reader who finds it disagreeing with anything else should trust the file.
+The Vercel dashboard was set to 60 to match on 31 July 2026, having previously
+read 300. Matching it changes nothing while `vercel.json` exists. It matters only
+if that file ever goes missing, because the project was recreated or the repo
+forked, at which point the dashboard becomes live again and should fall back to
+the measured number rather than to a 300 nobody chose.
 
 Measured on 30 July 2026 across four real sessions: a debrief takes 11 seconds on
 the smallest session and 14 seconds on session 4, which is the largest one the
