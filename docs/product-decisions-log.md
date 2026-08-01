@@ -6,6 +6,28 @@
 
 ---
 
+## B1 Coach: Product Decisions Log — Slice 3 (July 31)
+
+*What we built:* The first safety nets. Until now every change to this project was checked entirely by hand, which is what let a broken cold start sit in production for eleven weeks. There is now a test suite that runs in under a second, and two automatic checks that fire while work is happening rather than after it: one runs the tests after every edit and reports a break immediately, the other refuses to let anything edit a file holding secrets. A visitor sees nothing different. What changes is that every future slice is cheaper and safer to verify.
+
+*Key product decisions and the thinking behind them:*
+
+**The suite covers the server proxy, not just the browser code.** That file is the one local development never runs, so Slice 2 was checked entirely by hand against a deployed preview, and a throwaway harness was written for it and then discarded. That harness is now permanent. It was the obvious place to spend the effort: it is where hand-checking cost the most, and where an independent review found all four of the defects that slice had already talked itself out of, including one where the limit meant to cap what a request costs was not actually capping it.
+
+**Tests that record bugs rather than fixing them.** Looking for testable logic turned up six known-wrong behaviors. We deliberately did not fix them here. A change that both builds the safety net and alters behavior produces something the product manager cannot judge, because there is no way to tell which part is which. So where a bug could be reached from a test, it is pinned by one carrying a comment saying "recorded, not endorsed" and naming the problem, and a future change cannot alter it silently. **Four of the six are covered that way; two are not**, because reaching them would mean moving code this slice deliberately left alone, and a review caught us claiming otherwise in this very document. The uncovered pair is written down by name in the project's notes so the follow-up slice does not go looking for a test that was never written. Fixing all six is proposed as its own slice.
+
+**A passing test proves nothing until it has failed.** Tests written over code that already exists pass the moment they are written, which makes them worthless as evidence. So every function under test was deliberately broken, one at a time, and the suite was watched going red: eleven separate sabotages, each caught. Two of those attempts silently did not work the first time, one because the edit never applied and one because it broke the file badly enough that the suite could not load at all and the failure looked like a pass. Both were redone properly rather than counted. This is the difference between having tests and knowing they work.
+
+**The test-after-every-edit check runs the project's own command, not its own copy of it.** A small thing with a real failure mode behind it: if the hook spelled out how to run the tests itself, someone could change how the project runs tests and the hook would quietly keep running the old way. It calls the same command a person would type.
+
+**Documentation edits skip the tests, deliberately.** Changing a Markdown file cannot change what the software does, so running the suite on a documentation edit is cost with no signal. Measured: a documentation edit finishes in about 30 milliseconds; an edit that runs the suite takes about 800.
+
+**What this deliberately does not cover, and why that matters.** The suite touches no screens and no rendering at all. A green run says nothing about what a visitor sees, and it is written down in the project's own notes in those words, because the real risk with a first test suite is that it creates false confidence. Anything touching the screen still owes a look at the running app, exactly as before.
+
+**A small amount of already-shipped code moved.** Nothing testable was reachable: the functions were private, and two were defined inside React components, so importing them meant loading the entire results screen. Two small files were carved out to hold that logic unchanged. This is the kind of change worth naming out loud rather than burying, since it touches code the plan never mentioned.
+
+---
+
 ## B1 Coach: Product Decisions Log — Slice 2 (July 30)
 
 *What we built:* The server side of the same cold-start problem Slice 1 handled in the browser, plus a lid on what a stranger can spend on our key. The endpoint that keeps the demo awake now answers "I'm alive" instead of "not allowed," so an uptime monitor can actually be pointed at it. The server decides which model runs and how long an answer can be, rather than believing whatever the request asks for. Requests shaped like nothing this app sends are turned away before any money is spent. And the deadline for giving up on a slow request now lives in the repo instead of only in a dashboard, at sixty seconds rather than five minutes.

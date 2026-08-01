@@ -121,3 +121,34 @@ Written before any code.
   This slice covers extracted logic, not screens.
 - Exporting internals widens each module's public surface slightly, which is the
   ordinary cost of making something testable.
+
+---
+
+## Postscript, 31 July 2026: where the build diverged from this plan
+
+Recorded rather than edited into the text above, so the difference between what
+was intended and what shipped stays visible.
+
+- **The moved code went to new files, not to module scope in the files it came
+  from.** The section above says `computeStats` moves to module scope in
+  `src/App.jsx` and the chart logic lifts to module scope in
+  `src/DebriefScreen.jsx`. Both went to new files instead, `src/sessionStats.js`
+  and `src/chartSlots.js`, because a test that imports either big file also loads
+  Recharts and needs a DOM, which would have meant adding a browser environment
+  to the test runner for no gain. The logic inside both is character-for-character
+  identical to where it came from. Consequently two call sites changed rather than
+  the one this plan predicted.
+- **Six known-wrong behaviors, not four.** The plan names four bugs found while
+  scoping. Writing the tests surfaced two more, both in the markdown-fence
+  stripping in `callApi`. Four of the six are pinned by a test; two are not,
+  because reaching them needs code this slice left alone.
+- **A code review found nine defects in this slice's own work**, all fixed before
+  the pull request. The one that mattered: the test-after-every-edit hook exited
+  with the suite's own code, and Claude Code only feeds a hook's output back to
+  the agent on exit 2, so a broken suite would have been invisible to the thing
+  that broke it. The hook's stated purpose did not work, and this plan's
+  verification step 3 had been reported as demonstrating that it did. The second:
+  the `.env` guard was case-sensitive on a case-insensitive filesystem, so a
+  write to `.ENV.local` would have clobbered the real secrets file unchecked.
+  Both fixes belong back in
+  `~/.claude/templates/project-safety-nets/`, which has the same two faults.

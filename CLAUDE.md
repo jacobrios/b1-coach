@@ -104,6 +104,22 @@ touches (test-driven development, verification before completion, requesting
 code review, writing and executing plans, finishing a branch), follow the
 plugin's version. Do not silently reconcile two sets of process rules.
 
+## Hooks in play
+
+Added in Slice 3, adapted from `~/.claude/templates/project-safety-nets/`. Both
+are wired in `.claude/settings.json`, which is committed.
+
+- **Before every edit**, `protect-paths.mjs` blocks any `.env` file and allows
+  `.env.example`. The template's Prisma migration protection was dropped: this
+  project has no database.
+- **After every edit that is not Markdown**, `run-tests-unless-docs.mjs` runs
+  `npm test` and hands a failure back as hook feedback, so a broken suite
+  surfaces at the edit rather than at the pull request.
+
+A hook changed in this repo that is not specific to this repo should be copied
+back to the template, or the template becomes the oldest version rather than the
+best one.
+
 ## Stack
 
 React 19.2 + Vite 8. Recharts 3.8 for all charts. react-markdown 10 for coach
@@ -120,18 +136,27 @@ as a side effect of other work.
 
 ## Where things live
 
-    src/App.jsx              952 lines. Screen routing, player and session state,
+    src/App.jsx             1000 lines. Screen routing, player and session state,
                              synthetic swing data generation, debrief orchestration.
-    src/DebriefScreen.jsx   1408 lines. The results screen, all six chart
+    src/DebriefScreen.jsx   1409 lines. The results screen, all six chart
                              components, and the chat panel.
     src/LiveSessionScreen.jsx 517 lines. Animated incoming swing data.
-    src/coachApi.js          181 lines. System prompts, the single API call
+    src/coachApi.js          207 lines. System prompts, the single API call
                              function, and the two calls built on it.
-    api/coach.js              22 lines. The serverless proxy. See the trap below.
+    src/chartSlots.js         43 lines. Which charts can render, and how a slot
+                             is filled when the model names one that cannot.
+    src/sessionStats.js       18 lines. The four numbers a session is summarized by.
+    api/coach.js              95 lines. The serverless proxy. See the trap below.
+    *.test.js                551 lines across four files, beside what they test.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
 little return.
+
+`chartSlots.js` and `sessionStats.js` were carved out of the two big files in
+Slice 3 so their logic could be tested without loading Recharts and a DOM. The
+logic inside them is unchanged from where it used to live. Do not move anything
+else out on the same excuse without a test that needs it.
 
 ## The data is synthetic
 
@@ -173,12 +198,22 @@ committable. Do not remove it.
 The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
-1. **There is no test suite.** No `test` script, no test or spec files. Never
-   imply anything was covered by automated tests. If tests are introduced, show
-   them failing before the fix.
-2. **Anything that changes the screen owes a rendered check.** Load the running
+1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
+   vitest. It covers the serverless proxy's method routing, validation, and size
+   cap; `callApi`'s one retry and its unwrapping of a fenced model response; the
+   chart-slot fallback; and `computeStats`. It covers **no screens and no
+   rendering at all**, so a green suite says nothing about what a visitor sees.
+   Never imply broader coverage than that. New behavior gets a test shown failing
+   first; a test written over existing behavior is worthless until the thing it
+   covers has been broken on purpose and seen to go red.
+2. **Some tests deliberately pin behavior that is wrong.** They carry a
+   "recorded, not endorsed" comment naming the bug. When a correctness slice
+   fixes one, its test changes in the same commit. Do not "fix" a test that says
+   this to make it match what the code ought to do.
+3. **Anything that changes the screen owes a rendered check.** Load the running
    app in a real browser and look at it. This project's whole value is what a
-   stranger sees, so "the code looks right" is not evidence here.
+   stranger sees, so "the code looks right" is not evidence here, and the suite
+   does not reach it.
 
 Failure paths need to be seen failing, not reasoned about. Force the error
 rather than describing what would happen.
@@ -308,10 +343,32 @@ owner's own use explains. Do not build rate limiting without that signal.
   together without evidence.
 - The 2.8 MB handoff zip was removed from the tree on 30 July 2026 but remains
   in git history. A history rewrite was considered and deliberately rejected.
-- This project has no test suite, no hooks, and no committed reviewer config,
-  while the owner's other projects have all three. Every slice here is verified
-  entirely by hand, which is what let a cold-start bug hide for eleven weeks.
-  Named as the recommended next slice on 30 July 2026.
+- ~~This project has no test suite, no hooks, and no committed reviewer
+  config.~~ Resolved for tests and hooks in Slice 3 on 31 July 2026; see the
+  verification norms above. **There is still no committed reviewer config**, so
+  every code review in this repo is a session choosing to run one.
+- Six known-wrong behaviors are deliberately unfixed, proposed as a correctness
+  slice on 31 July 2026. **Only four carry a "recorded, not endorsed" test**, so
+  grepping for that phrase does not find them all. Do not treat the count of
+  those tests as the count of open bugs.
+  - Pinned by a test: chart slots do not dedupe, so a model naming the same
+    valid key twice renders the same chart twice (`src/chartSlots.test.js`);
+    `computeStats` returns `NaN` on an empty session, which would reach the
+    coach's prompt as the literal text "NaN mph" (`src/sessionStats.test.js`);
+    and two separate faults in the markdown-fence stripping in `callApi`
+    (`src/coachApi.test.js`).
+  - **Not pinned by anything:** top exit velocity displays `-Infinity` on an
+    empty session, because `Math.max(...[])` returns `-Infinity` and the guard at
+    `src/App.jsx` checks that swings exist rather than that there are any; and
+    the goal thresholds disagree between the coach's prompt and the charts, and
+    between two charts. Testing either needs code moved that this slice
+    deliberately left alone.
+  - Reachability: the two empty-session faults cannot happen today, because a
+    session always generates fifteen swings. The other four can.
+- The strike-zone rule, the distance buckets, and the goal thresholds are each
+  written out in two or three places that must agree, and the goal thresholds
+  already do not. Belongs with the correctness slice above, since the
+  duplication is why they drifted.
 - Chat history inside a session grows without bound, roughly 0.9 KB per turn on
   top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
   well over a hundred turns, so nothing a real visitor does should reach it, but
