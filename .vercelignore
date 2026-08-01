@@ -1,0 +1,9 @@
+# Test files sit next to the code they test, which puts one of them inside api/.
+# Vercel turns every file in api/ into a serverless function, so api/coach.test.js
+# was deployed as a live endpoint at /api/coach.test and returned a 500 to anyone
+# who found it: it imports the test framework, which is not a production
+# dependency. Shipped that way in Slice 3 and caught on the production deploy.
+#
+# Excluding the tests here keeps them beside what they test without handing any
+# of them to Vercel. The local build and the test suite never see this file.
+*.test.js
