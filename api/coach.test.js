@@ -1,0 +1,278 @@
+// Tests for the serverless proxy.
+//
+// This file is the reason the suite exists. Local development never runs
+// api/coach.js (vite.config.js proxies /api/coach straight to Anthropic), so
+// during Slice 2 every one of these cases was checked by hand against a deployed
+// preview, and a throwaway harness was written and discarded. This is that
+// harness, kept.
+//
+// Nothing here touches the network: fetch is stubbed, so no test costs money.
+
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import handler from './coach.js'
+
+const PINNED_MODEL = 'claude-sonnet-4-6'
+const PINNED_MAX_TOKENS = 4096
+const MAX_INPUT_BYTES = 128 * 1024
+
+// Vercel hands the handler a Node response object with status/json helpers. This
+// records what the handler did instead of writing it to a socket.
+function makeRes() {
+  const res = { statusCode: null, body: undefined, ended: false, headers: {} }
+  res.status = (code) => { res.statusCode = code; return res }
+  res.json = (payload) => { res.body = payload; return res }
+  res.end = () => { res.ended = true; return res }
+  res.setHeader = (k, v) => { res.headers[k] = v; return res }
+  return res
+}
+
+let sentToAnthropic
+
+beforeEach(() => {
+  sentToAnthropic = null
+  vi.stubGlobal('fetch', async (url, init) => {
+    sentToAnthropic = { url, body: JSON.parse(init.body) }
+    return { status: 200, json: async () => ({ content: [{ type: 'text', text: '{}' }] }) }
+  })
+})
+
+async function call(req) {
+  const res = makeRes()
+  await handler(req, res)
+  return res
+}
+
+const validBody = () => ({
+  system: 'you are a coach',
+  messages: [{ role: 'user', content: 'hello' }],
+})
+
+describe('liveness, which must never cost anything', () => {
+  it('answers GET with 200 and does not call Anthropic', async () => {
+    const res = await call({ method: 'GET' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ ok: true })
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('answers HEAD with 200, no body, and does not call Anthropic', async () => {
+    const res = await call({ method: 'HEAD' })
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toBeUndefined()
+    expect(res.ended).toBe(true)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('does not read the request body on a liveness ping', async () => {
+    // Reading the body is what would cost something on a monitor's ping, so this
+    // gives the handler a body that screams if touched rather than merely
+    // checking the status code twice.
+    let bodyWasRead = false
+    const req = { method: 'GET' }
+    Object.defineProperty(req, 'body', {
+      get() { bodyWasRead = true; throw new Error('body was read on a liveness ping') },
+    })
+
+    const res = await call(req)
+
+    expect(res.statusCode).toBe(200)
+    expect(bodyWasRead).toBe(false)
+  })
+})
+
+describe('methods this endpoint does not serve', () => {
+  it.each(['PUT', 'DELETE', 'PATCH', 'OPTIONS'])('refuses %s with 405', async (method) => {
+    const res = await call({ method, body: validBody() })
+    expect(res.statusCode).toBe(405)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('names the methods it does serve, which is what a monitor looks for', async () => {
+    const res = await call({ method: 'PUT' })
+    expect(res.headers.Allow).toBe('GET, HEAD, POST')
+  })
+})
+
+describe('the server, not the caller, decides what a request costs', () => {
+  it('forwards the pinned model and response length', async () => {
+    await call({ method: 'POST', body: validBody() })
+    expect(sentToAnthropic.body.model).toBe(PINNED_MODEL)
+    expect(sentToAnthropic.body.max_tokens).toBe(PINNED_MAX_TOKENS)
+  })
+
+  it('ignores an expensive model and a huge response length asked for by the caller', async () => {
+    await call({
+      method: 'POST',
+      body: { ...validBody(), model: 'claude-opus-4-1', max_tokens: 60000 },
+    })
+    expect(sentToAnthropic.body.model).toBe(PINNED_MODEL)
+    expect(sentToAnthropic.body.max_tokens).toBe(PINNED_MAX_TOKENS)
+  })
+
+  it('forwards nothing beyond the four fields it builds itself', async () => {
+    await call({
+      method: 'POST',
+      body: { ...validBody(), temperature: 1, stream: true, tools: [{ name: 'x' }], metadata: {} },
+    })
+    expect(Object.keys(sentToAnthropic.body).sort()).toEqual(
+      ['max_tokens', 'messages', 'model', 'system'],
+    )
+  })
+
+  it('passes the caller system prompt and messages through unchanged', async () => {
+    const body = validBody()
+    await call({ method: 'POST', body })
+    expect(sentToAnthropic.body.system).toBe(body.system)
+    expect(sentToAnthropic.body.messages).toEqual(body.messages)
+  })
+})
+
+describe('requests shaped like nothing this app sends', () => {
+  const rejected = {
+    'no body at all': undefined,
+    'a body that is not an object': 'hello',
+    'an array body': [1, 2, 3],
+    'no messages': { system: 'x' },
+    'messages as a string': { system: 'x', messages: 'hello' },
+    'an empty messages array': { system: 'x', messages: [] },
+    'system as a number': { system: 42, messages: [{ role: 'user', content: 'hi' }] },
+    'a non-string content': { system: 'x', messages: [{ role: 'user', content: 42 }] },
+    'a non-string content on a later message': {
+      system: 'x',
+      messages: [{ role: 'user', content: 'ok' }, { role: 'user', content: 42 }],
+    },
+    'a null message': { system: 'x', messages: [null] },
+  }
+
+  it.each(Object.entries(rejected))('refuses %s with 400, before spending anything', async (_label, body) => {
+    const res = await call({ method: 'POST', body })
+    expect(res.statusCode).toBe(400)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('refuses content that points at a URL, which Anthropic would fetch and bill', async () => {
+    // The byte cap cannot catch this: the request is tiny and the cost is not.
+    const res = await call({
+      method: 'POST',
+      body: {
+        system: 'x',
+        messages: [{
+          role: 'user',
+          content: [{ type: 'document', source: { type: 'url', url: 'https://example.com/big.pdf' } }],
+        }],
+      },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('refuses input that cannot be serialized, rather than crashing', async () => {
+    // The realistic route here is input nested deeply enough to blow the stack on
+    // the way back out, which parses fine and only fails on the return trip. That
+    // depth is not a fixed number, though: it moves with the Node version and the
+    // platform, and a test tuned to it would eventually go red for no reason. A
+    // circular reference reaches the same guard deterministically.
+    const body = { system: 'x', messages: [{ role: 'user', content: 'hi' }] }
+    body.messages[0].self = body
+
+    const res = await call({ method: 'POST', body })
+
+    expect(res.statusCode).toBe(400)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('says the same thing however the request was wrong', async () => {
+    // Two different messages would let someone probe for where the limits sit.
+    const tooBig = await call({
+      method: 'POST',
+      body: { system: 'x', messages: [{ role: 'user', content: 'x'.repeat(MAX_INPUT_BYTES) }] },
+    })
+    const malformed = await call({ method: 'POST', body: { system: 'x' } })
+    expect(tooBig.body).toEqual(malformed.body)
+    expect(tooBig.body).toEqual({ error: 'Invalid request' })
+  })
+})
+
+describe('the size cap', () => {
+  it('lets through a request the size of a real session 4 debrief', async () => {
+    // Measured at 13,729 bytes on 30 July 2026 by running four real sessions.
+    const res = await call({
+      method: 'POST',
+      body: { system: 'x'.repeat(4482), messages: [{ role: 'user', content: 'x'.repeat(9100) }] },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(sentToAnthropic).not.toBeNull()
+  })
+
+  it('lets through a request just under the cap', async () => {
+    const res = await call({
+      method: 'POST',
+      body: { system: 'x', messages: [{ role: 'user', content: 'x'.repeat(120 * 1024) }] },
+    })
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('refuses a request over the cap', async () => {
+    const res = await call({
+      method: 'POST',
+      body: { system: 'x', messages: [{ role: 'user', content: 'x'.repeat(200 * 1024) }] },
+    })
+    expect(res.statusCode).toBe(400)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  // Build a request whose forwarded payload serializes to exactly `bytes`. All
+  // ASCII, so one character is one byte. Without this the cap is only tested from
+  // 6% away on one side, and flipping the comparison to >= would go unnoticed.
+  const bodyOfExactly = (bytes) => {
+    const overhead = JSON.stringify({
+      model: PINNED_MODEL,
+      max_tokens: PINNED_MAX_TOKENS,
+      system: 'x',
+      messages: [{ role: 'user', content: '' }],
+    }).length
+    return { system: 'x', messages: [{ role: 'user', content: 'a'.repeat(bytes - overhead) }] }
+  }
+
+  it('accepts a request of exactly the cap, because the cap is the last allowed size', async () => {
+    const res = await call({ method: 'POST', body: bodyOfExactly(MAX_INPUT_BYTES) })
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('refuses a request one byte over the cap', async () => {
+    const res = await call({ method: 'POST', body: bodyOfExactly(MAX_INPUT_BYTES + 1) })
+    expect(res.statusCode).toBe(400)
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('measures the payload it forwards, not the one it was handed', async () => {
+    // A caller could otherwise pad with fields that get dropped and never counted.
+    const res = await call({
+      method: 'POST',
+      body: {
+        system: 'x',
+        messages: [{ role: 'user', content: 'hi' }],
+        ignored: 'x'.repeat(200 * 1024),
+      },
+    })
+    expect(res.statusCode).toBe(200)
+  })
+})
+
+describe('what comes back', () => {
+  it('returns the upstream status and body unchanged', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      status: 429,
+      json: async () => ({ error: { type: 'rate_limit_error' } }),
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(429)
+    expect(res.body).toEqual({ error: { type: 'rate_limit_error' } })
+  })
+
+  it('turns a failed call into a 500 rather than crashing', async () => {
+    vi.stubGlobal('fetch', async () => { throw new Error('socket hang up') })
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(500)
+  })
+})

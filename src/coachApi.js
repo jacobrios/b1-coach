@@ -77,7 +77,8 @@ Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zo
 
 const RETRY_DELAY_MS = 1500
 
-async function callApi(body, { onRetry } = {}) {
+// Exported for tests. Both callers are in this file; nothing else should use it.
+export async function callApi(body, { onRetry } = {}) {
   const url = '/api/coach'
   const headers = { 'content-type': 'application/json' }
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { sendChatMessage } from './coachApi'
+import { resolveChartSlots } from './chartSlots'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
   XAxis, YAxis, CartesianGrid,
@@ -11,21 +12,6 @@ const ACCENT = '#FF6B1A'
 
 const PAD = 14
 const GAP = 8
-
-// The only chart keys this screen can actually render. Kept in sync with the list
-// the coach prompt offers the model in coachApi.js.
-const CHART_KEYS = [
-  'scatter_ev_la',
-  'trend_ev',
-  'bar_distance',
-  'spray_direction',
-  'zone_breakdown',
-  'pitch_location',
-]
-
-// Stand-ins when the model names a chart that does not exist. Both work for every
-// goal, so a slot always shows real session data instead of an empty box.
-const FALLBACK_CHART_KEYS = ['scatter_ev_la', 'trend_ev']
 
 // ── TrackMan logo ──────────────────────────────────────────────────────────
 function TMLogo() {
@@ -930,23 +916,7 @@ export default function DebriefScreen({
   const inZone   = sessionData?.inZoneCount     ?? null
   const total    = sessionData?.totalSwings     ?? null
 
-  // Normalize charts array to exactly 2 slots for the bottom row. The model names
-  // the charts it wants, so a key it invents is a claim to be rejected, not a
-  // fact: anything outside CHART_KEYS is dropped and a real chart takes its place
-  // rather than an empty box.
-  const normalizeChart = (c) => {
-    const type = c == null ? null : typeof c === 'string' ? c : c.type
-    return CHART_KEYS.includes(type) ? { type } : null
-  }
-
-  const chartSlots = [normalizeChart(charts[0]), normalizeChart(charts[1])]
-  chartSlots.forEach((chart, i) => {
-    if (chart) return
-    const used = chartSlots.filter(Boolean).map((c) => c.type)
-    // Preferred fallbacks first, then any remaining real chart, so a slot can
-    // never end up with an undefined type and the two slots never collide.
-    chartSlots[i] = { type: [...FALLBACK_CHART_KEYS, ...CHART_KEYS].find((k) => !used.includes(k)) }
-  })
+  const chartSlots = resolveChartSlots(charts)
 
   const headerButtonStyle = {
     display: 'flex', alignItems: 'center', gap: 6,

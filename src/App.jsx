@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import LiveSessionScreen from './LiveSessionScreen'
 import DebriefScreen from './DebriefScreen'
 import { generateDebrief, sendChatMessage } from './coachApi'
+import { computeStats } from './sessionStats'
 
 // ── Goal definitions ───────────────────────────────────────────────────────
 // These are the app's predefined coaching focus options.
@@ -669,17 +670,6 @@ export default function App() {
   const [sessionHistory, setSessionHistory] = useState([])
   const [viewingSession, setViewingSession] = useState(null)
   const [wakingUp, setWakingUp] = useState(false)
-
-  const computeStats = (swings) => {
-    const total = swings.length
-    const avgExitVelocity = Math.round(swings.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / total)
-    const avgLaunchAngle = Math.round(swings.reduce((s, w) => s + w.hit.launch.angle, 0) / total)
-    const inZoneCount = swings.filter((w) =>
-      w.plateLocHeight >= 1.5 && w.plateLocHeight <= 3.5 &&
-      w.plateLocSide >= -0.7 && w.plateLocSide <= 0.7
-    ).length
-    return { avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings: total }
-  }
 
   const generateSwings = (sessionNum = 2) => {
     const prevEV = mockSwings.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / mockSwings.length
