@@ -400,6 +400,48 @@ owner's own use explains. Do not build rate limiting without that signal.
   Slice 2 verified against the preview by turning it off for a few minutes and
   back on afterwards. Expect to do the same for any future server-side slice.
 
+## What's next
+
+The running list of work this project knows it wants and has not done. It is
+here rather than in `docs/` on purpose: this file loads at the start of every
+session, so a fresh session sees the list without the product manager having to
+remember it. Added 31 July 2026, after work started slipping between sessions.
+
+**A slice is not done until this list is updated**: the slice's own entry comes
+off, and anything the slice surfaced goes on. Keep each item to a line or two in
+product language, with enough to judge it cold. The section above is problems;
+this section is intended work. An item can appear in both.
+
+- **Correctness: what the goals promise, and which charts the coach can pick.**
+  Being planned 31 July 2026, see `docs/slice-4-plan.md` on its branch. Settled
+  with the product manager: Power means 25-35 degrees and Contact means 8-18,
+  everywhere, with the goal cards changing to match; Hit to All Fields and Open
+  Session get no target zone at all rather than silently borrowing the power
+  one; plus the duplicate-chart bug, the chat path overwriting a debrief chart,
+  and two response-parsing faults.
+- **Show the "waking up" explanation on a timer, not only after a failure.**
+  Slice 1 rejected a timer because a normal debrief takes about twelve seconds
+  and a timer would have alarmed everyone. Slice 2 dropping the server's give-up
+  deadline from five minutes to sixty seconds changed that arithmetic: a timer
+  at roughly 25 seconds now sits well above the normal case while still
+  explaining itself before the server gives up. Closes the gap Slice 1 named in
+  its own pull request. The remaining candidate a visitor would most feel.
+- **A committed reviewer config.** Slice 3 added tests and hooks but not this,
+  so every code review here is still a session choosing to run one. Reviews have
+  found real defects in each of the last two slices, which is the argument.
+- **Consolidate the rules that exist in several copies.** The strike-zone
+  boundary lives in six places and the distance buckets in three. They agree
+  today, checked 31 July 2026. The goal thresholds are the same shape of problem
+  and had already drifted, which is what the correctness slice is fixing. Worth
+  doing only if a third drift shows up; otherwise it is churn.
+- **Rate limiting.** Deliberately deferred, see the cost section above. Only if
+  the prepaid balance starts moving faster than the owner's own use explains.
+
+Done and deliberately kept here for a while, so nobody re-proposes them: the
+uptime monitor was set up on Better Stack on 31 July 2026 against both the app
+and `/api/coach`; the safety-net fixes went back to
+`~/.claude/templates/project-safety-nets/` the same day.
+
 ## Where decisions get recorded
 
 `docs/product-decisions-log.md`, most recent first, written in product language.
