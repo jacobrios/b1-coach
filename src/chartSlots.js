@@ -27,7 +27,10 @@ export const FALLBACK_CHART_KEYS = ['scatter_ev_la', 'trend_ev']
 // Note the prompt asks the model for "chart_key or null", and the string "null"
 // is a real answer it gives, which passes a plain truthiness check.
 export function validChartKey(key) {
-  return typeof key === 'string' && CHART_KEYS.includes(key) ? key : null
+  // Both shapes, matching what the debrief path already accepts below. Being
+  // stricter here would silently drop a chart the other path would have drawn.
+  const type = typeof key === 'string' ? key : key?.type
+  return CHART_KEYS.includes(type) ? type : null
 }
 
 // Normalize charts array to exactly 2 slots for the bottom row. The model names

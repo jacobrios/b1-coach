@@ -65,6 +65,18 @@ describe('the targets the coach is told about', () => {
     expect(goalContext({ id: 'dashboard' })).toBe('')
     expect(goalContext(undefined)).toBe('')
   })
+
+  // power, contact and popup quote their target numbers, so they read the shared
+  // definition without checking it is there. Nothing else keeps this switch and
+  // GOAL_TARGETS in step, and a goal that lost its target would throw here
+  // rather than in a test: every debrief for that goal would fail before the
+  // request was even sent. This is that missing check.
+  it.each(['power', 'contact', 'popup', 'allfields', 'open', 'dashboard'])(
+    'builds the context for %s without throwing',
+    (id) => {
+      expect(() => goalContext({ id })).not.toThrow()
+    },
+  )
 })
 
 describe('the one retry that covers a sleeping server', () => {
@@ -199,6 +211,44 @@ describe('unwrapping what the model actually returns', () => {
     const reply = '```json\n{"message":"Nice work.","chart":"trend_ev"}\n```'
     vi.stubGlobal('fetch', vi.fn(async () => ok(reply)))
     await expect(run(() => callApi({}))).resolves.toEqual({ message: 'Nice work.', chart: 'trend_ev' })
+  })
+
+  // Found by an independent review of Slice 4, before merge. The first version of
+  // the fix read the reply as it stood and then fell back to the outermost
+  // braces, which quietly regressed two cases the old regex did handle: a brace
+  // anywhere in the prose around the fence dragged the slice past the JSON. The
+  // coach writes prose for a living, so a stray brace in a friendly closing
+  // sentence is not exotic, and it would have reached the player as a connection
+  // error.
+
+  it('reads a fenced reply with prose after the closing fence', async () => {
+    const reply = '```json\n{"message":"ok"}\n```\nWant the {spray} chart too?'
+    vi.stubGlobal('fetch', vi.fn(async () => ok(reply)))
+    await expect(run(() => callApi({}))).resolves.toEqual({ message: 'ok' })
+  })
+
+  it('reads a fenced reply with a brace in the prose before it', async () => {
+    const reply = 'Quick note {see below}:\n```json\n{"message":"ok"}\n```'
+    vi.stubGlobal('fetch', vi.fn(async () => ok(reply)))
+    await expect(run(() => callApi({}))).resolves.toEqual({ message: 'ok' })
+  })
+
+  it('reads a bare object with a sentence in front of it and no fence at all', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ok('Here you go: {"a":1}')))
+    await expect(run(() => callApi({}))).resolves.toEqual({ a: 1 })
+  })
+
+  it('reads the answer when the reply carries a third fence after it', async () => {
+    // The fence match is greedy to the last fence, so a trailing code sample
+    // swallows the real closing fence. The braces inside the block still find it.
+    const reply = '```json\n{"a":1}\n```\nAlso ```code``` if you want it.'
+    vi.stubGlobal('fetch', vi.fn(async () => ok(reply)))
+    await expect(run(() => callApi({}))).resolves.toEqual({ a: 1 })
+  })
+
+  it('refuses a reply that opens an object and never closes it', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ok('{"a":1')))
+    await expect(run(() => callApi({}))).rejects.toThrow('Failed to parse coach response as JSON')
   })
 
   it('still refuses prose that only looks like an answer', async () => {

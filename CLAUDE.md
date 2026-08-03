@@ -180,9 +180,15 @@ it. Do not move anything else out on the same excuse without a test that needs i
 
 **`goalTargets.js` is the single source for what a goal asks of a swing.** Every
 launch angle and exit velocity target reads from it: the goal cards in `App.jsx`,
-both coach prompts in `coachApi.js`, the band in `ScatterEVLA`, and the outcome
-colouring in `PitchLocation`. Before Slice 4 those were five separate copies and
+both coach prompts in `coachApi.js`, the band in `ScatterEVLA`, the outcome
+colouring in `PitchLocation`, and the swing-card highlighting in `SwingTicker` on
+the live session screen. Before Slice 4 those were **six** separate copies and
 they had already drifted apart. Do not write a goal threshold anywhere else.
+The sixth was found by review, after the first version of this section claimed
+five: `LiveSessionScreen.jsx` held its own `LA_ZONE_MIN`/`LA_ZONE_MAX` of 25 and
+35, under a comment calling it "the chosen goal" while ignoring the goal
+entirely. If a future session goes looking for stragglers, grep for bare
+`const` numbers as well as comparisons; that is what the first sweep missed.
 A goal with no target is represented by absence, not by zeroes, because telling
 "aim for nothing" apart from "aim at zero" is what stops Open Session borrowing
 Power's band again. Numbers that are *not* goal targets stay where they are: the
@@ -461,6 +467,14 @@ this section is intended work. An item can appear in both.
   intended. Changing it changes how the demo feels, which is why Slice 4 fixed
   the comment and left the formula alone. Cheap to do, needs a judgment call on
   how strong the arc should be.
+- **Decide whether "hard hit" should be per goal.** The 88 mph highlight on the
+  AVG EXIT VELO and TOP EXIT VELO tiles and in the Raw Data table applies to
+  every goal, including the two that Slice 4 just declared have no target at all,
+  and including contact, whose own card reads "Hard Hit %" while the coach tells
+  the player 85. Deliberately left alone in Slice 4 as a general display
+  convention rather than a goal target, which is defensible, but it leaves 88
+  written in three more places with nothing tying them to `goalTargets.js`.
+  Raised by the Slice 4 review.
 - **The popup goal card still reads `LA < 0° ↓ · Drive more`.** Slice 4 changed
   the Power and Contact card labels to match the shared targets, which is what
   the plan named. Reduce Pop-Ups was left alone because its label is not a

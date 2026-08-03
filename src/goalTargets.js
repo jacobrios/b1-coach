@@ -40,12 +40,22 @@ export function hasTarget(goalId) {
 // Whether one swing met its goal. Both charts judge swings through this, so the
 // launch angle chart and the pitch location chart can no longer disagree about
 // what counts as a good swing on the same session.
-export function meetsTarget(goalId, { exitSpeed, angle }) {
+export function meetsTarget(goalId, { exitSpeed, angle } = {}) {
   const target = goalTarget(goalId)
   if (!target) return false
+
+  // Every check below rejects, so a swing carrying no numbers would pass all of
+  // them and come out on target: any comparison against undefined or NaN is
+  // false. A missing number is not a swing that met its goal, it is a swing we
+  // know nothing about, so it has to be rejected explicitly.
+  if (!Number.isFinite(angle)) return false
   if (angle < target.launchAngle.min || angle > target.launchAngle.max) return false
-  if (target.exitVelocity != null && exitSpeed < target.exitVelocity) return false
-  return true
+
+  // Only goals that ask for a minimum exit velocity need one recorded. Reduce
+  // Pop-Ups is judged on launch angle alone.
+  if (target.exitVelocity == null) return true
+  if (!Number.isFinite(exitSpeed)) return false
+  return exitSpeed >= target.exitVelocity
 }
 
 // The launch angle range as the goal cards write it. The en dash is correct

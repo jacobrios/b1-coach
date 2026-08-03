@@ -128,18 +128,53 @@ const RETRY_DELAY_MS = 1500
 // plainly fenced answer and truncated any answer quoting a fence. Both reached
 // the player as a connection error, which was untrue: the connection worked and
 // the model answered.
+// The outermost { ... } of a string, parsed, or undefined if there is no object
+// in there or it does not parse. JSON has no undefined literal, so undefined is
+// unambiguously "nothing usable here" rather than a value the model sent.
+function parseOutermostObject(text) {
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end <= start) return undefined
+  try {
+    return JSON.parse(text.slice(start, end + 1))
+  } catch {
+    return undefined
+  }
+}
+
 function parseCoachResponse(text) {
   const trimmed = text.trim()
+
+  // Almost always this, and it is the only reading that cannot mangle a fence
+  // the coach meant to say out loud inside its own message.
   try {
     return JSON.parse(trimmed)
   } catch {
-    const start = trimmed.indexOf('{')
-    const end = trimmed.lastIndexOf('}')
-    if (start === -1 || end <= start) {
-      throw new Error('Failed to parse coach response as JSON')
-    }
-    return JSON.parse(trimmed.slice(start, end + 1))
+    // Fenced, or wrapped in prose. Keep going.
   }
+
+  // A fence, tagged ```json or plain, with prose allowed on either side. Greedy
+  // to the LAST fence on purpose, so a fence quoted inside the answer does not
+  // end the block early. Unwrapping the fence before looking for braces is what
+  // keeps a stray brace in the surrounding prose from dragging the slice past
+  // the JSON, which is how the first version of this fix regressed.
+  const fenced = trimmed.match(/```(?:json)?[ \t]*\r?\n?([\s\S]*)\r?\n?[ \t]*```/)
+  if (fenced) {
+    const body = fenced[1].trim()
+    try {
+      return JSON.parse(body)
+    } catch {
+      // More than two fences, so the greedy match swallowed a trailing one.
+      const inner = parseOutermostObject(body)
+      if (inner !== undefined) return inner
+    }
+  }
+
+  // No usable fence. Covers a bare object with a sentence in front of it.
+  const outer = parseOutermostObject(trimmed)
+  if (outer !== undefined) return outer
+
+  throw new Error('Failed to parse coach response as JSON')
 }
 
 // Exported for tests. Both callers are in this file; nothing else should use it.

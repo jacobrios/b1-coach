@@ -1,10 +1,7 @@
 import { useState, useEffect } from 'react'
+import { meetsTarget } from './goalTargets'
 
 const ACCENT = '#FF6B1A'
-
-// Launch angle highlight range for the chosen goal
-const LA_ZONE_MIN = 25
-const LA_ZONE_MAX = 35
 
 // ── TrackMan logo ──────────────────────────────────────────────────────────
 function TMLogo() {
@@ -183,9 +180,15 @@ function SwingCount({ count }) {
 // ── Recent swings ticker row ───────────────────────────────────────────────
 // Shows the last 8 swings (most recent at the end of the array → displayed right-to-left
 // so newest appears first in the scroll view).
-function SwingTicker({ swings }) {
+function SwingTicker({ swings, goalId }) {
   // Take the last 8, reverse so newest is on the left
   const recent = [...swings].slice(-8).reverse()
+
+  // Highlighting is per goal, and goals with no target highlight nothing.
+  // This row used to light up a fixed 25 to 35 degrees for every goal, so an
+  // Open Session visitor watched swings glow orange against Power's target for
+  // the whole live feed, on the way to a debrief that has no target at all. A
+  // contact swing at 12 degrees was grey here and orange on the debrief.
 
   if (recent.length === 0) {
     return (
@@ -210,7 +213,7 @@ function SwingTicker({ swings }) {
       msOverflowStyle: 'none',
     }}>
       {recent.map((swing, i) => {
-        const inZone = swing.angle >= LA_ZONE_MIN && swing.angle <= LA_ZONE_MAX
+        const inZone = meetsTarget(goalId, swing)
         return (
           <div
             key={i}
@@ -449,7 +452,7 @@ export default function LiveSessionScreen({
           }}>
             Recent swings
           </div>
-          <SwingTicker swings={swings.slice(0, visibleCount)} />
+          <SwingTicker swings={swings.slice(0, visibleCount)} goalId={goalId} />
         </div>
 
         {/* CTA button */}

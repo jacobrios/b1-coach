@@ -115,7 +115,14 @@ describe('a chart the coach names in a chat reply', () => {
   // invented destroyed a chart the visitor was already looking at, with no way
   // back. Only a key the screen can actually render is allowed through.
 
-  it.each(CHART_KEYS)('lets %s through', (key) => {
+  // Written out rather than driven from CHART_KEYS. validChartKey is defined as
+  // a lookup in CHART_KEYS, so iterating that same constant passes for any value
+  // it could ever hold, including a corrupted one. Literals are the only version
+  // of this test that can fail.
+  it.each([
+    'scatter_ev_la', 'trend_ev', 'bar_distance',
+    'spray_direction', 'zone_breakdown', 'pitch_location',
+  ])('lets %s through', (key) => {
     expect(validChartKey(key)).toBe(key)
   })
 
@@ -131,9 +138,16 @@ describe('a chart the coach names in a chat reply', () => {
     ['an empty string', ''],
     ['a number', 7],
     ['true', true],
-    ['an object', { type: 'trend_ev' }],
     ['an array', ['trend_ev']],
+    ['an object with a bad type', { type: 'nope' }],
+    ['an empty object', {}],
   ])('rejects %s', (_label, bad) => {
     expect(validChartKey(bad)).toBeNull()
+  })
+
+  it('accepts a key wrapped in an object, the same as the debrief path does', () => {
+    // resolveChartSlots accepts both shapes, so rejecting the object form here
+    // would silently drop a chart the debrief path would have rendered.
+    expect(validChartKey({ type: 'trend_ev' })).toBe('trend_ev')
   })
 })

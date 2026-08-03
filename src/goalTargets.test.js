@@ -107,6 +107,39 @@ describe('whether one swing met its goal', () => {
   })
 })
 
+describe('a swing with numbers missing', () => {
+  // Every check inside meetsTarget is a rejection, and any comparison against
+  // undefined or NaN is false, so a swing carrying no numbers used to fall
+  // through every guard and come out as on target. Both charts and the live
+  // ticker judge swings through this, so it would have drawn a bright orange
+  // "you nailed it" marker for a swing that recorded nothing at all.
+  it.each([
+    ['nothing at all', {}],
+    ['NaN for both', { exitSpeed: NaN, angle: NaN }],
+    ['no launch angle', { exitSpeed: 90 }],
+    ['no exit velocity', { angle: 30 }],
+    ['a null angle', { exitSpeed: 90, angle: null }],
+  ])('is not on target when it carries %s', (_label, swing) => {
+    expect(meetsTarget('power', swing)).toBe(false)
+  })
+
+  it('is not on target on a goal that ignores exit velocity either', () => {
+    // Popup has no exit velocity requirement, so a missing angle is the only
+    // thing that can disqualify it, and it must.
+    expect(meetsTarget('popup', { angle: NaN })).toBe(false)
+    expect(meetsTarget('popup', {})).toBe(false)
+  })
+
+  it('still counts a popup swing that records no exit velocity, since it needs none', () => {
+    expect(meetsTarget('popup', { angle: 15 })).toBe(true)
+  })
+
+  it('survives being handed no swing at all', () => {
+    expect(() => meetsTarget('power')).not.toThrow()
+    expect(meetsTarget('power')).toBe(false)
+  })
+})
+
 describe('the range as the goal cards write it', () => {
   it('writes power and contact the way the cards read', () => {
     expect(launchAngleRangeLabel('power')).toBe('25–35°')

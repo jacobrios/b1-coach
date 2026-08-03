@@ -88,6 +88,33 @@ changing one number in one file now fails the module's test, the coach prompt's
 test, and the goal card's test together. The block was also written out twice,
 verbatim, once for the debrief and once for chat. It is now written once.
 
+**The live screen was the sixth copy, and the review is what found it.** The slice
+was reported as done with five copies consolidated. An independent read-only
+review found a sixth, in the file nobody had surveyed: the live session screen
+lit up swing cards at a fixed 25 to 35 degrees for every goal, under a comment
+describing it as the chosen goal's range. So an Open Session visitor watched
+their swings glow orange against Power's target for the full twelve seconds of
+the live feed, before arriving at a debrief that correctly told them they had no
+target. That is the slice's own fault, one screen earlier, and it would have
+shipped. It also turned out the live screen was wrong for Power itself: it
+highlighted on launch angle alone and ignored the 88 mph half of Power's target,
+so a swing at 86 mph and 25 degrees was shown as a hit. Both now read the shared
+definition. The search that missed it looked for comparisons against a number and
+never matched a plain `const` holding one; that is written into the project's
+notes so the next sweep is not made the same way.
+
+**A fix can introduce the fault it removes, which is why the review is not
+optional.** The same review found that the new response parser, while fixing the
+two faults it was meant to fix, had quietly broken two cases the old code handled:
+any stray brace in the prose around a fenced reply now threw the answer away. The
+coach writes prose for a living, so a closing sentence like "want the {spray}
+chart too?" would have reached the player as a connection error, which is exactly
+the untrue message this slice existed to stop showing. Both cases are now tests.
+A third finding was the same shape: a swing carrying no numbers came out of the
+shared target check as *on target*, because every check in it was a rejection and
+nothing rejects a missing number. Unreachable today, and fixed on the same
+reasoning that justified fixing the empty-session faults.
+
 **What a visitor asking a question still costs them.** Verification turned up
 something the plan did not anticipate. The chat coach can name a chart, and that
 chart replaces one of the two on the debrief. This slice stopped an invented chart
