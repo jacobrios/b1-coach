@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { sendChatMessage } from './coachApi'
-import { resolveChartSlots } from './chartSlots'
+import { resolveChartSlots, validChartKey } from './chartSlots'
+import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
   XAxis, YAxis, CartesianGrid,
@@ -9,6 +10,14 @@ import {
 } from 'recharts'
 
 const ACCENT = '#FF6B1A'
+
+// How a swing is drawn on a goal that has no target. There is no hit or miss to
+// show, so every swing looks the same and none of them looks faded out. The
+// "missed it" styling is deliberately not reused here: dimming a whole session
+// reads as the app telling the player every swing was bad, which is what an Open
+// Session visitor used to see.
+const NEUTRAL_SWING_FILL = 'rgba(255,255,255,0.55)'
+const NEUTRAL_SWING_OPACITY = 0.85
 
 const PAD = 14
 const GAP = 8
@@ -175,8 +184,13 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
         const finalMessages = [...updatedMessages, { role: 'coach', content: result.message }]
         onMessagesChange?.(finalMessages)
         setLoading(false)
-        if (result.chart) {
-          onChartSignal?.(result.chart, finalMessages)
+        // This chart replaces one of the two already on the debrief, so a key
+        // the model invented used to cost the visitor a chart they were looking
+        // at, with no way to get it back. Only a renderable key is allowed to
+        // overwrite anything.
+        const requestedChart = validChartKey(result.chart)
+        if (requestedChart) {
+          onChartSignal?.(requestedChart, finalMessages)
         }
       })
       .catch(() => {
@@ -361,11 +375,14 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
 
 // ── EV vs Launch Angle scatter chart ──────────────────────────────────────
 function ScatterEVLA({ swings, goalId }) {
-  const bandMin = goalId === 'contact' ? 8 : goalId === 'popup' ? 10 : 25
-  const bandMax = goalId === 'contact' ? 18 : goalId === 'popup' ? 25 : 35
+  // Null for Hit to All Fields and Open Session, which have no launch angle
+  // target. They get no band and no hit-or-miss colouring rather than silently
+  // borrowing Power's, which is what they used to fall through to.
+  const target = goalTarget(goalId)
   const data = swings.map((swing, i) => ({
     ev: swing.hit.launch.exitSpeed,
     la: swing.hit.launch.angle,
+    onTarget: meetsTarget(goalId, swing.hit.launch),
     swing: i + 1,
   }))
 
@@ -373,11 +390,13 @@ function ScatterEVLA({ swings, goalId }) {
     <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 10, right: 20, bottom: 30, left: 0 }}>
-          <ReferenceArea
-            y1={bandMin} y2={bandMax}
-            fill="#FF6B1A" fillOpacity={0.08}
-            stroke="#FF6B1A" strokeOpacity={0.25}
-          />
+          {target ? (
+            <ReferenceArea
+              y1={target.launchAngle.min} y2={target.launchAngle.max}
+              fill="#FF6B1A" fillOpacity={0.08}
+              stroke="#FF6B1A" strokeOpacity={0.25}
+            />
+          ) : null}
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
           <XAxis
             dataKey="ev"
@@ -404,15 +423,18 @@ function ScatterEVLA({ swings, goalId }) {
               style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
             }}
           />
-          <ReferenceLine y={bandMin} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" />
-          <ReferenceLine y={bandMax} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" />
-          <ReferenceLine x={88} stroke="#FF6B1A" strokeOpacity={0.35} strokeDasharray="4 4" />
+          {target ? <ReferenceLine y={target.launchAngle.min} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" /> : null}
+          {target ? <ReferenceLine y={target.launchAngle.max} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" /> : null}
+          {/* Only the goals that actually ask for a minimum exit velocity get the
+              line. Reduce Pop-Ups is judged on launch angle alone, and used to be
+              shown an 88 mph line it never asked for. */}
+          {target?.exitVelocity != null ? <ReferenceLine x={target.exitVelocity} stroke="#FF6B1A" strokeOpacity={0.35} strokeDasharray="4 4" /> : null}
           <Scatter data={data} name="Swings">
             {data.map((entry, i) => (
               <Cell
                 key={i}
-                fill={entry.ev >= 88 && entry.la >= bandMin && entry.la <= bandMax ? '#FF6B1A' : 'rgba(255,255,255,0.3)'}
-                fillOpacity={entry.ev >= 88 && entry.la >= bandMin && entry.la <= bandMax ? 0.9 : 0.5}
+                fill={entry.onTarget ? '#FF6B1A' : target ? 'rgba(255,255,255,0.3)' : NEUTRAL_SWING_FILL}
+                fillOpacity={entry.onTarget ? 0.9 : target ? 0.5 : NEUTRAL_SWING_OPACITY}
               />
             ))}
           </Scatter>
@@ -697,13 +719,13 @@ function SprayDirection({ swings }) {
 
 // ── Pitch location scatter (Recharts) ────────────────────────────────────
 function PitchLocation({ swings, goalId }) {
+  // False for Hit to All Fields and Open Session. Open Session used to draw every
+  // single pitch as a grey "you missed it" dot, judged against Power's target,
+  // which reads to a visitor as the app being broken.
+  const showsOutcome = hasTarget(goalId)
   const data = swings.map((sw, i) => {
     const { exitSpeed, angle } = sw.hit.launch
-    let outcome = false
-    if (goalId === 'power')   outcome = exitSpeed >= 88 && angle >= 25 && angle <= 35
-    if (goalId === 'contact') outcome = angle >= 10 && angle <= 20 && exitSpeed >= 85
-    if (goalId === 'popup')   outcome = angle >= 5 && angle <= 35
-    return { x: sw.plateLocSide, y: sw.plateLocHeight, exitSpeed, angle, direction: sw.hit.launch.direction, outcome, swing: i + 1 }
+    return { x: sw.plateLocSide, y: sw.plateLocHeight, exitSpeed, angle, direction: sw.hit.launch.direction, outcome: meetsTarget(goalId, sw.hit.launch), swing: i + 1 }
   })
 
   const renderShape = ({ cx, cy, payload }) => {
@@ -718,6 +740,8 @@ function PitchLocation({ swings, goalId }) {
     }
     if (payload.outcome)
       return <rect x={cx - 5} y={cy - 5} width={10} height={10} fill={ACCENT} fillOpacity={0.9} transform={`rotate(45, ${cx}, ${cy})`} />
+    if (!showsOutcome)
+      return <circle cx={cx} cy={cy} r={5} fill={NEUTRAL_SWING_FILL} fillOpacity={NEUTRAL_SWING_OPACITY} />
     return <circle cx={cx} cy={cy} r={5} fill="rgba(255,255,255,0.25)" fillOpacity={0.6} />
   }
 

@@ -5,7 +5,7 @@
 // confidently narrating something that did not happen.
 
 import { describe, it, expect } from 'vitest'
-import { computeStats } from './sessionStats.js'
+import { computeStats, topExitVelocity } from './sessionStats.js'
 
 // Minimal shape of a swing, matching what the app generates.
 const swing = ({ ev = 85, la = 20, height = 2.5, side = 0 }) => ({
@@ -67,17 +67,45 @@ describe('what counts as being in the strike zone', () => {
   })
 })
 
-// ── Pinned, not endorsed ────────────────────────────────────────────────────
-// Recorded rather than approved. Found while scoping the test suite and left for
-// a follow-up slice, so this change adds a safety net without also changing
-// behavior. It is not reachable today: a session always generates fifteen swings.
+describe('the hardest swing of the session', () => {
+  it('reports the highest exit velocity', () => {
+    expect(topExitVelocity([swing({ ev: 80 }), swing({ ev: 94 }), swing({ ev: 88 })])).toBe(94)
+  })
 
-it('currently returns NaN for an empty session (recorded, not endorsed)', () => {
-  // Dividing by a total of zero. These NaNs would flow into the coach prompt as
-  // the literal text "NaN mph" and onto the results screen.
-  const stats = computeStats([])
-  expect(stats.avgExitVelocity).toBeNaN()
-  expect(stats.avgLaunchAngle).toBeNaN()
-  expect(stats.inZoneCount).toBe(0)
-  expect(stats.totalSwings).toBe(0)
+  it('reports the only swing when there is one', () => {
+    expect(topExitVelocity([swing({ ev: 77 })])).toBe(77)
+  })
+})
+
+// ── A session with no swings ────────────────────────────────────────────────
+// Fixed in Slice 4. Neither of these is reachable today, because a session always
+// generates exactly fifteen swings. They were fixed anyway: a test asserting a
+// known-wrong number is worse than no test, and an empty session is one guard
+// away from real whenever the swing source stops being a generator.
+//
+// The answer in both cases is nothing rather than zero. A zero is a claim that
+// the player swung and got zero. The screen already draws a dash for a missing
+// number, so returning null is what puts an honest dash on the tile.
+
+describe('an empty session', () => {
+  it('has no average to report, rather than NaN', () => {
+    // These used to be NaN, from dividing by a total of zero. They would have
+    // reached the coach's own prompt as the literal text "NaN mph".
+    const stats = computeStats([])
+    expect(stats.avgExitVelocity).toBeNull()
+    expect(stats.avgLaunchAngle).toBeNull()
+  })
+
+  it('still counts nothing as nothing, because those are real counts', () => {
+    const stats = computeStats([])
+    expect(stats.inZoneCount).toBe(0)
+    expect(stats.totalSwings).toBe(0)
+  })
+
+  it('has no hardest swing to report, rather than -Infinity', () => {
+    // Math.max of nothing is -Infinity, and the tile's guard checked that the
+    // swing list existed rather than that it had anything in it, so the player
+    // would have been shown "-Infinity mph".
+    expect(topExitVelocity([])).toBeNull()
+  })
 })

@@ -6,6 +6,126 @@
 
 ---
 
+## B1 Coach: Product Decisions Log — Slice 4 (August 3)
+
+*What we built:* One answer to the question "what am I aiming for?" The app used to
+give a different answer depending on where you looked. The Power card promised a
+launch angle of 20 to 35 degrees, the coach said 25 to 35, and the two charts
+coloured your swings against a third set of numbers again. Two of the six goals had
+no target of their own and quietly borrowed Power's, so a visitor who picked Open
+Session, whose own card reads "Free practice, no target metrics," was shown an
+orange target box and had every single pitch drawn as a faded "you missed it" dot.
+Those numbers now live in one place and everything reads from it. Four other faults
+went with it, all of them cases where the app was confidently telling the visitor
+something untrue.
+
+*Key product decisions and the thinking behind them:*
+
+**The coach's numbers won, and the cards changed to match.** Three sources
+disagreed, so one had to be chosen rather than averaged. We kept the coach's,
+because they were already used in most places and because the coaching language
+written against them had been reviewed and liked. Changing the coach would have
+meant rewriting prose that works; changing the cards meant editing two short
+labels. Power is 25 to 35 degrees at 88 mph and up, contact is 8 to 18 degrees at
+85 and up. The most visible consequence is on the contact goal, where the launch
+angle chart used to judge a swing against 88 mph while the coach was telling the
+player 85. A swing at 86 was hard contact according to the coach and a miss
+according to the chart, on the same screen, at the same time.
+
+**Hit to All Fields and Open Session now show no target at all, which is the whole
+point.** The tempting fix was to give each of them a target of their own. We did not,
+because neither goal has one to give. Hit to All Fields is judged on spray
+direction, not launch angle, and Open Session is explicitly free practice. The
+alternative we considered and rejected was inventing a direction-based target zone
+for All Fields; that is a real product idea, but it is designing a new feature
+inside a correctness fix, and it would have meant the slice shipped a target nobody
+had asked for. An honest blank beats a borrowed promise. The one thing this
+required was building the shared definition so that "no target" is an absence
+rather than a row of zeroes, since a zero target and no target look identical to a
+chart and that is exactly how Open Session ended up borrowing Power's.
+
+**Swings on those two goals are drawn in a plain neutral, not the faded styling.**
+Falling back to the existing "missed it" grey would have kept the bug in a quieter
+form: a whole session dimmed reads as the app saying every swing was bad. With no
+target there is no hit and no miss, so every swing is drawn the same way and at
+full strength.
+
+**Reduce Pop-Ups was fixed by extension, not by instruction.** The product manager
+was asked about power and contact. Pop-Ups had the identical disagreement, so the
+same rule was applied without asking again: the coach's 10 to 25 degrees wins over
+the pitch location chart's 5 to 35 and over an exit velocity floor of 88 that the
+coach's prompt never mentioned. This is called out because it was an extension of a
+settled principle rather than a decision anyone made, and it can be reversed in one
+line. The visible effect is that Pop-Ups no longer displays an 88 mph target line
+for a goal that has no exit velocity requirement at all.
+
+**An empty session shows a dash, not a zero.** Two faults would have shown a visitor
+"NaN mph" and "-Infinity mph". Neither can happen today, because a session always
+generates exactly fifteen swings. They were fixed anyway, because a test that
+asserts a known-wrong number is worse than no test, and because both are one
+changed guard away from real the moment swing data stops coming from a generator.
+The answer in both cases is nothing rather than zero: a zero is a claim that the
+player swung and got zero, and the screen already knows how to draw a dash where a
+number is missing.
+
+**The variance comment was corrected to match the formula, not the other way
+round.** A comment in the swing generator promised that spread narrows to 87, 75 and
+65 percent across sessions two to four. The formula under it produces 100, 95 and
+90, and its floor never comes into play in the four sessions the app can reach, so
+the comment had been wrong for every session since it was written. Correcting the
+comment is a correctness fix. Changing the formula would change how much the demo
+visibly improves session over session, which is a product decision about how the
+demo feels, and it is now its own question on the What's Next list rather than
+something smuggled in here.
+
+**The coach's prompt now reads its numbers from the same source as the charts.** The
+alternative offered was to leave the prompt as hand-written prose and add a test
+asserting it matched. We interpolated instead, because a test holding two copies in
+agreement is still two copies, and this slice exists because copies drift. The
+prose itself is untouched and stays hand-written; only the target numbers inside it
+are read from the shared definition. Proof that this is real rather than cosmetic:
+changing one number in one file now fails the module's test, the coach prompt's
+test, and the goal card's test together. The block was also written out twice,
+verbatim, once for the debrief and once for chat. It is now written once.
+
+**The live screen was the sixth copy, and the review is what found it.** The slice
+was reported as done with five copies consolidated. An independent read-only
+review found a sixth, in the file nobody had surveyed: the live session screen
+lit up swing cards at a fixed 25 to 35 degrees for every goal, under a comment
+describing it as the chosen goal's range. So an Open Session visitor watched
+their swings glow orange against Power's target for the full twelve seconds of
+the live feed, before arriving at a debrief that correctly told them they had no
+target. That is the slice's own fault, one screen earlier, and it would have
+shipped. It also turned out the live screen was wrong for Power itself: it
+highlighted on launch angle alone and ignored the 88 mph half of Power's target,
+so a swing at 86 mph and 25 degrees was shown as a hit. Both now read the shared
+definition. The search that missed it looked for comparisons against a number and
+never matched a plain `const` holding one; that is written into the project's
+notes so the next sweep is not made the same way.
+
+**A fix can introduce the fault it removes, which is why the review is not
+optional.** The same review found that the new response parser, while fixing the
+two faults it was meant to fix, had quietly broken two cases the old code handled:
+any stray brace in the prose around a fenced reply now threw the answer away. The
+coach writes prose for a living, so a closing sentence like "want the {spray}
+chart too?" would have reached the player as a connection error, which is exactly
+the untrue message this slice existed to stop showing. Both cases are now tests.
+A third finding was the same shape: a swing carrying no numbers came out of the
+shared target check as *on target*, because every check in it was a rejection and
+nothing rejects a missing number. Unreachable today, and fixed on the same
+reasoning that justified fixing the empty-session faults.
+
+**What a visitor asking a question still costs them.** Verification turned up
+something the plan did not anticipate. The chat coach can name a chart, and that
+chart replaces one of the two on the debrief. This slice stopped an invented chart
+name from doing that, but a real one still does, by design and unchanged. In a real
+run, asking "what should I work on first next round?" silently replaced the Pitch
+Location chart with an Exit Velocity Trend. That is the same complaint the invented
+name caused, arriving through the front door, and it is now written down as an open
+question rather than quietly fixed inside a correctness slice.
+
+---
+
 ## B1 Coach: Product Decisions Log — Slice 3 (July 31)
 
 *What we built:* The first safety nets. Until now every change to this project was checked entirely by hand, which is what let a broken cold start sit in production for eleven weeks. There is now a test suite that runs in under a second, and two automatic checks that fire while work is happening rather than after it: one runs the tests after every edit and reports a break immediately, the other refuses to let anything edit a file holding secrets. A visitor sees nothing different. What changes is that every future slice is cheaper and safer to verify.
