@@ -5,7 +5,7 @@
 // twice, silently. This is what stops that returning.
 
 import { describe, it, expect } from 'vitest'
-import { resolveChartSlots, CHART_KEYS, FALLBACK_CHART_KEYS } from './chartSlots.js'
+import { resolveChartSlots, validChartKey, CHART_KEYS, FALLBACK_CHART_KEYS } from './chartSlots.js'
 
 describe('keys the model gets right', () => {
   it('keeps two valid keys in the order given', () => {
@@ -78,15 +78,62 @@ describe('keys the model gets wrong', () => {
   })
 })
 
-// ── Pinned, not endorsed ────────────────────────────────────────────────────
-// This records a real bug rather than approving of it. It was found while
-// scoping the test suite and deliberately left for a follow-up slice, so that
-// this change adds a safety net without also changing behavior.
+describe('a key the model names twice', () => {
+  // Fixed in Slice 4. Two valid but identical keys both used to survive, so a
+  // visitor saw the same chart drawn side by side and lost one of the two charts
+  // they were owed. A repeated key is as unusable as an invented one.
 
-it('currently renders the same chart twice if the model names it twice (recorded, not endorsed)', () => {
-  // Both keys are valid, so neither is replaced and nothing dedupes them. The
-  // comment in chartSlots.js claiming the two slots never collide holds only for
-  // the fallback path. A visitor sees the same chart side by side.
-  expect(resolveChartSlots(['trend_ev', 'trend_ev']))
-    .toEqual([{ type: 'trend_ev' }, { type: 'trend_ev' }])
+  it('does not render the same chart twice', () => {
+    const [first, second] = resolveChartSlots(['trend_ev', 'trend_ev'])
+    expect(first.type).toBe('trend_ev')
+    expect(second.type).not.toBe('trend_ev')
+    expect(CHART_KEYS).toContain(second.type)
+  })
+
+  it('keeps the first of the two and fills the second with a real chart', () => {
+    expect(resolveChartSlots(['trend_ev', 'trend_ev']))
+      .toEqual([{ type: 'trend_ev' }, { type: 'scatter_ev_la' }])
+  })
+
+  it('dedupes a repeat written as an object against one written as a string', () => {
+    const [first, second] = resolveChartSlots(['pitch_location', { type: 'pitch_location' }])
+    expect(first.type).toBe('pitch_location')
+    expect(second.type).not.toBe('pitch_location')
+  })
+
+  it('still replaces the stand-in it would otherwise duplicate', () => {
+    // The repeated key is itself the first fallback, so the filler has to skip it.
+    const [first, second] = resolveChartSlots(['scatter_ev_la', 'scatter_ev_la'])
+    expect(first.type).toBe('scatter_ev_la')
+    expect(second.type).toBe('trend_ev')
+  })
+})
+
+describe('a chart the coach names in a chat reply', () => {
+  // A chat reply carries a single chart key, and it overwrites one of the two
+  // charts already on the debrief. Nothing checked it first, so a key the model
+  // invented destroyed a chart the visitor was already looking at, with no way
+  // back. Only a key the screen can actually render is allowed through.
+
+  it.each(CHART_KEYS)('lets %s through', (key) => {
+    expect(validChartKey(key)).toBe(key)
+  })
+
+  it('rejects a key the model invented', () => {
+    expect(validChartKey('launch_angle_heatmap')).toBeNull()
+  })
+
+  it.each([
+    ['the string "null", which the prompt asks for and which passes a truthiness check', 'null'],
+    ['the string "none"', 'none'],
+    ['a real null', null],
+    ['undefined', undefined],
+    ['an empty string', ''],
+    ['a number', 7],
+    ['true', true],
+    ['an object', { type: 'trend_ev' }],
+    ['an array', ['trend_ev']],
+  ])('rejects %s', (_label, bad) => {
+    expect(validChartKey(bad)).toBeNull()
+  })
 })

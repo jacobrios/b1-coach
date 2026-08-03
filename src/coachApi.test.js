@@ -6,7 +6,7 @@
 // thing went wrong; both are silent when they work.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { callApi } from './coachApi.js'
+import { callApi, goalContext } from './coachApi.js'
 
 const RETRY_DELAY_MS = 1500
 
@@ -29,6 +29,43 @@ async function run(promiseFactory) {
   await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS)
   return promise
 }
+
+// The numbers below are written as literals rather than read from goalTargets.js.
+// Asserting the prompt against the same module it is built from would pass no
+// matter what those numbers became, which is exactly the change worth catching:
+// this is the text the coach reads before telling the player what to aim for.
+describe('the targets the coach is told about', () => {
+  it('tells the coach power is 25 to 35 degrees at 88 mph', () => {
+    const context = goalContext({ id: 'power' })
+    expect(context).toContain('25-35 degrees')
+    expect(context).toContain('88+ mph')
+  })
+
+  it('tells the coach contact is 8 to 18 degrees at 85 mph', () => {
+    const context = goalContext({ id: 'contact' })
+    expect(context).toContain('8-18 degrees')
+    expect(context).toContain('85+ mph')
+  })
+
+  it('tells the coach popup is 10 to 25 degrees', () => {
+    expect(goalContext({ id: 'popup' })).toContain('10-25 degrees')
+  })
+
+  it('tells the coach that Open Session has no target metrics', () => {
+    expect(goalContext({ id: 'open' })).toContain('no specific target metrics')
+  })
+
+  it('gives Hit to All Fields its spray-direction context and no launch angle target', () => {
+    const context = goalContext({ id: 'allfields' })
+    expect(context).toContain('all three zones')
+    expect(context).not.toContain('target launch angle')
+  })
+
+  it('says nothing at all for a goal it does not know', () => {
+    expect(goalContext({ id: 'dashboard' })).toBe('')
+    expect(goalContext(undefined)).toBe('')
+  })
+})
 
 describe('the one retry that covers a sleeping server', () => {
   it('does not retry when the first attempt works', async () => {
@@ -129,25 +166,45 @@ describe('unwrapping what the model actually returns', () => {
     await expect(run(() => callApi({}))).rejects.toThrow('Failed to parse coach response as JSON')
   })
 
-  // ── Pinned, not endorsed ──────────────────────────────────────────────────
-  // The two tests below record what the stripping does today, including where it
-  // is wrong. They are here so a future change to that regex cannot alter these
-  // outcomes silently. If the fence handling is ever fixed, these tests are
-  // expected to change in the same commit.
+  // ── Fixed in Slice 4 ──────────────────────────────────────────────────────
+  // The two cases below used to be thrown away. Both surfaced to the player as a
+  // connection error, which was wrong on the facts: the connection worked, the
+  // model answered, and the answer was discarded on the way in. On the debrief
+  // that was the full "coach unavailable" screen; in chat it was "Sorry, I
+  // couldn't connect right now."
 
-  it('currently fails on a fence with no json tag (recorded, not endorsed)', async () => {
-    // The first regex only looks for ```json, so it does not match a plain fence
-    // and strips nothing. The second regex then matches from the opening fence to
-    // the end and takes the JSON with it, leaving an empty string to parse. Not
-    // seen in practice, since the prompt asks for JSON by name.
+  it('reads a fence with no json tag', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ok('```\n{"a":1}\n```')))
-    await expect(run(() => callApi({}))).rejects.toThrow('Failed to parse coach response as JSON')
+    await expect(run(() => callApi({}))).resolves.toEqual({ a: 1 })
   })
 
-  it('currently truncates at a literal fence inside a string value (recorded, not endorsed)', async () => {
-    // The closing-fence regex matches from the leftmost ``` it finds, so a coach
-    // message that quotes a code fence loses everything from there on.
+  it('reads a fence with no json tag and prose in front of it', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ok('Sure thing:\n\n```\n{"a":1}\n```')))
+    await expect(run(() => callApi({}))).resolves.toEqual({ a: 1 })
+  })
+
+  it('keeps a literal fence that is part of the coach message, rather than truncating there', async () => {
+    // The coach may quote a code fence inside its own answer. That is content,
+    // not a wrapper, and everything after it used to be discarded.
     vi.stubGlobal('fetch', vi.fn(async () => ok('{"note":"use ``` for code","after":1}')))
+    await expect(run(() => callApi({}))).resolves.toEqual({ note: 'use ``` for code', after: 1 })
+  })
+
+  it('keeps a literal fence inside a value that is itself wrapped in a fence', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ok('```json\n{"note":"use ``` for code"}\n```')))
+    await expect(run(() => callApi({}))).resolves.toEqual({ note: 'use ``` for code' })
+  })
+
+  it('reads the real shape of a chat reply, fence and all', async () => {
+    const reply = '```json\n{"message":"Nice work.","chart":"trend_ev"}\n```'
+    vi.stubGlobal('fetch', vi.fn(async () => ok(reply)))
+    await expect(run(() => callApi({}))).resolves.toEqual({ message: 'Nice work.', chart: 'trend_ev' })
+  })
+
+  it('still refuses prose that only looks like an answer', async () => {
+    // The point of the fix is to stop discarding real answers, not to start
+    // accepting things that are not answers.
+    vi.stubGlobal('fetch', vi.fn(async () => ok('```\nI am afraid I cannot do that.\n```')))
     await expect(run(() => callApi({}))).rejects.toThrow('Failed to parse coach response as JSON')
   })
 })

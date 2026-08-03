@@ -2,11 +2,18 @@ import { useState, useEffect, useMemo } from 'react'
 import LiveSessionScreen from './LiveSessionScreen'
 import DebriefScreen from './DebriefScreen'
 import { generateDebrief, sendChatMessage } from './coachApi'
-import { computeStats } from './sessionStats'
+import { computeStats, topExitVelocity } from './sessionStats'
+import { launchAngleRangeLabel } from './goalTargets'
 
 // ── Goal definitions ───────────────────────────────────────────────────────
 // These are the app's predefined coaching focus options.
 // Labels, subtitles, and tags are app content — not from an external API.
+//
+// The launch angle ranges in the tags are read from goalTargets.js rather than
+// written out here. They used to be a fifth copy of numbers that lived in four
+// other places, and they had drifted: the cards promised 20-35 and 10-15 while
+// the coach was telling the player 25-35 and 8-18 and the charts coloured their
+// swings against a third set again.
 const ACCENT = '#FF6B1A'
 const DASHBOARD_COLOR = '#7B9EB8'
 
@@ -16,7 +23,7 @@ const GOALS = [
     label: 'Power & Home Runs',
     subtitle: 'Exit velocity · Launch angle · Distance',
     type: 'power',
-    tag: 'Launch Angle 20–35°',
+    tag: `Launch Angle ${launchAngleRangeLabel('power')}`,
     color: ACCENT,
     dashboard: false,
   },
@@ -25,7 +32,7 @@ const GOALS = [
     label: 'Line Drives & Contact',
     subtitle: 'Exit velocity · Launch angle · Spray chart',
     type: 'contact',
-    tag: 'LA 10–15° · Hard Hit %',
+    tag: `LA ${launchAngleRangeLabel('contact')} · Hard Hit %`,
     color: ACCENT,
     dashboard: false,
   },
@@ -680,8 +687,14 @@ export default function App() {
     const sessionEV = prevEV + (improving ? (1 + Math.random() * 3) : -(1 + Math.random() * 2))
     const sessionLA = prevLA + (improving ? (0.5 + Math.random() * 2) : -(0.5 + Math.random() * 1.5))
 
-    // Variance shrinks naturally as sessions progress (more consistent with practice)
-    // Session 2: ~87% of session 1 spread, Session 3: ~75%, Session 4: ~65%
+    // Variance shrinks slightly as sessions progress (more consistent with practice)
+    // Session 2: 100% of session 1 spread, Session 3: 95%, Session 4: 90%. The
+    // 0.85 floor never binds, because the app only ever reaches session 4.
+    //
+    // The comment here used to promise 87%, 75% and 65%, which the formula below
+    // has never produced. Corrected in Slice 4 by fixing the comment rather than
+    // the formula: how much the demo visibly improves session over session is a
+    // product decision, and it is on the What's Next list as its own question.
     const varianceFactor = Math.max(0.85, 1 - (sessionNum - 2) * 0.05)
 
     return Array.from({ length: 15 }, () => {
@@ -933,9 +946,7 @@ export default function App() {
     const viewedDebrief = viewed?.debrief ?? null
 
     const rawSwings = viewed?.swings ?? []
-    const topEV = viewed?.swings
-      ? Math.max(...viewed.swings.map(s => s.hit.launch.exitSpeed))
-      : null
+    const topEV = topExitVelocity(rawSwings)
 
     const sessionContext = {
       goal: selectedGoal,
