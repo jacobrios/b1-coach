@@ -451,15 +451,70 @@ off, and anything the slice surfaced goes on. Keep each item to a line or two in
 product language, with enough to judge it cold. The section above is problems;
 this section is intended work. An item can appear in both.
 
-- **Decide what a chat reply is allowed to do to the debrief's charts.** Surfaced
-  by verifying Slice 4, not predicted by its plan. A chart the coach names in
-  chat replaces the debrief's second chart, so asking an ordinary coaching
-  question can cost the visitor a chart they were reading, with no way back.
-  Slice 4 stopped invented chart names from doing it; valid ones still do. The
-  options are a third slot, a way back to the original pair, or leaving it and
-  saying so on purpose. A product decision, not a bug fix. The strongest
-  candidate after the waking-up timer, because it is something a visitor
-  actually hits.
+### Parked at Slice 4 close, 3 August 2026
+
+The four questions Slice 4 put to the product manager. All four were **parked
+deliberately**, not forgotten and not deferred for lack of time: the owner's
+other project is heading for an MVP, and this one goes on the shelf until that
+ships. Nothing here is blocking, and none of it should be picked up as filler
+work. Each is written to be actionable cold, because the session that picks it up
+will not have been the session that found it.
+
+1. **Decide what a chat reply is allowed to do to the debrief's charts.**
+   *Open, needs a product decision.* Surfaced by verifying Slice 4, not predicted
+   by its plan. The debrief shows two charts. When the coach names a chart in a
+   chat reply, that chart overwrites the second one for the rest of the session,
+   with no way back to the original pair. Slice 4 stopped *invented* chart names
+   from doing this (`validChartKey` in `src/chartSlots.js`); a **valid** name
+   still does, by design and unchanged. Reproduced live, not reasoned about:
+   asking "what should I work on first next round?" on a Power debrief silently
+   replaced Pitch Location with Exit Velocity Trend. The visitor asked an
+   ordinary coaching question and lost a chart they were reading. Options: add a
+   third slot, offer a way back to the original two, or decide this is correct
+   and say so on purpose. The mechanism lives at `onChartSignal` in
+   `src/DebriefScreen.jsx` and the state write in `src/App.jsx`. **This ships in
+   Slice 4 as a known limitation** and is named as such in that slice's PR.
+   Strongest candidate of the four when work resumes, because it is the only one
+   a visitor actually hits.
+
+2. **The Reduce Pop-Ups goal card still reads `LA < 0° ↓ · Drive more`.**
+   *Open, needs a copy decision, then a one-line change.* Slice 4 changed the
+   Power and Contact card tags to read from the shared targets, which is what its
+   plan named. Pop-Ups was left alone because its tag is not a numeric range in
+   the same shape. But it does not describe the goal's actual 10-25 degree target
+   either, and read literally it points the opposite way (a pop-up is a *high*
+   launch angle, so "LA < 0°" is backwards). The tag is in the `GOALS` array in
+   `src/App.jsx`; `launchAngleRangeLabel('popup')` in `src/goalTargets.js` already
+   returns `10–25°` if a numeric range turns out to be what is wanted. Needs
+   someone to decide the wording first.
+
+3. **Hit to All Fields draws orange pull-side dots. Confirmed intended, no change
+   needed.** Raised because Slice 4's own verification step said "no orange at
+   all" for that goal, and the Slice 4 review flagged that a literal reader would
+   trip on it. Resolved: the orange belongs to the Pull / Center / Oppo spray
+   legend on `PitchLocation`, which is direction colouring and has its own visible
+   key. It is **not** target or outcome colouring, and Hit to All Fields correctly
+   shows no band and no hit-or-miss styling. Recorded so nobody "fixes" it later:
+   the verification wording was too broad, the code is right.
+
+4. **The neutral swing styling for goals with no target. Shipping as-is, pending
+   a future design pass.** Slice 4 had to choose how to draw a swing on a goal
+   with nothing to aim at. Reusing the existing dimmed "missed it" grey would have
+   kept the bug in a quieter form, since a whole session dimmed reads as the app
+   saying every swing was bad. So swings on Hit to All Fields and Open Session are
+   drawn in plain white at full strength, one treatment for every swing
+   (`NEUTRAL_SWING_FILL` / `NEUTRAL_SWING_OPACITY` in `src/DebriefScreen.jsx`).
+   This was an engineering judgment call inside a correctness slice, reviewed in
+   the browser and considered good enough to ship, but it has **not** had a
+   deliberate design pass. Not a defect and not blocking; revisit if and when the
+   visual language of the charts gets looked at properly.
+
+### Queued, not parked
+
+Everything below predates the Slice 4 close or came out of it as ordinary work.
+It is queued behind the same shelf decision, but it was never put to the product
+manager as a question, so it does not carry the "parked" status above.
+
 - **Retune how much the demo improves session over session.** Slice 4 corrected a
   comment claiming variance narrows to 87 / 75 / 65 percent across sessions 2 to
   4; the formula actually yields 100 / 95 / 90, so a visitor clicking through
@@ -475,12 +530,6 @@ this section is intended work. An item can appear in both.
   convention rather than a goal target, which is defensible, but it leaves 88
   written in three more places with nothing tying them to `goalTargets.js`.
   Raised by the Slice 4 review.
-- **The popup goal card still reads `LA < 0° ↓ · Drive more`.** Slice 4 changed
-  the Power and Contact card labels to match the shared targets, which is what
-  the plan named. Reduce Pop-Ups was left alone because its label is not a
-  numeric range in the same shape, but it does not describe the 10-25 degree
-  target either, and read literally it points the opposite way. A one-line copy
-  fix once someone decides what it should say.
 - **Show the "waking up" explanation on a timer, not only after a failure.**
   Slice 1 rejected a timer because a normal debrief takes about twelve seconds
   and a timer would have alarmed everyone. Slice 2 dropping the server's give-up
