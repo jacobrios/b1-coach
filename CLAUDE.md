@@ -152,27 +152,43 @@ as a side effect of other work.
 
 ## Where things live
 
-    src/App.jsx             1000 lines. Screen routing, player and session state,
+    src/App.jsx             1011 lines. Screen routing, player and session state,
                              synthetic swing data generation, debrief orchestration.
-    src/DebriefScreen.jsx   1409 lines. The results screen, all six chart
+    src/DebriefScreen.jsx   1433 lines. The results screen, all six chart
                              components, and the chat panel.
     src/LiveSessionScreen.jsx 517 lines. Animated incoming swing data.
-    src/coachApi.js          207 lines. System prompts, the single API call
-                             function, and the two calls built on it.
-    src/chartSlots.js         43 lines. Which charts can render, and how a slot
-                             is filled when the model names one that cannot.
-    src/sessionStats.js       18 lines. The four numbers a session is summarized by.
+    src/coachApi.js          263 lines. System prompts, the goal-context block both
+                             prompts share, response parsing, and the two calls.
+    src/chartSlots.js         61 lines. Which charts can render, how a slot is
+                             filled when the model names one that cannot, and
+                             whether a single key from a chat reply is usable.
+    src/goalTargets.js        56 lines. What each goal asks of a swing. The single
+                             source for every launch angle and exit velocity target.
+    src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js              95 lines. The serverless proxy. See the trap below.
-    *.test.js                551 lines across four files, beside what they test.
+    *.test.js                583 lines across five files, beside what they test.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
 little return.
 
 `chartSlots.js` and `sessionStats.js` were carved out of the two big files in
-Slice 3 so their logic could be tested without loading Recharts and a DOM. The
-logic inside them is unchanged from where it used to live. Do not move anything
-else out on the same excuse without a test that needs it.
+Slice 3 so their logic could be tested without loading Recharts and a DOM.
+`goalTargets.js` was added in Slice 4 for the same reason and to end a drift, and
+`topExitVelocity` moved into `sessionStats.js` in Slice 4 because a test needed
+it. Do not move anything else out on the same excuse without a test that needs it.
+
+**`goalTargets.js` is the single source for what a goal asks of a swing.** Every
+launch angle and exit velocity target reads from it: the goal cards in `App.jsx`,
+both coach prompts in `coachApi.js`, the band in `ScatterEVLA`, and the outcome
+colouring in `PitchLocation`. Before Slice 4 those were five separate copies and
+they had already drifted apart. Do not write a goal threshold anywhere else.
+A goal with no target is represented by absence, not by zeroes, because telling
+"aim for nothing" apart from "aim at zero" is what stops Open Session borrowing
+Power's band again. Numbers that are *not* goal targets stay where they are: the
+strike-zone bounds, the distance buckets, the pull and opposite-field direction
+cutoffs, and the 88 mph "hard hit" highlight on the stat tiles and raw data table,
+which applies to every goal rather than to one.
 
 ## The data is synthetic
 
@@ -217,15 +233,18 @@ specific to this repo:
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
    vitest. It covers the serverless proxy's method routing, validation, and size
    cap; `callApi`'s one retry and its unwrapping of a fenced model response; the
-   chart-slot fallback; and `computeStats`. It covers **no screens and no
-   rendering at all**, so a green suite says nothing about what a visitor sees.
-   Never imply broader coverage than that. New behavior gets a test shown failing
-   first; a test written over existing behavior is worthless until the thing it
-   covers has been broken on purpose and seen to go red.
-2. **Some tests deliberately pin behavior that is wrong.** They carry a
-   "recorded, not endorsed" comment naming the bug. When a correctness slice
-   fixes one, its test changes in the same commit. Do not "fix" a test that says
-   this to make it match what the code ought to do.
+   chart-slot fallback and dedupe; the chat reply's chart key; the goal targets
+   and the coach prompt built from them; and `computeStats`. It covers **no
+   screens and no rendering at all**, so a green suite says nothing about what a
+   visitor sees. Never imply broader coverage than that. New behavior gets a test
+   shown failing first; a test written over existing behavior is worthless until
+   the thing it covers has been broken on purpose and seen to go red.
+2. ~~**Some tests deliberately pin behavior that is wrong.**~~ Resolved in
+   Slice 4 on 3 August 2026. All four "recorded, not endorsed" tests were flipped
+   to assert the correct behavior, each seen failing against the unfixed code
+   first. **There are no longer any tests pinning a known-wrong behavior**, so
+   grepping for that phrase now finds nothing, and a test that looks wrong is
+   now simply wrong. Kept here rather than deleted so nobody goes looking.
 3. **Anything that changes the screen owes a rendered check.** Load the running
    app in a real browser and look at it. This project's whole value is what a
    stranger sees, so "the code looks right" is not evidence here, and the suite
@@ -249,20 +268,29 @@ The only valid keys are:
 
     scatter_ev_la  trend_ev  bar_distance  spray_direction  zone_breakdown  pitch_location
 
-`normalizeChart` at `src/DebriefScreen.jsx:937` validates the key against
-`CHART_KEYS` and drops anything else, and a rejected or missing slot is filled
-from `FALLBACK_CHART_KEYS` so it renders a real chart on real session data.
-Landed in Slice 1 on 30 July 2026. Before that, an invented key became a
+`normalizeChart`, inside `resolveChartSlots` in `src/chartSlots.js`, validates the
+key against `CHART_KEYS` and drops anything else, and a rejected or missing slot
+is filled from `FALLBACK_CHART_KEYS` so it renders a real chart on real session
+data. Landed in Slice 1 on 30 July 2026. Before that, an invented key became a
 valid-looking object and failed silently twice, falling back to the label
-'Chart' and to an empty "Chart renders here" box. Both fallbacks still exist at
-:1175 and :1226 as a last resort, but nothing should reach them now.
+'Chart' and to an empty "Chart renders here" box. Both fallbacks still exist in
+`DebriefScreen.jsx` as a last resort, but nothing should reach them now.
+Slice 4 added deduping: a key the model names *twice* used to survive twice and
+draw the same chart side by side, costing the visitor one of their two charts.
 
-The chat path's single `chart` key is still unvalidated. Same problem, not yet
-fixed.
+~~The chat path's single `chart` key is still unvalidated.~~ Fixed in Slice 4 on
+3 August 2026. `validChartKey` in `src/chartSlots.js` gates it before it can
+overwrite anything. Note the prompt asks the model for "chart_key or null" and it
+does sometimes answer with the *string* `"null"`, which passed the old truthiness
+check. **A valid key still replaces the debrief's second chart, by design and
+unchanged**; see the open question about that below.
 
-`callApi` at `src/coachApi.js:80-123` is the single choke point for both calls. It
-already strips markdown code fences before parsing. Anything that should apply to
-every model response belongs there, once, not in both call sites.
+`callApi` at `src/coachApi.js` is the single choke point for both calls, and
+`parseCoachResponse` above it is where a model reply is turned into data. It
+parses the reply as it stands first and only falls back to the outermost braces,
+which is what lets a coach message quote a literal ``` without losing everything
+after it. Anything that should apply to every model response belongs there, once,
+not in both call sites.
 
 ## Deployment and cold starts
 
@@ -346,18 +374,29 @@ owner's own use explains. Do not build rate limiting without that signal.
 
 ## Known debt and open questions
 
-- `src/App.jsx:692-694` claims variance shrinks to 87% / 75% / 65% across
-  sessions 2 to 4. The formula on the line below yields 100% / 95% / 90% and
-  floors at 85%, so the comment is wrong for every session and variance barely
-  shrinks at all. Unresolved whether the comment or the formula reflects intent.
+- ~~`src/App.jsx:692-694` claims variance shrinks to 87% / 75% / 65%.~~ Half
+  resolved in Slice 4 on 3 August 2026: the comment was corrected to describe the
+  formula, which yields 100% / 95% / 90% with a floor that never binds. **What is
+  still open is the product question the wrong comment was hiding**: variance
+  barely shrinks at all across the four sessions, so the demo shows less
+  session-over-session improvement than the comment's author evidently intended.
+  Retuning it is on the What's Next list.
 - ~~`.claude/settings.local.json` is tracked. Normally machine-local. Raised on
   30 July 2026, deliberately left alone, still unanswered.~~ Settled 31 July
   2026; see the settings convention above. This entry was already stale when
   written: the file was untracked in PR #3 on 30 July, and this bullet was left
   saying otherwise, which then got repeated in the Slice 3 pull request as an
   open question that was not open.
-- The chat path's single `chart` key has the same unvalidated-model-output
-  problem the debrief path had before Slice 1. A candidate for a future slice.
+- ~~The chat path's single `chart` key has the same unvalidated-model-output
+  problem the debrief path had before Slice 1.~~ Fixed in Slice 4 on 3 August
+  2026. **A different question came out of verifying it and is open**: a chart the
+  coach names *validly* still replaces the debrief's second chart. Observed live,
+  not reasoned about: asking "what should I work on first next round?" on a Power
+  debrief silently swapped Pitch Location for Exit Velocity Trend. The visitor
+  asked a question and lost a chart, with no way back, which is the same complaint
+  the invented key caused. Left alone deliberately because changing it is a
+  product decision about what a chat reply is allowed to do, not a correctness
+  fix. On the What's Next list.
 - A "whole site shows up blank" symptom has been reported but never reproduced.
   It is distinct from the silent-placeholder cold start. Do not fold the two
   together without evidence.
@@ -367,28 +406,22 @@ owner's own use explains. Do not build rate limiting without that signal.
   config.~~ Resolved for tests and hooks in Slice 3 on 31 July 2026; see the
   verification norms above. **There is still no committed reviewer config**, so
   every code review in this repo is a session choosing to run one.
-- Six known-wrong behaviors are deliberately unfixed, proposed as a correctness
-  slice on 31 July 2026. **Only four carry a "recorded, not endorsed" test**, so
-  grepping for that phrase does not find them all. Do not treat the count of
-  those tests as the count of open bugs.
-  - Pinned by a test: chart slots do not dedupe, so a model naming the same
-    valid key twice renders the same chart twice (`src/chartSlots.test.js`);
-    `computeStats` returns `NaN` on an empty session, which would reach the
-    coach's prompt as the literal text "NaN mph" (`src/sessionStats.test.js`);
-    and two separate faults in the markdown-fence stripping in `callApi`
-    (`src/coachApi.test.js`).
-  - **Not pinned by anything:** top exit velocity displays `-Infinity` on an
-    empty session, because `Math.max(...[])` returns `-Infinity` and the guard at
-    `src/App.jsx` checks that swings exist rather than that there are any; and
-    the goal thresholds disagree between the coach's prompt and the charts, and
-    between two charts. Testing either needs code moved that this slice
-    deliberately left alone.
-  - Reachability: the two empty-session faults cannot happen today, because a
-    session always generates fifteen swings. The other four can.
-- The strike-zone rule, the distance buckets, and the goal thresholds are each
-  written out in two or three places that must agree, and the goal thresholds
-  already do not. Belongs with the correctness slice above, since the
-  duplication is why they drifted.
+- ~~Six known-wrong behaviors are deliberately unfixed, proposed as a correctness
+  slice on 31 July 2026.~~ All six fixed in Slice 4 on 3 August 2026: the chart
+  slot dedupe, `computeStats` returning `NaN`, both markdown-fence faults, the
+  `-Infinity` top exit velocity, and the goal thresholds disagreeing across five
+  places. Each of the four that carried a test had it flipped in the same commit,
+  seen red first; the two that carried none got new tests, which meant moving
+  `topExitVelocity` out of `App.jsx` so it could be reached.
+- ~~The strike-zone rule, the distance buckets, and the goal thresholds are each
+  written out in two or three places that must agree.~~ The goal thresholds were
+  consolidated into `src/goalTargets.js` in Slice 4, because they had already
+  drifted. **The strike-zone bounds and the distance buckets were deliberately
+  left alone** and are still written out six times and three times respectively.
+  They agree today, rechecked 3 August 2026. This leaves the project with one
+  consolidated pattern and two unconsolidated ones, which is a slightly confusing
+  state to read; that is a known cost of not widening the slice. Still only worth
+  doing if a third drift shows up.
 - Chat history inside a session grows without bound, roughly 0.9 KB per turn on
   top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
   well over a hundred turns, so nothing a real visitor does should reach it, but
@@ -412,13 +445,28 @@ off, and anything the slice surfaced goes on. Keep each item to a line or two in
 product language, with enough to judge it cold. The section above is problems;
 this section is intended work. An item can appear in both.
 
-- **Correctness: what the goals promise, and which charts the coach can pick.**
-  Being planned 31 July 2026, see `docs/slice-4-plan.md` on its branch. Settled
-  with the product manager: Power means 25-35 degrees and Contact means 8-18,
-  everywhere, with the goal cards changing to match; Hit to All Fields and Open
-  Session get no target zone at all rather than silently borrowing the power
-  one; plus the duplicate-chart bug, the chat path overwriting a debrief chart,
-  and two response-parsing faults.
+- **Decide what a chat reply is allowed to do to the debrief's charts.** Surfaced
+  by verifying Slice 4, not predicted by its plan. A chart the coach names in
+  chat replaces the debrief's second chart, so asking an ordinary coaching
+  question can cost the visitor a chart they were reading, with no way back.
+  Slice 4 stopped invented chart names from doing it; valid ones still do. The
+  options are a third slot, a way back to the original pair, or leaving it and
+  saying so on purpose. A product decision, not a bug fix. The strongest
+  candidate after the waking-up timer, because it is something a visitor
+  actually hits.
+- **Retune how much the demo improves session over session.** Slice 4 corrected a
+  comment claiming variance narrows to 87 / 75 / 65 percent across sessions 2 to
+  4; the formula actually yields 100 / 95 / 90, so a visitor clicking through
+  four sessions sees less of an improvement arc than whoever wrote that comment
+  intended. Changing it changes how the demo feels, which is why Slice 4 fixed
+  the comment and left the formula alone. Cheap to do, needs a judgment call on
+  how strong the arc should be.
+- **The popup goal card still reads `LA < 0° ↓ · Drive more`.** Slice 4 changed
+  the Power and Contact card labels to match the shared targets, which is what
+  the plan named. Reduce Pop-Ups was left alone because its label is not a
+  numeric range in the same shape, but it does not describe the 10-25 degree
+  target either, and read literally it points the opposite way. A one-line copy
+  fix once someone decides what it should say.
 - **Show the "waking up" explanation on a timer, not only after a failure.**
   Slice 1 rejected a timer because a normal debrief takes about twelve seconds
   and a timer would have alarmed everyone. Slice 2 dropping the server's give-up
@@ -429,11 +477,12 @@ this section is intended work. An item can appear in both.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.
-- **Consolidate the rules that exist in several copies.** The strike-zone
+- **Consolidate the rules that still exist in several copies.** The strike-zone
   boundary lives in six places and the distance buckets in three. They agree
-  today, checked 31 July 2026. The goal thresholds are the same shape of problem
-  and had already drifted, which is what the correctness slice is fixing. Worth
-  doing only if a third drift shows up; otherwise it is churn.
+  today, rechecked 3 August 2026. The goal thresholds were the same shape of
+  problem, had already drifted, and were consolidated in Slice 4, which leaves
+  these two as the odd ones out. Still worth doing only if a third drift shows
+  up; otherwise it is churn.
 - **Rate limiting.** Deliberately deferred, see the cost section above. Only if
   the prepaid balance starts moving faster than the owner's own use explains.
 
