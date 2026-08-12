@@ -538,7 +538,7 @@ manager as a question, so it does not carry the "parked" status above.
   explaining itself before the server gives up. Closes the gap Slice 1 named in
   its own pull request. The remaining candidate a visitor would most feel.
 - **Say so honestly when the API balance is drained, instead of blaming the
-  server.** Every failed coach call lands on the same screen: "The coach didn't
+  server.** Every failed debrief lands on the same screen: "The coach didn't
   wake up in time. This demo sleeps when idle and sometimes needs a second try."
   When the real cause is the prepaid Anthropic balance running out, that message
   is actively wrong twice over: it invites a retry that can never work, and it
@@ -546,14 +546,19 @@ manager as a question, so it does not carry the "parked" status above.
   explicitly wants the honest version, roughly: the demo is out of API credits
   and they will be reloaded soon. Confirmed feasible on 12 August 2026:
   `api/coach.js` forwards Anthropic's status and error body to the client
-  unchanged, so the client can tell a balance error apart from a timeout; the
-  catch in `runDebrief` in `src/App.jsx` and the chat catch in
-  `src/DebriefScreen.jsx` currently throw that detail away. The same failure in
-  chat shows "Sorry, I couldn't connect right now," which mislabels it the same
-  way. Verifying the failure path means forcing a real balance-style error, not
-  reasoning about it. Raised 12 August 2026; the owner has queued the same idea
-  on interplanetary-groups, so check there for a settled message pattern before
-  inventing one here.
+  unchanged, so the client can tell a balance error apart from a timeout. The
+  detail is currently lost in three places, in order: `callApi` in
+  `src/coachApi.js` throws away the response body and keeps only the status
+  code, which cannot distinguish out-of-credits from any other refusal, and then
+  the catch in `runDebrief` in `src/App.jsx` and the chat catch in
+  `src/DebriefScreen.jsx` discard even that. The same failure in chat shows
+  "Sorry, I couldn't connect right now. Try again in a moment.", which mislabels
+  it the same way. Verifying the failure path means forcing a real
+  balance-style error, not reasoning about it. Raised 12 August 2026. This is
+  already built and shipped on interplanetary-groups, where a failed model call
+  is classified as out of credits or the service having trouble, never one
+  blamed for the other; borrow that settled pattern rather than inventing a new
+  one here.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.
