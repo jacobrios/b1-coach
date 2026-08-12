@@ -537,6 +537,19 @@ manager as a question, so it does not carry the "parked" status above.
   at roughly 25 seconds now sits well above the normal case while still
   explaining itself before the server gives up. Closes the gap Slice 1 named in
   its own pull request. The remaining candidate a visitor would most feel.
+- **Say so honestly when the API balance is drained, instead of blaming the
+  server.** A drained prepaid balance currently shows the cold-start failure
+  message on the debrief ("didn't wake up in time... needs a second try") and
+  "couldn't connect right now" in chat. Both invite a retry that can never work
+  and read as a flaky demo rather than an unfunded one. The owner wants the
+  honest version: out of API credits, reloading soon. Feasible, checked 12
+  August 2026: `api/coach.js` forwards Anthropic's error body unchanged, but
+  three places drop it before any screen sees it. `callApi` in
+  `src/coachApi.js` first, which keeps only the status code and so cannot tell
+  out-of-credits from any other refusal, then the catches in `src/App.jsx` and
+  `src/DebriefScreen.jsx`. Borrow the shipped pattern from
+  interplanetary-groups rather than inventing one. Verify by forcing a real
+  balance error, not by reasoning about it.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.
