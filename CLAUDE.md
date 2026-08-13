@@ -158,6 +158,19 @@ A hook changed in this repo that is not specific to this repo should be copied
 back to the template, or the template becomes the oldest version rather than the
 best one.
 
+**`.claude/safety-net-exceptions.json` is committed and records the eight
+differences from the template that are deliberate**, written 13 August 2026 with
+`~/.claude/bin/accept-safety-net-difference.mjs`. Each entry is pinned to the
+template file as it stood that day, so the drift check re-asks when the template
+moves. Do not silence a difference by editing that file by hand; use the script,
+which refuses a difference that does not exist and a reason too short to read
+later.
+
+**One difference is deliberately left unrecorded and still reports every
+session**: the template's `protect-paths.test.ts`. This project has no test at
+all for its own `.env` guard, which is a gap rather than a decision, so silencing
+it would have been a lie. It is on the What's Next list.
+
 ## Stack
 
 React 19.2 + Vite 8. Recharts 3.8 for all charts. react-markdown 10 for coach
@@ -572,6 +585,13 @@ manager as a question, so it does not carry the "parked" status above.
   `src/DebriefScreen.jsx`. Borrow the shipped pattern from
   interplanetary-groups rather than inventing one. Verify by forcing a real
   balance error, not by reasoning about it.
+- **Test the `.env` guard, or decide it does not need one.** `protect-paths.mjs`
+  blocks edits to `.env` files and has never been seen to fire. The template
+  ships a test for it; this project has none, which is why that one drift line
+  is still reported every session rather than recorded as deliberate. Adopting
+  the template's version means translating it from TypeScript and dropping its
+  database cases. Small, and it closes the last open drift line. Raised
+  13 August 2026 while recording the other eight.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.

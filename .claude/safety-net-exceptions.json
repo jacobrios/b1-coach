@@ -1,0 +1,53 @@
+{
+  "accepted": {
+    "full-suite-on-subagent-stop.mjs": {
+      "kind": "missing",
+      "reason": "Not adopted. The per-edit / end-of-task split exists to keep an 801-test suite off every edit; this suite is 171 tests in about a second, so the split adds a moving part and saves nothing.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "46bb478ce18eebff78c50b114d3f41723c961c56a3d54f186fa19e0ebfc85594"
+    },
+    "full-suite-on-subagent-stop.test.ts": {
+      "kind": "missing",
+      "reason": "Tests a hook this project deliberately does not have. See the reason recorded for full-suite-on-subagent-stop.mjs.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "83d6f02fecc3fb11acd3fbcb9bdea343f443048cdf84ff51ccc962fbf49a3f04"
+    },
+    "suite-stamp.mjs": {
+      "kind": "missing",
+      "reason": "Only the end-of-task hook needs the stamp, and this project deliberately runs the whole suite on every edit instead. Nothing here would read it.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "e47a4abdc216a0d253af444042fc0b74db327e9735c8911d4eacc071bf58b20c"
+    },
+    "suite-stamp.test.ts": {
+      "kind": "missing",
+      "reason": "Tests a hook this project deliberately does not have. See the reason recorded for suite-stamp.mjs.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "868f99aa3d9fce7fc204b883ac65a3be3f39901ff5341692bf41798499b4aa18"
+    },
+    "run-tests-unless-docs.test.ts": {
+      "kind": "missing",
+      "reason": "This project has its own equivalent at .claude/hooks/run-tests-unless-docs.test.js, written in JS against this project's own adapted hook. The template's version is TypeScript and covers the split this project did not adopt.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "7049d321a51259972a2faec4007d95cdc23a9dbd98511964731ed04c32962e1c"
+    },
+    "protect-paths.mjs": {
+      "kind": "differs",
+      "reason": "Same guard, reduced. The template also blocks Prisma migration edits; this project has no database, so a rule that can never fire was dropped rather than carried as noise.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "3978a1100464339025fa553d6c3cb15910757de3484cf694434ffee256029f76"
+    },
+    "run-tests-unless-docs.mjs": {
+      "kind": "differs",
+      "reason": "Runs 'npm test' rather than the runner directly, so the hook and the command a human would type cannot disagree, and exits 2 rather than propagating the runner's exit 1, which is the only code Claude Code feeds back to the agent. Also lacks the split this project did not adopt.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "ee810919d8b120c623dd873f96707934c16ad9cb1584fe0c5b518d5ec0b04ea8"
+    },
+    "project-root.mjs": {
+      "kind": "differs",
+      "reason": "Logic is byte-identical to the template; verified by diff on 13 August 2026. Only the comments differ, recording the cases measured in this project rather than the ones measured in interplanetary-groups.",
+      "acceptedOn": "2026-08-13",
+      "templateSha256": "4749143a1b9e5657ecbc041bd71fc5a27435351619d2710d092dc335305a7eed"
+    }
+  },
+  "$comment": "Differences from ~/.claude/templates/project-safety-nets/ that this project has deliberately accepted. Written by `node ~/.claude/bin/accept-safety-net-difference.mjs`, read by ~/.claude/hooks/safety-net-drift.mjs. Each entry is pinned to the template file it was accepted against: when that template file changes, the acceptance expires and the difference is reported again."
+}
