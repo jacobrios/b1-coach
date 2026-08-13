@@ -6,6 +6,67 @@
 
 ---
 
+## Slice 5: the app now says what actually went wrong (August 13)
+
+*What we changed:* Every failure used to produce the same sentence, telling the
+visitor the coach's server had been asleep. That was a guess worded as a fact,
+and often untrue: it is also what a drained prepaid API balance said, and no
+amount of retrying fixes a funding problem. The app now names one of four
+things it can actually prove, and caps how long a stranger is held before
+anything is said at all.
+
+*Key decisions and the thinking behind them:*
+
+**Cold start is a modifier on one message, not a fifth kind of failure.** A
+sleeping server can only report that it was asleep if it wakes up far enough to
+answer. So "it was cold" is never a reason on its own; it is a flag that rewords
+the took-too-long message when the server says the invocation started fresh.
+Treating it as a peer reason would have meant claiming a cold start in the very
+cases where nobody could know.
+
+**"Couldn't reach the coach's server" had to exist as its own reason.** When the
+browser cannot reach our own function, it knows nothing whatsoever about
+Anthropic. Folding that case into an Anthropic message would have invented a
+brand new lie of precisely the kind this slice exists to remove, so it says only
+what it can prove: either Vercel or the visitor's own connection.
+
+**The failure screen names Anthropic and Vercel out loud, breaking the TrackMan
+fiction.** Accepted explicitly by the product manager. This is the one place
+where the demo stops talking to a hitter and starts talking to the person
+deciding whether to hire the author, and that reader must not come away thinking
+an unfunded balance was a coding mistake.
+
+**A timeout never retries automatically.** Retrying a system that is already slow
+doubles the silence for someone who has run out of patience. The visitor gets the
+honest message and a Try Again button and decides. The drained-balance message is
+the only one with no button, because a button there would promise something that
+cannot work.
+
+**The fifty second promise had to be a budget, not a per-attempt clock.** The
+final review disproved the plan's own arithmetic: a slow Anthropic error could
+retry on a fresh clock and hold a visitor for roughly ninety seconds. The ceiling
+is now spent down across the whole call, so the promise holds by construction.
+
+**The one clause that let a dry balance retry is gone.** The plan said retry when
+the instance was cold, which meant a stranger's first click on an unfunded demo
+would auto-retry and announce "Trying once more," against the deliberate decision
+to give that case no button. Cold changes nothing in any of the four cases, so
+the clause was removed and the reasoning written into the code. Recorded because
+it came from the plan's own ambiguity, not from a build mistake.
+
+*Verification:* 171 tests before, 222 after; lint unchanged at 22 pre-existing
+errors. Failures were forced against a real Vercel preview, not reasoned about.
+Losing the server produced the unreachable message, one retry 2.3 seconds later,
+then the honest screen and its button, with the chat panel giving the same reason
+instead of its old "couldn't connect." Dropping the server's deadline to one
+second and deploying it produced a real timeout with no automatic retry. A
+healthy debrief measured 12.06 seconds. **The drained balance ships verified a
+layer short**, because a balance cannot be drained to order; a genuine cold
+start, an Anthropic outage, and the 25 second mid-wait line were also not forced,
+the last because every real debrief finished first.
+
+---
+
 ## Micro-PR: the differences from the shared template are now on the record (August 13)
 
 *What we changed:* A session-start check compares this project's automated

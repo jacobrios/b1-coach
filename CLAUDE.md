@@ -187,21 +187,26 @@ as a side effect of other work.
 
 ## Where things live
 
-    src/App.jsx             1011 lines. Screen routing, player and session state,
+Line counts current as of 13 August 2026, at the close of Slice 5.
+
+    src/App.jsx             1077 lines. Screen routing, player and session state,
                              synthetic swing data generation, debrief orchestration.
-    src/DebriefScreen.jsx   1433 lines. The results screen, all six chart
+    src/DebriefScreen.jsx   1442 lines. The results screen, all six chart
                              components, and the chat panel.
     src/LiveSessionScreen.jsx 517 lines. Animated incoming swing data.
-    src/coachApi.js          263 lines. System prompts, the goal-context block both
-                             prompts share, response parsing, and the two calls.
+    src/coachApi.js          439 lines. System prompts, the goal-context block both
+                             prompts share, response parsing, failure
+                             classification, the retry policy, and the two calls.
+    src/failureCopy.js        74 lines. What the app says when a call fails. See
+                             the failure vocabulary section below.
     src/chartSlots.js         61 lines. Which charts can render, how a slot is
                              filled when the model names one that cannot, and
                              whether a single key from a chat reply is usable.
     src/goalTargets.js        56 lines. What each goal asks of a swing. The single
                              source for every launch angle and exit velocity target.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
-    api/coach.js              95 lines. The serverless proxy. See the trap below.
-    *.test.js                583 lines across five files, beside what they test.
+    api/coach.js             191 lines. The serverless proxy. See the trap below.
+    *.test.js               1620 lines across six files, beside what they test.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -211,7 +216,10 @@ little return.
 Slice 3 so their logic could be tested without loading Recharts and a DOM.
 `goalTargets.js` was added in Slice 4 for the same reason and to end a drift, and
 `topExitVelocity` moved into `sessionStats.js` in Slice 4 because a test needed
-it. Do not move anything else out on the same excuse without a test that needs it.
+it. `failureCopy.js` was added in Slice 5 on the same pattern, so the debrief
+screen and the chat panel read one copy table instead of each carrying its own
+guess. Do not move anything else out on the same excuse without a test that
+needs it.
 
 **`goalTargets.js` is the single source for what a goal asks of a swing.** Every
 launch angle and exit velocity target reads from it: the goal cards in `App.jsx`,
@@ -333,6 +341,63 @@ which is what lets a coach message quote a literal ``` without losing everything
 after it. Anything that should apply to every model response belongs there, once,
 not in both call sites.
 
+## What the app says when a call fails
+
+Added in Slice 5 on 13 August 2026. Before it, every failure produced one
+sentence claiming the server had been asleep, which was a guess worded as a fact
+and was often wrong.
+
+**Four reasons, plus one flag. Every one of them is something that was actually
+reported, never an inference.**
+
+    credits      Anthropic reports the balance is dry.      Server only.
+    timeout      Nobody answered inside the deadline.       Server, or the
+                                                            browser as a backstop.
+    trouble      Anthropic refused or errored.              Server only.
+    unreachable  Our own function could not be reached.     Browser only.
+    cold (flag)  This invocation started on a fresh
+                 instance.                                  Server only.
+
+`unreachable` is its own reason and must stay that way. When the browser cannot
+reach our function it knows nothing whatsoever about Anthropic, so naming
+Anthropic there would be a new lie of exactly the kind this slice removed.
+`cold` is a modifier rather than a fifth reason for the mirror-image reason: the
+server can only report it was cold if it lived long enough to answer.
+
+**The copy lives in `src/failureCopy.js` and nowhere else.** Both the debrief
+screen (`src/App.jsx`) and the chat panel (`src/DebriefScreen.jsx`) read from
+that one table. The strings were written and approved by the product manager on
+13 August 2026 and are not to be reworded. They name Anthropic and Vercel on
+purpose, breaking the TrackMan fiction, because the failure screen is where the
+demo stops talking to a hitter and starts talking to a hiring manager who must
+not mistake an unfunded balance for a coding mistake.
+
+**`credits` and `timeout` never retry; `trouble` and `unreachable` retry once.**
+`credits` is also the only reason with no Try Again button, because a button
+there would promise something that cannot work. The `cold` flag is deliberately
+not consulted in the retry decision at all; `isRetryable` in `src/coachApi.js`
+carries the reasoning, and the Slice 5 plan's own wording is what put a hole
+there in the first place. Do not restore a cold clause from that plan.
+
+**Two deadlines, and they differ on purpose.** The server gives up on Anthropic
+at 40 seconds (`UPSTREAM_DEADLINE_MS` in `api/coach.js`), leaving twenty seconds
+of headroom under Vercel's 60 so it can answer in words rather than be killed
+mid-sentence. The browser gives up at 50 seconds (`REQUEST_TIMEOUT_MS` in
+`src/coachApi.js`), sitting ten seconds behind so the server's more specific
+reason almost always wins the race. A single shared number would leave the two
+racing and throw away the specific answer. The 50 seconds is a wall-clock budget
+for the whole call, spent down by each attempt, so a retry cannot start a fresh
+clock; before that fix a slow `trouble` could hold a visitor for roughly 90
+seconds. A "still working" line appears at 25 seconds.
+
+**Every response now carries how long Anthropic took.** `x-coach-upstream-ms`
+and `x-coach-cold` are set on success, and a failure body carries
+`{ reason, upstreamStatus, upstreamMs, cold }`. That is where any future latency
+question gets answered from, rather than from a stopwatch.
+
+None of this can be verified by `npm run dev`; see the trap above. Slice 5 forced
+its failures against a real Vercel preview.
+
 ## Deployment and cold starts
 
 Vercel. The static app is served from a CDN and is always instant. The
@@ -369,6 +434,15 @@ Latency roughly doubled between the two measurements. The cause is not known to
 be anything in this repository: the prompt did not grow and the model did not
 change between the two dates. The owner was running his own session
 concurrently during the audit, so a concurrency effect has not been ruled out.
+
+Measured again on 13 August 2026, against a real Vercel preview during Slice 5:
+a full session 1 debrief took **12.06 seconds** end to end in the browser, one
+request and no retry, and a curl of the same endpoint reported
+`x-coach-upstream-ms: 1141` against a 1337ms wall clock on a warm instance. So
+the 12 August numbers were not a new normal. All three measurements are kept:
+30 July, 12 August, and 13 August. Latency here moves around for reasons this
+repository does not control, which is the argument for measuring it from the
+`x-coach-upstream-ms` header rather than from memory.
 
 ## Cost exposure
 
@@ -580,26 +654,27 @@ manager as a question, so it does not carry the "parked" status above.
   convention rather than a goal target, which is defensible, but it leaves 88
   written in three more places with nothing tying them to `goalTargets.js`.
   Raised by the Slice 4 review.
-- **Show the "waking up" explanation on a timer, not only after a failure.**
-  Slice 1 rejected a timer because a normal debrief takes about twelve seconds
-  and a timer would have alarmed everyone. Slice 2 dropping the server's give-up
-  deadline from five minutes to sixty seconds changed that arithmetic: a timer
-  at roughly 25 seconds now sits well above the normal case while still
-  explaining itself before the server gives up. Closes the gap Slice 1 named in
-  its own pull request. The remaining candidate a visitor would most feel.
-- **Say so honestly when the API balance is drained, instead of blaming the
-  server.** A drained prepaid balance currently shows the cold-start failure
-  message on the debrief ("didn't wake up in time... needs a second try") and
-  "couldn't connect right now" in chat. Both invite a retry that can never work
-  and read as a flaky demo rather than an unfunded one. The owner wants the
-  honest version: out of API credits, reloading soon. Feasible, checked 12
-  August 2026: `api/coach.js` forwards Anthropic's error body unchanged, but
-  three places drop it before any screen sees it. `callApi` in
-  `src/coachApi.js` first, which keeps only the status code and so cannot tell
-  out-of-credits from any other refusal, then the catches in `src/App.jsx` and
-  `src/DebriefScreen.jsx`. Borrow the shipped pattern from
-  interplanetary-groups rather than inventing one. Verify by forcing a real
-  balance error, not by reasoning about it.
+- **Stream the debrief. Recommended next slice, added 13 August 2026.** A
+  visitor watches a blank screen for 12 to 30 seconds before a word appears, and
+  it is the thing they most feel about this demo. Slice 5 deliberately measured
+  that wait and put honest words around its failures without reducing it; the
+  real fix is showing the coach's text as it is written. Named as the next slice
+  in the Slice 5 plan's own not-in-this-slice list.
+- **Tie the "within 40 seconds" wording to the deadline it describes.** Added
+  13 August 2026, found while building Slice 5. The timeout copy in
+  `src/failureCopy.js` hardcodes 40 seconds, while the deadline itself is
+  `UPSTREAM_DEADLINE_MS` in `api/coach.js`. Change the constant and the copy
+  silently becomes a lie, which is exactly the class of problem Slice 5 existed
+  to remove. Small; the awkward part is that the copy is approved wording and
+  the constant lives across the browser/server boundary.
+- **Decide what to say when the browser's own backstop fires, not the server's.**
+  *Open, needs a copy decision from the product manager.* Added 13 August 2026.
+  If the browser gives up at 50 seconds before the server answers, the app shows
+  the timeout copy saying Anthropic did not answer within 40 seconds. The browser
+  cannot know that: the request may never have reached Anthropic at all. It is a
+  narrow case, since the server is meant to answer first by design, but it is a
+  claim the app cannot prove, which is the standard Slice 5 set. Needs wording
+  decided before anyone changes code.
 - **Test the `.env` guard, or decide it does not need one.** `protect-paths.mjs`
   blocks edits to `.env` files and has never been seen to fire. The template
   ships a test for it; this project has none, which is why that one drift line
@@ -622,7 +697,16 @@ manager as a question, so it does not carry the "parked" status above.
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
 and `/api/coach`; the safety-net fixes went back to
-`~/.claude/templates/project-safety-nets/` the same day.
+`~/.claude/templates/project-safety-nets/` the same day. Two more came off this
+list in Slice 5 on 13 August 2026, both shipped: saying so honestly when the API
+balance is drained instead of blaming the server, and showing an explanation
+mid-wait on a timer rather than only after a failure, which now fires at 25
+seconds. See the failure vocabulary section above for what replaced them.
+
+*Note, 13 August 2026:* the "queued behind the same shelf decision" framing above
+was written while this project was on the shelf. The shelf decision was reversed
+on 13 August 2026, so nothing on this list is waiting on another project any
+more. Left in place rather than rewritten, per the append-only rule.
 
 ## Where decisions get recorded
 
