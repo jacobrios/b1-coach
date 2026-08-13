@@ -130,12 +130,24 @@ export default async function handler(req, res) {
       upstreamMs = Date.now() - startedAt
     }
 
-    const data = await response.json()
-
     if (response.ok) {
+      const data = await response.json()
       res.setHeader('x-coach-upstream-ms', String(upstreamMs))
       res.setHeader('x-coach-cold', String(wasCold))
       return res.status(response.status).json(data)
+    }
+
+    // A non-ok response is not guaranteed to be JSON. An infrastructure gateway
+    // failing (a 502 or 503) commonly answers with an HTML error page instead,
+    // and that is exactly the case this diagnostic exists to catch, so a body
+    // that fails to parse falls back to an empty object rather than throwing
+    // and losing the real upstream status to the catch block below, which
+    // would misreport a real response as no response at all.
+    let data = {}
+    try {
+      data = await response.json()
+    } catch {
+      // Leave data as {}; the status below is still the real one.
     }
 
     // A 400 knowingly covers two different situations: Anthropic refusing a
@@ -151,10 +163,8 @@ export default async function handler(req, res) {
       error: { reason, upstreamStatus: response.status, upstreamMs, cold: wasCold },
     })
   } catch {
-    if (upstreamMs === undefined) {
-      clearTimeout(timer)
-      upstreamMs = Date.now() - startedAt
-    }
+    // The inner finally above always runs before an error reaches here,
+    // whether the fetch resolved or threw, so upstreamMs is always set by now.
     const reason = controller.signal.aborted ? 'timeout' : 'trouble'
     return res.status(reason === 'timeout' ? 504 : 502).json({
       error: { reason, upstreamStatus: null, upstreamMs, cold: wasCold },

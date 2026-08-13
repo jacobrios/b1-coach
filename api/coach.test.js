@@ -8,7 +8,7 @@
 //
 // Nothing here touches the network: fetch is stubbed, so no test costs money.
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import handler from './coach.js'
 
 const PINNED_MODEL = 'claude-sonnet-4-6'
@@ -36,6 +36,13 @@ beforeEach(() => {
     // set it explicitly, since a plain object does not.
     return { status: 200, ok: true, json: async () => ({ content: [{ type: 'text', text: '{}' }] }) }
   })
+})
+
+// A test that leaves fake timers on would corrupt every test that runs after
+// it in this file, not just itself. This runs whether the test above it
+// passed, failed, or threw, so that can never happen.
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 async function call(req) {
@@ -278,8 +285,10 @@ describe('what comes back on success', () => {
 describe('the server classifies its own failures', () => {
   it('turns an aborted request into timeout, 504, once the 40 second deadline fires', async () => {
     vi.useFakeTimers()
+    let aborted = false
     vi.stubGlobal('fetch', (url, init) => new Promise((_resolve, reject) => {
       init.signal.addEventListener('abort', () => {
+        aborted = true
         const err = new Error('This operation was aborted')
         err.name = 'AbortError'
         reject(err)
@@ -287,13 +296,36 @@ describe('the server classifies its own failures', () => {
     }))
 
     const resPromise = call({ method: 'POST', body: validBody() })
-    await vi.advanceTimersByTimeAsync(40000)
+
+    // Bound the deadline from below too, not just above: advancing to 40000
+    // alone would still pass if the real deadline had regressed to something
+    // much shorter, like 5000ms.
+    await vi.advanceTimersByTimeAsync(39999)
+    expect(aborted).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
     const res = await resPromise
 
-    vi.useRealTimers()
     expect(res.statusCode).toBe(504)
     expect(res.body).toEqual({
       error: { reason: 'timeout', upstreamStatus: null, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+
+  it('reports the real upstream status when a non-ok response is not JSON', async () => {
+    // An infrastructure gateway returning a 502/503 with an HTML error page,
+    // not a JSON body, is exactly the case this diagnostic exists to catch.
+    // Losing the real status here and reporting null (meaning "no response at
+    // all") would be worse than not having the field.
+    vi.stubGlobal('fetch', async () => ({
+      status: 503,
+      ok: false,
+      json: async () => { throw new SyntaxError('Unexpected token < in JSON at position 0') },
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(502)
+    expect(res.body).toEqual({
+      error: { reason: 'trouble', upstreamStatus: 503, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
     })
   })
 
@@ -377,5 +409,24 @@ describe('cold instance detection', () => {
     const res = makeRes()
     await handlerFn({ method: 'POST', body: validBody() }, res)
     expect(res.headers['x-coach-cold']).toBe('false')
+  })
+
+  it('pins cold: true in a failure envelope on a genuinely cold instance', async () => {
+    const handlerFn = await freshHandler()
+    vi.stubGlobal('fetch', async () => { throw new Error('socket hang up') })
+    const res = makeRes()
+    await handlerFn({ method: 'POST', body: validBody() }, res)
+    expect(res.body.error.cold).toBe(true)
+  })
+
+  it('pins cold: false in a failure envelope once the instance has warmed', async () => {
+    const handlerFn = await freshHandler()
+    // The default beforeEach stub is still in place here, so this first call
+    // succeeds and only warms the instance.
+    await handlerFn({ method: 'POST', body: validBody() }, makeRes())
+    vi.stubGlobal('fetch', async () => { throw new Error('socket hang up') })
+    const res = makeRes()
+    await handlerFn({ method: 'POST', body: validBody() }, res)
+    expect(res.body.error.cold).toBe(false)
   })
 })
