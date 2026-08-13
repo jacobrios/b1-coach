@@ -63,5 +63,13 @@ export function failureCopy(reason, cold = false) {
   if (reason === 'timeout' && cold) {
     return { message: TIMEOUT_COLD_MESSAGE, showRetry: true }
   }
-  return COPY[reason] ?? COPY.trouble
+  // COPY is a plain object, so it inherits from Object.prototype. A lookup of
+  // `COPY['constructor']` (or 'toString', 'valueOf', 'hasOwnProperty',
+  // '__proto__') finds that inherited property and returns it, and it is not
+  // nullish, so `COPY[reason] ?? COPY.trouble` would silently skip the
+  // fallback and hand the caller something that is not a copy object at all.
+  // That is the exact blank screen this fallback exists to prevent, reached
+  // through a different door. hasOwnProperty is checked explicitly so only a
+  // reason this table actually defines can bypass the fallback.
+  return Object.prototype.hasOwnProperty.call(COPY, reason) ? COPY[reason] : COPY.trouble
 }

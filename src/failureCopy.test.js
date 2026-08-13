@@ -64,6 +64,22 @@ describe('an unrecognized reason', () => {
     expect(failureCopy(undefined)).toEqual(failureCopy('trouble'))
     expect(failureCopy(null)).toEqual(failureCopy('trouble'))
   })
+
+  // A plain object literal used as a lookup table inherits from
+  // Object.prototype, so a reason string that happens to name one of its
+  // properties is not actually missing from the table: COPY['constructor']
+  // returns the Object constructor function, which is not nullish, so
+  // `?? COPY.trouble` never fires. That is the exact blank screen this
+  // fallback exists to prevent, just reached through a different door. The
+  // server only ever sends one of the four real reasons today, so this is not
+  // reachable in practice, but the guarantee this module makes is that no
+  // string reaches a blank screen, not "no string we currently send."
+  it.each(['constructor', 'toString', 'valueOf', 'hasOwnProperty', '__proto__'])(
+    'does not leak an inherited Object.prototype property through the fallback for %s',
+    (reason) => {
+      expect(failureCopy(reason)).toEqual(failureCopy('trouble'))
+    }
+  )
 })
 
 describe('the two lines shown while waiting is still normal', () => {

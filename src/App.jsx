@@ -755,11 +755,23 @@ export default function App() {
     setScreen('loading')
 
     if (slowTimerRef.current) clearTimeout(slowTimerRef.current)
-    slowTimerRef.current = setTimeout(() => setSlow(true), 25000)
+    const timerId = setTimeout(() => setSlow(true), 25000)
+    slowTimerRef.current = timerId
 
+    // Clears this call's own timer by the id it captured, and only clears the
+    // shared ref if the ref still points at that same id. The second check is
+    // what keeps this safe if an older runDebrief call's promise settles
+    // after a newer call has already started its own timer: without it, the
+    // older call's cleanup would read the ref, find the newer timer sitting
+    // there, and clear that one instead of its own, silently cutting off a
+    // wait that was still active. Not reachable today, because both entry
+    // points into runDebrief (ending a session, and the Try Again button)
+    // only fire from a screen other than 'loading', so two calls cannot be in
+    // flight at once. Written defensively anyway, since that is exactly the
+    // assumption a later change could break without anyone noticing here.
     const clearSlowTimer = () => {
-      if (slowTimerRef.current) {
-        clearTimeout(slowTimerRef.current)
+      clearTimeout(timerId)
+      if (slowTimerRef.current === timerId) {
         slowTimerRef.current = null
       }
     }
