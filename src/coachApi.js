@@ -113,6 +113,28 @@ Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zo
 
 const RETRY_DELAY_MS = 1500
 
+// The browser's own backstop. api/coach.js gives up on Anthropic at 40000ms and
+// answers with its own classified reason; this sits behind that on purpose, at
+// 50000ms, so the server's more specific answer almost always wins the race and
+// this timeout only fires when the function itself never got to speak at all.
+const REQUEST_TIMEOUT_MS = 50000
+
+// Everything callApi throws is one of these, so no caller has to guess what
+// went wrong from a bare Error message again. `reason` is one of 'timeout',
+// 'unreachable', 'credits' or 'trouble'. `respondedOk` marks whether this
+// attempt got a successful HTTP response before failing (true only for a good
+// response whose body could not be used); the retry policy below reads it to
+// tell an attempt that never reached the server apart from one that did.
+export class CoachError extends Error {
+  constructor(message, { reason, cold = false, respondedOk = false } = {}) {
+    super(message)
+    this.name = 'CoachError'
+    this.reason = reason
+    this.cold = cold
+    this.respondedOk = respondedOk
+  }
+}
+
 // The model is asked for bare JSON and usually gives it, but it also wraps the
 // answer in a Markdown fence unpredictably: sometimes tagged ```json, sometimes
 // a plain ```, sometimes with a sentence in front of it. It may also quote a
@@ -177,48 +199,103 @@ function parseCoachResponse(text) {
   throw new Error('Failed to parse coach response as JSON')
 }
 
-// Exported for tests. Both callers are in this file; nothing else should use it.
-export async function callApi(body, { onRetry } = {}) {
-  const url = '/api/coach'
-  const headers = { 'content-type': 'application/json' }
-
-  const send = async () => {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
-    }
-
-    return response
-  }
+// One attempt: fetch, classify whatever went wrong into a CoachError, or parse
+// and return the coach's reply. The server's own answer always wins when there
+// is one; this only guesses when the function never got to speak at all.
+async function attempt(url, headers, body) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
   let response
   try {
-    response = await send()
-  } catch {
-    // The server answering this call sleeps when idle, and the request that wakes
-    // it is the one that fails. One retry covers that. A second would only make a
-    // genuinely dead server take longer to say so.
-    onRetry?.()
-    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-    response = await send()
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timer)
+    }
+  } catch (err) {
+    if (err?.name === 'AbortError') {
+      throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+    }
+    // The network failed or the function could not be reached at all. We know
+    // nothing about Anthropic; the server never got a chance to say more.
+    throw new CoachError('Could not reach the coach', { reason: 'unreachable' })
+  }
+
+  if (!response.ok) {
+    let envelope
+    try {
+      envelope = await response.json()
+    } catch {
+      envelope = undefined
+    }
+
+    // The classified shape from api/coach.js: { error: { reason, cold, ... } }.
+    // A bare string error (the older caller-shape refusal) is not this, and
+    // reading `.reason` off it must not throw or be mistaken for a real reason.
+    const errorField = envelope?.error
+    if (errorField && typeof errorField === 'object' && typeof errorField.reason === 'string') {
+      throw new CoachError('The coach could not answer', { reason: errorField.reason, cold: !!errorField.cold })
+    }
+
+    // No usable envelope: the function never got to speak, or answered in a
+    // shape this app never asked for. A 504 or an x-vercel-error header is the
+    // platform itself saying it gave up; anything else, we simply do not know.
+    const isTimeoutSignal = response.status === 504 || response.headers?.get?.('x-vercel-error') != null
+    throw new CoachError('The coach could not answer', { reason: isTimeoutSignal ? 'timeout' : 'unreachable' })
   }
 
   const data = await response.json()
   const text = data.content?.[0]?.text
 
+  // The connection worked and the server answered; the reply itself is what's
+  // unusable. That attempt already spent its full wait succeeding, which is
+  // exactly why it is marked respondedOk and the retry policy below refuses to
+  // repeat it.
   if (!text) {
-    throw new Error('No text content in API response')
+    throw new CoachError('No text content in API response', { reason: 'trouble', respondedOk: true })
   }
 
   try {
     return parseCoachResponse(text)
   } catch {
-    throw new Error('Failed to parse coach response as JSON')
+    throw new CoachError('Failed to parse coach response as JSON', { reason: 'trouble', respondedOk: true })
+  }
+}
+
+// Whether a failed attempt is cheap enough to repeat once. An attempt that
+// already produced a successful HTTP response never qualifies, no matter what
+// reason its unusable reply carries, because repeating it means paying for a
+// second full wait on top of the first. Of the failures that never got a good
+// response, only 'unreachable' and 'trouble' are worth another try on their
+// own, and a cold instance's answer is worth retrying regardless of what it
+// was refused for. 'timeout' is the one exception to all of that: the visitor
+// has already waited the whole budget, and the point of a ceiling is that it
+// holds even when the instance was also cold.
+function isRetryable(err) {
+  if (err.respondedOk) return false
+  if (err.reason === 'timeout') return false
+  return err.reason === 'unreachable' || err.reason === 'trouble' || err.cold
+}
+
+// Exported for tests. Both callers are in this file; nothing else should use it.
+export async function callApi(body, { onRetry } = {}) {
+  const url = '/api/coach'
+  const headers = { 'content-type': 'application/json' }
+
+  try {
+    return await attempt(url, headers, body)
+  } catch (err) {
+    if (!(err instanceof CoachError) || !isRetryable(err)) throw err
+
+    onRetry?.({ reason: err.reason, cold: err.cold })
+    await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
+    return attempt(url, headers, body)
   }
 }
 
