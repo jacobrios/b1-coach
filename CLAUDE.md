@@ -362,6 +362,14 @@ the smallest session and 14 seconds on session 4, which is the largest one the
 app can produce. A chat reply takes 6 to 11 seconds. That is what 60 seconds was
 chosen against.
 
+A 12 August 2026 audit measured slower numbers: debriefs taking 20 to 30
+seconds, plus one debrief that returned a 504 after roughly 28 to 38 seconds and
+succeeded on an automatic retry, for a total visitor wait of over a minute.
+Latency roughly doubled between the two measurements. The cause is not known to
+be anything in this repository: the prompt did not grow and the model did not
+change between the two dates. The owner was running his own session
+concurrently during the audit, so a concurrency effect has not been ruled out.
+
 ## Cost exposure
 
 Spend is capped by a prepaid Anthropic balance of roughly $35 with auto-reload
@@ -543,6 +551,13 @@ will not have been the session that found it.
    the browser and considered good enough to ship, but it has **not** had a
    deliberate design pass. Not a defect and not blocking; revisit if and when the
    visual language of the charts gets looked at properly.
+
+**Postscript, 13 August 2026: the shelf decision above was reversed.** The
+owner's other project reached its MVP milestone, and this project came off the
+shelf that day. The four questions above are live again, not parked; work on
+this slice started the same day. The block above is kept exactly as written
+because it records what was true at the time it was written, not because the
+shelf decision still stands.
 
 ### Queued, not parked
 
