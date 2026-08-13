@@ -31,7 +31,7 @@ const reject = (res) => res.status(400).json({ error: 'Invalid request' })
 // vercel.json pins this function's platform deadline at 60 seconds; 40 sits
 // inside that on purpose, so the function always has time left to answer with
 // a real error rather than being killed mid-response.
-const UPSTREAM_DEADLINE_MS = 1000
+const UPSTREAM_DEADLINE_MS = 40000
 
 // Whether this instance has handled a request before. Module scope, so it
 // survives between invocations on the same warm instance and resets to false
