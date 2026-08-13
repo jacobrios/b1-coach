@@ -46,11 +46,10 @@ const TIMEOUT_COLD_MESSAGE = "The coach's server was asleep and took too long wa
 // which would be untrue for a large share of the sessions that see it.
 export const MID_WAIT_MESSAGE = 'Still working. The coach can take up to 40 seconds on a full session.'
 
-// Shown while the one automatic retry (unreachable, trouble, or a cold
-// instance) is in flight. Deliberately the same line regardless of which of
-// those three reasons triggered it: what the visitor needs to know is that
-// something is happening again, not which reason caused the first attempt to
-// fail.
+// Shown while the one automatic retry (unreachable or trouble) is in flight.
+// Deliberately the same line regardless of which of those two reasons triggered
+// it: what the visitor needs to know is that something is happening again, not
+// which reason caused the first attempt to fail.
 export const RETRYING_MESSAGE = "That didn't go through. Trying once more."
 
 // The copy for a failed debrief or chat reply: the message to show and
