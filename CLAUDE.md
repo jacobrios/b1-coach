@@ -347,8 +347,13 @@ Added in Slice 5 on 13 August 2026. Before it, every failure produced one
 sentence claiming the server had been asleep, which was a guess worded as a fact
 and was often wrong.
 
-**Four reasons, plus one flag. Every one of them is something that was actually
-reported, never an inference.**
+**Four reasons, plus one flag. Each is meant to rest on something that was
+actually reported rather than inferred, with one honest exception: `trouble` is
+also the catch-all.** An unrecognized reason, a missing one, and an Anthropic 400
+that is more likely this app's own bug all land there, which is a deliberate
+choice (a blank failure screen is worse than copy that is too general) but does
+mean `trouble` on screen is not proof Anthropic did anything wrong. The code says
+so in its own comments.
 
     credits      Anthropic reports the balance is dry.      Server only.
     timeout      Nobody answered inside the deadline.       Server, or the
@@ -392,11 +397,23 @@ seconds. A "still working" line appears at 25 seconds.
 
 **Every response now carries how long Anthropic took.** `x-coach-upstream-ms`
 and `x-coach-cold` are set on success, and a failure body carries
-`{ reason, upstreamStatus, upstreamMs, cold }`. That is where any future latency
+`{ error: { reason, upstreamStatus, upstreamMs, cold } }`. Note the `error`
+wrapper; the fields are not at the top level. That is where any future latency
 question gets answered from, rather than from a stopwatch.
 
-None of this can be verified by `npm run dev`; see the trap above. Slice 5 forced
-its failures against a real Vercel preview.
+**What Slice 5 actually proved, and what it did not.** None of this can be
+verified by `npm run dev`; see the trap above. Two of the four reasons were
+forced against a real Vercel preview on 13 August 2026: `unreachable`, by
+patching the browser's fetch, and `timeout`, by temporarily deploying a one
+second server deadline. **The other two were not forced.** `credits` cannot be,
+because a prepaid balance cannot be drained to order. `trouble` needs an invalid
+key set on the deployment, which is a Vercel environment change nobody made. A
+genuine cold start was not observed either, because that needs the uptime monitor
+paused and the instance left to be evicted. Nor was the 25 second mid-wait line,
+because every real debrief finished before it could fire. So `credits`,
+`trouble`, the `cold` wording, and the mid-wait line rest on unit tests and on
+reading the code, not on a forced failure. Do not read this section as four
+proven paths.
 
 ## Deployment and cold starts
 
@@ -435,14 +452,20 @@ be anything in this repository: the prompt did not grow and the model did not
 change between the two dates. The owner was running his own session
 concurrently during the audit, so a concurrency effect has not been ruled out.
 
-Measured again on 13 August 2026, against a real Vercel preview during Slice 5:
-a full session 1 debrief took **12.06 seconds** end to end in the browser, one
-request and no retry, and a curl of the same endpoint reported
-`x-coach-upstream-ms: 1141` against a 1337ms wall clock on a warm instance. So
-the 12 August numbers were not a new normal. All three measurements are kept:
-30 July, 12 August, and 13 August. Latency here moves around for reasons this
-repository does not control, which is the argument for measuring it from the
-`x-coach-upstream-ms` header rather than from memory.
+One further measurement, 13 August 2026, against a real Vercel preview during
+Slice 5: a single session 1 debrief took **12.06 seconds** end to end in the
+browser, one request and no retry, and a curl of the same endpoint reported
+`x-coach-upstream-ms: 1141` against a 1337ms wall clock on a warm instance.
+
+**Read that as one run, not as a refutation.** It was a single debrief, on
+session 1, which is the smallest session the app can produce, on an instance that
+was already warm. The 12 August audit measured 20 to 30 seconds across a larger
+sample and included an outright timeout, and one fast run does not overturn it.
+What it is consistent with is the concurrency explanation above, and it is
+nowhere near enough to settle that. All three measurements stand together:
+30 July, 12 August, 13 August. Latency here moves for reasons this repository
+does not control, which is the argument for reading it off the
+`x-coach-upstream-ms` header rather than from memory or from one good run.
 
 ## Cost exposure
 
@@ -639,6 +662,12 @@ Everything below predates the Slice 4 close or came out of it as ordinary work.
 It is queued behind the same shelf decision, but it was never put to the product
 manager as a question, so it does not carry the "parked" status above.
 
+*Annotation, 13 August 2026:* the "queued behind the same shelf decision" phrase
+in the paragraph above is stale. That shelf decision was reversed on 13 August
+2026, per the postscript further up, so nothing on this list is waiting on
+another project any more. The original wording is left in place rather than
+rewritten, per the append-only rule.
+
 - **Retune how much the demo improves session over session.** Slice 4 corrected a
   comment claiming variance narrows to 87 / 75 / 65 percent across sessions 2 to
   4; the formula actually yields 100 / 95 / 90, so a visitor clicking through
@@ -660,13 +689,14 @@ manager as a question, so it does not carry the "parked" status above.
   that wait and put honest words around its failures without reducing it; the
   real fix is showing the coach's text as it is written. Named as the next slice
   in the Slice 5 plan's own not-in-this-slice list.
-- **Tie the "within 40 seconds" wording to the deadline it describes.** Added
-  13 August 2026, found while building Slice 5. The timeout copy in
-  `src/failureCopy.js` hardcodes 40 seconds, while the deadline itself is
-  `UPSTREAM_DEADLINE_MS` in `api/coach.js`. Change the constant and the copy
-  silently becomes a lie, which is exactly the class of problem Slice 5 existed
-  to remove. Small; the awkward part is that the copy is approved wording and
-  the constant lives across the browser/server boundary.
+- **Tie the "40 seconds" wording to the deadline it describes.** Added 13 August
+  2026, found while building Slice 5. The number is written out **twice** in
+  `src/failureCopy.js`, once in the `timeout` message and once in
+  `MID_WAIT_MESSAGE`, while the deadline itself is `UPSTREAM_DEADLINE_MS` in
+  `api/coach.js`. Fix both or the job is half done. Change the constant and the
+  copy silently becomes a lie, which is exactly the class of problem Slice 5
+  existed to remove. Small; the awkward part is that the copy is approved wording
+  and the constant lives across the browser/server boundary.
 - **Decide what to say when the browser's own backstop fires, not the server's.**
   *Open, needs a copy decision from the product manager.* Added 13 August 2026.
   If the browser gives up at 50 seconds before the server answers, the app shows
@@ -702,11 +732,6 @@ list in Slice 5 on 13 August 2026, both shipped: saying so honestly when the API
 balance is drained instead of blaming the server, and showing an explanation
 mid-wait on a timer rather than only after a failure, which now fires at 25
 seconds. See the failure vocabulary section above for what replaced them.
-
-*Note, 13 August 2026:* the "queued behind the same shelf decision" framing above
-was written while this project was on the shelf. The shelf decision was reversed
-on 13 August 2026, so nothing on this list is waiting on another project any
-more. Left in place rather than rewritten, per the append-only rule.
 
 ## Where decisions get recorded
 
