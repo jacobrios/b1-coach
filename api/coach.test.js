@@ -312,6 +312,106 @@ describe('the server classifies its own failures', () => {
     })
   })
 
+  // Found by the whole-branch review. The 40 second deadline used to stop at
+  // the headers: clearTimeout sat in a finally around the fetch call alone, so
+  // the moment Anthropic answered, reading the body had no deadline at all.
+  // src/coachApi.js had already fixed exactly this bug on its own side of the
+  // wire, which left the two files contradicting each other. A stalled body
+  // read here runs past 40 seconds, the browser's 50 second backstop fires
+  // first, and the visitor gets the browser's generic guess instead of this
+  // function's specific answer, which is the whole outcome this slice exists to
+  // prevent. These four mirror the shape src/coachApi.js uses.
+
+  it('the deadline covers reading a successful body, not just the wait for headers', async () => {
+    vi.useFakeTimers()
+    let aborted = false
+    vi.stubGlobal('fetch', async (url, init) => ({
+      status: 200,
+      ok: true,
+      json: () => new Promise((_resolve, reject) => {
+        init.signal.addEventListener('abort', () => {
+          aborted = true
+          const err = new Error('This operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        })
+      }),
+    }))
+
+    const resPromise = call({ method: 'POST', body: validBody() })
+
+    // Bounded from below as well as above, the same way the abort test is: the
+    // body read must still be running at 39999ms, or a deadline that had
+    // regressed to something much shorter would pass this unnoticed.
+    await vi.advanceTimersByTimeAsync(39999)
+    expect(aborted).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    const res = await resPromise
+
+    expect(aborted).toBe(true)
+    expect(res.statusCode).toBe(504)
+    expect(res.body.error.reason).toBe('timeout')
+  })
+
+  it('the deadline covers reading a non-ok body too', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('fetch', async (url, init) => ({
+      status: 529,
+      ok: false,
+      json: () => new Promise((_resolve, reject) => {
+        init.signal.addEventListener('abort', () => {
+          const err = new Error('This operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        })
+      }),
+    }))
+
+    const resPromise = call({ method: 'POST', body: validBody() })
+    await vi.advanceTimersByTimeAsync(40000)
+    const res = await resPromise
+
+    expect(res.statusCode).toBe(504)
+    expect(res.body.error.reason).toBe('timeout')
+    // The response did arrive, so its status is reported even though what
+    // followed was a timeout. null here would mean nobody answered at all.
+    expect(res.body.error.upstreamStatus).toBe(529)
+  })
+
+  it('measures upstream time through the body read, since that is time the visitor waited', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('fetch', async () => ({
+      status: 200,
+      ok: true,
+      json: () => new Promise((resolve) => {
+        setTimeout(() => resolve({ content: [{ type: 'text', text: '{}' }] }), 5000)
+      }),
+    }))
+
+    const resPromise = call({ method: 'POST', body: validBody() })
+    await vi.advanceTimersByTimeAsync(5000)
+    const res = await resPromise
+
+    expect(Number(res.headers['x-coach-upstream-ms'])).toBeGreaterThanOrEqual(5000)
+  })
+
+  it('reports the real upstream status when a successful body will not parse', async () => {
+    // upstreamStatus is null only when there was no response. A 200 whose body
+    // then failed had a response, and saying otherwise makes the one diagnostic
+    // field in this envelope untrue.
+    vi.stubGlobal('fetch', async () => ({
+      status: 200,
+      ok: true,
+      json: async () => { throw new SyntaxError('Unexpected token < in JSON at position 0') },
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(502)
+    expect(res.body).toEqual({
+      error: { reason: 'trouble', upstreamStatus: 200, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+
   it('reports the real upstream status when a non-ok response is not JSON', async () => {
     // An infrastructure gateway returning a 502/503 with an HTML error page,
     // not a JSON body, is exactly the case this diagnostic exists to catch.
