@@ -130,7 +130,29 @@ are wired in `.claude/settings.json`, which is committed.
   project has no database.
 - **After every edit that is not Markdown**, `run-tests-unless-docs.mjs` runs
   `npm test` and hands a failure back as hook feedback, so a broken suite
-  surfaces at the edit rather than at the pull request.
+  surfaces at the edit rather than at the pull request. It runs the suite from
+  the project root, resolved by `project-root.mjs`, and never from wherever the
+  session's shell happens to be standing; see the decision log entry for 12
+  August 2026 for what that is guarding against and what it is not.
+- **The hook itself has tests**, in `.claude/hooks/run-tests-unless-docs.test.js`.
+  Vitest collects them from the dot-directory without any config change, checked
+  12 August 2026. They inject a fake child process, so the suite never runs a
+  suite inside itself; what they check is the working directory the hook hands
+  over.
+
+The template's per-edit / end-of-task split was deliberately not adopted here.
+It exists to keep an 801-test suite off every single edit; this one is 171 tests
+in about a second, so the split would buy nothing and cost a second moving part.
+
+**Do not switch this hook to `npx vitest run`.** Measured 12 August 2026
+standing in `src/`: `npm test` ran all 171 tests, `npx vitest run` ran 127 and
+reported green. npm climbs to the first ancestor holding a `package.json` **or a
+`node_modules`**, which is usually the repo root, and runs the script from
+there. Note the "or `node_modules`" half: an `npx` run inside `src/` leaves a
+`src/node_modules/.vite` cache behind, and from then on `npm test` in `src/`
+stops there and dies with ENOENT having run nothing. That trap is real; it was
+hit while verifying this on 12 August 2026. It is also why the hook now names
+its working directory outright instead of relying on npm to find the root.
 
 A hook changed in this repo that is not specific to this repo should be copied
 back to the template, or the template becomes the oldest version rather than the
