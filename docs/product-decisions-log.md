@@ -6,6 +6,37 @@
 
 ---
 
+## Micro-PR: the differences from the shared template are now on the record (August 13)
+
+*What we changed:* A session-start check compares this project's automated
+guards against the shared template they came from and reports anything that
+differs. It was reporting nine things, all but one of them decisions we had made
+on purpose and never written down. Those eight now carry their reasons. Nothing
+about how the project builds or behaves changed.
+
+*Key decisions and the thinking behind them:*
+
+**A warning that fires every session and is always correct to ignore is worse
+than no warning.** Nine lines of noise train you to skim past the tenth, and the
+tenth is the one this check exists for: the morning a template fix does not reach
+a project that needs it. Recording the eight is what makes the check a signal
+again.
+
+**The reasons are pinned to the template as it stands today, and that is the
+point.** Each entry stores a fingerprint of the template file it was measured
+against. When the template changes, the difference is reported again with its
+old reason attached, as a decision to make afresh. A permanent silence would have
+hidden exactly the failure that produced this check.
+
+**One difference was deliberately left noisy.** The template ships a test for the
+guard that blocks edits to secrets files; this project has none, and that guard
+has never been seen to fire. Silencing it would have recorded a decision nobody
+made. It stays on the report and went on the What's Next list instead. This is
+the whole difference between an accepted difference and a hidden gap, and it is
+worth one line of recurring noise to keep it visible.
+
+---
+
 ## Micro-PR: the test hook now runs the tests from the project root (August 12)
 
 *What we changed:* The automatic gate that runs the test suite after every code
