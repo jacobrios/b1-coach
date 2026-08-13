@@ -57,13 +57,15 @@ describe('where the suite runs from', () => {
     expect(calls).toEqual([PROJECT_ROOT])
   })
 
-  it('runs from the project root the harness names, when it names one', () => {
-    process.env.CLAUDE_PROJECT_DIR = PROJECT_ROOT
+  // The two anchors are pointed at different real directories on purpose. Aimed
+  // at the same one, the test passes whichever anchor won, and so pins nothing.
+  it('prefers the project the harness names over the climb', () => {
+    process.env.CLAUDE_PROJECT_DIR = join(PROJECT_ROOT, 'src')
     const { spawn, calls } = spy()
 
     runEdit({ filePath: 'anything.js', shellCwd: join(PROJECT_ROOT, 'api'), spawn })
 
-    expect(calls).toEqual([PROJECT_ROOT])
+    expect(calls).toEqual([join(PROJECT_ROOT, 'src')])
   })
 
   // A directory the harness names but that does not exist is worth less than the
@@ -77,7 +79,12 @@ describe('where the suite runs from', () => {
     expect(calls).toEqual([PROJECT_ROOT])
   })
 
-  it('falls back to where the shell is standing when nothing above it is a project', () => {
+  // Named for what it actually pins. The climb never runs an iteration here,
+  // because there is nowhere above `/` to climb to, so this is the degenerate
+  // top-of-the-filesystem case and not the general "no project above" one. It
+  // also passes against the unfixed hook, which is recorded rather than hidden:
+  // it is here to stop the loop running off the top, not to prove the fix.
+  it('stops at the top of the filesystem instead of climbing off it', () => {
     delete process.env.CLAUDE_PROJECT_DIR
     const { spawn, calls } = spy()
 

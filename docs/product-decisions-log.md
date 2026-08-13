@@ -21,12 +21,23 @@ reporting the suite green after quietly running a fraction of it. Measured here
 on 12 August 2026, standing in `src/`: this project's hook ran all 171 tests, and
 the other repo's version of the same hook ran 127 and called it green. The
 difference is one word. This hook runs `npm test`; the other runs `npx vitest run`
-directly. npm runs a script from the package root whatever directory you typed it
-in, so the adaptation made months ago for a different reason, keeping the hook and
-the command a human would type identical, had already closed the hole. That is
-recorded rather than smoothed over, because a fix that quietly claims to have
-solved something it never had is exactly the kind of thing this log exists to
-catch.
+directly, and npm finds the project's own root before running anything. So the
+adaptation made months ago for an unrelated reason, keeping the hook and the
+command a human would type identical, had already closed that particular hole.
+Recorded rather than smoothed over: a fix that quietly claims to have solved
+something it never had is exactly what this log exists to catch.
+
+**The first version of this entry got the reason wrong, and the review caught
+it.** It said npm runs a script from the package root "whatever directory you
+typed it in." npm actually climbs to the first ancestor holding a `package.json`
+*or* a `node_modules`, and the reviewer's re-run of the same measurement did not
+merely disagree, it errored: verifying the claim had itself left an `npx` cache
+folder inside `src/`, and from that point on `npm test` there stopped at the
+cache and ran nothing at all. Two things worth keeping from that. The protection
+this project was relying on is thinner than it looked, one stray folder from
+routine tooling and it is gone. And the measurement was invalidated by the act of
+measuring it, which is the argument for a second pair of eyes rather than a
+careful first pair.
 
 **One real hole did exist, and it is closed.** With the shell standing in a
 *different* project, the old hook ran that project's test suite and reported the
@@ -34,6 +45,13 @@ result as verification of a b1-coach edit. Reproduced on 12 August 2026 with a
 stub project: the hook printed another suite's success and exited clean, having
 run zero of this project's tests. The new version ignores where the shell is and
 uses the project directory the harness names.
+
+**Whether that hole was ever open in day-to-day use is not settled, and it is
+not worth settling.** Instrumenting the live hook on 12 August 2026 showed the
+harness handing it the project root on all three of its inputs, so in this
+desktop app the shell may simply never wander. In the terminal version, where a
+`cd` persists for the rest of the session, it can. The change is twelve lines and
+costs nothing either way, so it ships as insurance without claiming a rescue.
 
 **Kept as insurance for the switch nobody should make.** With the working
 directory now stated outright instead of inherited by luck, a future session that
@@ -47,9 +65,11 @@ second, so the split would add a moving part and save nothing.
 
 *Verification:* 160 tests before, 171 after. The eleven new ones cover the hook
 itself and were written first and watched fail, five of them naming the wrong
-directory before the fix. Both scenarios above were run as real subprocesses
-rather than reasoned about. Nothing here touches the app, so nothing was checked
-in a browser.
+directory before the fix. The review ran all eleven against the old code to check
+that claim, and reported honestly that a sixth passes either way; it was renamed
+to say what it actually holds rather than deleted. Every scenario above was run
+as a real subprocess rather than reasoned about. Nothing here touches the app, so
+nothing was checked in a browser.
 
 ---
 

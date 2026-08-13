@@ -30,9 +30,9 @@ export function runEdit({ filePath, shellCwd, spawn = defaultSpawn }) {
   if (path.toLowerCase().endsWith(".md")) return 0; // docs edit: skip the suite
 
   // The runner runs from the project root, never from wherever the session's
-  // shell is standing. Rooted in a subfolder, vitest collects only the tests
-  // under that subfolder, passes, and this hook reports the suite green having
-  // run a fraction of it.
+  // shell is standing. Rooted somewhere else, npm answers about somewhere else:
+  // in another project it runs that project's suite and reports it green here.
+  // See project-root.mjs for the measured cases.
   const root = resolveProjectRoot(shellCwd);
 
   // Exit 2 specifically, not the suite's own exit code. Claude Code only feeds a
@@ -62,8 +62,9 @@ function main() {
 
     if (code !== 0) {
       console.error(
-        "The test suite failed after this edit. Run `npm test` to see which tests " +
-          "broke, and fix them before continuing."
+        "The test suite did not come back clean after this edit. Run `npm test` " +
+          "and fix it before continuing. If nothing looks broken, check that the " +
+          "runner started at all: this same message covers npm failing to run."
       );
     }
 
