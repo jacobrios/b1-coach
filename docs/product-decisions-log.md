@@ -6,6 +6,53 @@
 
 ---
 
+## Micro-PR: the test hook now runs the tests from the project root (August 12)
+
+*What we changed:* The automatic gate that runs the test suite after every code
+edit used to run it from wherever the session's shell was standing. It now always
+runs it from the project's own root. Small change, one hook file, no product
+behavior touched.
+
+*Key decisions and the thinking behind them:*
+
+**The symptom this was raised to fix does not happen in this project, and saying
+so is the point.** The concern, carried over from another repo, was a gate
+reporting the suite green after quietly running a fraction of it. Measured here
+on 12 August 2026, standing in `src/`: this project's hook ran all 171 tests, and
+the other repo's version of the same hook ran 127 and called it green. The
+difference is one word. This hook runs `npm test`; the other runs `npx vitest run`
+directly. npm runs a script from the package root whatever directory you typed it
+in, so the adaptation made months ago for a different reason, keeping the hook and
+the command a human would type identical, had already closed the hole. That is
+recorded rather than smoothed over, because a fix that quietly claims to have
+solved something it never had is exactly the kind of thing this log exists to
+catch.
+
+**One real hole did exist, and it is closed.** With the shell standing in a
+*different* project, the old hook ran that project's test suite and reported the
+result as verification of a b1-coach edit. Reproduced on 12 August 2026 with a
+stub project: the hook printed another suite's success and exited clean, having
+run zero of this project's tests. The new version ignores where the shell is and
+uses the project directory the harness names.
+
+**Kept as insurance for the switch nobody should make.** With the working
+directory now stated outright instead of inherited by luck, a future session that
+swaps `npm test` for the runner directly, or narrows to only the tests touching an
+edited file, cannot silently reintroduce the partial run. That guard is the main
+thing bought here, and it is worth the twelve lines.
+
+**The other project's per-edit / end-of-task split was not copied.** It exists to
+keep an 801-test suite off every keystroke. This suite is 171 tests in about a
+second, so the split would add a moving part and save nothing.
+
+*Verification:* 160 tests before, 171 after. The eleven new ones cover the hook
+itself and were written first and watched fail, five of them naming the wrong
+directory before the fix. Both scenarios above were run as real subprocesses
+rather than reasoned about. Nothing here touches the app, so nothing was checked
+in a browser.
+
+---
+
 ## B1 Coach: Product Decisions Log — Slice 4 (August 3)
 
 *What we built:* One answer to the question "what am I aiming for?" The app used to

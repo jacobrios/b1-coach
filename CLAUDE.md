@@ -130,7 +130,24 @@ are wired in `.claude/settings.json`, which is committed.
   project has no database.
 - **After every edit that is not Markdown**, `run-tests-unless-docs.mjs` runs
   `npm test` and hands a failure back as hook feedback, so a broken suite
-  surfaces at the edit rather than at the pull request.
+  surfaces at the edit rather than at the pull request. It runs the suite from
+  the project root, resolved by `project-root.mjs`, and never from wherever the
+  session's shell happens to be standing; see the decision log entry for 12
+  August 2026 for what that is guarding against and what it is not.
+- **The hook itself has tests**, in `.claude/hooks/run-tests-unless-docs.test.js`.
+  Vitest collects them from the dot-directory without any config change, checked
+  12 August 2026. They inject a fake child process, so the suite never runs a
+  suite inside itself; what they check is the working directory the hook hands
+  over.
+
+The template's per-edit / end-of-task split was deliberately not adopted here.
+It exists to keep an 801-test suite off every single edit; this one is 171 tests
+in about a second, so the split would buy nothing and cost a second moving part.
+
+**Do not switch this hook to `npx vitest run`.** `npm test` is what makes it
+safe from a subfolder, because npm runs a script from the package root whatever
+directory it was invoked in. Measured 12 August 2026 standing in `src/`:
+`npm test` ran all 171 tests, `npx vitest run` ran 127 and reported green.
 
 A hook changed in this repo that is not specific to this repo should be copied
 back to the template, or the template becomes the oldest version rather than the
