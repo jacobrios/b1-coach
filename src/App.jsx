@@ -1,9 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import LiveSessionScreen from './LiveSessionScreen'
 import DebriefScreen from './DebriefScreen'
-import { generateDebrief, sendChatMessage } from './coachApi'
+import { generateDebrief, sendChatMessage, CoachError } from './coachApi'
 import { computeStats, topExitVelocity } from './sessionStats'
 import { launchAngleRangeLabel } from './goalTargets'
+import { failureCopy, MID_WAIT_MESSAGE, RETRYING_MESSAGE } from './failureCopy'
 
 // ── Goal definitions ───────────────────────────────────────────────────────
 // These are the app's predefined coaching focus options.
@@ -676,7 +677,25 @@ export default function App() {
 
   const [sessionHistory, setSessionHistory] = useState([])
   const [viewingSession, setViewingSession] = useState(null)
-  const [wakingUp, setWakingUp] = useState(false)
+
+  // Loading-screen state. `slow` fires once at 25 seconds so the ambient wait
+  // sets an expectation against the real deadline instead of staying silent.
+  // `retrying` covers the one automatic retry callApi may run on its own.
+  // `failure` is the reason (and cold flag) the coachUnavailable screen reads
+  // its copy from, from src/failureCopy.js.
+  const [slow, setSlow] = useState(false)
+  const [retrying, setRetrying] = useState(false)
+  const [failure, setFailure] = useState(null)
+  const slowTimerRef = useRef(null)
+
+  // Belt and suspenders on top of the per-call clears in runDebrief: if the
+  // component itself ever unmounts mid-wait, the 25 second timer does not
+  // fire into a screen that is no longer there.
+  useEffect(() => {
+    return () => {
+      if (slowTimerRef.current) clearTimeout(slowTimerRef.current)
+    }
+  }, [])
 
   const generateSwings = (sessionNum = 2) => {
     const prevEV = mockSwings.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / mockSwings.length
@@ -730,8 +749,20 @@ export default function App() {
   // Split out of handleEndSession so the error screen's "Try again" can re-run the
   // same request without adding the session to history a second time.
   const runDebrief = (history, forSessionNumber) => {
-    setWakingUp(false)
+    setSlow(false)
+    setRetrying(false)
+    setFailure(null)
     setScreen('loading')
+
+    if (slowTimerRef.current) clearTimeout(slowTimerRef.current)
+    slowTimerRef.current = setTimeout(() => setSlow(true), 25000)
+
+    const clearSlowTimer = () => {
+      if (slowTimerRef.current) {
+        clearTimeout(slowTimerRef.current)
+        slowTimerRef.current = null
+      }
+    }
 
     const sessionsForDebrief = history.filter((s) => s.sessionNumber <= forSessionNumber)
 
@@ -740,9 +771,10 @@ export default function App() {
       player,
       sessions: sessionsForDebrief,
       viewingSessionNumber: forSessionNumber,
-      onRetry: () => setWakingUp(true),
+      onRetry: () => setRetrying(true),
     })
       .then((result) => {
+        clearSlowTimer()
         if (result.nextSessionTips?.length > 0) {
           setSessionHistory((prev) =>
             prev.map((s) =>
@@ -759,13 +791,24 @@ export default function App() {
               : s
           )
         )
-        setWakingUp(false)
+        setSlow(false)
+        setRetrying(false)
         setScreen('debrief')
       })
-      .catch(() => {
+      .catch((err) => {
         // Never advance to the debrief without a debrief. An empty results screen
         // reads as a finished product with nothing to say.
-        setWakingUp(false)
+        //
+        // callApi always throws a CoachError, but this catch must survive one
+        // that is not, so an error shape this app has never seen still reaches
+        // the visitor as the honest 'trouble' copy rather than a blank screen.
+        clearSlowTimer()
+        setSlow(false)
+        setRetrying(false)
+        setFailure({
+          reason: err instanceof CoachError ? err.reason : 'trouble',
+          cold: err instanceof CoachError ? err.cold : false,
+        })
         setScreen('coachUnavailable')
       })
   }
@@ -867,6 +910,12 @@ export default function App() {
   }
 
   if (screen === 'loading') {
+    // Retrying takes priority over the mid-wait line: the two can be true at
+    // once (the retry can fire after the 25 second mark), and "trying again"
+    // is the more current thing to tell the visitor than "still working."
+    const prominent = retrying || slow
+    const loadingMessage = retrying ? RETRYING_MESSAGE : slow ? MID_WAIT_MESSAGE : 'Your coach is reviewing the session…'
+
     return (
       <div style={{
         width: '100vw', height: '100vh',
@@ -885,26 +934,29 @@ export default function App() {
             }} />
           ))}
         </div>
-        {/* The ordinary waiting line stays quiet and ambient. The waking-up
-            explanation is the one a visitor has to actually read, so it gets the
-            larger, brighter treatment shared with the failure screen. */}
+        {/* The ordinary waiting line stays quiet and ambient. The mid-wait and
+            retrying lines are the ones a visitor has to actually read, so they
+            get the larger, brighter treatment shared with the failure screen. */}
         <div style={{
           fontFamily: "'Barlow', sans-serif",
-          fontSize: wakingUp ? 18 : 14,
-          color: wakingUp ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.35)',
+          fontSize: prominent ? 18 : 14,
+          color: prominent ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.35)',
           letterSpacing: '0.02em',
-          maxWidth: wakingUp ? 520 : 420, textAlign: 'center', lineHeight: 1.6,
+          maxWidth: prominent ? 520 : 420, textAlign: 'center', lineHeight: 1.6,
           paddingInline: 24,
         }}>
-          {wakingUp
-            ? 'Waking up the coach. This demo runs on a server that sleeps when idle, so the first request after a quiet spell takes a few extra seconds.'
-            : 'Your coach is reviewing the session…'}
+          {loadingMessage}
         </div>
       </div>
     )
   }
 
   if (screen === 'coachUnavailable') {
+    // failureCopy falls back to the 'trouble' wording on its own for a
+    // reason it does not recognize, including no reason at all, so this
+    // never renders a blank screen.
+    const { message, showRetry } = failureCopy(failure?.reason, failure?.cold)
+
     return (
       <div style={{
         width: '100vw', height: '100vh',
@@ -921,22 +973,24 @@ export default function App() {
           maxWidth: 520, textAlign: 'center', lineHeight: 1.6,
           paddingInline: 24,
         }}>
-          The coach didn't wake up in time. This demo sleeps when idle and sometimes needs a second try.
+          {message}
         </div>
-        <button
-          onClick={() => runDebrief(sessionHistory, viewingSession)}
-          style={{
-            height: 42, paddingInline: 24, borderRadius: 12, border: 'none',
-            background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT}CC 100%)`,
-            color: '#fff',
-            fontFamily: "'Barlow Condensed', sans-serif",
-            fontWeight: 800, fontSize: 15, letterSpacing: '0.08em',
-            textTransform: 'uppercase', cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(255,107,26,0.35)',
-          }}
-        >
-          Try again
-        </button>
+        {showRetry && (
+          <button
+            onClick={() => runDebrief(sessionHistory, viewingSession)}
+            style={{
+              height: 42, paddingInline: 24, borderRadius: 12, border: 'none',
+              background: `linear-gradient(135deg, ${ACCENT} 0%, ${ACCENT}CC 100%)`,
+              color: '#fff',
+              fontFamily: "'Barlow Condensed', sans-serif",
+              fontWeight: 800, fontSize: 15, letterSpacing: '0.08em',
+              textTransform: 'uppercase', cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(255,107,26,0.35)',
+            }}
+          >
+            Try again
+          </button>
+        )}
       </div>
     )
   }
