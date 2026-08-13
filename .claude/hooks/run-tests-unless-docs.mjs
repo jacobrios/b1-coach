@@ -13,6 +13,7 @@
 // command a human would type can never drift apart.
 
 import { spawnSync } from "node:child_process";
+import { resolveProjectRoot } from "./project-root.mjs";
 
 function defaultSpawn(cwd) {
   return spawnSync("npm", ["test", "--silent"], { stdio: "inherit", cwd }).status;
@@ -28,12 +29,18 @@ export function runEdit({ filePath, shellCwd, spawn = defaultSpawn }) {
 
   if (path.toLowerCase().endsWith(".md")) return 0; // docs edit: skip the suite
 
+  // The runner runs from the project root, never from wherever the session's
+  // shell is standing. Rooted in a subfolder, vitest collects only the tests
+  // under that subfolder, passes, and this hook reports the suite green having
+  // run a fraction of it.
+  const root = resolveProjectRoot(shellCwd);
+
   // Exit 2 specifically, not the suite's own exit code. Claude Code only feeds a
   // hook's output back to the agent on exit 2; every other non-zero code is
   // reported to the human and the agent carries on none the wiser. Propagating
   // vitest's exit 1, which is what the template does, means a broken suite is
   // silently invisible to the thing that broke it.
-  return spawn(shellCwd) === 0 ? 0 : 2;
+  return spawn(root) === 0 ? 0 : 2;
 }
 
 function main() {
