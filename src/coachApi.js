@@ -113,11 +113,24 @@ Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zo
 
 const RETRY_DELAY_MS = 1500
 
-// The browser's own backstop. api/coach.js gives up on Anthropic at 40000ms and
-// answers with its own classified reason; this sits behind that on purpose, at
-// 50000ms, so the server's more specific answer almost always wins the race and
-// this timeout only fires when the function itself never got to speak at all.
+// The browser's own backstop, and the ceiling this slice promises: the longest
+// a visitor is held before being told something. api/coach.js gives up on
+// Anthropic at 40000ms and answers with its own classified reason; this sits
+// behind that on purpose, at 50000ms, so the server's more specific answer
+// almost always wins the race and this timeout only fires when the function
+// itself never got to speak at all.
+//
+// It is a budget for the whole callApi call, not an allowance handed fresh to
+// each attempt. Both attempts and the delay between them are spent out of the
+// same wall clock, so the ceiling holds by construction rather than by
+// assuming every retryable failure happens to fail fast.
 const REQUEST_TIMEOUT_MS = 50000
+
+// A second attempt needs some room to work in. Below this there is not enough
+// budget left for one to plausibly finish, so starting it would only add
+// silence in front of the same honest message the visitor was always going to
+// get.
+const MIN_RETRY_BUDGET_MS = 2000
 
 // Everything callApi throws is one of these, so no caller has to guess what
 // went wrong from a bare Error message again. `reason` is one of 'timeout',
@@ -212,9 +225,13 @@ const isAbort = (err) => err?.name === 'AbortError'
 // 'unreachable' by the generic catches around those reads. Without that, a slow
 // body on an already-answered request could hang past the deadline this slice
 // promises as its ceiling.
-async function attempt(url, headers, body) {
+//
+// `budgetMs` is whatever is left of the call's ceiling when this attempt
+// starts, not a fresh allowance. A retry therefore inherits the time its
+// predecessor did not spend, and nothing else.
+async function attempt(url, headers, body, budgetMs) {
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), budgetMs)
 
   try {
     let response
@@ -294,34 +311,55 @@ async function attempt(url, headers, body) {
   }
 }
 
-// Whether a failed attempt is cheap enough to repeat once. An attempt that
-// already produced a successful HTTP response never qualifies, no matter what
-// reason its unusable reply carries, because repeating it means paying for a
-// second full wait on top of the first. Of the failures that never got a good
-// response, only 'unreachable' and 'trouble' are worth another try on their
-// own, and a cold instance's answer is worth retrying regardless of what it
-// was refused for. 'timeout' is the one exception to all of that: the visitor
-// has already waited the whole budget, and the point of a ceiling is that it
-// holds even when the instance was also cold.
+// Whether a failed attempt is worth repeating once. Two conditions, both
+// required: the attempt never produced a successful HTTP response, and the
+// reason is one a second try can plausibly do better on.
+//
+// The first condition is not decoration. A reply that arrived fine and then
+// would not parse is classified 'trouble', but that attempt already spent its
+// wait succeeding, so repeating it buys a second full wait for a problem in
+// the model's answer rather than in reaching it.
+//
+// `cold` is deliberately not consulted here, and this is the third time it has
+// been reasoned through, so it is written down. Work through what it could
+// change and it changes nothing: cold with 'credits' must not retry, because a
+// drained balance is not a waking-up problem and no second try will fund it;
+// cold with 'timeout' must not retry, because the visitor has already waited
+// the whole budget and the point of a ceiling is that it holds; and cold with
+// 'unreachable' or 'trouble' already retries without asking about cold at all.
+// A cold clause adds no case and only lets 'credits' through, which is the one
+// failure this slice was built to report honestly and the one the copy table
+// deliberately gives no Try Again button. Do not add it back.
 function isRetryable(err) {
   if (err.respondedOk) return false
-  if (err.reason === 'timeout') return false
-  return err.reason === 'unreachable' || err.reason === 'trouble' || err.cold
+  return err.reason === 'unreachable' || err.reason === 'trouble'
 }
 
 // Exported for tests. Both callers are in this file; nothing else should use it.
+//
+// One wall clock governs the whole call. Each attempt gets whatever is left of
+// REQUEST_TIMEOUT_MS rather than a fresh copy of it, and a retry is skipped
+// outright when too little is left for a second attempt to finish inside the
+// ceiling. That is what makes the ceiling a fact about the code instead of an
+// assumption about how quickly retryable failures tend to fail.
 export async function callApi(body, { onRetry } = {}) {
   const url = '/api/coach'
   const headers = { 'content-type': 'application/json' }
+  const startedAt = Date.now()
+  const remainingMs = () => REQUEST_TIMEOUT_MS - (Date.now() - startedAt)
 
   try {
-    return await attempt(url, headers, body)
+    return await attempt(url, headers, body, remainingMs())
   } catch (err) {
     if (!(err instanceof CoachError) || !isRetryable(err)) throw err
 
+    // The 1500ms pause comes out of the same budget as the attempts do, so it
+    // is subtracted before asking whether a second attempt has room to run.
+    if (remainingMs() - RETRY_DELAY_MS < MIN_RETRY_BUDGET_MS) throw err
+
     onRetry?.({ reason: err.reason, cold: err.cold })
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-    return attempt(url, headers, body)
+    return attempt(url, headers, body, remainingMs())
   }
 }
 

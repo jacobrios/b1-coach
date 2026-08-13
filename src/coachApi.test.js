@@ -1,9 +1,10 @@
 // Tests for the single choke point every coach request goes through.
 //
 // Two behaviors matter here and neither is visible on a happy path: the one
-// automatic retry that covers a sleeping server, and the unwrapping of a model
-// response that arrives fenced in Markdown. Both were added because the real
-// thing went wrong; both are silent when they work.
+// automatic retry, which fires only for failures that never reached a good
+// response and only while the call's time budget can still afford it, and the
+// unwrapping of a model response that arrives fenced in Markdown. Both were
+// added because the real thing went wrong; both are silent when they work.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { callApi, goalContext, CoachError } from './coachApi.js'
@@ -287,18 +288,29 @@ describe('the retry policy: cheap failures repeat once, an already-spent wait ne
     expect(result).toEqual({ recovered: true })
   })
 
-  it('retries for cold, even when the reason alone would not have retried', async () => {
-    // credits alone does not retry (below), but a cold instance's very first
-    // answer is cheap to repeat regardless of what it was refused for.
+  it('does not retry credits on a cold instance either, because a dry balance is not a waking-up problem', async () => {
+    // This test used to assert the opposite, and the opposite was wrong. Cold is
+    // the ordinary state of a stranger's first click, and a drained balance is
+    // the failure this whole slice exists to report honestly. Retrying it told
+    // the visitor "Trying once more" for something a second try can never fix.
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(serverError(502, 'credits', true))
       .mockResolvedValueOnce(ok('{"recovered":true}'))
     vi.stubGlobal('fetch', fetchMock)
 
-    const result = await run(() => callApi({ messages: [] }))
+    await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'credits', cold: true })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
 
-    expect(fetchMock).toHaveBeenCalledTimes(2)
-    expect(result).toEqual({ recovered: true })
+  it('does not retry a cold timeout either, so cold changes no answer the reason had not already given', async () => {
+    // The other half of why cold is not consulted at all: every reason it could
+    // have flipped either must not retry (credits, timeout) or already retries
+    // without it (unreachable, trouble).
+    const fetchMock = vi.fn(async () => serverError(504, 'timeout', true))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'timeout' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('does not retry timeout: the visitor already waited the whole budget', async () => {
@@ -336,6 +348,63 @@ describe('the retry policy: cheap failures repeat once, an already-spent wait ne
 
     await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'trouble' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  // Found by the whole-branch review. The ceiling used to rest on an assumption
+  // stated in a comment: that everything retryable "answered quickly." Nothing
+  // in the code held it. A degraded Anthropic answering 529 at 35 seconds is a
+  // server-classified 'trouble', and it bought a second attempt with a fresh
+  // full deadline, so the roughly 50 second promise quietly became roughly 90.
+  // The budget below is the same promise made structural: one wall clock for
+  // the whole call, spent down by each attempt.
+
+  it('a trouble that took 35 seconds does not buy a second full wait', async () => {
+    const startedAt = Date.now()
+    let finishedAt = null
+
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        setTimeout(() => resolve(serverError(502, 'trouble')), 35000)
+      }))
+      .mockImplementationOnce((_url, { signal }) => new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => {
+          const err = new Error('The operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        })
+      }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const promise = callApi({ messages: [] })
+    const settled = promise.then(
+      () => { finishedAt = Date.now() },
+      () => { finishedAt = Date.now() },
+    )
+    await vi.advanceTimersByTimeAsync(4 * REQUEST_TIMEOUT_MS)
+    await settled
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(finishedAt - startedAt).toBeLessThanOrEqual(REQUEST_TIMEOUT_MS)
+  })
+
+  it('does not start a second attempt with almost none of the budget left', async () => {
+    // A retry here could not finish before the ceiling anyway, so all it would
+    // buy the visitor is a longer silence before the same honest message.
+    const onRetry = vi.fn()
+    const fetchMock = vi.fn()
+      .mockImplementationOnce(() => new Promise((resolve) => {
+        setTimeout(() => resolve(serverError(502, 'trouble')), 49000)
+      }))
+      .mockResolvedValue(ok('{"recovered":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const promise = callApi({ messages: [] }, { onRetry })
+    promise.catch(() => {})
+    await vi.advanceTimersByTimeAsync(4 * REQUEST_TIMEOUT_MS)
+
+    await expect(promise).rejects.toMatchObject({ reason: 'trouble' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(onRetry).not.toHaveBeenCalled()
   })
 
   it('tells the caller a retry is happening, and what it is retrying for', async () => {
@@ -381,21 +450,21 @@ describe('the retry policy: cheap failures repeat once, an already-spent wait ne
     await expect(run(() => callApi({ messages: [] }))).rejects.toBeInstanceOf(CoachError)
   })
 
-  // There is deliberately no separate "pins the ceiling" test here. A first
-  // version of this file had one, and review found it proved nothing: it mocked
-  // two instant fetches, advanced 1500ms, and asserted the resolved result,
-  // which is exactly 'retries for unreachable' with a different timer advance.
-  // It would have passed unchanged no matter what REQUEST_TIMEOUT_MS was set to
-  // and would not have gone red if timeout started retrying. The ceiling this
-  // slice promises (a visitor is never held longer than roughly the request
-  // deadline, and never doubled to two full waits) is actually covered by two
-  // things already in this file: 'branch 1: an abort is classified timeout' in
-  // the block above, which pins that the 50-second deadline is what produces a
-  // timeout, and 'does not retry timeout' plus the cold trap just above, which
-  // pin that a timeout never buys a second wait. Together those two facts are
-  // the ceiling; no third test is needed to say so, and one that only restates
-  // the retry-fires-for-unreachable behavior under a misleading name is worse
-  // than not having it.
+  // A note on the ceiling tests above, because an earlier version of this file
+  // got them wrong twice and the second mistake is the instructive one.
+  //
+  // The first attempt mocked two instant fetches, advanced 1500ms, and asserted
+  // the resolved result, which was 'retries for unreachable' under a grander
+  // name. It would have passed no matter what REQUEST_TIMEOUT_MS was.
+  //
+  // It was replaced by an argument rather than a test: that a timeout is the
+  // only failure that can spend the whole budget, and it never retries, so
+  // everything else must fail fast. The whole-branch review found the hole. A
+  // server-classified 'trouble' can take 35 seconds to arrive and still retry,
+  // so "fails fast" was an assumption about Anthropic's behavior, not a
+  // property of this code. The two tests above measure the clock instead of
+  // reasoning about it, which is why they could go red and the argument could
+  // not.
 })
 
 describe('unwrapping what the model actually returns', () => {
