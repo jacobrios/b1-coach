@@ -199,15 +199,25 @@ function parseCoachResponse(text) {
   throw new Error('Failed to parse coach response as JSON')
 }
 
+const isAbort = (err) => err?.name === 'AbortError'
+
 // One attempt: fetch, classify whatever went wrong into a CoachError, or parse
 // and return the coach's reply. The server's own answer always wins when there
 // is one; this only guesses when the function never got to speak at all.
+//
+// The deadline covers the whole attempt, not just the wait for headers: the
+// timer is cleared only once this function is done with the response body, and
+// an abort firing during either body read (the error envelope or the coach's
+// reply) is still classified 'timeout', not misread as 'trouble' or
+// 'unreachable' by the generic catches around those reads. Without that, a slow
+// body on an already-answered request could hang past the deadline this slice
+// promises as its ceiling.
 async function attempt(url, headers, body) {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
-  let response
   try {
+    let response
     try {
       response = await fetch(url, {
         method: 'POST',
@@ -215,56 +225,72 @@ async function attempt(url, headers, body) {
         body: JSON.stringify(body),
         signal: controller.signal,
       })
-    } finally {
-      clearTimeout(timer)
+    } catch (err) {
+      if (isAbort(err)) {
+        throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+      }
+      // The network failed or the function could not be reached at all. We know
+      // nothing about Anthropic; the server never got a chance to say more.
+      throw new CoachError('Could not reach the coach', { reason: 'unreachable' })
     }
-  } catch (err) {
-    if (err?.name === 'AbortError') {
-      throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
-    }
-    // The network failed or the function could not be reached at all. We know
-    // nothing about Anthropic; the server never got a chance to say more.
-    throw new CoachError('Could not reach the coach', { reason: 'unreachable' })
-  }
 
-  if (!response.ok) {
-    let envelope
+    if (!response.ok) {
+      let envelope
+      try {
+        envelope = await response.json()
+      } catch (err) {
+        if (isAbort(err)) {
+          throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+        }
+        envelope = undefined
+      }
+
+      // The classified shape from api/coach.js: { error: { reason, cold, ... } }.
+      // A bare string error (the older caller-shape refusal) is not this, and
+      // reading `.reason` off it must not throw or be mistaken for a real reason.
+      const errorField = envelope?.error
+      if (errorField && typeof errorField === 'object' && typeof errorField.reason === 'string') {
+        throw new CoachError('The coach could not answer', { reason: errorField.reason, cold: !!errorField.cold })
+      }
+
+      // No usable envelope: the function never got to speak, or answered in a
+      // shape this app never asked for. A 504 or an x-vercel-error header is the
+      // platform itself saying it gave up; anything else, we simply do not know.
+      const isTimeoutSignal = response.status === 504 || response.headers?.get?.('x-vercel-error') != null
+      throw new CoachError('The coach could not answer', { reason: isTimeoutSignal ? 'timeout' : 'unreachable' })
+    }
+
+    // The connection worked and the server answered; everything from here on is
+    // the reply itself being unusable, in one shape or another. That attempt
+    // already spent its full wait succeeding, which is exactly why every
+    // failure below is marked respondedOk and the retry policy refuses to
+    // repeat it. A body that is not JSON at all, or is JSON but not an object,
+    // must not escape this function as a raw SyntaxError or TypeError with no
+    // reason. An abort while reading this body is the one exception: it is
+    // still 'timeout', because the visitor waited the full deadline regardless
+    // of whether the headers had already arrived.
+    let text
     try {
-      envelope = await response.json()
+      const data = await response.json()
+      text = data?.content?.[0]?.text
+    } catch (err) {
+      if (isAbort(err)) {
+        throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+      }
+      throw new CoachError('The coach answered with something unusable', { reason: 'trouble', respondedOk: true })
+    }
+
+    if (!text) {
+      throw new CoachError('No text content in API response', { reason: 'trouble', respondedOk: true })
+    }
+
+    try {
+      return parseCoachResponse(text)
     } catch {
-      envelope = undefined
+      throw new CoachError('Failed to parse coach response as JSON', { reason: 'trouble', respondedOk: true })
     }
-
-    // The classified shape from api/coach.js: { error: { reason, cold, ... } }.
-    // A bare string error (the older caller-shape refusal) is not this, and
-    // reading `.reason` off it must not throw or be mistaken for a real reason.
-    const errorField = envelope?.error
-    if (errorField && typeof errorField === 'object' && typeof errorField.reason === 'string') {
-      throw new CoachError('The coach could not answer', { reason: errorField.reason, cold: !!errorField.cold })
-    }
-
-    // No usable envelope: the function never got to speak, or answered in a
-    // shape this app never asked for. A 504 or an x-vercel-error header is the
-    // platform itself saying it gave up; anything else, we simply do not know.
-    const isTimeoutSignal = response.status === 504 || response.headers?.get?.('x-vercel-error') != null
-    throw new CoachError('The coach could not answer', { reason: isTimeoutSignal ? 'timeout' : 'unreachable' })
-  }
-
-  const data = await response.json()
-  const text = data.content?.[0]?.text
-
-  // The connection worked and the server answered; the reply itself is what's
-  // unusable. That attempt already spent its full wait succeeding, which is
-  // exactly why it is marked respondedOk and the retry policy below refuses to
-  // repeat it.
-  if (!text) {
-    throw new CoachError('No text content in API response', { reason: 'trouble', respondedOk: true })
-  }
-
-  try {
-    return parseCoachResponse(text)
-  } catch {
-    throw new CoachError('Failed to parse coach response as JSON', { reason: 'trouble', respondedOk: true })
+  } finally {
+    clearTimeout(timer)
   }
 }
 

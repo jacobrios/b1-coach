@@ -121,6 +121,57 @@ describe('reading the reason a failure carries', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
+  // Found by review: the deadline used to cover only the wait for headers.
+  // clearTimeout sat in a finally around the fetch call alone, so once headers
+  // arrived, reading the body had no deadline at all. These two pin that the
+  // same AbortController now covers the body read too, for both the coach's
+  // reply and the server's error envelope.
+
+  it('the deadline covers reading a successful reply, not just the wait for headers', async () => {
+    const fetchMock = vi.fn((_url, { signal }) => Promise.resolve({
+      ok: true,
+      status: 200,
+      json: () => new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => {
+          const err = new Error('The operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        })
+      }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const promise = callApi({ messages: [] })
+    promise.catch(() => {})
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS)
+
+    await expect(promise).rejects.toMatchObject({ reason: 'timeout', respondedOk: false })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('the deadline covers reading the server error envelope, not just the wait for headers', async () => {
+    const fetchMock = vi.fn((_url, { signal }) => Promise.resolve({
+      ok: false,
+      status: 502,
+      headers: { get: () => null },
+      json: () => new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => {
+          const err = new Error('The operation was aborted')
+          err.name = 'AbortError'
+          reject(err)
+        })
+      }),
+    }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const promise = callApi({ messages: [] })
+    promise.catch(() => {})
+    await vi.advanceTimersByTimeAsync(REQUEST_TIMEOUT_MS)
+
+    await expect(promise).rejects.toMatchObject({ reason: 'timeout' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
   it('branch 2: any other thrown error is classified unreachable', async () => {
     const fetchMock = vi.fn(async () => { throw new Error('network down') })
     vi.stubGlobal('fetch', fetchMock)
@@ -175,6 +226,30 @@ describe('reading the reason a failure carries', () => {
     vi.stubGlobal('fetch', vi.fn(async () => ok('I am afraid I cannot do that.')))
 
     await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'trouble' })
+  })
+
+  // Found by review after this task's first pass: an ok response whose body is
+  // not valid JSON at all (not even an unparseable coach reply, the envelope
+  // itself) reached response.json() outside any try, so it threw a raw
+  // SyntaxError with no `reason`. A caller switching on `.reason` would see
+  // `undefined`, which is exactly the blank-screen failure this slice exists
+  // to prevent.
+  it('branch 5: an ok response whose body is not JSON at all is classified trouble, not a raw SyntaxError', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => { throw new SyntaxError('Unexpected token in JSON') },
+    })))
+
+    await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'trouble', respondedOk: true })
+  })
+
+  // A null body reaches the same unguarded `.content` read and throws a raw
+  // TypeError instead, for the same reason.
+  it('branch 5: an ok response whose body is null is classified trouble, not a raw TypeError', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, status: 200, json: async () => null })))
+
+    await expect(run(() => callApi({ messages: [] }))).rejects.toMatchObject({ reason: 'trouble', respondedOk: true })
   })
 })
 
@@ -306,21 +381,21 @@ describe('the retry policy: cheap failures repeat once, an already-spent wait ne
     await expect(run(() => callApi({ messages: [] }))).rejects.toBeInstanceOf(CoachError)
   })
 
-  it('pins the ceiling: the retried attempt still resolves within the retry delay once its own fetch settles', async () => {
-    // Every retryable failure fails fast (unreachable before the server answers,
-    // or a quick error response), so the only wait beyond a single attempt is
-    // the fixed 1500ms retry delay, not a second full deadline.
-    const fetchMock = vi.fn()
-      .mockRejectedValueOnce(new Error('network down'))
-      .mockResolvedValueOnce(ok('{"recovered":true}'))
-    vi.stubGlobal('fetch', fetchMock)
-
-    const promise = callApi({ messages: [] })
-    promise.catch(() => {})
-    await vi.advanceTimersByTimeAsync(RETRY_DELAY_MS)
-
-    await expect(promise).resolves.toEqual({ recovered: true })
-  })
+  // There is deliberately no separate "pins the ceiling" test here. A first
+  // version of this file had one, and review found it proved nothing: it mocked
+  // two instant fetches, advanced 1500ms, and asserted the resolved result,
+  // which is exactly 'retries for unreachable' with a different timer advance.
+  // It would have passed unchanged no matter what REQUEST_TIMEOUT_MS was set to
+  // and would not have gone red if timeout started retrying. The ceiling this
+  // slice promises (a visitor is never held longer than roughly the request
+  // deadline, and never doubled to two full waits) is actually covered by two
+  // things already in this file: 'branch 1: an abort is classified timeout' in
+  // the block above, which pins that the 50-second deadline is what produces a
+  // timeout, and 'does not retry timeout' plus the cold trap just above, which
+  // pin that a timeout never buys a second wait. Together those two facts are
+  // the ceiling; no third test is needed to say so, and one that only restates
+  // the retry-fires-for-unreachable behavior under a misleading name is worse
+  // than not having it.
 })
 
 describe('unwrapping what the model actually returns', () => {
