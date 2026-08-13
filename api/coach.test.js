@@ -32,7 +32,9 @@ beforeEach(() => {
   sentToAnthropic = null
   vi.stubGlobal('fetch', async (url, init) => {
     sentToAnthropic = { url, body: JSON.parse(init.body) }
-    return { status: 200, json: async () => ({ content: [{ type: 'text', text: '{}' }] }) }
+    // A real fetch Response computes `ok` from the status; this stand-in has to
+    // set it explicitly, since a plain object does not.
+    return { status: 200, ok: true, json: async () => ({ content: [{ type: 'text', text: '{}' }] }) }
   })
 })
 
@@ -259,20 +261,121 @@ describe('the size cap', () => {
   })
 })
 
-describe('what comes back', () => {
-  it('returns the upstream status and body unchanged', async () => {
-    vi.stubGlobal('fetch', async () => ({
-      status: 429,
-      json: async () => ({ error: { type: 'rate_limit_error' } }),
-    }))
+describe('what comes back on success', () => {
+  it('returns the success body byte for byte unchanged, since callApi parses it', async () => {
     const res = await call({ method: 'POST', body: validBody() })
-    expect(res.statusCode).toBe(429)
-    expect(res.body).toEqual({ error: { type: 'rate_limit_error' } })
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ content: [{ type: 'text', text: '{}' }] })
   })
 
-  it('turns a failed call into a 500 rather than crashing', async () => {
+  it('carries the upstream timing and cold-instance headers', async () => {
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.headers['x-coach-upstream-ms']).toBeDefined()
+    expect(res.headers['x-coach-cold']).toBeDefined()
+  })
+})
+
+describe('the server classifies its own failures', () => {
+  it('turns an aborted request into timeout, 504, once the 40 second deadline fires', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal('fetch', (url, init) => new Promise((_resolve, reject) => {
+      init.signal.addEventListener('abort', () => {
+        const err = new Error('This operation was aborted')
+        err.name = 'AbortError'
+        reject(err)
+      })
+    }))
+
+    const resPromise = call({ method: 'POST', body: validBody() })
+    await vi.advanceTimersByTimeAsync(40000)
+    const res = await resPromise
+
+    vi.useRealTimers()
+    expect(res.statusCode).toBe(504)
+    expect(res.body).toEqual({
+      error: { reason: 'timeout', upstreamStatus: null, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+
+  it('turns a drained balance into credits, 502, matched against the serialized body', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      status: 400,
+      ok: false,
+      json: async () => ({
+        error: { type: 'invalid_request_error', message: 'Your credit balance is too low to access the Claude API' },
+      }),
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(502)
+    expect(res.body).toEqual({
+      error: { reason: 'credits', upstreamStatus: 400, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+
+  it('turns any other non-ok status into trouble, 502', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      status: 529,
+      ok: false,
+      json: async () => ({ error: { type: 'overloaded_error', message: 'Overloaded' } }),
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(502)
+    expect(res.body).toEqual({
+      error: { reason: 'trouble', upstreamStatus: 529, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+
+  it('turns a 400 that is not about credits into trouble, not credits', async () => {
+    vi.stubGlobal('fetch', async () => ({
+      status: 400,
+      ok: false,
+      json: async () => ({ error: { type: 'invalid_request_error', message: 'messages: at least one message is required' } }),
+    }))
+    const res = await call({ method: 'POST', body: validBody() })
+    expect(res.statusCode).toBe(502)
+    expect(res.body.error.reason).toBe('trouble')
+  })
+
+  it('turns a thrown fetch into trouble, 502, rather than crashing', async () => {
     vi.stubGlobal('fetch', async () => { throw new Error('socket hang up') })
     const res = await call({ method: 'POST', body: validBody() })
-    expect(res.statusCode).toBe(500)
+    expect(res.statusCode).toBe(502)
+    expect(res.body).toEqual({
+      error: { reason: 'trouble', upstreamStatus: null, upstreamMs: expect.any(Number), cold: expect.any(Boolean) },
+    })
+  })
+})
+
+describe('cold instance detection', () => {
+  // Each test here resets the module registry so it gets its own fresh
+  // `instanceWarm` module-scope flag, rather than inheriting whatever earlier
+  // tests in this file left behind.
+  async function freshHandler() {
+    vi.resetModules()
+    const mod = await import('./coach.js')
+    return mod.default
+  }
+
+  it('reports cold on the first invocation of a fresh instance', async () => {
+    const handlerFn = await freshHandler()
+    const res = makeRes()
+    await handlerFn({ method: 'POST', body: validBody() }, res)
+    expect(res.headers['x-coach-cold']).toBe('true')
+  })
+
+  it('reports warm on a later invocation of the same instance', async () => {
+    const handlerFn = await freshHandler()
+    await handlerFn({ method: 'POST', body: validBody() }, makeRes())
+    const res = makeRes()
+    await handlerFn({ method: 'POST', body: validBody() }, res)
+    expect(res.headers['x-coach-cold']).toBe('false')
+  })
+
+  it('a liveness GET marks the instance warm for the POST that follows', async () => {
+    const handlerFn = await freshHandler()
+    await handlerFn({ method: 'GET' }, makeRes())
+    const res = makeRes()
+    await handlerFn({ method: 'POST', body: validBody() }, res)
+    expect(res.headers['x-coach-cold']).toBe('false')
   })
 })
