@@ -302,6 +302,26 @@ failure fails fast, because it either could not reach the server or the server
 answered quickly with an error. So the longest a visitor is held without being
 told anything stays at roughly 50 seconds rather than doubling to 100.
 
+**Correction, 13 August 2026, from the whole-branch review.** Two sentences
+above are wrong and were built as written before this was caught. Recorded here
+rather than edited away, because what the plan said is why the code said it.
+
+- **"or the `cold` flag is set" was a defect in this plan.** It let `credits`
+  retry whenever the instance was cold, which is the ordinary state of a
+  stranger's first click, contradicting this same document in two other places
+  and auto-retrying the one failure the copy table deliberately gives no button.
+  Work through what `cold` could change and it changes nothing: with `credits`
+  or `timeout` it must not retry, and with `unreachable` or `trouble` it already
+  retries without being asked. The clause is removed; the reasoning is written
+  into `isRetryable` so nobody restores it from this plan.
+- **The ceiling paragraph rested on an assumption, not on the code.** "The
+  server answered quickly with an error" is not something the code enforced: a
+  degraded Anthropic returning 529 at 35 seconds is a `trouble`, and the retry
+  used to start a fresh 50 second clock, making the real ceiling roughly 90. The
+  50 seconds is now a wall-clock budget for the whole `callApi` call, spent down
+  by each attempt, with a retry skipped when too little is left for one to
+  finish. The promise now holds by construction.
+
 **The `onRetry` callback** now receives `{ reason, cold }` so the loading screen
 can say something true while the second attempt runs.
 
