@@ -149,6 +149,15 @@ are wired in `.claude/settings.json`, which is committed.
   Both directions matter and both were seen failing first: blanking the protected
   pattern turned 8 tests red, and emptying the allowlist turned the 4
   `.env.example` tests red.
+- **Two limits of that guard, found by review on 14 August 2026 and recorded so
+  nobody reads "tested" as "airtight."** First, it only runs on `Edit`, `Write`
+  and `MultiEdit` (the matcher in `.claude/settings.json`), so an agent writing
+  to `.env` through a shell command is not stopped by it at any point. That is
+  the larger gap of the two and it is on the What's Next list. Second, a
+  *directory* named `.env` is not protected: the pattern needs a `.` or the end
+  of the string after `.env` and finds a `/` instead, so `.env/config.json` gets
+  through. That one is inherited from the template, matters only if secrets ever
+  move into a `.env/` folder, and is recorded rather than fixed.
 
 The template's per-edit / end-of-task split was deliberately not adopted here.
 It exists to keep an 801-test suite off every single edit; this one is 171 tests
@@ -802,6 +811,14 @@ rewritten, per the append-only rule.
   in both directions first, and the drift report is clean for the first time. See
   the hooks section above. The guard has still never been observed firing in
   real use; what changed is that it is now proven to fire when it should.
+- **Decide whether the `.env` guard should cover shell commands too.** Added 14
+  August 2026, found by the review of the guard's own tests. `protect-paths.mjs`
+  runs only on the file-editing tools, so it stops an agent editing `.env`
+  directly and does nothing about an agent appending to it from a shell command.
+  The guard is now proven to do what it does; this is about what it does not
+  reach. Whether that is worth closing on a proof of concept is a judgment call:
+  the realistic risk here is an accident rather than an attacker, and the key is
+  spendable rather than readable either way.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.

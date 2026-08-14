@@ -88,6 +88,16 @@ const CASES = [
     blocked: false,
     why: 'a direnv config, which merely starts like the secrets file',
   },
+  {
+    path: 'production.env',
+    blocked: false,
+    why: 'a config file whose name merely ends in .env, which pins the leading anchor',
+  },
+  {
+    path: 'src/config.env.js',
+    blocked: false,
+    why: 'ordinary code with .env in the middle of its name',
+  },
   { path: 'docs/queued-slices.md', blocked: false, why: 'an ordinary docs file' },
   { path: 'src/coachApi.js', blocked: false, why: 'ordinary product code' },
 ]

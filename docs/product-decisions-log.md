@@ -46,6 +46,23 @@ report still be true after you silence it? The difference itself is real, since
 the drift check matches on exact filename and this project's copy is JavaScript
 rather than TypeScript, there being no TypeScript anywhere in this repo.
 
+**Review found the one mutation the tests did not catch, and it is now caught.**
+An independent reviewer rebuilt the break-it experiment from scratch on a copy
+outside the repo, tried seven mutations rather than the two that had been run,
+and found that removing the pattern's leading anchor left all 18 tests green
+while `production.env` and `src/config.env.js` started being refused. Over-blocking
+rather than a hole, but the test file's own stated standard is that a path which
+must stay editable is as load-bearing as one that must be refused, and that was
+the single anchor the standard left unguarded. Two rows were added and seen
+failing against that exact mutation, taking the suite to 242.
+
+**What the guard still does not reach, said plainly.** It runs only on the
+file-editing tools, so an agent writing to `.env` through a shell command is not
+stopped by it. A directory named `.env` is also unprotected. Both are recorded in
+the project brief and the first is on the What's Next list, because this project's
+standing rule is never to imply broader coverage than exists, and "the guard is
+tested" could otherwise be read as "the secrets file cannot be written."
+
 *One process note.* A guardrail blocked the cleanup of a scratch file written to
 `/tmp`, correctly, if conservatively: the file was genuinely outside the project.
 The underlying mistake was writing it there at all. It also swallowed the command
