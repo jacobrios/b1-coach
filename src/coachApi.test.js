@@ -62,6 +62,18 @@ describe('the targets the coach is told about', () => {
     expect(context).toContain('88+ mph')
   })
 
+  // Slice 6 replaced the fake distance formula with an honest carry curve.
+  // Under the old formula, 88 mph at 25-35 degrees carried 399 feet, so calling
+  // it "home run distance" was true. Under the honest curve the same swing
+  // carries roughly 310-323 feet, a warning-track flyball, so the prompt must
+  // not claim a home run next to a chart that shows one falling short. This
+  // pins the wording, not the number, so it survives future retuning of the
+  // carry curve itself.
+  it('does not tell the coach the Power target is home run distance', () => {
+    const context = goalContext({ id: 'power' })
+    expect(context.toLowerCase()).not.toMatch(/home run/)
+  })
+
   it('tells the coach contact is 8 to 18 degrees at 85 mph', () => {
     const context = goalContext({ id: 'contact' })
     expect(context).toContain('8-18 degrees')

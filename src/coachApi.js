@@ -31,7 +31,12 @@ export function goalContext(goal) {
   const target = goalTarget(goal?.id)
   switch (goal?.id) {
     case 'power':
-      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees, target exit velocity ${target.exitVelocity}+ mph. These are the conditions for home run distance contact.`
+      // Was "the conditions for home run distance contact" until Slice 6 gave
+      // distance an honest carry curve; at these numbers that is now a
+      // warning-track flyball, not a home run, and the wrong word would sit
+      // right next to a chart proving it wrong. Describes best contact instead,
+      // which stays true regardless of how far the curve says the ball goes.
+      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees, target exit velocity ${target.exitVelocity}+ mph. These are the conditions for the player's best contact.`
     case 'contact':
       return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees for true line drives, target exit velocity ${target.exitVelocity}+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.`
     case 'allfields':
