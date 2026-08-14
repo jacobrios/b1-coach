@@ -109,7 +109,7 @@ const { distanceBucketCounts } = await import('../src/ballFlight.js')
 const REPLAYS_PER_CELL = 20000
 const SESSIONS = [2, 3, 4]
 const TARGET_GOALS = [
-  { id: 'power', label: 'Power & Home Runs' },
+  { id: 'power', label: 'Power & Distance' },
   { id: 'contact', label: 'Line Drives & Contact' },
   { id: 'popup', label: 'Reduce Pop-Ups' },
 ]

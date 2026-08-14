@@ -271,7 +271,7 @@ function SwingTicker({ swings, goalId }) {
 //   player          — { firstName, lastName } from TrackMan API, or null while loading
 //   sessionNumber   — integer, e.g. 1
 //   goalId          — string key matching a goal, e.g. 'power'
-//   goalLabel       — display name, e.g. 'Power & Home Runs'
+//   goalLabel       — display name, e.g. 'Power & Distance'
 //   swings          — array of { ev: number, la: number, dist?: number }
 export default function LiveSessionScreen({
   player = null,

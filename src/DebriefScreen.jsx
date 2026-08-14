@@ -898,7 +898,7 @@ function ZoneBreakdown({ swings }) {
 //   player           — { firstName, lastName } from TrackMan API, or null
 //   sessionNumber    — integer
 //   goalId           — string key, e.g. 'power'
-//   goalLabel        — display string, e.g. 'Power & Home Runs'
+//   goalLabel        — display string, e.g. 'Power & Distance'
 //   sessionData      — { avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings }
 //   coachingSummary  — string for the Session Summary body (from Anthropic API)
 //   whatThisMeans    — string for the What This Means body (from Anthropic API)

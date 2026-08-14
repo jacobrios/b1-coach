@@ -19,10 +19,10 @@ import { generateSwings } from './swingGenerator'
 const ACCENT = '#FF6B1A'
 const DASHBOARD_COLOR = '#7B9EB8'
 
-const GOALS = [
+export const GOALS = [
   {
     id: 'power',
-    label: 'Power & Home Runs',
+    label: 'Power & Distance',
     subtitle: 'Exit velocity · Launch angle · Distance',
     type: 'power',
     tag: `Launch Angle ${launchAngleRangeLabel('power')}`,
