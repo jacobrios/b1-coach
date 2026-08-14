@@ -229,8 +229,22 @@ console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per
 console.log('Lower is better: fewer bars on the chart come up completely empty.')
 console.log('='.repeat(78))
 
+// Two header rows rather than one abbreviated row: `power` and `popup` both
+// start with "po", so a single-row abbreviated header (this script's first
+// draft) printed the same "poS2/poS3/poS4" label over two different goals'
+// columns. scripts/measure-swing-generation.mjs never abbreviates a goal
+// name; this keeps that convention by spelling the full name out, just once
+// per group of three session columns instead of once per line, so the table
+// stays compact enough to compare all three schemes side by side.
+const GROUP_WIDTH = 7 * SESSIONS.length
+// +1 so a label as long as the group itself ("Line Drives & Contact" is
+// exactly 21 characters, the same as three 7-wide session columns) still
+// gets a visible gap before the next goal's name, rather than running
+// straight into it.
+console.log(' '.repeat(38) + TARGET_GOALS.map((g) => g.label.padEnd(GROUP_WIDTH + 1)).join(''))
+
 const header = ['scheme'.padEnd(38)]
-  .concat(TARGET_GOALS.flatMap((g) => SESSIONS.map((s) => `${g.id.slice(0, 2)}S${s}`.padStart(7))))
+  .concat(TARGET_GOALS.flatMap(() => SESSIONS.map((s) => `S${s}`.padStart(7))))
   .concat(['  OVERALL'])
 console.log(header.join(''))
 
