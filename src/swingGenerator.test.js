@@ -60,7 +60,23 @@ const ALWAYS_ON_TARGET = [{ hit: { launch: { exitSpeed: 120, angle: 45 } } }]
 // draw nothing.
 function callsPerAttempt(value) {
   const source = constantRandom(value)
-  generateSwings({ sessionNum: 2, goalId: 'power', baselineSwings: ALWAYS_ON_TARGET, random: source.random })
+  const swings = generateSwings({ sessionNum: 2, goalId: 'power', baselineSwings: ALWAYS_ON_TARGET, random: source.random })
+
+  // The comment above is a lesson; this is what enforces it. The measurement
+  // only holds while every swing off that baseline really does clear the Power
+  // target, and today that is partly luck: the launch angle clamp stops at 35
+  // and Power's band happens to end at 35 too, so the measuring swing sits
+  // exactly on the boundary. Narrow the band or drop the clamp and this helper
+  // would silently start measuring two attempts again, which would make the
+  // four no-target guards below pass against anything. It fails loudly here
+  // instead.
+  for (const swing of swings) {
+    expect(
+      meetsTarget('power', swing.hit.launch),
+      'callsPerAttempt is no longer measuring a single attempt: its baseline stopped clearing the Power target, so the re-roll now fires inside the measurement itself',
+    ).toBe(true)
+  }
+
   return source.callCount()
 }
 

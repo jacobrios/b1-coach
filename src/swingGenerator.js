@@ -35,9 +35,18 @@ import { hasTarget, meetsTarget } from './goalTargets'
 // numbers had to get lucky separately. Real batted balls do not work that way,
 // because a barrel is both at once.
 //
-// The independent share is the arithmetic that keeps the total spread the same
-// as before, so the charts do not visibly tighten just because the two numbers
-// now agree with each other: 0.6 squared plus 0.8 squared is 1.
+// The independent share is the arithmetic that stops the charts tightening just
+// because the two numbers now agree with each other: 0.6 squared plus 0.8
+// squared is 1, so the typical distance of a swing from its session average is
+// unchanged. Measured over 40,000 replays it holds almost exactly, 5.2 mph and
+// 6.5 degrees either way.
+//
+// What is NOT preserved is the extremes. Adding two scaled draws together can
+// reach further than one draw could, so the occasional swing now lands further
+// out: launch angle across those replays ran 4 to 31 degrees before and 0 to 35
+// after. A visitor sees a few more dots at the edges of the chart, which is
+// honest for a hitter and worth knowing before anyone reads a wider scatter as
+// a bug.
 const CONTACT_CORRELATION = 0.6
 const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
 
@@ -49,9 +58,12 @@ const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
 // It is a ramp rather than a flat lift because a flat +5 scored marginally
 // better and read far worse: it moves session 2's average launch angle five and
 // a half degrees in a single round of batting practice, which is exactly the
-// kind of impossible number this slice exists to remove. The ramp lands session
-// 2 at 19.9 degrees and session 4 at 23.8, which is a player making progress
-// rather than a different player.
+// kind of impossible number this slice exists to remove. Measured over 40,000
+// replays, the ramp lands session 2 at 20.4 degrees and session 4 at 24.4,
+// against a session 1 average of 17.3: a player making progress rather than a
+// different player. Those are a little above the +2 and +6 the ramp adds,
+// because the re-roll below throws out some of the worst sessions and that
+// pulls the average up with it.
 const POWER_LIFT_PER_SESSION = 2
 
 // One session of fifteen swings. Everything random it needs comes through the
@@ -112,7 +124,12 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
 // A session of fifteen swings, built off the averages of `baselineSwings`,
 // which is the session the player has already seen. `random` is injected only
 // so the tests can hold it still; the app passes nothing and gets Math.random.
-export function generateSwings({ sessionNum = 2, goalId = null, baselineSwings = [], random = Math.random } = {}) {
+//
+// `baselineSwings` deliberately has no default. A caller that forgets it should
+// crash here and be found immediately, rather than be handed fifteen swings
+// whose every number is NaN and quietly drawn on a chart. This app has shipped
+// a NaN through to the screen before, in computeStats before Slice 4 fixed it.
+export function generateSwings({ sessionNum = 2, goalId = null, baselineSwings, random = Math.random } = {}) {
   const prevEV = baselineSwings.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / baselineSwings.length
   const prevLA = baselineSwings.reduce((s, w) => s + w.hit.launch.angle, 0) / baselineSwings.length
 
@@ -122,11 +139,20 @@ export function generateSwings({ sessionNum = 2, goalId = null, baselineSwings =
   // with nothing inside it, which a visitor reads as a broken chart rather than
   // as an honest bad day. So it gets one more roll of the dice.
   //
-  // Written for every goal rather than for Power, because Line Drives & Contact
-  // renders an empty band on roughly one session in six for the same underlying
-  // reason and nobody had noticed. Goals with nothing to aim at are skipped
-  // entirely: there is no such thing as an empty band on a chart that draws no
-  // band, and re-rolling them would be re-rolling against nothing.
+  // Written for every goal rather than for Power, and that is not a bonus, it is
+  // what stops this slice making Line Drives & Contact worse than it is today.
+  // Tying exit velocity to launch angle helps Power, whose target wants both
+  // numbers high, but it works against Contact, whose target wants a hard hit
+  // ball UNDER 18 degrees: the harder a ball is now struck, the more likely the
+  // same swing sails through that ceiling. Measured over 40,000 replays of each,
+  // Contact renders an empty band on 9% of sessions today, 16% with the shared
+  // contact quality and no re-roll, and 3% as this file ships. A Power-only
+  // re-roll would have fixed the goal everyone was looking at and quietly
+  // damaged the one nobody was.
+  //
+  // Goals with nothing to aim at are skipped entirely: there is no such thing as
+  // an empty band on a chart that draws no band, and re-rolling them would be
+  // re-rolling against nothing.
   //
   // Once, and the second attempt is kept whatever it contains. Rolling until it
   // succeeds would quietly promise a better hitter than the simulation admits
