@@ -1,4 +1,5 @@
-// How far a synthetic swing's ball carries, in feet.
+// How far a synthetic swing's ball carries, in feet, and the five buckets
+// that carry distance is grouped into for display.
 //
 // The formula this replaces, round(ev * 4.0 + la * 1.8), barely used launch
 // angle at all. A ground ball at 70 mph and 4 degrees was recorded carrying 287
@@ -70,7 +71,11 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 //
 //   shortest ball   74-108ft    10th pct   155-200ft    25th pct  185-229ft
 //   middle (50th)  224-259ft    75th pct   262-289ft    90th pct  294-311ft
-//   longest ball   375-383ft
+//   longest ball   375-383ft (this file's own 20,000-per-cell sample; a
+//     separate, larger 108,000-swing run found 390 instead — the top bucket
+//     is open-ended, so which of these is closer to the true max drives
+//     nothing here, but a future reader comparing numbers should know they
+//     came from different sample sizes rather than assume one is wrong)
 //
 // "Under 150" catches the shortest real balls: the old chart's floor of 160
 // let a 74-foot grounder fall through with no bucket to land in at all.
