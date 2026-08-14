@@ -74,8 +74,11 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 //   middle (50th)  224-259ft    75th pct   262-289ft    90th pct  294-311ft
 //   longest ball   375-383ft (what that sample happened to throw up; the true
 //     ceiling is 390ft, which is arithmetic rather than an observation: the
-//     hardest ball this generator can produce is 97mph at 28 degrees, the top
-//     of both clamps, and that carries 390 feet exactly. The top bucket is
+//     hardest ball this generator can produce is 97mph at 28 degrees, which is
+//     the top of the exit velocity clamp meeting the peak of the shape curve
+//     below, and that carries 390 feet exactly. Note 28 is NOT the launch angle
+//     clamp, which is 35: a ball hit higher than 28 degrees carries less, so the
+//     maximum sits at the peak rather than at the ceiling. The top bucket is
 //     open-ended, so nothing here turns on the difference)
 //
 // A first draft placed the edges straight on those percentiles —

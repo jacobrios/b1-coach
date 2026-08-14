@@ -165,6 +165,11 @@ in about a second, so the split would buy nothing and cost a second moving part.
 *(Re-checked 14 August 2026 against a changed template: the suite is now 240
 tests in about a third of a second, so the reasoning holds more strongly than
 when it was written, and the decision was re-recorded rather than revisited.)*
+*(Later the same day, at the close of Slice 6: 326 tests in about nine tenths of
+a second. The decision still holds, and it is now the third time it has been
+re-checked rather than revisited. If a future session finds the suite slow
+enough that a full run on every edit is painful, that is the trigger to adopt
+the template's split, not a reason to weaken the hook.)*
 
 **Do not switch this hook to `npx vitest run`.** Measured 12 August 2026
 standing in `src/`: `npm test` ran all 171 tests, `npx vitest run` ran 127 and
@@ -248,9 +253,10 @@ Line counts current as of 14 August 2026, at the close of Slice 6.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
     src/*.test.js           1714 lines across eight files, beside what they test.
+    api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
-                             counted in the row above; together the ten test
-                             files are 1993 lines.
+                             counted in the rows above; together the eleven test
+                             files vitest collects are 2525 lines.
     scripts/*.mjs            804 lines across two hand-run measurement scripts,
                              deliberately outside the test runner. See below.
 
