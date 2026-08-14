@@ -6,6 +6,34 @@
 
 ---
 
+## Process failure: two commits reached main without a pull request (August 14)
+
+*What happened:* The two commits of the `.env` guard work, `2e0adc9` and
+`b2b9235`, were committed on `main` and pushed to origin, skipping the pull
+request entirely. The standing rule is that nothing reaches main outside a PR.
+The branch for that work had been created and then, at some point before the
+first commit, the checkout returned to `main`. Which command did that was never
+identified, and inventing a cause would be worse than recording the gap.
+
+*What was and was not lost.* Not the quality: the suite was green at 242 across
+8 files, an independent review had returned a merge verdict with its one
+actionable finding acted on, and main was never broken. What was lost is the
+gate. The product manager never got to run QA or give the merge signal, and on
+this project those two acts are the whole point of the rule.
+
+*The decision.* Accepted as landed rather than rewound. Rewinding would have
+meant force-pushing main, which is destructive, and reverting forward would have
+added two noisy commits to undo work everyone agreed was correct. Recording it
+was judged the honest cost of leaving it. **Noted deliberately: accepting it
+normalises a gate-skip, which is the argument that was made against this option
+at the time and is preserved here rather than dropped.**
+
+*What would have caught it:* checking the current branch immediately before
+committing, every time. That is a habit rather than a mechanism, and a rule that
+holds only when someone remembers it is the same failure this log spent two
+entries documenting today. A guard that refuses a commit on `main` is on the
+What's Next list as the mechanical version.
+
 ## Micro-PR: the guard on the secrets file has now been seen to work (August 14)
 
 *What we changed:* Added 18 tests for `protect-paths.mjs`, the hook that blocks
