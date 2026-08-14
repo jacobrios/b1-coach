@@ -19,8 +19,12 @@
 //
 // It lives in its own file, beside goalTargets.js, sessionStats.js and
 // chartSlots.js, so it can be tested without loading the results screen, which
-// drags in Recharts and needs a DOM. Nothing calls it yet; wiring it into the
-// swing generator is a separate task.
+// drags in Recharts and needs a DOM. carryDistance is wired into the swing
+// generator (src/swingGenerator.js). Below it, the same file also holds the
+// distance buckets the results screen and both coach prompts describe a
+// session's ball flight in, for the same reason: one place, testable without
+// a DOM, that a chart and two prompts all read instead of each writing their
+// own copy.
 
 // Carry in feet for one swing. Takes the same { exitSpeed, angle } shape
 // meetsTarget in goalTargets.js already takes, so callers pass a swing's
@@ -49,4 +53,60 @@ export function carryDistance({ exitSpeed, angle } = {}) {
       : Math.max(0.55, 1 - (angle - 28) * 0.02)
 
   return Math.round(potential * shape)
+}
+
+// The five buckets used to describe how far balls carried: the bar chart on
+// the results screen, and the distance line inside both coach prompts. All
+// three used to write out their own copy of these ranges, and the chat
+// prompt was the one that kept being missed when the ranges changed — this
+// project's CLAUDE.md names that by name as recorded debt. There is now one
+// copy: DISTANCE_BUCKETS is the only place the edges are written, and
+// distanceBucketCounts below is the only place a swing gets sorted into one
+// of them. The chart and both prompts call these; they do not recompute them.
+//
+// Edges come from scripts/measure-swing-generation.mjs, 20,000 replays per
+// cell across sessions 2-4 and every goal that has a target, run against the
+// carry formula above:
+//
+//   shortest ball   74-108ft    10th pct   155-200ft    25th pct  185-229ft
+//   middle (50th)  224-259ft    75th pct   262-289ft    90th pct  294-311ft
+//   longest ball   375-383ft
+//
+// "Under 150" catches the shortest real balls: the old chart's floor of 160
+// let a 74-foot grounder fall through with no bucket to land in at all.
+// "300+" catches the longest without adding a sixth column the chart is not
+// laid out for.
+export const DISTANCE_BUCKETS = [
+  { label: 'Under 150', min: -Infinity, max: 150 },
+  { label: '150-200', min: 150, max: 200 },
+  { label: '200-250', min: 200, max: 250 },
+  { label: '250-300', min: 250, max: 300 },
+  { label: '300+', min: 300, max: Infinity },
+]
+
+// Sort a session's swings into the five buckets above. Membership is
+// half-open, dist >= min && dist < max, the same convention the rest of the
+// app already uses for a strike zone or a goal target: a ball at exactly 200
+// feet belongs to 200-250, not 150-200. The lowest bucket's min of -Infinity
+// and the top bucket's max of Infinity mean a swing can never land in zero
+// buckets or in more than one, whatever distance the generator produces.
+export function distanceBucketCounts(swings) {
+  return DISTANCE_BUCKETS.map(({ label, min, max }) => ({
+    label,
+    count: swings.filter((sw) => {
+      const dist = sw.hit.landing.distance
+      return dist >= min && dist < max
+    }).length,
+  }))
+}
+
+// The one line of English both coach prompts use to describe the same
+// distribution the chart draws. Written once so the debrief prompt and the
+// chat prompt cannot describe different ranges to the model: before this they
+// were two copies of the same filter logic that had to be kept in step by
+// hand, and the chat prompt was the one nobody remembered to update.
+export function distanceDistributionLine(swings) {
+  return distanceBucketCounts(swings)
+    .map(({ label, count }) => `${label}ft: ${count} swings`)
+    .join(', ')
 }

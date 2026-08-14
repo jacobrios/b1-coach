@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { sendChatMessage, CoachError } from './coachApi'
 import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
+import { distanceBucketCounts } from './ballFlight'
 import { failureCopy } from './failureCopy'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
@@ -544,20 +545,13 @@ function TrendEV({ swings }) {
 
 // ── Distance distribution bar chart ───────────────────────────────────────
 function BarDistance({ swings }) {
-  const buckets = [
-    { range: '160-220', min: 160, max: 220 },
-    { range: '220-260', min: 220, max: 260 },
-    { range: '260-300', min: 260, max: 300 },
-    { range: '300-340', min: 300, max: 340 },
-    { range: '340+',    min: 340, max: Infinity },
-  ]
-
-  const data = buckets.map(({ range, min, max }) => ({
-    range,
-    count: swings.filter((s) => {
-      const dist = s.hit.landing.distance
-      return dist >= min && dist < max
-    }).length,
+  // Bucket edges live once, in src/ballFlight.js, and this chart reads them
+  // through distanceBucketCounts rather than filtering swings itself. Both
+  // coach prompts read the same function, so the chart and what the coach
+  // says about it cannot describe different ranges.
+  const data = distanceBucketCounts(swings).map(({ label, count }) => ({
+    range: label,
+    count,
   }))
 
   const maxCount = Math.max(...data.map((d) => d.count))
