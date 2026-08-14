@@ -238,6 +238,17 @@ balls now tend to be the highest ones, which pushes them through Contact's
 18 degree ceiling. So the correlation alone would have taken Contact from 9.7 to
 16.7 percent.
 
+*Second correction, 14 August 2026, at the close of the slice.* The three
+figures in the two paragraphs above (9.7, 10.8 and 16.7 percent) were measured
+during execution by a script that was never committed, so nothing in this repo
+could reproduce them. That measurement now lives in
+`scripts/measure-swing-generation.mjs`, and what it prints is: 9 percent empty
+before this slice at session 2, rising to 11 by session 4; 17 rising to 19 with
+the correlation and no re-roll; 3 rising to 4 as the slice ships. Read the
+figures above as that range's session 2 end. The reasoning is unchanged and is
+what matters here; the numbers are now rerunnable. Left in place rather than
+overwritten, per the append-only rule.
+
 The general re-roll more than pays that back, landing Contact under 4 percent,
 better than it ships today. But the honest description of this task is that
 **writing the re-roll generally is load-bearing rather than a free bonus**:

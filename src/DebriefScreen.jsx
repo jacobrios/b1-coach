@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { sendChatMessage, CoachError } from './coachApi'
 import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
-import { distanceBucketCounts, sprayRadius, SPRAY_RINGS } from './ballFlight'
+import { distanceBucketCounts, sprayRadius, SPRAY_RINGS, SPRAY_FAIR_RADIUS } from './ballFlight'
 import { failureCopy } from './failureCopy'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
@@ -636,14 +636,20 @@ function SprayDirection({ swings }) {
     return `M ${l.x} ${l.y} A ${r} ${r} 0 0 1 ${rp.x} ${rp.y}`
   }
 
-  const leftLine  = arcPoint(-45, 190)
-  const rightLine = arcPoint(45, 190)
+  // The edge of fair territory is SPRAY_FAIR_RADIUS in src/ballFlight.js, the
+  // same constant sprayRadius() clamps every dot to. It used to be typed out as
+  // a bare 190 three times here while the constant sat unused next door, which
+  // is the same drift this slice consolidated the distance-bucket edges to
+  // prevent: move the boundary and the balls would have stopped matching the
+  // fence they are meant to land inside.
+  const leftLine  = arcPoint(-45, SPRAY_FAIR_RADIUS)
+  const rightLine = arcPoint(45, SPRAY_FAIR_RADIUS)
 
   // Fair territory fill path
   const fairPath = [
     `M ${cx} ${cy}`,
     `L ${leftLine.x} ${leftLine.y}`,
-    `A 190 190 0 0 1 ${rightLine.x} ${rightLine.y}`,
+    `A ${SPRAY_FAIR_RADIUS} ${SPRAY_FAIR_RADIUS} 0 0 1 ${rightLine.x} ${rightLine.y}`,
     'Z',
   ].join(' ')
 

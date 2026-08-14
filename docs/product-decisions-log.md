@@ -28,8 +28,8 @@ the infield.
 *The Power goal was quietly broken and this fixed it.* Its target asks for 25 to
 35 degrees at 88 mph, but the simulated hitter averaged 17 to 19, and exit
 velocity and launch angle were drawn independently, so the goal's orange target
-band rendered completely empty in 56% of sessions and in a third of sessions that
-actually improved. An empty band reads as a broken chart, not as coaching. Three
+band rendered completely empty in 56% of session 2s, rising to 63% by session 4,
+and in a third of sessions that actually improved. An empty band reads as a broken chart, not as coaching. Three
 changes fixed it: the two numbers now share a contact-quality term, because a
 real barrel is hard *and* well-angled in the same swing; a session on the Power
 goal lifts launch angle on a ramp, because a player who chose that goal is
@@ -39,11 +39,22 @@ Empty bands fell to 14% at session 2 and 11% at session 4.
 *The decision that nearly went wrong.* Writing that re-roll generically rather
 than for Power alone looked like a free bonus. It is not. Tying exit velocity to
 launch angle pushes hard-hit balls through Line Drives & Contact's 18 degree
-ceiling, so the correlation change *alone* would have taken that goal from 9.7%
-empty to 16.8%. Without the generic re-roll this slice would have shipped a
-regression on the second goal a visitor is likely to click. An earlier claim that
-Contact was already at 16 to 19% was wrong; that figure had been measured with
-the fix already switched on.
+ceiling, so the correlation change *alone* would have taken that goal from 9%
+empty to 17% at session 2, and from 11% to 19% at session 4. Without the generic
+re-roll this slice would have shipped a regression on the second goal a visitor
+is likely to click. It ships at 3% instead. An earlier claim that Contact was
+already at 16 to 19% was wrong; that figure had been measured with the fix
+already switched on.
+
+*A note on that pair of numbers, because it is the one figure here that nothing
+could reproduce.* The middle state, correlation with the re-roll switched off,
+never shipped, so no script printed it and the first draft of this entry quoted
+"9.7% to 16.8%" from a throwaway measurement. At the close of the slice the
+measurement was written into `scripts/measure-swing-generation.mjs`, which now
+prints all three states side by side; the figures above are what it prints,
+rounded, and they are a range across sessions 2 to 4 rather than one number.
+Everything else in this entry was already reproducible, which is what made this
+one stand out.
 
 *Two decisions the product manager made from rendered evidence, not description.*
 The distance chart's column boundaries were set at 150/200/250/300 and then moved

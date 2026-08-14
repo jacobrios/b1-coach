@@ -64,9 +64,12 @@ describe('the targets the coach is told about', () => {
 
   // Slice 6 replaced the fake distance formula with an honest carry curve.
   // Under the old formula, 88 mph at 25-35 degrees carried 399 feet, so calling
-  // it "home run distance" was true. Under the honest curve the same swing
-  // carries roughly 310-323 feet, a warning-track flyball, so the prompt must
-  // not claim a home run next to a chart that shows one falling short. This
+  // it "home run distance" was true. Under the honest curve a swing that meets
+  // the target carries 277 to 390 feet, and at the band's own minimum of 88 mph
+  // it never clears 323 — warning-track territory, not out of the park. Only
+  // the hardest contact the generator can produce, 97 mph at 28 degrees,
+  // reaches 390. So the prompt must not claim a home run next to a chart that
+  // shows one falling short. This
   // pins the wording, not the number, so it survives future retuning of the
   // carry curve itself.
   it('does not tell the coach the Power target is home run distance', () => {

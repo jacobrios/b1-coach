@@ -225,17 +225,17 @@ Line counts current as of 14 August 2026, at the close of Slice 6.
                              debrief orchestration, and the fifteen hand-written
                              session-1 swings. Swing generation moved out in
                              Slice 6.
-    src/DebriefScreen.jsx   1445 lines. The results screen, all six chart
+    src/DebriefScreen.jsx   1451 lines. The results screen, all six chart
                              components, and the chat panel.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
     src/coachApi.js          445 lines. System prompts, the goal-context block both
                              prompts share, response parsing, failure
                              classification, the retry policy, and the two calls.
-    src/ballFlight.js        214 lines. How far a struck ball carries, the five
+    src/ballFlight.js        225 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
                              Added in Slice 6. See the ball flight section below.
-    src/swingGenerator.js    164 lines. Generates a session's fifteen swings.
+    src/swingGenerator.js    180 lines. Generates a session's fifteen swings.
                              Carved out of App.jsx in Slice 6 so the re-roll
                              could be tested. Takes an injectable random source.
     src/failureCopy.js        74 lines. What the app says when a call fails. See
@@ -247,8 +247,11 @@ Line counts current as of 14 August 2026, at the close of Slice 6.
                              whether a single key from a chat reply is usable.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    *.test.js               1987 lines across eight files, beside what they test.
-    scripts/*.mjs            635 lines across two hand-run measurement scripts,
+    src/*.test.js           1714 lines across eight files, beside what they test.
+    .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
+                             counted in the row above; together the ten test
+                             files are 1993 lines.
+    scripts/*.mjs            804 lines across two hand-run measurement scripts,
                              deliberately outside the test runner. See below.
 
 The two big files are big. Navigate them by line reference rather than reading
@@ -329,10 +332,16 @@ field. The chart is held to the shared constant by its import alone.
 config here, so its default glob collects only `*.test.*`, and both were checked
 against the file count). `scripts/measure-swing-generation.mjs` reports empty
 target-band rates, distance percentiles and bucket fill, before and after, and is
-where the numbers in the decision log came from.
-`scripts/compare-distance-bucket-schemes.mjs` records why the shipped bucket
-edges beat the two that were rejected. Neither is fast to eyeball; both print
-plain-language output meant to be read directly.
+where the numbers in the decision log came from. Its last two sections, added at
+the close of Slice 6, isolate the correlation change from the re-roll and check
+that a session did not get wider or tighter.
+`scripts/compare-distance-bucket-schemes.mjs` records how the shipped bucket
+edges compare with the two that were rejected. Note the wording: the shipped
+edges do **not** win that comparison outright. One rejected scheme ties them on
+the empty-column measure and beats them on the strongest Power session; the
+choice between them was the product manager's, made on how the three rendered.
+Neither script is fast to eyeball; both print plain-language output meant to be
+read directly.
 
 ## The data is synthetic
 
@@ -349,8 +358,8 @@ implausible for a real hitter, that is the generator, not the coach.
 
 **Three things the generator does that are deliberate nudges, not simulation.**
 All three landed in Slice 6 and all three are the reason the Power goal stopped
-showing an empty target band in 56% of sessions. Do not read `generateSwings` as
-an unbiased model of a hitter.
+showing an empty target band in 56% of session 2s, rising to 63% by session 4.
+Do not read `generateSwings` as an unbiased model of a hitter.
 
 1. **Exit velocity and launch angle share a contact-quality term** at correlation
    0.6, so a well-struck ball tends to be hard *and* well-angled together. Real
@@ -363,10 +372,18 @@ an unbiased model of a hitter.
 
 **Point 3 is generic on purpose and it is load-bearing.** Tying exit velocity to
 launch angle pushes hard-hit balls up through Line Drives & Contact's 18 degree
-ceiling, so point 1 *by itself* would have taken that goal from 9.7% empty to
-16.8%. The generic re-roll is what stops this being a regression on the second
-goal a visitor is likely to click, and it lands Contact under 4%. Anyone tempted
-to narrow the re-roll to Power should read that sentence twice.
+ceiling, so point 1 *by itself* would have taken that goal from 9% empty to 17%
+at session 2, and from 11% to 19% at session 4. The generic re-roll is what stops
+this being a regression on the second goal a visitor is likely to click, and it
+lands Contact under 4%. Anyone tempted to narrow the re-roll to Power should read
+that sentence twice.
+
+Those are ranges across sessions 2 to 4, not single figures, and the middle state
+never shipped, so it has to be reconstructed on purpose. The last two sections of
+`node scripts/measure-swing-generation.mjs` print all three states and say how
+the re-roll is switched off without touching shipped code. Rerun it rather than
+citing this file; earlier drafts of this paragraph quoted a "9.7% to 16.8%"
+nobody could reproduce.
 
 `varianceFactor` and the 65/35 improve-or-decline split were left alone by Slice
 6 and remain a separate open question. Note that **no test can currently see
@@ -771,8 +788,11 @@ on purpose: this file loads at the start of every session, so it is an index.
 - **Slice 6b, surface polish. The remaining six items, and the next slice.**
   Items 3 to 8 of credibility polish, still scoped in `docs/queued-slices.md`:
   the browser tab showing the build tool's logo, five scaffolding files, the lint
-  wall (23 errors as of 14 August, most of them Node files linted as browser
-  code), a README a stranger cannot run the project from, a README goal list that
+  wall (24 errors as counted on 14 August at the close of Slice 6, most of them
+  Node files linted as browser code; the twenty-fourth is new and expected,
+  `react-refresh/only-export-components` on `App.jsx`, because Slice 6
+  deliberately exported `GOALS` so one label could be tested), a README a
+  stranger cannot run the project from, a README goal list that
   does not match the screen, and the Reduce Pop-Ups card pointing the wrong way.
   **Two of these are now decided and need no further product input**: the
   Pop-Ups tag becomes `LA 10–25° · Level it out`, and the README's goal list must
@@ -943,6 +963,22 @@ rewritten, per the append-only rule.
   reach. Whether that is worth closing on a proof of concept is a judgment call:
   the realistic risk here is an accident rather than an attacker, and the key is
   spendable rather than readable either way.
+- **Pin the fifteen hand-written session-1 distances, or decide they do not need
+  pinning.** Added 14 August 2026, found by the review of Slice 6. Session 1 is
+  not generated: it is fifteen swings typed out by hand in `src/App.jsx`, and
+  their distances are the ones every visitor reads in their very first debrief.
+  Nothing checks them. A reviewer changed one from 170 feet to a physically
+  impossible 999 and all 326 tests stayed green. All fifteen are correct today,
+  recomputed against the honest carry curve in Slice 6, so this is a missing
+  safety net rather than a live defect. What makes it worth a line is that a
+  wrong distance there is precisely the defect Slice 6 existed to remove, on the
+  one screen a stranger is guaranteed to see. It got harder rather than easier
+  in Slice 6, too: those fifteen swings now exist in five hand-maintained copies
+  that must agree, in `src/App.jsx` and both scripts under `scripts/` in full,
+  and in `src/coachApi.test.js` and `src/ballFlight.test.js` as the distances
+  alone. Each copy is deliberate and explained where it sits, but a copy is also
+  why the tests could not notice the 999. Deliberately left as a
+  decision for the product manager rather than fixed on the way past.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.

@@ -74,6 +74,16 @@
 // old formula left the two shortest buckets close to empty no matter how
 // weakly a ball was struck.
 
+// TWO EXTRA SECTIONS AT THE END, ADDED 14 AUGUST 2026. The before/after tables
+// answer "what did this slice do", but two of the comments in
+// src/swingGenerator.js make a narrower claim: what the exit-velocity/launch-
+// angle correlation did BY ITSELF, with the empty-band re-roll switched off.
+// That intermediate state never shipped, so nothing above can show it. The
+// last two sections produce it: how often Line Drives & Contact drew an empty
+// target band in each of the three states, and whether a session got wider or
+// tighter. Both were quoted as measured fact in comments before anything here
+// could reproduce them, which is the same defect this slice exists to remove.
+//
 // A LOADER WRINKLE, EXPLAINED SO NOBODY "FIXES" IT AWAY. src/swingGenerator.js
 // imports its neighbours as `./ballFlight` and `./goalTargets`, with no file
 // extension. That is fine under Vite and under vitest (both resolve it), but
@@ -357,6 +367,151 @@ for (const sessionNum of SESSIONS) {
     printDistributionLine(goal.label, afterDist)
     printBucketLine(bucketPercentages(after.distances))
   }
+}
+
+// ---------------------------------------------------------------------------
+// THE CORRELATION CHANGE ON ITS OWN.
+//
+// Two claims written into src/swingGenerator.js's own comments are about what
+// the shared contact-quality term did BY ITSELF, before the re-roll caught
+// anything. Neither can be read off the before/after tables above, because
+// every "after" number there already has the re-roll in it. This section is
+// what produces them, so the comments quoting them are reproducible rather
+// than remembered.
+//
+// The load-bearing one is Line Drives & Contact. Tying exit velocity to launch
+// angle helps the Power goal and HURTS Contact, because a harder-struck ball
+// is more likely to sail through Contact's 18 degree ceiling. That is the
+// whole reason the re-roll was written for every goal rather than for Power
+// alone, and this is the measurement that reason rests on.
+//
+// HOW THE RE-ROLL IS SWITCHED OFF WITHOUT TOUCHING SHIPPED CODE. generateSwings
+// only re-rolls when the chosen goal HAS a target (hasTarget in
+// src/goalTargets.js), and it only lifts launch angle when the goal is `power`.
+// So asking it for an Open Session gives correlated swings with no re-roll and
+// no lift — exactly the intermediate state — and those swings are then judged
+// against Contact's target here by hand. Contact never gets a lift anyway, so
+// the only thing this removes is the re-roll. Nothing in src/ is modified,
+// reimplemented, or reached around to get the number.
+
+function contactEmptyRateCorrelationOnly(sessionNum) {
+  let empty = 0
+  for (let i = 0; i < REPLAYS_PER_CELL; i++) {
+    const swings = generateSwings({
+      sessionNum,
+      goalId: 'open',
+      baselineSwings: mockSwings,
+      random: Math.random,
+    })
+    if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
+  }
+  return empty / REPLAYS_PER_CELL
+}
+
+function contactEmptyRateBefore(sessionNum) {
+  let empty = 0
+  for (let i = 0; i < REPLAYS_PER_CELL; i++) {
+    const swings = oldGenerateSwings(sessionNum, mockSwings, Math.random)
+    if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
+  }
+  return empty / REPLAYS_PER_CELL
+}
+
+function contactEmptyRateShipped(sessionNum) {
+  let empty = 0
+  for (let i = 0; i < REPLAYS_PER_CELL; i++) {
+    const swings = generateSwings({
+      sessionNum,
+      goalId: 'contact',
+      baselineSwings: mockSwings,
+      random: Math.random,
+    })
+    if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
+  }
+  return empty / REPLAYS_PER_CELL
+}
+
+console.log('')
+console.log('='.repeat(78))
+console.log('WHAT THE CORRELATION CHANGE DID ON ITS OWN, WITH NO RE-ROLL')
+console.log('Line Drives & Contact: how often a session drew a completely empty')
+console.log('target band. The middle row is the state that never shipped.')
+console.log('='.repeat(78))
+console.log('  ' + 'state'.padEnd(46) + SESSIONS.map((s) => `S${s}`.padStart(8)).join(''))
+const EMPTY_BAND_ROWS = [
+  ['pre-slice generator (independent draws)', contactEmptyRateBefore],
+  ['correlation only, re-roll switched off', contactEmptyRateCorrelationOnly],
+  ['as this app ships (correlation + re-roll)', contactEmptyRateShipped],
+]
+for (const [label, measure] of EMPTY_BAND_ROWS) {
+  console.log('  ' + label.padEnd(46) + SESSIONS.map((s) => pct(measure(s)).padStart(8)).join(''))
+}
+
+// ---------------------------------------------------------------------------
+// AND WHAT IT DID NOT DO: WIDEN OR TIGHTEN A SESSION.
+//
+// The independent share in src/swingGenerator.js (0.8, alongside the 0.6
+// correlation) exists so the charts do not quietly tighten just because the
+// two numbers now agree with each other: 0.6 squared plus 0.8 squared is 1.
+// This checks that arithmetic against the real generator.
+//
+// TWO DIFFERENT SPREADS, AND THEY ARE EASY TO CONFUSE. "Within a session" is
+// how far a typical swing sits from its OWN session's average, which is the
+// thing the independent share is meant to preserve. "Pooled" throws every
+// swing from every replayed session into one pile and measures against the
+// grand average, so it also picks up how much the session averages themselves
+// move around. The pooled figure is the larger of the two, and quoting it as
+// though it were the within-session one is exactly the mix-up this block was
+// added to settle. Both are sample standard deviations (n-1).
+
+function spreads(gen) {
+  let withinEV = 0
+  let withinLA = 0
+  let sessions = 0
+  const allEV = []
+  const allLA = []
+  for (let i = 0; i < REPLAYS_PER_CELL; i++) {
+    const swings = gen()
+    const evs = swings.map((w) => w.hit.launch.exitSpeed)
+    const las = swings.map((w) => w.hit.launch.angle)
+    const meanEV = average(evs)
+    const meanLA = average(las)
+    withinEV += evs.reduce((s, x) => s + (x - meanEV) ** 2, 0)
+    withinLA += las.reduce((s, x) => s + (x - meanLA) ** 2, 0)
+    sessions += 1
+    allEV.push(...evs)
+    allLA.push(...las)
+  }
+  const pooledSd = (xs) => {
+    const m = average(xs)
+    return Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / (xs.length - 1))
+  }
+  return {
+    withinEV: Math.sqrt(withinEV / (sessions * 14)),
+    withinLA: Math.sqrt(withinLA / (sessions * 14)),
+    pooledEV: pooledSd(allEV),
+    pooledLA: pooledSd(allLA),
+  }
+}
+
+console.log('')
+console.log('='.repeat(78))
+console.log('HOW SPREAD OUT A SESSION IS, BEFORE AND AFTER THE CORRELATION CHANGE')
+console.log('Session 2, re-roll switched off on the "after" row so the correlation')
+console.log('is the only thing that differs between them.')
+console.log('='.repeat(78))
+for (const [label, gen] of [
+  ['before (independent draws)', () => oldGenerateSwings(2, mockSwings, Math.random)],
+  [
+    'after (correlated, no re-roll)',
+    () => generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: mockSwings, random: Math.random }),
+  ],
+]) {
+  const s = spreads(gen)
+  console.log(
+    `  ${label.padEnd(32)} within a session ${s.withinEV.toFixed(2)} mph / ${s.withinLA.toFixed(2)} deg` +
+      `   |   pooled across sessions ${s.pooledEV.toFixed(2)} mph / ${s.pooledLA.toFixed(2)} deg`
+  )
 }
 
 console.log('')

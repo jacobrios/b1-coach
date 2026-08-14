@@ -72,11 +72,11 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 //
 //   shortest ball   74-108ft    10th pct   155-200ft    25th pct  185-229ft
 //   middle (50th)  224-259ft    75th pct   262-289ft    90th pct  294-311ft
-//   longest ball   375-383ft (this file's own 20,000-per-cell sample; a
-//     separate, larger 108,000-swing run found 390 instead — the top bucket
-//     is open-ended, so which of these is closer to the true max drives
-//     nothing here, but a future reader comparing numbers should know they
-//     came from different sample sizes rather than assume one is wrong)
+//   longest ball   375-383ft (what that sample happened to throw up; the true
+//     ceiling is 390ft, which is arithmetic rather than an observation: the
+//     hardest ball this generator can produce is 97mph at 28 degrees, the top
+//     of both clamps, and that carries 390 feet exactly. The top bucket is
+//     open-ended, so nothing here turns on the difference)
 //
 // A first draft placed the edges straight on those percentiles —
 // 150/200/250/300 — and shipped in this slice's Task 4. It fixed the
@@ -91,13 +91,24 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 // per cell, average empty columns per chart across every goal and session
 // that has a target:
 //
-//   150/200/250/300 (Task 4's draft)   0.97 overall, 1.38 on Power session 4
-//   175/225/265/305 (shipped)          0.70 overall, 0.99 on Power session 4
+//   150/200/250/300 (Task 4's draft)   0.99 overall, 1.38 on Power session 4
+//   200/250/280/310 (scheme B)         0.70 overall, 0.61 on Power session 4
+//   175/225/265/305 (shipped)          0.70 overall, 0.97 on Power session 4
+//
+// (One run. The second decimal wanders by a hundredth or two on a rerun,
+// which is sampling noise, not disagreement; the ordering below does not
+// move.)
+//
+// Read that table honestly: on this measure the shipped edges did not win.
+// Scheme B ties them overall and beats them clearly on Power session 4, which
+// is the very case that surfaced the problem. The shipped edges were chosen on
+// how the three rendered, not on this number, and the paragraph above says so.
 //
 // The hand-written session 1 (src/App.jsx's mockSwings) renders 3, 3, 3, 3, 3
-// under the draft edges and 5, 3, 1, 3, 3 under these. The product manager
-// preferred the uneven shape on sight: five identical bars reads as
-// placeholder data, not as something real measurement produced.
+// under the draft edges, 6, 3, 2, 1, 3 under scheme B, and 5, 3, 1, 3, 3 under
+// these. The product manager preferred the uneven shape on sight: five
+// identical bars reads as placeholder data, not as something real measurement
+// produced.
 //
 // Rerun this yourself with `node scripts/compare-distance-bucket-schemes.mjs`
 // rather than trusting the numbers above. That script is what actually

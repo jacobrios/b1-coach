@@ -485,7 +485,8 @@ building rather than by planning:
 **One number in the scope above is wrong and the correction matters more than
 the number.** Item 9's analysis is sound, but a figure produced while planning
 this slice claimed Line Drives & Contact already rendered an empty target band 16
-to 19 percent of the time. It does not; it is 9.7 percent. The 16 to 19 was
+to 19 percent of the time. It does not; it is 9 percent at session 2 and 11 by
+session 4. The 16 to 19 was
 measured with the fix already switched on. The direction is the opposite of what
 was assumed: correlating exit velocity with launch angle makes Contact *worse*,
 because it pushes hard-hit balls through that goal's 18 degree ceiling. Writing

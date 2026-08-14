@@ -10,9 +10,12 @@ import { GOALS } from './App.jsx'
 // Slice 6 replaced the fake distance formula with an honest carry curve. Under
 // the old formula the Power goal's target carried close to home run distance,
 // so calling the goal 'Power & Home Runs' was defensible. Under the honest
-// curve the same swing carries roughly 310-323 feet, a warning-track flyball,
-// so the goal's own name must not promise a home run next to a chart that
-// shows one falling short. Task 6 already pinned this for the coach prompt;
+// curve a swing that actually meets the target (25-35 degrees, 88 mph or
+// better) carries 277 to 390 feet, and a swing at the bottom of that band,
+// 88 mph, never clears 323 — warning-track territory, not out of the park.
+// Only the hardest contact the generator can produce, 97 mph at 28 degrees,
+// reaches 390. So the goal's own name must not promise a home run next to a
+// chart that shows one falling short. Task 6 already pinned this for the coach prompt;
 // this pins it for the goal label the coach was regenerating the claim from.
 describe('the Power goal label', () => {
   it('does not claim home runs', () => {

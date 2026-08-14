@@ -11,9 +11,13 @@
 // chart library and a DOM. Its tests are in swingGenerator.test.js.
 //
 // Three things it now does that it did not before, all aimed at one complaint:
-// on the Power goal, 56 percent of generated sessions used to put nothing at
-// all inside the orange target band, and a chart with an empty target reads as
-// broken software rather than as a hard practice session.
+// on the Power goal, 56 percent of session 2s used to put nothing at all inside
+// the orange target band, rising to 63 percent by session 4, and a chart with
+// an empty target reads as broken software rather than as a hard practice
+// session. (Those two figures bracket sessions 2 to 4; 56 on its own is the
+// best of the three, not the whole story. They are the rounded numbers this
+// repo has used throughout; `node scripts/measure-swing-generation.mjs` prints
+// 56.7 and 63.0, and is what to rerun rather than citing this comment.)
 //
 //   1. Exit velocity and launch angle come off the same swing (see below).
 //   2. A player working on Power slowly gets the ball in the air.
@@ -37,9 +41,15 @@ import { hasTarget, meetsTarget } from './goalTargets'
 //
 // The independent share is the arithmetic that stops the charts tightening just
 // because the two numbers now agree with each other: 0.6 squared plus 0.8
-// squared is 1, so the typical distance of a swing from its session average is
-// unchanged. Measured over 40,000 replays it holds almost exactly, 5.2 mph and
-// 6.5 degrees either way.
+// squared is 1, so the typical distance of a swing from its own session's
+// average is unchanged. Measured over 20,000 replayed session 2s it holds
+// almost exactly: 4.63 mph and 6.35 degrees either way before, 4.63 and 6.36
+// after. (Do not confuse that with the 5.2 mph and 6.5 degrees the same
+// measurement prints beside it. Those pool every swing from every replay into
+// one heap, so they also carry how much the session averages themselves move
+// around, which is a different and larger thing. Both are printed by
+// `node scripts/measure-swing-generation.mjs`, labelled, for exactly that
+// reason.)
 //
 // What is NOT preserved is the extremes. Adding two scaled draws together can
 // reach further than one draw could, so the occasional swing now lands further
@@ -144,11 +154,17 @@ export function generateSwings({ sessionNum = 2, goalId = null, baselineSwings, 
   // Tying exit velocity to launch angle helps Power, whose target wants both
   // numbers high, but it works against Contact, whose target wants a hard hit
   // ball UNDER 18 degrees: the harder a ball is now struck, the more likely the
-  // same swing sails through that ceiling. Measured over 40,000 replays of each,
-  // Contact renders an empty band on 9% of sessions today, 16% with the shared
-  // contact quality and no re-roll, and 3% as this file ships. A Power-only
-  // re-roll would have fixed the goal everyone was looking at and quietly
-  // damaged the one nobody was.
+  // same swing sails through that ceiling. Measured over 20,000 replays per
+  // session, Contact rendered an empty band on 9% of session 2s before this
+  // slice (11% by session 4), would have gone to 17% (19% by session 4) with
+  // the shared contact quality and no re-roll, and lands at 3% (4% by session
+  // 4) as this file ships. A Power-only re-roll would have fixed the goal
+  // everyone was looking at and quietly damaged the one nobody was. All nine of
+  // those numbers, three states across three sessions, are printed by the
+  // "what the correlation change did on its own" section of
+  // `node scripts/measure-swing-generation.mjs`. The middle state never
+  // shipped, so it has to be reconstructed on purpose; that script explains
+  // how, and does it without touching anything in src/.
   //
   // Goals with nothing to aim at are skipped entirely: there is no such thing as
   // an empty band on a chart that draws no band, and re-rolling them would be
