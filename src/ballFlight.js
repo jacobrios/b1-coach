@@ -105,6 +105,75 @@ export function distanceBucketCounts(swings) {
   }))
 }
 
+// ── How far from the plate the spray chart draws a ball ──────────────────
+//
+// The spray chart on the results screen is a fan of fair territory with the
+// plate at the bottom. Every ball is a dot, its angle from the plate is the
+// direction it was hit, and its distance from the plate is what these numbers
+// decide. It lives here rather than in the chart file for the same reason the
+// buckets above do: the chart is JSX that needs a DOM, and this can be tested
+// without one. It also puts the mapping next to the carry formula it is fitted
+// to, which is the point of the warning below.
+//
+// IMPORTANT, and the thing a future reader will otherwise miss: this scale is
+// fitted to the output of carryDistance above. Change that formula and this
+// must be re-checked and probably re-fitted, or the chart quietly starts
+// lying again. That is not hypothetical. The scale this replaces,
+//
+//     Math.max(40, Math.min(200, 120 + (dist - 300) * 0.65))
+//
+// was correct for the old, dishonest distances (287-451ft, centred on 300).
+// Fed the honest ones it collapsed the whole session into the infield and
+// stacked every ball under 177 feet on the same spot at the plate. Seen in a
+// browser on 14 August 2026.
+//
+// The range it is fitted to, from scripts/measure-swing-generation.mjs:
+// shortest ball 74ft, median 224-259ft, 90th percentile 294-311ft, longest
+// ball 390ft. Those map to radii of 68, about 126, about 152, and 186.
+
+// A ball that carried nothing at all still has to be drawn somewhere, and that
+// somewhere is a small ring around the plate rather than the plate itself, so
+// the weakest contact is still visible as a mark.
+export const SPRAY_PLATE_RADIUS = 40
+
+// The foul lines and the edge of the fair-territory fill are drawn at 190 in
+// the chart's own coordinates. Nothing may be placed beyond it.
+export const SPRAY_FAIR_RADIUS = 190
+
+// Feet-to-radius, chosen so the longest ball the generator can produce (390ft)
+// lands at 186, just inside the fair boundary, and the shortest (74ft) lands
+// clear of the plate ring. Everything in between spreads across the fan
+// instead of piling up at either end.
+const SPRAY_RADIUS_PER_FOOT = 0.375
+
+export function sprayRadius(dist) {
+  // A distance we know nothing about is not a ball that carried zero feet for
+  // a reason, but it still has to render: drop it on the plate ring rather
+  // than let a NaN push the dot off the chart entirely. Same call
+  // carryDistance makes at the top of this file.
+  if (!Number.isFinite(dist) || dist < 0) return SPRAY_PLATE_RADIUS
+
+  // The Math.min is a safety rail, not part of the scale. Reaching it takes a
+  // 400-foot ball, and the generator's hardest possible contact (97mph at 28
+  // degrees) carries 390, so in normal running nothing ever touches it. It is
+  // here only so that a future change to the carry formula draws a wrong dot
+  // on the boundary instead of outside the ballpark.
+  return Math.min(SPRAY_FAIR_RADIUS, SPRAY_PLATE_RADIUS + dist * SPRAY_RADIUS_PER_FOOT)
+}
+
+// The two labelled arcs on the chart. Radius and label are both derived from
+// the scale above rather than written out by hand, so the printed distance and
+// the arc it sits on cannot drift apart: that is exactly how the chart ended
+// up with an outer ring labelled "400ft+" that no ball could ever reach. 200
+// and 300 feet are chosen because the real distribution straddles them: the
+// median ball falls between the two rings and the top tenth clears the outer
+// one, so both rings carry information about the session being looked at.
+export const SPRAY_RINGS = [200, 300].map((feet) => ({
+  feet,
+  radius: sprayRadius(feet),
+  label: `${feet} ft`,
+}))
+
 // The one line of English both coach prompts use to describe the same
 // distribution the chart draws. Written once so the debrief prompt and the
 // chat prompt cannot describe different ranges to the model: before this they

@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { sendChatMessage, CoachError } from './coachApi'
 import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
-import { distanceBucketCounts } from './ballFlight'
+import { distanceBucketCounts, sprayRadius, SPRAY_RINGS } from './ballFlight'
 import { failureCopy } from './failureCopy'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
@@ -647,9 +647,17 @@ function SprayDirection({ swings }) {
     'Z',
   ].join(' ')
 
-  // Distance label positions
-  const infieldLabel  = arcPoint(0, 120)
-  const outfieldLabel = arcPoint(0, 178)
+  // The two labelled distance arcs, and the label sitting just above each one.
+  // Both the radius and the printed distance come from SPRAY_RINGS in
+  // src/ballFlight.js, so an arc can never be drawn at one distance and
+  // labelled with another. The arcs used to be at fixed radii of 120 and 185
+  // with "300ft" and "400ft+" typed in beside them, which stopped being true
+  // the moment the carry distances became honest.
+  const rings = SPRAY_RINGS.map((ring) => ({
+    ...ring,
+    path: arcPath(ring.radius),
+    labelPoint: arcPoint(0, ring.radius),
+  }))
 
   // Shape renderers for each hit type
   const renderShape = (x, y, dir, i) => {
@@ -685,21 +693,22 @@ function SprayDirection({ swings }) {
         <line x1={cx} y1={cy} x2={leftLine.x}  y2={leftLine.y}  stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
         <line x1={cx} y1={cy} x2={rightLine.x} y2={rightLine.y} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
 
-        {/* Infield arc */}
-        <path d={arcPath(120)} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-
-        {/* Outfield arc */}
-        <path d={arcPath(185)} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-
-        {/* Distance markers */}
-        <text x={infieldLabel.x}  y={infieldLabel.y  - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">300ft</text>
-        <text x={outfieldLabel.x} y={outfieldLabel.y - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">400ft+</text>
+        {/* Distance arcs, and the distance each one marks */}
+        {rings.map((ring) => (
+          <path key={ring.feet} d={ring.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        ))}
+        {rings.map((ring) => (
+          <text key={ring.feet} x={ring.labelPoint.x} y={ring.labelPoint.y - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">{ring.label}</text>
+        ))}
 
         {/* Swing shapes */}
         {swings.map((swing, i) => {
           const dir  = swing.hit.launch.direction
           const dist = swing.hit.landing.distance
-          const scale = Math.max(40, Math.min(200, 120 + (dist - 300) * 0.65))
+          // How far from the plate this ball is drawn. The scale lives in
+          // src/ballFlight.js beside the carry formula it is fitted to, and
+          // moves if that formula moves.
+          const scale = sprayRadius(dist)
           const rad = (dir * Math.PI) / 180
           const x = cx + scale * Math.sin(rad)
           const y = cy - scale * Math.cos(rad)

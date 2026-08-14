@@ -6,7 +6,7 @@
 // shrinks distance at a low angle instead of merely appearing to.
 
 import { describe, it, expect } from 'vitest'
-import { carryDistance, DISTANCE_BUCKETS, distanceBucketCounts, distanceDistributionLine } from './ballFlight.js'
+import { carryDistance, DISTANCE_BUCKETS, distanceBucketCounts, distanceDistributionLine, sprayRadius, SPRAY_RINGS, SPRAY_PLATE_RADIUS, SPRAY_FAIR_RADIUS } from './ballFlight.js'
 import { generateSwings } from './swingGenerator.js'
 
 describe('the reference points the shape is built from', () => {
@@ -202,5 +202,71 @@ describe('every swing the real generator can produce lands in exactly one bucket
       const total = counts.reduce((sum, b) => sum + b.count, 0)
       expect(total).toBe(swings.length)
     }
+  })
+})
+
+// ── The spray chart's distance-to-radius mapping ─────────────────────────
+//
+// The spray chart draws every ball as a dot whose distance from the plate is
+// its carry distance. The old mapping was fitted to the old, dishonest carry
+// numbers (287-451ft) and centred on 300 feet. Fed the honest numbers it
+// collapsed the whole session into the infield and pinned every ball under
+// about 177 feet on top of each other at the minimum radius. Confirmed in a
+// browser on 14 August 2026, not reasoned about.
+//
+// These tests exist because the chart itself cannot be tested here: it is JSX
+// that drags in a DOM, and this project has no rendering tests by design. So
+// the arithmetic underneath it is pulled out and pinned instead.
+describe('the spray chart distance-to-radius mapping', () => {
+  // Both ends of what the generator can actually produce, measured over 20,000
+  // replays per goal per session by scripts/measure-swing-generation.mjs.
+  const SHORTEST_REAL_BALL = 74
+  const LONGEST_REAL_BALL = 390
+
+  it.each([SHORTEST_REAL_BALL, LONGEST_REAL_BALL])(
+    'draws a %sft ball inside fair territory and off the plate',
+    (dist) => {
+      const r = sprayRadius(dist)
+      expect(r).toBeGreaterThan(SPRAY_PLATE_RADIUS)
+      expect(r).toBeLessThanOrEqual(SPRAY_FAIR_RADIUS)
+    },
+  )
+
+  it('never draws a longer ball nearer the plate than a shorter one', () => {
+    let previous = -Infinity
+    for (let dist = 0; dist <= 500; dist += 1) {
+      const r = sprayRadius(dist)
+      expect(r).toBeGreaterThanOrEqual(previous)
+      previous = r
+    }
+  })
+
+  it('separates the two ends of the real range instead of stacking them', () => {
+    // The specific failure this replaces: everything under 177ft landed on the
+    // same pixel. A 74ft dribbler and a 200ft flare must be visibly different.
+    expect(sprayRadius(200) - sprayRadius(SHORTEST_REAL_BALL)).toBeGreaterThan(20)
+  })
+
+  // The one that stops the printed labels drifting away from the arcs they sit
+  // on, which is the same class of bug as the distance buckets drifting from
+  // the data. If the scale moves, these go red and whoever moved it has to
+  // decide what the rings should now say.
+  it('puts each labelled ring exactly where its distance maps to', () => {
+    expect(SPRAY_RINGS.map((ring) => ring.feet)).toEqual([200, 300])
+    for (const ring of SPRAY_RINGS) {
+      expect(ring.radius).toBe(sprayRadius(ring.feet))
+      expect(ring.label).toBe(`${ring.feet} ft`)
+    }
+  })
+
+  it('pins the two ring radii the chart is drawn against', () => {
+    expect(SPRAY_RINGS.map((ring) => ring.radius)).toEqual([115, 152.5])
+  })
+
+  it('treats a distance it knows nothing about as no carry at all', () => {
+    // Same call carryDistance itself makes: reject explicitly rather than let a
+    // NaN reach the chart and drop the dot off the screen entirely.
+    expect(sprayRadius(undefined)).toBe(SPRAY_PLATE_RADIUS)
+    expect(sprayRadius(NaN)).toBe(SPRAY_PLATE_RADIUS)
   })
 })
