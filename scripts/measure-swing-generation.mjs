@@ -60,6 +60,19 @@
 // `contact`, and `popup`. `allfields` and `open` have no target and are not
 // measured here for that reason — there is no such thing as an empty band on
 // a chart that draws no band.
+//
+// THE DISTANCE BUCKETS. The results screen's bar chart, and both coach
+// prompts, sort every swing into one of five distance buckets rather than
+// showing a raw number. Those five buckets — their edges and their labels —
+// live in exactly one place, `DISTANCE_BUCKETS` in src/ballFlight.js (added
+// in this slice's Task 4, specifically so nothing else, including this
+// script, would carry its own copy and let it drift). This script IMPORTS
+// that constant and the `distanceBucketCounts` function that sorts swings
+// into it; it does not hand-copy the edges. For every goal and session this
+// reports what fraction of swings landed in each bucket, for both the old
+// generator and today's, so the decision record can show plainly that the
+// old formula left the two shortest buckets close to empty no matter how
+// weakly a ball was struck.
 
 // A LOADER WRINKLE, EXPLAINED SO NOBODY "FIXES" IT AWAY. src/swingGenerator.js
 // imports its neighbours as `./ballFlight` and `./goalTargets`, with no file
@@ -91,6 +104,7 @@ register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK
 
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { hasTarget, meetsTarget } = await import('../src/goalTargets.js')
+const { distanceBucketCounts } = await import('../src/ballFlight.js')
 
 const REPLAYS_PER_CELL = 20000
 const SESSIONS = [2, 3, 4]
@@ -188,6 +202,21 @@ function formatDistribution(distances) {
   }
 }
 
+// What fraction of swings landed in each of the app's five distance buckets.
+// Reuses distanceBucketCounts from src/ballFlight.js — the same function the
+// results screen and both coach prompts call — rather than re-filtering the
+// distances by hand, so this can never disagree with the app about where a
+// bucket's edge falls. It takes swings shaped { hit: { landing: { distance
+// } } }, so a plain array of numbers is wrapped just enough to match that
+// shape and nothing more.
+function bucketPercentages(distances) {
+  const fakeSwings = distances.map((d) => ({ hit: { landing: { distance: d } } }))
+  return distanceBucketCounts(fakeSwings).map(({ label, count }) => ({
+    label,
+    share: count / distances.length,
+  }))
+}
+
 // ---------------------------------------------------------------------------
 // Measurement.
 //
@@ -280,6 +309,13 @@ function printDistributionLine(label, dist) {
   )
 }
 
+function printBucketLine(buckets) {
+  console.log(
+    '        Where the balls landed: ' +
+      buckets.map(({ label, share }) => `${label}ft ${pct(share)}`).join('  |  ')
+  )
+}
+
 console.log('='.repeat(78))
 console.log('SWING GENERATOR MEASUREMENT')
 console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per row below.`)
@@ -307,6 +343,7 @@ for (const sessionNum of SESSIONS) {
   )
   console.log('    How far the ball carried, across every swing generated above:')
   printDistributionLine('all goals (identical)', beforeDist)
+  printBucketLine(bucketPercentages(before.distances))
 
   console.log('')
   console.log('  AFTER (current generator, in src/swingGenerator.js):')
@@ -318,6 +355,7 @@ for (const sessionNum of SESSIONS) {
         `  (avg EV ${after.avgEV.toFixed(1)} mph, avg LA ${after.avgLA.toFixed(1)} deg)`
     )
     printDistributionLine(goal.label, afterDist)
+    printBucketLine(bucketPercentages(after.distances))
   }
 }
 
