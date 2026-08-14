@@ -1013,6 +1013,32 @@ rewritten, per the append-only rule.
   tests still passed, because every test drives noise at a neutral value. This
   does not matter until someone retunes the improvement arc, which is the queued
   item two above this one, and at that point it matters a lot. Worth pairing.
+- **The coach is long-winded, and the type is too small, and these are one
+  problem.** Raised by the owner on 14 August 2026 after running QA on Slice 6.
+  He wants larger text in the session summary box and in the chat panel; his own
+  reasoning for not doing it yet is the right one, that bigger type plus an
+  unbounded coach could fill the whole panel with the first message. He has tried
+  to fix the length by prompt instruction twice and it did not hold. The reason
+  is that "be brief" is unmeasured: nothing notices when it drifts. The fix is a
+  concrete budget per field (a word count, not an adjective) plus an eval bench
+  scoring compliance as a rate over N runs, which this project has never built
+  and which CLAUDE.md's own model-evidence rule already asks for. **Second,
+  independent argument for doing it:** output length is the main driver of how
+  long a debrief takes, so halving it is also the latency win that streaming was
+  declined for.
+- **The two font bumps are not equally risky.** The chat panel already scrolls,
+  so enlarging its text is close to free. The session summary box is fixed
+  height and must not scroll, so its type size is capped by the longest summary
+  the coach can produce, not the typical one. Do not size it against a good
+  example.
+- **Session 1's rewrite needs the coach checked, and that check should not be
+  done by hand.** The owner intends to fix the straight-line swings (see the item
+  above) and named the real risk: he did significant prompt engineering against
+  that data set and does not want a whack-a-mole hunt through sessions afterwards.
+  He has explicitly handed that verification over rather than doing it himself.
+  Do it with the same eval bench as the brevity work, grading whether the coach's
+  claims still match the data over many runs, which is the argument for building
+  the bench first and rewriting session 1 second.
 - **The distance-bucket drift test does not reach the chart.** Recorded in the
   known-debt section above with its reasoning. Only worth revisiting if this
   project ever grows rendering tests, which it deliberately has not.
