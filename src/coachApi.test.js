@@ -7,7 +7,8 @@
 // added because the real thing went wrong; both are silent when they work.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { callApi, goalContext, CoachError } from './coachApi.js'
+import { callApi, goalContext, generateDebrief, sendChatMessage, CoachError } from './coachApi.js'
+import { distanceDistributionLine } from './ballFlight.js'
 
 const RETRY_DELAY_MS = 1500
 const REQUEST_TIMEOUT_MS = 50000
@@ -59,6 +60,21 @@ describe('the targets the coach is told about', () => {
     const context = goalContext({ id: 'power' })
     expect(context).toContain('25-35 degrees')
     expect(context).toContain('88+ mph')
+  })
+
+  // Slice 6 replaced the fake distance formula with an honest carry curve.
+  // Under the old formula, 88 mph at 25-35 degrees carried 399 feet, so calling
+  // it "home run distance" was true. Under the honest curve a swing that meets
+  // the target carries 277 to 390 feet, and at the band's own minimum of 88 mph
+  // it never clears 323 — warning-track territory, not out of the park. Only
+  // the hardest contact the generator can produce, 97 mph at 28 degrees,
+  // reaches 390. So the prompt must not claim a home run next to a chart that
+  // shows one falling short. This
+  // pins the wording, not the number, so it survives future retuning of the
+  // carry curve itself.
+  it('does not tell the coach the Power target is home run distance', () => {
+    const context = goalContext({ id: 'power' })
+    expect(context.toLowerCase()).not.toMatch(/home run/)
   })
 
   it('tells the coach contact is 8 to 18 degrees at 85 mph', () => {
@@ -571,5 +587,84 @@ describe('unwrapping what the model actually returns', () => {
     // accepting things that are not answers.
     vi.stubGlobal('fetch', vi.fn(async () => ok('```\nI am afraid I cannot do that.\n```')))
     await expect(run(() => callApi({}))).rejects.toThrow('Failed to parse coach response as JSON')
+  })
+})
+
+// Task 4 of the honest-ball-flight slice: the debrief prompt and the chat
+// prompt both used to write out the same 160-220/220-260/260-300/300-340/340+
+// filter logic by hand, tuned to the old dishonest carry formula. The chat
+// prompt is the one CLAUDE.md names as "easy to miss" — Slice 4's chart-slot
+// validation had exactly this failure once already. These tests read the
+// actual text callApi sends, not a copy of the buckets, so a hand-written
+// range creeping back into either prompt fails here.
+describe('the distance distribution both prompts describe', () => {
+  // src/App.jsx's mockSwings distances, the hand-written session 1 every
+  // visitor opens on.
+  const mockDistances = [170, 122, 310, 126, 345, 224, 150, 277, 185, 241, 279, 97, 290, 201, 346]
+  const swings = mockDistances.map((distance) => ({
+    plateLocHeight: 2.5,
+    plateLocSide: 0,
+    hit: {
+      launch: { exitSpeed: 80, angle: 15, direction: 0 },
+      landing: { distance },
+    },
+  }))
+  const session = {
+    sessionNumber: 1,
+    stats: { avgExitVelocity: 80, avgLaunchAngle: 15, inZoneCount: 10, totalSwings: 15 },
+    swings,
+  }
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  // Runs a real call through callApi with fetch stubbed, and hands back the
+  // exact user-message text that was about to leave the browser.
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  it('the debrief prompt states the exact five-bucket distribution', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    // Hardcoded rather than built from distanceDistributionLine, so this does
+    // not just prove the prompt echoes whatever that function currently
+    // returns — it proves the buckets are actually the ones the plan chose.
+    expect(message).toContain(
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+    )
+  })
+
+  it('the chat prompt — the copy that is easy to miss — states the identical distribution', async () => {
+    const message = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    expect(message).toContain(
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+    )
+  })
+
+  it('cannot drift apart: the debrief prompt and the chat prompt report the same sentence for the same swings', async () => {
+    const debriefMessage = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chatMessage = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    const extract = (text) => text.match(/Distance distribution: [^\n]+/)[0]
+    expect(extract(debriefMessage)).toBe(extract(chatMessage))
+    // Also matches the function both prompts actually call, confirming the
+    // request that left the browser is not some third, independent value.
+    expect(extract(debriefMessage)).toBe(`Distance distribution: ${distanceDistributionLine(swings)}`)
   })
 })

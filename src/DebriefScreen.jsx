@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { sendChatMessage, CoachError } from './coachApi'
 import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
+import { distanceBucketCounts, sprayRadius, SPRAY_RINGS, SPRAY_FAIR_RADIUS } from './ballFlight'
 import { failureCopy } from './failureCopy'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
@@ -544,20 +545,13 @@ function TrendEV({ swings }) {
 
 // ── Distance distribution bar chart ───────────────────────────────────────
 function BarDistance({ swings }) {
-  const buckets = [
-    { range: '160-220', min: 160, max: 220 },
-    { range: '220-260', min: 220, max: 260 },
-    { range: '260-300', min: 260, max: 300 },
-    { range: '300-340', min: 300, max: 340 },
-    { range: '340+',    min: 340, max: Infinity },
-  ]
-
-  const data = buckets.map(({ range, min, max }) => ({
-    range,
-    count: swings.filter((s) => {
-      const dist = s.hit.landing.distance
-      return dist >= min && dist < max
-    }).length,
+  // Bucket edges live once, in src/ballFlight.js, and this chart reads them
+  // through distanceBucketCounts rather than filtering swings itself. Both
+  // coach prompts read the same function, so the chart and what the coach
+  // says about it cannot describe different ranges.
+  const data = distanceBucketCounts(swings).map(({ label, count }) => ({
+    range: label,
+    count,
   }))
 
   const maxCount = Math.max(...data.map((d) => d.count))
@@ -642,20 +636,34 @@ function SprayDirection({ swings }) {
     return `M ${l.x} ${l.y} A ${r} ${r} 0 0 1 ${rp.x} ${rp.y}`
   }
 
-  const leftLine  = arcPoint(-45, 190)
-  const rightLine = arcPoint(45, 190)
+  // The edge of fair territory is SPRAY_FAIR_RADIUS in src/ballFlight.js, the
+  // same constant sprayRadius() clamps every dot to. It used to be typed out as
+  // a bare 190 three times here while the constant sat unused next door, which
+  // is the same drift this slice consolidated the distance-bucket edges to
+  // prevent: move the boundary and the balls would have stopped matching the
+  // fence they are meant to land inside.
+  const leftLine  = arcPoint(-45, SPRAY_FAIR_RADIUS)
+  const rightLine = arcPoint(45, SPRAY_FAIR_RADIUS)
 
   // Fair territory fill path
   const fairPath = [
     `M ${cx} ${cy}`,
     `L ${leftLine.x} ${leftLine.y}`,
-    `A 190 190 0 0 1 ${rightLine.x} ${rightLine.y}`,
+    `A ${SPRAY_FAIR_RADIUS} ${SPRAY_FAIR_RADIUS} 0 0 1 ${rightLine.x} ${rightLine.y}`,
     'Z',
   ].join(' ')
 
-  // Distance label positions
-  const infieldLabel  = arcPoint(0, 120)
-  const outfieldLabel = arcPoint(0, 178)
+  // The two labelled distance arcs, and the label sitting just above each one.
+  // Both the radius and the printed distance come from SPRAY_RINGS in
+  // src/ballFlight.js, so an arc can never be drawn at one distance and
+  // labelled with another. The arcs used to be at fixed radii of 120 and 185
+  // with "300ft" and "400ft+" typed in beside them, which stopped being true
+  // the moment the carry distances became honest.
+  const rings = SPRAY_RINGS.map((ring) => ({
+    ...ring,
+    path: arcPath(ring.radius),
+    labelPoint: arcPoint(0, ring.radius),
+  }))
 
   // Shape renderers for each hit type
   const renderShape = (x, y, dir, i) => {
@@ -691,21 +699,22 @@ function SprayDirection({ swings }) {
         <line x1={cx} y1={cy} x2={leftLine.x}  y2={leftLine.y}  stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
         <line x1={cx} y1={cy} x2={rightLine.x} y2={rightLine.y} stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
 
-        {/* Infield arc */}
-        <path d={arcPath(120)} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-
-        {/* Outfield arc */}
-        <path d={arcPath(185)} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
-
-        {/* Distance markers */}
-        <text x={infieldLabel.x}  y={infieldLabel.y  - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">300ft</text>
-        <text x={outfieldLabel.x} y={outfieldLabel.y - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">400ft+</text>
+        {/* Distance arcs, and the distance each one marks */}
+        {rings.map((ring) => (
+          <path key={ring.feet} d={ring.path} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        ))}
+        {rings.map((ring) => (
+          <text key={ring.feet} x={ring.labelPoint.x} y={ring.labelPoint.y - 5} textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="8" fontFamily="Barlow, sans-serif">{ring.label}</text>
+        ))}
 
         {/* Swing shapes */}
         {swings.map((swing, i) => {
           const dir  = swing.hit.launch.direction
           const dist = swing.hit.landing.distance
-          const scale = Math.max(40, Math.min(200, 120 + (dist - 300) * 0.65))
+          // How far from the plate this ball is drawn. The scale lives in
+          // src/ballFlight.js beside the carry formula it is fitted to, and
+          // moves if that formula moves.
+          const scale = sprayRadius(dist)
           const rad = (dir * Math.PI) / 180
           const x = cx + scale * Math.sin(rad)
           const y = cy - scale * Math.cos(rad)
@@ -895,7 +904,7 @@ function ZoneBreakdown({ swings }) {
 //   player           — { firstName, lastName } from TrackMan API, or null
 //   sessionNumber    — integer
 //   goalId           — string key, e.g. 'power'
-//   goalLabel        — display string, e.g. 'Power & Home Runs'
+//   goalLabel        — display string, e.g. 'Power & Distance'
 //   sessionData      — { avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings }
 //   coachingSummary  — string for the Session Summary body (from Anthropic API)
 //   whatThisMeans    — string for the What This Means body (from Anthropic API)

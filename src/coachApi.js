@@ -1,4 +1,5 @@
 import { goalTarget, meetsTarget } from './goalTargets'
+import { distanceDistributionLine } from './ballFlight'
 
 // The debrief prompt reports a power-zone count for every goal, not just the
 // power goal, so it names Power's numbers directly rather than the current
@@ -30,7 +31,12 @@ export function goalContext(goal) {
   const target = goalTarget(goal?.id)
   switch (goal?.id) {
     case 'power':
-      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees, target exit velocity ${target.exitVelocity}+ mph. These are the conditions for home run distance contact.`
+      // Was "the conditions for home run distance contact" until Slice 6 gave
+      // distance an honest carry curve; at these numbers that is now a
+      // warning-track flyball, not a home run, and the wrong word would sit
+      // right next to a chart proving it wrong. Describes best contact instead,
+      // which stays true regardless of how far the curve says the ball goes.
+      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees, target exit velocity ${target.exitVelocity}+ mph. These are the conditions for the player's best contact.`
     case 'contact':
       return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees for true line drives, target exit velocity ${target.exitVelocity}+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.`
     case 'allfields':
@@ -379,7 +385,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Swings with launch angle strictly below 15 degrees (not including 15): ${s.swings.filter(sw => sw.hit.launch.angle < 15).length} swings — numbers: ${s.swings.map((sw, i) => sw.hit.launch.angle < 15 ? i + 1 : null).filter(Boolean).join(', ')}
 - Swings in power zone (EV >= ${POWER.exitVelocity} mph AND launch angle ${POWER.launchAngle.min}-${POWER.launchAngle.max} degrees): ${s.swings.filter(sw => meetsTarget('power', sw.hit.launch)).length} swings
 - Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
-- Distance distribution: 160-220ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 160 && sw.hit.landing.distance < 220).length} swings, 220-260ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 220 && sw.hit.landing.distance < 260).length} swings, 260-300ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 260 && sw.hit.landing.distance < 300).length} swings, 300-340ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 300 && sw.hit.landing.distance < 340).length} swings, 340+ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 340).length} swings
+- Distance distribution: ${distanceDistributionLine(s.swings)}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
 
@@ -404,7 +410,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph
 - Avg Launch Angle: ${s.stats.avgLaunchAngle} degrees
 - In Zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} pitches landed in the strike zone (pitch location only — not related to launch angle or swing outcome)
-- Distance distribution: 160-220ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 160 && sw.hit.landing.distance < 220).length} swings, 220-260ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 220 && sw.hit.landing.distance < 260).length} swings, 260-300ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 260 && sw.hit.landing.distance < 300).length} swings, 300-340ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 300 && sw.hit.landing.distance < 340).length} swings, 340+ft: ${s.swings.filter(sw => sw.hit.landing.distance >= 340).length} swings
+- Distance distribution: ${distanceDistributionLine(s.swings)}
 ${s.debrief?.coachingSummary ? `- Previously told player in session summary: ${s.debrief.coachingSummary}` : ''}
 ${s.debrief?.whatThisMeans ? `- Previously told player in what this means: ${s.debrief.whatThisMeans}` : ''}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
