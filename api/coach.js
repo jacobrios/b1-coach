@@ -20,9 +20,40 @@ const MAX_INPUT_BYTES = 128 * 1024
 // One shape for every refusal. A caller learns that the request was refused and
 // nothing else: not what was wrong with it, not that a size limit exists, not
 // where that limit sits.
+//
+// This is the caller-shape refusal only, kept exactly as it was. It is not a
+// visitor-facing failure reason (see the classification below); it means a
+// caller sent something this app never sends, and there is no product reason
+// to describe it any further.
 const reject = (res) => res.status(400).json({ error: 'Invalid request' })
 
+// How long this function waits on Anthropic before giving up on its own terms.
+// vercel.json pins this function's platform deadline at 60 seconds; 40 sits
+// inside that on purpose, so the function always has time left to answer with
+// a real error rather than being killed mid-response.
+const UPSTREAM_DEADLINE_MS = 40000
+
+// Whether this instance has handled a request before. Module scope, so it
+// survives between invocations on the same warm instance and resets to false
+// only when Vercel spins up a fresh one. Every invocation reads it into
+// `wasCold` before setting it true, including the GET/HEAD liveness pings: an
+// instance the uptime monitor just woke is genuinely warm by the time a
+// visitor's POST lands, so a ping has to count as the thing that warmed it, not
+// just POSTs.
+let instanceWarm = false
+
+// The three reasons a visitor-facing failure can carry: 'credits' (the prepaid
+// balance is drained), 'timeout' (this function gave up at its own deadline),
+// 'trouble' (anything else). These strings are also written in src/, on the
+// client side that renders them into a message. That duplication is
+// deliberate, the same call already made for MODEL and MAX_TOKENS above:
+// importing across the api/ and src/ boundary is an unproven build seam on
+// this project, so the two sides are kept in step by hand instead.
+
 export default async function handler(req, res) {
+  const wasCold = !instanceWarm
+  instanceWarm = true
+
   // Liveness only, for the uptime monitor that keeps this function warm. It must
   // never read the body or call Anthropic, so a ping every five minutes is free.
   if (req.method === 'GET' || req.method === 'HEAD') {
@@ -76,6 +107,27 @@ export default async function handler(req, res) {
     return reject(res)
   }
 
+  // The deadline covers the whole exchange, not just the wait for headers. The
+  // timer is cleared in the outer finally below, once this handler is done with
+  // the response body, so a body that stalls after a fast set of headers is
+  // still aborted at 40 seconds rather than running unbounded. src/coachApi.js
+  // carries the same shape on its own side of the wire, and the two must agree:
+  // when this function overruns, the browser's 50 second backstop fires first
+  // and the visitor gets a generic guess instead of the specific answer this
+  // function exists to give.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), UPSTREAM_DEADLINE_MS)
+  const startedAt = Date.now()
+
+  // Elapsed time is read where it is reported rather than pinned when the
+  // headers land, because a slow body is time the visitor spent waiting too.
+  const upstreamMsNow = () => Date.now() - startedAt
+
+  // Null means nobody answered, and only that. It is filled in the moment
+  // Anthropic responds, so a failure that happens after a real response still
+  // reports the status that response carried.
+  let upstreamStatus = null
+
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -85,11 +137,55 @@ export default async function handler(req, res) {
         'content-type': 'application/json',
       },
       body: forwarded,
+      signal: controller.signal,
     })
+    upstreamStatus = response.status
 
-    const data = await response.json()
-    return res.status(response.status).json(data)
-  } catch (err) {
-    return res.status(500).json({ error: err.message })
+    if (response.ok) {
+      const data = await response.json()
+      res.setHeader('x-coach-upstream-ms', String(upstreamMsNow()))
+      res.setHeader('x-coach-cold', String(wasCold))
+      return res.status(response.status).json(data)
+    }
+
+    // A non-ok response is not guaranteed to be JSON. An infrastructure gateway
+    // failing (a 502 or 503) commonly answers with an HTML error page instead,
+    // and that is exactly the case this diagnostic exists to catch, so a body
+    // that fails to parse falls back to an empty object rather than throwing
+    // and losing the reason classification below.
+    let data = {}
+    try {
+      data = await response.json()
+    } catch (err) {
+      // Unless the deadline is what interrupted the read. That is a timeout and
+      // must be reported as one, not swallowed into 'trouble' by the fallback
+      // this catch exists for.
+      if (controller.signal.aborted) throw err
+      // Otherwise leave data as {}; the status below is still the real one.
+    }
+
+    // A 400 knowingly covers two different situations: Anthropic refusing a
+    // drained balance, and Anthropic refusing a request malformed in some way
+    // this app has never sent. The second is far more likely our own bug than
+    // Anthropic having trouble, so it falls into 'trouble' rather than getting
+    // its own reason. Matched against the serialized body rather than a nested
+    // field, because Anthropic nests the message inside an error object and
+    // this check must not depend on that shape holding.
+    const isCreditsFailure = response.status === 400 && /credit balance is too low/i.test(JSON.stringify(data))
+    const reason = isCreditsFailure ? 'credits' : 'trouble'
+    return res.status(502).json({
+      error: { reason, upstreamStatus, upstreamMs: upstreamMsNow(), cold: wasCold },
+    })
+  } catch {
+    // Everything that failed after Anthropic answered arrives here too: an
+    // aborted body read, or a 200 whose body would not parse. Those had a real
+    // response, so upstreamStatus reports it rather than claiming nobody
+    // answered at all.
+    const reason = controller.signal.aborted ? 'timeout' : 'trouble'
+    return res.status(reason === 'timeout' ? 504 : 502).json({
+      error: { reason, upstreamStatus, upstreamMs: upstreamMsNow(), cold: wasCold },
+    })
+  } finally {
+    clearTimeout(timer)
   }
 }

@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { sendChatMessage } from './coachApi'
+import { sendChatMessage, CoachError } from './coachApi'
 import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
+import { failureCopy } from './failureCopy'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
   XAxis, YAxis, CartesianGrid,
@@ -193,8 +194,16 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
           onChartSignal?.(requestedChart, finalMessages)
         }
       })
-      .catch(() => {
-        onMessagesChange?.([...updatedMessages, { role: 'coach', content: "Sorry, I couldn't connect right now. Try again in a moment." }])
+      .catch((err) => {
+        // sendChatMessage always rejects with a CoachError, but this catch must
+        // survive one that is not, so an error shape this app has never seen
+        // still reaches the visitor as the honest 'trouble' copy rather than a
+        // blank or crashed chat bubble.
+        const { message } = failureCopy(
+          err instanceof CoachError ? err.reason : 'trouble',
+          err instanceof CoachError ? err.cold : false,
+        )
+        onMessagesChange?.([...updatedMessages, { role: 'coach', content: message }])
         setLoading(false)
       })
   }

@@ -113,6 +113,41 @@ Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zo
 
 const RETRY_DELAY_MS = 1500
 
+// The browser's own backstop, and the ceiling this slice promises: the longest
+// a visitor is held before being told something. api/coach.js gives up on
+// Anthropic at 40000ms and answers with its own classified reason; this sits
+// behind that on purpose, at 50000ms, so the server's more specific answer
+// almost always wins the race and this timeout only fires when the function
+// itself never got to speak at all.
+//
+// It is a budget for the whole callApi call, not an allowance handed fresh to
+// each attempt. Both attempts and the delay between them are spent out of the
+// same wall clock, so the ceiling holds by construction rather than by
+// assuming every retryable failure happens to fail fast.
+const REQUEST_TIMEOUT_MS = 50000
+
+// A second attempt needs some room to work in. Below this there is not enough
+// budget left for one to plausibly finish, so starting it would only add
+// silence in front of the same honest message the visitor was always going to
+// get.
+const MIN_RETRY_BUDGET_MS = 2000
+
+// Everything callApi throws is one of these, so no caller has to guess what
+// went wrong from a bare Error message again. `reason` is one of 'timeout',
+// 'unreachable', 'credits' or 'trouble'. `respondedOk` marks whether this
+// attempt got a successful HTTP response before failing (true only for a good
+// response whose body could not be used); the retry policy below reads it to
+// tell an attempt that never reached the server apart from one that did.
+export class CoachError extends Error {
+  constructor(message, { reason, cold = false, respondedOk = false } = {}) {
+    super(message)
+    this.name = 'CoachError'
+    this.reason = reason
+    this.cold = cold
+    this.respondedOk = respondedOk
+  }
+}
+
 // The model is asked for bare JSON and usually gives it, but it also wraps the
 // answer in a Markdown fence unpredictably: sometimes tagged ```json, sometimes
 // a plain ```, sometimes with a sentence in front of it. It may also quote a
@@ -177,48 +212,154 @@ function parseCoachResponse(text) {
   throw new Error('Failed to parse coach response as JSON')
 }
 
+const isAbort = (err) => err?.name === 'AbortError'
+
+// One attempt: fetch, classify whatever went wrong into a CoachError, or parse
+// and return the coach's reply. The server's own answer always wins when there
+// is one; this only guesses when the function never got to speak at all.
+//
+// The deadline covers the whole attempt, not just the wait for headers: the
+// timer is cleared only once this function is done with the response body, and
+// an abort firing during either body read (the error envelope or the coach's
+// reply) is still classified 'timeout', not misread as 'trouble' or
+// 'unreachable' by the generic catches around those reads. Without that, a slow
+// body on an already-answered request could hang past the deadline this slice
+// promises as its ceiling.
+//
+// `budgetMs` is whatever is left of the call's ceiling when this attempt
+// starts, not a fresh allowance. A retry therefore inherits the time its
+// predecessor did not spend, and nothing else.
+async function attempt(url, headers, body, budgetMs) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), budgetMs)
+
+  try {
+    let response
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      if (isAbort(err)) {
+        throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+      }
+      // The network failed or the function could not be reached at all. We know
+      // nothing about Anthropic; the server never got a chance to say more.
+      throw new CoachError('Could not reach the coach', { reason: 'unreachable' })
+    }
+
+    if (!response.ok) {
+      let envelope
+      try {
+        envelope = await response.json()
+      } catch (err) {
+        if (isAbort(err)) {
+          throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+        }
+        envelope = undefined
+      }
+
+      // The classified shape from api/coach.js: { error: { reason, cold, ... } }.
+      // A bare string error (the older caller-shape refusal) is not this, and
+      // reading `.reason` off it must not throw or be mistaken for a real reason.
+      const errorField = envelope?.error
+      if (errorField && typeof errorField === 'object' && typeof errorField.reason === 'string') {
+        throw new CoachError('The coach could not answer', { reason: errorField.reason, cold: !!errorField.cold })
+      }
+
+      // No usable envelope: the function never got to speak, or answered in a
+      // shape this app never asked for. A 504 or an x-vercel-error header is the
+      // platform itself saying it gave up; anything else, we simply do not know.
+      const isTimeoutSignal = response.status === 504 || response.headers?.get?.('x-vercel-error') != null
+      throw new CoachError('The coach could not answer', { reason: isTimeoutSignal ? 'timeout' : 'unreachable' })
+    }
+
+    // The connection worked and the server answered; everything from here on is
+    // the reply itself being unusable, in one shape or another. That attempt
+    // already spent its full wait succeeding, which is exactly why every
+    // failure below is marked respondedOk and the retry policy refuses to
+    // repeat it. A body that is not JSON at all, or is JSON but not an object,
+    // must not escape this function as a raw SyntaxError or TypeError with no
+    // reason. An abort while reading this body is the one exception: it is
+    // still 'timeout', because the visitor waited the full deadline regardless
+    // of whether the headers had already arrived.
+    let text
+    try {
+      const data = await response.json()
+      text = data?.content?.[0]?.text
+    } catch (err) {
+      if (isAbort(err)) {
+        throw new CoachError('The coach did not answer in time', { reason: 'timeout' })
+      }
+      throw new CoachError('The coach answered with something unusable', { reason: 'trouble', respondedOk: true })
+    }
+
+    if (!text) {
+      throw new CoachError('No text content in API response', { reason: 'trouble', respondedOk: true })
+    }
+
+    try {
+      return parseCoachResponse(text)
+    } catch {
+      throw new CoachError('Failed to parse coach response as JSON', { reason: 'trouble', respondedOk: true })
+    }
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+// Whether a failed attempt is worth repeating once. Two conditions, both
+// required: the attempt never produced a successful HTTP response, and the
+// reason is one a second try can plausibly do better on.
+//
+// The first condition is not decoration. A reply that arrived fine and then
+// would not parse is classified 'trouble', but that attempt already spent its
+// wait succeeding, so repeating it buys a second full wait for a problem in
+// the model's answer rather than in reaching it.
+//
+// `cold` is deliberately not consulted here, and this is the third time it has
+// been reasoned through, so it is written down. Work through what it could
+// change and it changes nothing: cold with 'credits' must not retry, because a
+// drained balance is not a waking-up problem and no second try will fund it;
+// cold with 'timeout' must not retry, because the visitor has already waited
+// the whole budget and the point of a ceiling is that it holds; and cold with
+// 'unreachable' or 'trouble' already retries without asking about cold at all.
+// A cold clause adds no case and only lets 'credits' through, which is the one
+// failure this slice was built to report honestly and the one the copy table
+// deliberately gives no Try Again button. Do not add it back.
+function isRetryable(err) {
+  if (err.respondedOk) return false
+  return err.reason === 'unreachable' || err.reason === 'trouble'
+}
+
 // Exported for tests. Both callers are in this file; nothing else should use it.
+//
+// One wall clock governs the whole call. Each attempt gets whatever is left of
+// REQUEST_TIMEOUT_MS rather than a fresh copy of it, and a retry is skipped
+// outright when too little is left for a second attempt to finish inside the
+// ceiling. That is what makes the ceiling a fact about the code instead of an
+// assumption about how quickly retryable failures tend to fail.
 export async function callApi(body, { onRetry } = {}) {
   const url = '/api/coach'
   const headers = { 'content-type': 'application/json' }
+  const startedAt = Date.now()
+  const remainingMs = () => REQUEST_TIMEOUT_MS - (Date.now() - startedAt)
 
-  const send = async () => {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-    })
-
-    if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`)
-    }
-
-    return response
-  }
-
-  let response
   try {
-    response = await send()
-  } catch {
-    // The server answering this call sleeps when idle, and the request that wakes
-    // it is the one that fails. One retry covers that. A second would only make a
-    // genuinely dead server take longer to say so.
-    onRetry?.()
+    return await attempt(url, headers, body, remainingMs())
+  } catch (err) {
+    if (!(err instanceof CoachError) || !isRetryable(err)) throw err
+
+    // The 1500ms pause comes out of the same budget as the attempts do, so it
+    // is subtracted before asking whether a second attempt has room to run.
+    if (remainingMs() - RETRY_DELAY_MS < MIN_RETRY_BUDGET_MS) throw err
+
+    onRetry?.({ reason: err.reason, cold: err.cold })
     await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
-    response = await send()
-  }
-
-  const data = await response.json()
-  const text = data.content?.[0]?.text
-
-  if (!text) {
-    throw new Error('No text content in API response')
-  }
-
-  try {
-    return parseCoachResponse(text)
-  } catch {
-    throw new Error('Failed to parse coach response as JSON')
+    return attempt(url, headers, body, remainingMs())
   }
 }
 
