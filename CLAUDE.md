@@ -591,6 +591,21 @@ off, and anything the slice surfaced goes on. Keep each item to a line or two in
 product language, with enough to judge it cold. The section above is problems;
 this section is intended work. An item can appear in both.
 
+**Open at the close of Slice 5, 14 August 2026: the agreed next slice is not
+written down here.** The owner reports that a separate session, titled "B1 Coach
+demo reliability audit," settled on a next slice called **"credibility polish"**,
+and that its contents exist only in that conversation. Nothing in this repository
+records what it covers, so this file cannot say. The first job of whoever picks
+up the next slice is to get that scope written down here before building
+anything, because this list is what a fresh session actually reads.
+
+This is worth naming as a process finding rather than a to-do. It is the exact
+failure this section exists to prevent: work agreed in one session, carried
+forward by re-pasting a prompt into the next, and therefore invisible to every
+session that does not receive the paste. It is also why the Slice 5 close
+recommended a next slice that had already been superseded. Decisions reached in
+conversation are not recorded until they are in this file.
+
 ### Parked at Slice 4 close, 3 August 2026
 
 The four questions Slice 4 put to the product manager. All four were **parked
@@ -616,6 +631,17 @@ will not have been the session that found it.
    Slice 4 as a known limitation** and is named as such in that slice's PR.
    Strongest candidate of the four when work resumes, because it is the only one
    a visitor actually hits.
+
+   *Correction, 14 August 2026, from the owner.* The framing above is wrong and
+   the entry is downgraded, not closed. Pulling up a chart from the chat is
+   **intended behavior**: the coach may bring one up when it decides the player
+   should see it, and the player may ask for one outright ("show me the spray
+   chart"). Nor is the visitor stranded, because they can simply ask for the
+   earlier chart again, or ask to go back. So "lost a chart with no way back" is
+   not what happens, and this is not a defect. What may still be worth something
+   is the **discoverability** question: nothing on screen tells a visitor that
+   asking is possible. That is a much smaller item than the one written above,
+   and it is no longer a candidate for the next slice.
 
 2. **The Reduce Pop-Ups goal card still reads `LA < 0° ↓ · Drive more`.**
    *Open, needs a copy decision, then a one-line change.* Slice 4 changed the
@@ -683,12 +709,18 @@ rewritten, per the append-only rule.
   convention rather than a goal target, which is defensible, but it leaves 88
   written in three more places with nothing tying them to `goalTargets.js`.
   Raised by the Slice 4 review.
-- **Stream the debrief. Recommended next slice, added 13 August 2026.** A
+- ~~**Stream the debrief. Recommended next slice, added 13 August 2026.** A
   visitor watches a blank screen for 12 to 30 seconds before a word appears, and
   it is the thing they most feel about this demo. Slice 5 deliberately measured
   that wait and put honest words around its failures without reducing it; the
   real fix is showing the coach's text as it is written. Named as the next slice
-  in the Slice 5 plan's own not-in-this-slice list.
+  in the Slice 5 plan's own not-in-this-slice list.~~ **Declined by the owner on
+  14 August 2026: the wait is fine as it is.** The recommendation had leaned on
+  the 12 August audit's 20 to 30 seconds, but the only debrief measured end to
+  end during Slice 5 took 12.06 seconds, and the owner judged that acceptable on
+  a first click. Kept rather than deleted so nobody re-proposes it. Reopen only
+  if measured latency climbs back toward 30 seconds, which is the number that
+  made it look worth doing.
 - **Tie the "40 seconds" wording to the deadline it describes.** Added 13 August
   2026, found while building Slice 5. The number is written out **twice** in
   `src/failureCopy.js`, once in the `timeout` message and once in
