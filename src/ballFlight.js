@@ -88,8 +88,8 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 // The edges below are the product manager's choice from a rendered
 // comparison of three candidate schemes shown side by side on 14 August
 // 2026, not a further percentile calculation. Measured over 2,500 sessions
-// per cell (scripts/measure-swing-generation.mjs), average empty columns per
-// chart across every goal and session that has a target:
+// per cell, average empty columns per chart across every goal and session
+// that has a target:
 //
 //   150/200/250/300 (Task 4's draft)   0.97 overall, 1.38 on Power session 4
 //   175/225/265/305 (shipped)          0.70 overall, 0.99 on Power session 4
@@ -98,6 +98,12 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 // under the draft edges and 5, 3, 1, 3, 3 under these. The product manager
 // preferred the uneven shape on sight: five identical bars reads as
 // placeholder data, not as something real measurement produced.
+//
+// Rerun this yourself with `node scripts/compare-distance-bucket-schemes.mjs`
+// rather than trusting the numbers above. That script is what actually
+// produces them, replaying the real generator against the shipped edges and
+// the two rejected candidates (Task 4's draft above, and a third, "scheme B"
+// at 200/250/280/310, shown alongside these two and not chosen).
 //
 // "Under 175" catches the shortest real balls: the pre-Task-4 chart's floor
 // of 160 let a 74-foot grounder fall through with no bucket to land in at
