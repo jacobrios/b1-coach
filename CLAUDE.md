@@ -606,6 +606,37 @@ session that does not receive the paste. It is also why the Slice 5 close
 recommended a next slice that had already been superseded. Decisions reached in
 conversation are not recorded until they are in this file.
 
+**Closed 14 August 2026.** The scope was recovered from the session that held it
+and written to `docs/queued-slices.md`. "Credibility polish" is Slice 6, and a
+second agreed slice nobody had recorded at all, coach fidelity, is Slice 7. The
+block above is kept as written because it records what was true when written, and
+because the process finding in it is the point. That finding now has its own
+entry in the decision log for 14 August 2026.
+
+### The next two slices, agreed 12 August 2026
+
+Full scope for both, with the reasoning behind every decision and everything
+ruled out, is in **`docs/queued-slices.md`**. Detail lives there rather than here
+on purpose: this file loads at the start of every session, so it is an index.
+
+- **Slice 6, credibility polish.** Eight defects an informed visitor would notice
+  and quietly judge, none of which break the app, plus one feel decision. The two
+  that matter most:
+  simulated hit distances that are physically impossible for the exit velocities
+  printed beside them, which the coach then quotes in its opening sentence; and
+  the browser tab still showing the build tool's own logo. Also carries a feel
+  decision for the product manager about how often the Power goal shows nothing
+  on target. May be too large for one slice; the seam is named in the doc.
+- **Slice 7, coach fidelity.** Four ways the coach can contradict the screen
+  beside it, the largest being that it is never told the two tips it just gave.
+  **Two of the four failed to reproduce in a live walkthrough**, so the slice
+  starts by deciding whether they are worth fixing at all, and it needs
+  model-behavior evidence rather than unit tests.
+
+Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and 7. Slice 5
+shipped on 14 August 2026 but delivered only the second half of what Slice A
+covered; `docs/queued-slices.md` records which half and why that was accepted.
+
 ### Parked at Slice 4 close, 3 August 2026
 
 The four questions Slice 4 put to the product manager. All four were **parked
