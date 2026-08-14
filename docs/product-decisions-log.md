@@ -6,6 +6,58 @@
 
 ---
 
+## Micro-PR: two agreed slices existed only in a chat window (August 14)
+
+*What we changed:* Wrote `docs/queued-slices.md`, holding the agreed scope for
+Slice 6 and Slice 7, and pointed at it from the What's Next list in CLAUDE.md.
+No code changed.
+
+*The finding, which matters more than the document:* Both slices were agreed in
+conversation on 12 August 2026, after a whole-app audit. Neither was written
+down anywhere in this repository. They were carried forward by re-pasting a
+prompt from one session into the next, which works exactly until somebody opens
+a session without the paste. That happened: a later session recommended a next
+slice that had already been ruled out, because from inside the repository it had
+never been ruled out at all. The Slice 5 close then repeated the recommendation.
+
+**A decision is not recorded until it is in a file.** A prompt that gets pasted
+forward is a decision held in one person's memory with extra steps. The failure
+is silent and it looks like progress, because each pasted session behaves
+correctly and only the sessions that never got the paste reveal the gap.
+
+**The parts we thought were too obvious to write down are the parts that went
+missing.** The item lists survived the re-pasting; the reasoning did not. The
+clearest case was the browser tab logo. It was reported as the most embarrassing
+thing in the app, and the product manager overruled that: the URL is visibly a
+Vercel address, he does not claim to work for TrackMan, and a non-engineer sees
+a generic bolt. It stays in the slice only because it costs ten minutes. None of
+that reasoning existed anywhere, so the next session to meet that item would
+have re-argued a settled question, and would have argued it at the wrong
+severity. `docs/queued-slices.md` therefore records why things were decided, and
+records five things that were ruled out, which a task list would have dropped
+entirely.
+
+**Scope goes on main; plans travel with their branch.** These two are different
+documents and conflating them is what produced the withdrawn plan-only pull
+request back in Slice 2. Agreed scope is settled and belongs where every session
+can read it. A slice plan is a working document that will be wrong in some
+detail by the time the work lands, so it stays on the branch and reaches GitHub
+only inside the pull request carrying the finished build.
+
+**CLAUDE.md is an index, not a container.** The full scope runs to a few hundred
+lines. Pasting it into CLAUDE.md would have made every future session in this
+project more expensive, forever, to save one file open. The pointer is two
+bullets; the detail is a file away.
+
+*Corrections made while writing this, all verified against the code rather than
+remembered:* the lint failure count is 22 across six files, not the 13 the audit
+reported two days earlier, because Slice 5 added server code that trips a
+browser-globals rule; the README's Tailwind overclaim has already been fixed and
+is off the list; and Slice 5 delivered only the second half of what its slice was
+scoped to cover, since the cause of the 12 August timeout is still not known. The
+last one is recorded rather than treated as debt: the visitor-facing problem was
+solved another way, by capping the wait and saying honestly what happened.
+
 ## Slice 5: the app now says what actually went wrong (August 13)
 
 *What we changed:* Every failure used to produce the same sentence, telling the

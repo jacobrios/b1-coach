@@ -1,0 +1,384 @@
+# Queued slices: agreed scope for Slice 6 and Slice 7
+
+Written 14 August 2026. This is **agreed scope**, not a slice plan. A slice plan
+travels on its own branch and reaches GitHub only inside the pull request that
+carries the finished build; this file lives on main so that any session can read
+what was already decided without re-deriving it.
+
+Both slices below were agreed in conversation on 12 August 2026 and existed
+nowhere in this repository until today. That gap is the reason this file exists.
+See the decision log entry for 14 August 2026 for the process finding itself.
+
+**Do not re-litigate what is marked settled here.** The product manager settled
+these deliberately, and several were settled *against* the recommendation that
+was put to him. Where that happened it is noted, because a future session that
+reads only the recommendation will otherwise reopen a closed question.
+
+---
+
+## Where these came from
+
+A read-only multi-agent audit of the whole app ran on 12 August 2026. Six
+auditors swept one dimension each, an adversarial verifier tried to refute every
+finding, and 22 of 47 findings survived. A live browser pass followed on the
+deployed site, which both confirmed several findings and killed two others.
+
+The audit's own report was written to a session scratch folder and is gone. What
+survived is what is written here and in CLAUDE.md, which is precisely the failure
+this file is meant to stop happening twice.
+
+## Letter-to-number mapping
+
+The slices were first agreed as letters, then renumbered to match this repo's
+existing sequence. Anyone who finds a reference to the letters should read it as:
+
+    Slice A  ->  Slice 5   Reliability. SHIPPED 14 August 2026 as PR #17.
+    Slice B  ->  Slice 6   Credibility polish. Queued, scope below.
+    Slice C  ->  Slice 7   Coach fidelity. Queued, scope below.
+
+**Slice 5 delivered half of what Slice A was scoped to cover, and that is worth
+knowing.** Slice A had two halves: find out why a debrief timed out, and stop the
+app blaming a sleeping server for every failure. The second half shipped in full.
+The first did not: CLAUDE.md still records the cause of the 12 August 504 as not
+known, with a concurrency effect unruled-out. This was not an oversight to
+correct later. The visitor-facing problem was solved another way, by capping the
+wait at 50 seconds and saying honestly what happened, so the root cause became a
+question rather than a defect. Recorded here so nobody reads "Slice A is done" as
+"the latency question is answered."
+
+---
+
+# Slice 6: credibility polish
+
+**What it is, in one line:** fix the things an informed visitor would notice and
+quietly judge, none of which break the app.
+
+**Why it is next:** these are the findings that survived both the adversarial
+verifier and a live browser pass. Every one of them is visible without opening
+the code, and most are cheap.
+
+**A warning about size.** This is eight items. It may be too large for one slice.
+The product manager's own rule is to prefer the largest slice that can still be
+verified honestly, and all of these are verifiable in a single browser pass,
+which is the argument for keeping them together. If it needs splitting, the
+natural seam is item 1 and item 2 (the data model) against everything else
+(surface polish). Say so before starting rather than discovering it halfway.
+
+### 1. Hit distances are physically impossible
+
+**Verified live on the deployed site, 12 August 2026, and re-verified in code on
+14 August 2026.**
+
+The formula is at `src/App.jsx:723`:
+
+    const dist = Math.round(ev * 4.0 + la * 1.8)
+
+Launch angle barely matters, so a ball hit almost flat is credited with most of
+the distance of one hit perfectly. Two real examples from the live app:
+
+- 70 mph at 4 degrees, recorded as **287 feet**. In real baseball that is a
+  ground ball, somewhere near 130 feet.
+- 91 mph at 28 degrees, recorded as **414 feet**. Real carry is nearer 320.
+  414 feet needs roughly 105 mph.
+
+This is not confined to a table nobody opens. The coach reads the distances and
+quotes them in its opening sentence. Live quote from the deployed app:
+
+> ten of your fifteen swings carried 340 feet or more
+
+on a session averaging 82 mph.
+
+**Why it matters more here than it would anywhere else.** The entire product is
+an interpretation layer over a ball-flight *measurement* company's data. A
+baseball-literate reviewer opens the Raw Data table and knows within seconds that
+the numbers came from nowhere. A reviewer who does not know baseball will never
+notice, which is exactly why this survived four months.
+
+**Direction of the fix:** give launch angle real weight. Near-zero carry below
+about 10 degrees, peaking around 28. The fifteen-swing opening session at
+`src/App.jsx:649` onward is hand-written using the same relationship and must be
+re-checked afterwards, or the fixed session every visitor sees will contradict
+the generated ones.
+
+*(The real-world distance figures above are from general baseball knowledge, not
+a physics model. The direction is certain; the exact feet are approximate.)*
+
+### 2. The distance buckets depend on item 1
+
+`src/DebriefScreen.jsx:547-549` starts its buckets at 160-220 feet. The shortest
+ball the current formula can produce is 251 feet, so that column can never fill
+and the next one almost never does. The first debrief renders as 0, 0, 1, 4, 10:
+two empty columns and one enormous bar. This chart is a default for the Power
+goal, so a first-click visitor lands on it.
+
+The same empty ranges are handed to the coach at `src/coachApi.js:379-381`, which
+can then congratulate the player for having nothing under 220 feet.
+
+**Do this after item 1**, since fixing the formula moves all the data, then set
+the buckets from the range the data actually occupies.
+
+### 3. The browser tab shows the build tool's logo
+
+`public/favicon.svg` is Vite's own scaffolding mark, a purple bolt, untouched
+since the first commit. `index.html:5` points at it. The app already draws its
+own radar mark in `TrackManLogo` at `src/App.jsx:366`; exporting that under the
+same filename changes nothing else.
+
+**The product manager downgraded this from the severity it was reported at, and
+his reasoning should be recorded rather than re-argued.** It was put to him as
+the single most embarrassing item found. He disagreed: the URL is visibly a
+Vercel address, he does not claim to work for TrackMan, and a non-engineer just
+sees a generic bolt. It stays in the slice only because it is a ten-minute job,
+not because it is urgent.
+
+One clarification worth keeping, because it caused a crossed wire the first time:
+**this item is not about TrackMan branding or copyright.** It is about shipping
+the *build tool's* logo, which reads as generated-from-a-template-and-never
+-finished. The TrackMan branding question is separate and nobody has raised it as
+a problem.
+
+### 4. Scaffolding files still in the repo
+
+Five files from day one, none of them reachable by any visitor path, all of them
+visible to a reviewer who opens the source folder, which is precisely the
+impression this project cannot afford:
+
+    src/App.css              build-tool template styles, imported by nothing
+                             (verified 14 August 2026: no reference in src/)
+    src/assets/react.svg     starter logo
+    src/assets/vite.svg      starter logo
+    src/assets/hero.png      unused
+    public/icons.svg         a social-media icon sprite that ships to the live
+                             site and is served at /icons.svg
+
+Keep `src/index.css`, which is the real stylesheet. Build once after deleting to
+confirm nothing broke.
+
+### 5. The project's own code-quality check fails
+
+An engineer gut-checking this repo runs install, then test, then lint. Tests come
+back perfect. Lint dumps a wall of red, which reads as nobody having run it
+recently.
+
+**The audit reported 13 errors on 12 August. It is 22 as of 14 August**, because
+Slice 5 added server code that trips a browser-globals rule. Re-run it rather
+than trusting either number.
+
+Most are the checker aimed at files it was never meant to lint. `eslint.config.js`
+ignores only `dist`, and applies browser globals to everything:
+
+- `design/trackman-b1-coach/project/ios-frame.jsx` is a design mockup, not app
+  code. Eight errors.
+- `api/coach.js` and `vite.config.js` are server-side and legitimately use
+  `process`. Six errors.
+- `.claude/hooks/run-tests-unless-docs.test.js` is a Node test file. Errors for
+  the same reason.
+
+Three are genuine and worth judging on their own merits:
+
+    src/App.jsx:4              'sendChatMessage' imported and never used
+    src/App.jsx:675            Math.random() called during render (nickname pick)
+    src/LiveSessionScreen.jsx:296  setState called synchronously in an effect
+
+The first is a leftover and takes seconds. The other two are real React
+complaints in shipped code; neither has produced a visible bug, so treat them as
+findings to assess, not as automatic fixes.
+
+### 6. A reviewer who clones the repo cannot run it
+
+`README.md` has "What it does", "Tech stack", "Status" and "Documentation", and
+no install line, no run line, and no mention that local development needs a
+differently-named API key than production does. That fact currently lives only in
+CLAUDE.md, which is not where a stranger looks.
+
+Add a short "Running it locally" section and a `.env.example` carrying both
+names: `VITE_ANTHROPIC_API_KEY` for local development, `ANTHROPIC_API_KEY` for
+production. `.gitignore` already carries the `!.env.example` negation that lets
+that file be committed; do not remove it.
+
+**Already fixed, do not re-report:** the audit flagged the README for advertising
+Tailwind. It now reads "Tailwind is installed but used only minimally," which is
+accurate. Verified 14 August 2026.
+
+### 7. The README lists goals that are not the goals on screen
+
+`README.md:13` names Power, Line Drives, Contact, Reduce Pop-Ups, Hit to All
+Fields, and Open Session. The app shows six cards, but they are a different six:
+Line Drives and Contact are a single card, and the sixth is Full Dashboard, which
+the README does not mention.
+
+Full Dashboard is deliberately out of scope and says so honestly when tapped.
+That honesty is worth showing rather than hiding. A two-line rewrite.
+
+### 8. The Reduce Pop-Ups goal card points the wrong way
+
+The tag reads `LA < 0° ↓ · Drive more` (`src/App.jsx:54`), for a goal whose real
+target is 10 to 25 degrees. Read literally it points backwards, since a pop-up is
+a *high* launch angle, not a low one.
+
+`launchAngleRangeLabel('popup')` in `src/goalTargets.js` already returns `10–25°`
+if a numeric range turns out to be what is wanted.
+
+**This needs the wording decided before any code changes.** It has been open
+since Slice 4 for exactly that reason. Ask the product manager; do not pick copy.
+
+### 9. A judgment call, not a defect: the Power goal often shows nothing on target
+
+**Measured 12 August 2026 by replaying the app's own generator 20,000 times
+against the Power target in `src/goalTargets.js` (launch angle 25-35 AND exit
+velocity 88 or better):**
+
+    session 2 showing ZERO on-target swings:        55.4%
+    ...of the sessions that IMPROVED:               34.3%
+
+**Read this carefully, because it was misread once already.** This is **not** the
+deliberate 65/35 improve-or-decline design, and that design is **settled and
+stays**. It was tuned on purpose because an unbroken improvement arc made the
+player look superhuman by session four.
+
+The separate thing is that the Power band sits at 25 to 35 degrees while the
+simulated hitter averages 17 to 19, so a swing has to be an outlier on launch
+angle *and* on exit velocity in the same moment. Exit velocity and launch angle
+are drawn independently at `src/App.jsx:718-720`. That is why a third of sessions
+that genuinely *improved* still show nothing highlighted.
+
+The risk is not that the player failed. It is that the chart's orange target band
+renders completely empty, which reads as a broken chart rather than as coaching.
+Power is the first card on the grid and the likeliest first click.
+
+**Bring the product manager options rather than a fix.** This is a feel decision.
+
+---
+
+# Slice 7: coach fidelity
+
+**What it is, in one line:** stop the coach from being able to contradict the
+screen it is sitting next to.
+
+**Read this before planning anything.** Items 1 and 2 were found by reading code,
+and a live walkthrough on 12 August 2026 **failed to reproduce either one**. The
+mechanisms are real; the visible symptom did not appear. Treat them as unproven,
+decide whether each is worth fixing before fixing it, and do not describe them as
+confirmed defects in a pull request.
+
+**How this slice has to be verified.** These are claims about model behavior, and
+the test suite cannot settle them: it deliberately never calls the model. Per
+CLAUDE.md, that needs named hand-run scripts scoring behavior as a rate over N
+runs, kept provably outside the test runner's collection. A single clean
+walkthrough is not evidence, in either direction. Plan that verification before
+writing code, and record baseline and after numbers in the decision log.
+
+### 1. The coach never receives the tips it just gave. UNPROVEN.
+
+The two next-session tips are stored as the literal placeholder string
+`__tips__` at `src/App.jsx:794`, rendered from a separate field at
+`src/DebriefScreen.jsx:245`, and stripped out of prior sessions' history at
+`src/coachApi.js:417`.
+
+The tips sit at the top of the chat panel looking exactly like something the
+coach said. When a visitor asks the most natural possible follow-up, the coach
+has never been told what they were.
+
+**Did not reproduce.** Asked "How do I work on that first one?" on a live Power
+debrief, the coach answered correctly and on-topic, inferring from the session
+numbers. One run proves nothing either way.
+
+### 2. The coach is told to flag "below 15 degrees" for every goal. UNPROVEN.
+
+`src/coachApi.js:379` hand-writes 15 rather than reading the selected goal's own
+target from `src/goalTargets.js`:
+
+    Swings with launch angle strictly below 15 degrees ...
+
+That 15 was written for Power and never revisited. On Line Drives & Contact,
+which targets 8 to 18 degrees, a swing at 12 degrees is exactly what was asked
+for, is drawn as on-target, and is simultaneously handed to the coach inside a
+list of problems. On Reduce Pop-Ups, the goal is about hitting the ball too
+*high* and the coach is handed a count of balls hit low.
+
+**Did not reproduce.** On a live Contact debrief the coach correctly used the
+8-to-18 window and framed the problem as swings going too high.
+
+### 3. Hit to All Fields is the one goal the coach must count by hand
+
+`src/coachApi.js:37` states the rule (at least 3 swings pull side below -15
+degrees, at least 3 opposite field above +15) but `src/coachApi.js:376-382`
+pre-counts everything *else* and leaves this one uncounted, handing the model a
+run-on list of fifteen direction values to tally itself.
+
+A wrong count here becomes the headline sentence of the debrief, with a chart
+beside it showing the true answer in dots. The decision log records that
+pre-counting was introduced in the first place *because* the model was
+miscounting. This goal was left out.
+
+Related and worth deciding at the same time: the goal card at `src/App.jsx:43`
+promises "Pull% · Center% · Opposite field%", percentages the app never
+calculates anywhere.
+
+### 4. Two model fields can blank the whole screen
+
+If the model returns the tips as a single string instead of a list, or the
+summary as anything other than text, the app throws while drawing and the visitor
+gets a white page with no hint that retrying would help. The gate is at
+`src/App.jsx:790` and the draw at `src/DebriefScreen.jsx:245`; the summary is at
+`src/DebriefScreen.jsx:1139`.
+
+Chart keys are already guarded exactly this way in `src/chartSlots.js`, so the
+pattern exists and simply was not applied to these two.
+
+**Scope this narrowly.** The audit explicitly declined a general validation layer
+over everything the coach returns as work with no visitor-facing payoff on a
+proof of concept. Do these two fields only.
+
+**Do not connect this to the old unreproduced "whole site shows up blank"
+report** without evidence. CLAUDE.md warns against folding those together and
+that warning stands.
+
+---
+
+# Ruled out, with reasons
+
+Recorded so nobody re-proposes them. Each was considered and declined by the
+product manager on 12 or 14 August 2026.
+
+**Labelling the orange target band on the results chart.** Declined. Nothing on
+the results screen currently states what the band means, and the audit proposed
+labelling it. The product manager's reasoning: it needs a design pass rather than
+a one-line change, and an experienced coach picks up the meaning without help.
+
+**Mobile and small-screen support.** Declined, and the intent is explicit: this
+demo is meant to be viewed on a desktop or an iPad. A phone-width viewport (375
+px) was checked on 12 August 2026 and the layout does break badly there. **iPad
+width (768 px) was checked on the same day and renders correctly**, so the stated
+target is a supported claim rather than a hope.
+
+**Consolidating the strike-zone bounds and distance buckets.** Declined, and the
+existing trigger stands: only worth doing if a third drift appears. The audit
+found no drift.
+
+**Rate limiting or authentication.** Declined. The audit found no new evidence
+against the reasoning recorded on 30 July, and confirmed by reading the server
+code that a caller cannot choose the model, the response length, or send an
+oversized request. The existing trigger stands: only if the prepaid balance
+starts moving faster than the owner's own use explains.
+
+**A general validation layer over model output.** Declined. Two specific fields
+are worth coercing (Slice 7, item 4); building general-purpose checking around
+the rest has no visitor-facing payoff here.
+
+**Streaming the debrief.** Declined 14 August 2026 and already struck through in
+CLAUDE.md. Reopen only if measured latency climbs back toward 30 seconds.
+
+**Treating the chat chart swap as a defect.** Downgraded 14 August 2026 and
+already annotated in CLAUDE.md. Pulling a chart up from chat is intended
+behavior, and a player can ask for the earlier chart back. What may still be
+worth something is discoverability: nothing on screen tells a visitor they can
+ask. That is a much smaller item and is not part of either slice.
+
+*Verified in code 14 August 2026, since this came up as an objection: only the
+second chart slot is ever overwritten. `onChartSignal` in `src/App.jsx` writes
+`[charts[0], chartKey]`, so the first chart is never touched and naming the
+original chart in chat restores it. One edge worth knowing: if the coach names
+the chart already occupying the first slot, the duplicate guard in
+`resolveChartSlots` fills the second slot with a fallback instead, so the visitor
+gets a different chart than the one they asked for.*
