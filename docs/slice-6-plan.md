@@ -224,6 +224,26 @@ Drives & Contact renders an empty band 16 to 19 percent of the time for the same
 underlying reason, which nobody had noticed. A general re-roll fixes that for
 free. Reduce Pop-Ups measures 0 percent and is unaffected either way.
 
+**Correction, 14 August 2026, during execution.** The paragraph above is wrong
+and the reason it is wrong matters more than the number. The 16 to 19 percent
+was measured with the correlation change already switched on. Line Drives &
+Contact renders empty **9.7 percent** of the time as the app ships today
+(10.8 percent at session 4), re-measured twice, once by the implementer and once
+independently.
+
+**The correlation change makes Contact worse, not better**, and that is not a
+defect in it. Contact asks for a hard-hit ball at a *moderate* launch angle, 8 to
+18 degrees. Tying exit velocity and launch angle together means the hardest-hit
+balls now tend to be the highest ones, which pushes them through Contact's
+18 degree ceiling. So the correlation alone would have taken Contact from 9.7 to
+16.7 percent.
+
+The general re-roll more than pays that back, landing Contact under 4 percent,
+better than it ships today. But the honest description of this task is that
+**writing the re-roll generally is load-bearing rather than a free bonus**:
+without it, this slice would have shipped a regression on the second most likely
+goal a visitor clicks.
+
 **Measured effect of 3a, 3b and 3c together, on the Power goal:**
 
     sessions showing an empty band, session 2:  56%  ->  13%
