@@ -811,6 +811,11 @@ rewritten, per the append-only rule.
   in both directions first, and the drift report is clean for the first time. See
   the hooks section above. The guard has still never been observed firing in
   real use; what changed is that it is now proven to fire when it should.
+- **A guard that refuses a commit on `main`.** Added 14 August 2026 after two
+  commits reached main without a pull request; see the decision log entry for
+  that date. Nothing mechanical stops it today, only the habit of checking the
+  branch first, and that habit already failed once. Small, and it protects the
+  one gate in this whole process that is not allowed to degrade.
 - **Decide whether the `.env` guard should cover shell commands too.** Added 14
   August 2026, found by the review of the guard's own tests. `protect-paths.mjs`
   runs only on the file-editing tools, so it stops an agent editing `.env`
