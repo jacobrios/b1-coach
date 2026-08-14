@@ -219,26 +219,37 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 13 August 2026, at the close of Slice 5.
+Line counts current as of 14 August 2026, at the close of Slice 6.
 
-    src/App.jsx             1077 lines. Screen routing, player and session state,
-                             synthetic swing data generation, debrief orchestration.
-    src/DebriefScreen.jsx   1442 lines. The results screen, all six chart
+    src/App.jsx             1046 lines. Screen routing, player and session state,
+                             debrief orchestration, and the fifteen hand-written
+                             session-1 swings. Swing generation moved out in
+                             Slice 6.
+    src/DebriefScreen.jsx   1445 lines. The results screen, all six chart
                              components, and the chat panel.
-    src/LiveSessionScreen.jsx 517 lines. Animated incoming swing data.
-    src/coachApi.js          439 lines. System prompts, the goal-context block both
+    src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
+    src/coachApi.js          445 lines. System prompts, the goal-context block both
                              prompts share, response parsing, failure
                              classification, the retry policy, and the two calls.
+    src/ballFlight.js        214 lines. How far a struck ball carries, the five
+                             distance buckets the chart and both prompts share,
+                             and the spray chart's distance-to-radius scale.
+                             Added in Slice 6. See the ball flight section below.
+    src/swingGenerator.js    164 lines. Generates a session's fifteen swings.
+                             Carved out of App.jsx in Slice 6 so the re-roll
+                             could be tested. Takes an injectable random source.
     src/failureCopy.js        74 lines. What the app says when a call fails. See
                              the failure vocabulary section below.
-    src/chartSlots.js         61 lines. Which charts can render, how a slot is
+    src/goalTargets.js        66 lines. What each goal asks of a swing. The single
+                             source for every launch angle and exit velocity target.
+    src/chartSlots.js         64 lines. Which charts can render, how a slot is
                              filled when the model names one that cannot, and
                              whether a single key from a chat reply is usable.
-    src/goalTargets.js        56 lines. What each goal asks of a swing. The single
-                             source for every launch angle and exit velocity target.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    *.test.js               1620 lines across six files, beside what they test.
+    *.test.js               1987 lines across eight files, beside what they test.
+    scripts/*.mjs            635 lines across two hand-run measurement scripts,
+                             deliberately outside the test runner. See below.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -250,8 +261,18 @@ Slice 3 so their logic could be tested without loading Recharts and a DOM.
 `topExitVelocity` moved into `sessionStats.js` in Slice 4 because a test needed
 it. `failureCopy.js` was added in Slice 5 on the same pattern, so the debrief
 screen and the chat panel read one copy table instead of each carrying its own
-guess. Do not move anything else out on the same excuse without a test that
-needs it.
+guess. `ballFlight.js` and `swingGenerator.js` were added in Slice 6, the second
+because the generator's re-roll cannot be tested while it is a closure inside a
+React component. Do not move anything else out on the same excuse without a test
+that needs it.
+
+**One thing was exported rather than extracted, deliberately.** Slice 6 changed
+`GOALS` in `App.jsx` from a file-local `const` to an `export const` so a test
+could assert the Power goal's label. That looks like a departure from the pattern
+above and is not: every extraction listed there pulled out *logic* that several
+call sites shared and that had already drifted. `GOALS` is static display content
+with one consumer, so a module of its own would hold no logic and exist purely to
+be imported. Reviewed and judged proportionate on 14 August 2026.
 
 **`goalTargets.js` is the single source for what a goal asks of a swing.** Every
 launch angle and exit velocity target reads from it: the goal cards in `App.jsx`,
@@ -267,19 +288,91 @@ entirely. If a future session goes looking for stragglers, grep for bare
 A goal with no target is represented by absence, not by zeroes, because telling
 "aim for nothing" apart from "aim at zero" is what stops Open Session borrowing
 Power's band again. Numbers that are *not* goal targets stay where they are: the
-strike-zone bounds, the distance buckets, the pull and opposite-field direction
-cutoffs, and the 88 mph "hard hit" highlight on the stat tiles and raw data table,
-which applies to every goal rather than to one.
+strike-zone bounds, the pull and opposite-field direction cutoffs, and the 88 mph
+"hard hit" highlight on the stat tiles and raw data table, which applies to every
+goal rather than to one. *(The distance buckets used to be on that list. Slice 6
+consolidated them into `ballFlight.js`; see the next section.)*
+
+## How far the ball goes
+
+Added in Slice 6 on 14 August 2026. Before it, distance was
+`round(ev * 4.0 + la * 1.8)`, which barely used launch angle, so a ground ball
+topped at 70 mph was credited with 287 feet and nothing could be shorter than
+251. The coach read those numbers out loud.
+
+**`src/ballFlight.js` owns three things, and they are together on purpose.**
+
+- `carryDistance({ exitSpeed, angle })` is the single source of every hit
+  distance. Both the generator and the fifteen hand-written session-1 swings go
+  through it. Carry, not total with roll: that is what TrackMan measures, and it
+  is why a ball at 4 degrees is now under 100 feet.
+- `DISTANCE_BUCKETS` is the single source of the five distance ranges, read by
+  the chart in `DebriefScreen.jsx` and by **both** coach prompts in
+  `coachApi.js`. Before Slice 6 those were three separate copies, and the chat
+  prompt was the one that got missed.
+- `sprayRadius` and `SPRAY_RINGS` map a distance to a radius on the spray chart,
+  and both ring radii *and* both printed ring labels are derived from that one
+  function, so a label cannot come to describe a ring it is not drawn on.
+
+**They live in one file because they move together.** The bucket edges and the
+spray scale were both fitted to the distribution `carryDistance` produces. Change
+the curve and both have to be re-checked, and the comments in that file say so.
+
+**Known limit, do not read "tested" as "airtight."** The test that stops the five
+ranges drifting apart reaches both coach prompts and **not** the chart. Putting a
+private bucket array back inside `BarDistance` leaves the whole suite green;
+this was proven by mutation, not assumed. Left deliberately: this project has no
+rendering tests by design, and the uncovered step is one line that renames a
+field. The chart is held to the shared constant by its import alone.
+
+**Two hand-run scripts, deliberately outside the test runner** (vitest has no
+config here, so its default glob collects only `*.test.*`, and both were checked
+against the file count). `scripts/measure-swing-generation.mjs` reports empty
+target-band rates, distance percentiles and bucket fill, before and after, and is
+where the numbers in the decision log came from.
+`scripts/compare-distance-bucket-schemes.mjs` records why the shipped bucket
+edges beat the two that were rejected. Neither is fast to eyeball; both print
+plain-language output meant to be read directly.
 
 ## The data is synthetic
 
-There is no real TrackMan feed. All swing data is generated with `Math.random()`
-in `generateSwings` at `src/App.jsx:683`. Sessions simulate improvement over time
-with a 65% chance of a session trending better than the last.
+There is no real TrackMan feed. All swing data comes from `generateSwings` in
+`src/swingGenerator.js`, which moved out of `App.jsx` in Slice 6. Sessions
+simulate improvement over time with a 65% chance of a session trending better
+than the last. Session 1 is not generated at all: it is the fifteen hand-written
+swings in `mockSwings` in `App.jsx`, and only their distances have ever been
+recomputed.
 
 This matters when judging output quality. If the coach says something that
 contradicts the numbers, that is a real bug. If the numbers themselves look
 implausible for a real hitter, that is the generator, not the coach.
+
+**Three things the generator does that are deliberate nudges, not simulation.**
+All three landed in Slice 6 and all three are the reason the Power goal stopped
+showing an empty target band in 56% of sessions. Do not read `generateSwings` as
+an unbiased model of a hitter.
+
+1. **Exit velocity and launch angle share a contact-quality term** at correlation
+   0.6, so a well-struck ball tends to be hard *and* well-angled together. Real
+   batted balls behave this way; independent draws did not.
+2. **A session on the Power goal lifts launch angle** on a ramp of `+2` at
+   session 2, `+4`, then `+6`. The story is that a player who picked that goal is
+   working on it. No other goal gets a lift.
+3. **A session that would render an empty target band is re-rolled once**, for
+   any goal that has a target. Once, never until it succeeds.
+
+**Point 3 is generic on purpose and it is load-bearing.** Tying exit velocity to
+launch angle pushes hard-hit balls up through Line Drives & Contact's 18 degree
+ceiling, so point 1 *by itself* would have taken that goal from 9.7% empty to
+16.8%. The generic re-roll is what stops this being a regression on the second
+goal a visitor is likely to click, and it lands Contact under 4%. Anyone tempted
+to narrow the re-roll to Power should read that sentence twice.
+
+`varianceFactor` and the 65/35 improve-or-decline split were left alone by Slice
+6 and remain a separate open question. Note that **no test can currently see
+`varianceFactor`**: a reviewer changed it six-fold and all 22 generator tests
+still passed, because they drive noise at a neutral value. Whoever retunes the
+improvement arc is working without a safety net there.
 
 ---
 
@@ -600,6 +693,16 @@ owner's own use explains. Do not build rate limiting without that signal.
   consolidated pattern and two unconsolidated ones, which is a slightly confusing
   state to read; that is a known cost of not widening the slice. Still only worth
   doing if a third drift shows up.
+
+  **Half closed on 14 August 2026 by Slice 6: the distance buckets are now
+  consolidated too**, into `DISTANCE_BUCKETS` in `src/ballFlight.js`, read by the
+  chart and both coach prompts. Not because a third drift appeared, but because
+  making the distances honest meant moving all three copies anyway, so leaving
+  two of them behind would have been the drift rather than avoiding it. **The
+  strike-zone bounds are the last unconsolidated set**, still in six places, and
+  the original trigger stands for them unchanged. One caveat carried forward: the
+  test that holds the buckets together reaches both coach prompts and not the
+  chart, so this is consolidation plus partial enforcement, not the full thing.
 - Chat history inside a session grows without bound, roughly 0.9 KB per turn on
   top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
   well over a hundred turns, so nothing a real visitor does should reach it, but
@@ -651,14 +754,30 @@ Full scope for both, with the reasoning behind every decision and everything
 ruled out, is in **`docs/queued-slices.md`**. Detail lives there rather than here
 on purpose: this file loads at the start of every session, so it is an index.
 
-- **Slice 6, credibility polish.** Eight defects an informed visitor would notice
-  and quietly judge, none of which break the app, plus one feel decision. The two
-  that matter most:
-  simulated hit distances that are physically impossible for the exit velocities
-  printed beside them, which the coach then quotes in its opening sentence; and
-  the browser tab still showing the build tool's own logo. Also carries a feel
-  decision for the product manager about how often the Power goal shows nothing
-  on target. May be too large for one slice; the seam is named in the doc.
+- ~~**Slice 6, credibility polish.** Eight defects an informed visitor would
+  notice and quietly judge, none of which break the app, plus one feel
+  decision.~~ **Split on 14 August 2026 at the seam `docs/queued-slices.md`
+  itself named, and the first half shipped.**
+
+  **Slice 6 shipped** the data-model half: items 1 (impossible hit distances),
+  2 (the distance buckets that depended on them) and 9 (the Power goal's empty
+  target band). It also picked up three things the agreed scope had not named:
+  the spray chart, which sized every dot against a 300-foot centre and would have
+  collapsed every session into the infield; the coach's prompt calling the Power
+  target "home run distance contact", which the honest curve made untrue; and the
+  Power goal's own name, which was "Power & Home Runs" until a live debrief showed
+  the coach reconstructing "out of the park" from the label alone.
+
+- **Slice 6b, surface polish. The remaining six items, and the next slice.**
+  Items 3 to 8 of credibility polish, still scoped in `docs/queued-slices.md`:
+  the browser tab showing the build tool's logo, five scaffolding files, the lint
+  wall (23 errors as of 14 August, most of them Node files linted as browser
+  code), a README a stranger cannot run the project from, a README goal list that
+  does not match the screen, and the Reduce Pop-Ups card pointing the wrong way.
+  **Two of these are now decided and need no further product input**: the
+  Pop-Ups tag becomes `LA 10–25° · Level it out`, and the README's goal list must
+  also pick up the Power goal's rename to "Power & Distance". Cheap, independent
+  of each other, and all six are verifiable in one browser pass.
 - **Slice 7, coach fidelity.** Four ways the coach can contradict the screen
   beside it, the largest being that it is never told the two tips it just gave.
   **Two of the four failed to reproduce in a live walkthrough**, so the slice
@@ -835,6 +954,26 @@ rewritten, per the append-only rule.
   up; otherwise it is churn.
 - **Rate limiting.** Deliberately deferred, see the cost section above. Only if
   the prepaid balance starts moving faster than the owner's own use explains.
+
+*Added at the close of Slice 6, 14 August 2026:*
+
+- **Session 1's fifteen hand-written swings form an almost perfect straight
+  line.** Sort them by exit velocity and the launch angles climb in near-lockstep,
+  so the first debrief's Launch Angle vs Exit Velocity scatter reads like a ruler
+  rather than a hitter. Pre-existing, untouched by Slice 6, which deliberately
+  changed only their distances. It is the same class of problem as the impossible
+  distances: something a baseball-literate visitor notices on the first screen.
+  Fixing it means rewriting the scripted session, which is a product decision
+  about the demo's first impression, not a correctness fix. Natural companion to
+  Slice 6b.
+- **`varianceFactor` has no test that can see it.** Now that the generator is its
+  own module, a reviewer changed that constant six-fold and all 22 generator
+  tests still passed, because every test drives noise at a neutral value. This
+  does not matter until someone retunes the improvement arc, which is the queued
+  item two above this one, and at that point it matters a lot. Worth pairing.
+- **The distance-bucket drift test does not reach the chart.** Recorded in the
+  known-debt section above with its reasoning. Only worth revisiting if this
+  project ever grows rendering tests, which it deliberately has not.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

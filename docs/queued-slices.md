@@ -445,3 +445,58 @@ original chart in chat restores it. One edge worth knowing: if the coach names
 the chart already occupying the first slot, the duplicate guard in
 `resolveChartSlots` fills the second slot with a fallback instead, so the visitor
 gets a different chart than the one they asked for.*
+
+---
+
+# Postscript, 14 August 2026: Slice 6 was split, and the first half shipped
+
+Append-only, per this project's convention. Nothing above is edited; this records
+what happened when the scope above was actually built.
+
+**The size warning was right and the named seam was the right one.** Slice 6 ran
+as items 1, 2 and 9 (the data model). Items 3 to 8 became Slice 6b and are
+unchanged from the scope above, except that two of their open questions are now
+settled: the Reduce Pop-Ups tag becomes `LA 10–25° · Level it out`, and the
+README's goal list must also pick up a rename made in Slice 6, from
+"Power & Home Runs" to "Power & Distance".
+
+**Three things landed that this document never named**, all three discovered by
+building rather than by planning:
+
+1. **The spray chart is a fourth place the distance change lands.** It sized
+   every dot against a 300-foot centre and clamped everything under 177 feet to
+   the same radius. Left alone it would have collapsed every session into the
+   infield with the short balls stacked on top of each other, and its two ring
+   labels said 300ft and 400ft+ when almost nothing now reaches 300. Item 2 of
+   the scope above names three places the distance ranges live; this was a
+   fourth, and it was the only one that was visually obvious rather than
+   numerically obvious.
+2. **Making distances honest made the coach's prompt untrue.** It described the
+   Power target as "the conditions for home run distance contact", defensible
+   when that swing was recorded at 399 feet and false at 323. Fixed in this slice
+   rather than deferred to Slice 7, because this slice created it.
+3. **Fixing the prompt was not enough, because the goal was named after the
+   claim.** A live debrief showed the coach saying "you have the power to hit the
+   ball out of the park" about 310-foot swings, reconstructing the idea from the
+   goal's own label. The product manager renamed it to "Power & Distance". Worth
+   keeping as a general lesson: removing a claim from a prompt does not remove it
+   from the model's reach if the surrounding product still asserts it.
+
+**One number in the scope above is wrong and the correction matters more than
+the number.** Item 9's analysis is sound, but a figure produced while planning
+this slice claimed Line Drives & Contact already rendered an empty target band 16
+to 19 percent of the time. It does not; it is 9.7 percent. The 16 to 19 was
+measured with the fix already switched on. The direction is the opposite of what
+was assumed: correlating exit velocity with launch angle makes Contact *worse*,
+because it pushes hard-hit balls through that goal's 18 degree ceiling. Writing
+the re-roll generically rather than for Power alone is therefore load-bearing
+rather than a free bonus, and without it this slice would have shipped a
+regression on the second goal a visitor is likely to click.
+
+**Item 9's decision, for the record.** The product manager chose correlated
+contact quality plus a Power-only launch angle lift plus a single re-roll, over
+a widened target band and over a guaranteed floor. Empty Power bands went from
+56% to 14% at session 2 and 63% to 11% at session 4.
+
+Full reasoning is in `docs/product-decisions-log.md` for 14 August 2026, and the
+slice's own document is `docs/slice-6-plan.md`, which travelled on the branch.

@@ -6,6 +6,75 @@
 
 ---
 
+## Slice 6: the ball flight stops being a lie (August 14)
+
+*The problem.* Every hit distance in this app was invented by a formula that
+barely used launch angle, so a ground ball topped at 70 mph was credited with 287
+feet and the whole session lived between 287 and 451. The coach read those
+numbers and quoted them: on a session averaging 82 mph it told a player that ten
+of his fifteen swings carried 340 feet or more. This is an interpretation layer
+over a ball-flight *measurement* company's data, so a reviewer who knows baseball
+disproves the entire premise in about ten seconds. A reviewer who does not know
+baseball never notices, which is how it survived four months.
+
+*What shipped.* Carry now depends on launch angle the way a real batted ball
+does: near nothing below ten degrees, peaking around 28. The same 70 mph ground
+ball is 97 feet and the hardest ball the app can produce is 390. Everything built
+on the old numbers moved with it: the distance chart's five columns, the two
+coach prompts that describe them, and the spray chart, which sized every dot
+against a 300-foot centre and would otherwise have collapsed every session into
+the infield.
+
+*The Power goal was quietly broken and this fixed it.* Its target asks for 25 to
+35 degrees at 88 mph, but the simulated hitter averaged 17 to 19, and exit
+velocity and launch angle were drawn independently, so the goal's orange target
+band rendered completely empty in 56% of sessions and in a third of sessions that
+actually improved. An empty band reads as a broken chart, not as coaching. Three
+changes fixed it: the two numbers now share a contact-quality term, because a
+real barrel is hard *and* well-angled in the same swing; a session on the Power
+goal lifts launch angle on a ramp, because a player who chose that goal is
+working on it; and a session that would render an empty band is re-rolled once.
+Empty bands fell to 14% at session 2 and 11% at session 4.
+
+*The decision that nearly went wrong.* Writing that re-roll generically rather
+than for Power alone looked like a free bonus. It is not. Tying exit velocity to
+launch angle pushes hard-hit balls through Line Drives & Contact's 18 degree
+ceiling, so the correlation change *alone* would have taken that goal from 9.7%
+empty to 16.8%. Without the generic re-roll this slice would have shipped a
+regression on the second goal a visitor is likely to click. An earlier claim that
+Contact was already at 16 to 19% was wrong; that figure had been measured with
+the fix already switched on.
+
+*Two decisions the product manager made from rendered evidence, not description.*
+The distance chart's column boundaries were set at 150/200/250/300 and then moved
+to 175/225/265/305, because the first set made a strong Power session render as
+one enormous bar and three empty columns, the same lopsided picture the slice
+existed to remove. And the Power goal was renamed from "Power & Home Runs" to
+"Power & Distance". Removing the phrase "home run distance contact" from the
+coach's prompt was not enough on its own: a live debrief showed the coach saying
+"you have the power to hit the ball out of the park" about 310-foot swings,
+reconstructing the idea from the goal's own name.
+
+*Evidence.* Test suite 242 passing across 8 files before, 326 across 11 after,
+with no pre-existing failures carried. Distributional claims cannot be settled by
+that suite, so two hand-run scripts outside the test runner produce them, and both
+before and after numbers came from running them rather than from memory. The
+whole flow was walked in a browser across four sessions and two goals; the
+strongest single check was recomputing all fifteen rows of the raw data table
+against the carry curve inside the running page, which matched exactly.
+
+*Known limits, recorded rather than smoothed over.* The test that stops the five
+distance ranges drifting apart reaches both coach prompts but not the chart:
+putting a private copy of the ranges back into the chart leaves the suite green.
+That was left deliberately, because this project has no rendering tests by design
+and the uncovered part is one line that renames a field. The carry curve is tuned
+constants chosen against general baseball knowledge, not a fitted physics model,
+and the re-roll is a deliberate nudge on a synthetic generator: neither should be
+read as a simulation of anything.
+
+
+---
+
 ## Process failure: two commits reached main without a pull request (August 14)
 
 *What happened:* The two commits of the `.env` guard work, `2e0adc9` and
