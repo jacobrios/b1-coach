@@ -2,15 +2,15 @@
   "accepted": {
     "full-suite-on-subagent-stop.mjs": {
       "kind": "missing",
-      "reason": "Not adopted. The per-edit / end-of-task split exists to keep an 801-test suite off every edit; this suite is 171 tests in about a second, so the split adds a moving part and saves nothing.",
-      "acceptedOn": "2026-08-13",
-      "templateSha256": "46bb478ce18eebff78c50b114d3f41723c961c56a3d54f186fa19e0ebfc85594"
+      "reason": "Still not adopted, re-checked 14 August 2026 against the current template. The per-edit / end-of-task split exists to keep a large slow suite off every single edit. This suite is 240 tests in about a third of a second, so running it on every edit costs nothing worth optimising, and the split would add a moving part with no benefit. Revisit if this suite ever grows slow enough that an edit-time run is felt.",
+      "acceptedOn": "2026-08-14",
+      "templateSha256": "0cd1c43bda32b25f86470e4d63d0af345430969a52df249e99263342a9559102"
     },
     "full-suite-on-subagent-stop.test.ts": {
       "kind": "missing",
-      "reason": "Tests a hook this project deliberately does not have. See the reason recorded for full-suite-on-subagent-stop.mjs.",
-      "acceptedOn": "2026-08-13",
-      "templateSha256": "83d6f02fecc3fb11acd3fbcb9bdea343f443048cdf84ff51ccc962fbf49a3f04"
+      "reason": "Still not adopted, re-checked 14 August 2026. This tests a hook this project deliberately does not have; see the reason recorded for full-suite-on-subagent-stop.mjs. Adopting the test without the hook it covers would be a test of nothing.",
+      "acceptedOn": "2026-08-14",
+      "templateSha256": "991a1187c67e1e0ca63b8f03bba2aefb94a384b4229e8895bd26395bd30299de"
     },
     "suite-stamp.mjs": {
       "kind": "missing",
@@ -47,6 +47,12 @@
       "reason": "Logic is byte-identical to the template; verified by diff on 13 August 2026. Only the comments differ, recording the cases measured in this project rather than the ones measured in interplanetary-groups.",
       "acceptedOn": "2026-08-13",
       "templateSha256": "4749143a1b9e5657ecbc041bd71fc5a27435351619d2710d092dc335305a7eed"
+    },
+    "protect-paths.test.ts": {
+      "kind": "missing",
+      "reason": "Adopted on 14 August 2026, but as protect-paths.test.js rather than .ts, because this project is plain JavaScript and has no TypeScript anywhere; a single .ts file would be the only one in the repo. The content is the template's, with every Prisma migration case dropped (this project has no database, and the hook itself drops that half for the same reason) and the stderr assertions retargeted at this project's wording. 18 tests, both directions, and both directions were seen failing against a deliberately broken guard before being committed. This line is recorded rather than left reporting because the report says the project has no test for its env guard, which is no longer true.",
+      "acceptedOn": "2026-08-14",
+      "templateSha256": "abf4bd26ab987f3281aeba51e6e6ced641c5d552097ebafe72ca34886b476019"
     }
   },
   "$comment": "Differences from ~/.claude/templates/project-safety-nets/ that this project has deliberately accepted. Written by `node ~/.claude/bin/accept-safety-net-difference.mjs`, read by ~/.claude/hooks/safety-net-drift.mjs. Each entry is pinned to the template file it was accepted against: when that template file changes, the acceptance expires and the difference is reported again."

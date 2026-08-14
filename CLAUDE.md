@@ -139,10 +139,23 @@ are wired in `.claude/settings.json`, which is committed.
   12 August 2026. They inject a fake child process, so the suite never runs a
   suite inside itself; what they check is the working directory the hook hands
   over.
+- **The `.env` guard has tests too**, added 14 August 2026 in
+  `.claude/hooks/protect-paths.test.js`. Adapted from the template's TypeScript
+  version, translated to JavaScript because this project has no TypeScript, with
+  every Prisma migration case dropped exactly as the hook itself drops that half.
+  It spawns the real hook as a child process and asserts on exit code and stderr,
+  because "exit 2 plus an explanation" is the guard's actual contract with the
+  harness; testing the regexes directly would pass while the contract was broken.
+  Both directions matter and both were seen failing first: blanking the protected
+  pattern turned 8 tests red, and emptying the allowlist turned the 4
+  `.env.example` tests red.
 
 The template's per-edit / end-of-task split was deliberately not adopted here.
 It exists to keep an 801-test suite off every single edit; this one is 171 tests
 in about a second, so the split would buy nothing and cost a second moving part.
+*(Re-checked 14 August 2026 against a changed template: the suite is now 240
+tests in about a third of a second, so the reasoning holds more strongly than
+when it was written, and the decision was re-recorded rather than revisited.)*
 
 **Do not switch this hook to `npx vitest run`.** Measured 12 August 2026
 standing in `src/`: `npm test` ran all 171 tests, `npx vitest run` ran 127 and
@@ -166,10 +179,20 @@ moves. Do not silence a difference by editing that file by hand; use the script,
 which refuses a difference that does not exist and a reason too short to read
 later.
 
-**One difference is deliberately left unrecorded and still reports every
+~~**One difference is deliberately left unrecorded and still reports every
 session**: the template's `protect-paths.test.ts`. This project has no test at
 all for its own `.env` guard, which is a gap rather than a decision, so silencing
-it would have been a lie. It is on the What's Next list.
+it would have been a lie. It is on the What's Next list.~~
+
+**Closed 14 August 2026, and the count above is now nine, not eight.** The gap
+was filled rather than silenced: this project now has `protect-paths.test.js`,
+described above. The difference is recorded because the drift check matches on
+exact filename, so it would otherwise keep reporting that no test exists, which
+became the untrue statement once the test landed. The recorded reason says the
+test was adopted in JavaScript form and why. **The distinction is worth keeping
+in mind for any future line: silencing a real gap is a lie, recording a genuine
+difference is not, and the test for which one you are looking at is whether the
+report would still be true after you silence it.**
 
 ## Stack
 
@@ -768,13 +791,17 @@ rewritten, per the append-only rule.
   narrow case, since the server is meant to answer first by design, but it is a
   claim the app cannot prove, which is the standard Slice 5 set. Needs wording
   decided before anyone changes code.
-- **Test the `.env` guard, or decide it does not need one.** `protect-paths.mjs`
+- ~~**Test the `.env` guard, or decide it does not need one.** `protect-paths.mjs`
   blocks edits to `.env` files and has never been seen to fire. The template
   ships a test for it; this project has none, which is why that one drift line
   is still reported every session rather than recorded as deliberate. Adopting
   the template's version means translating it from TypeScript and dropping its
   database cases. Small, and it closes the last open drift line. Raised
-  13 August 2026 while recording the other eight.
+  13 August 2026 while recording the other eight.~~ **Done 14 August 2026.** The
+  guard now has 18 tests in `.claude/hooks/protect-paths.test.js`, seen failing
+  in both directions first, and the drift report is clean for the first time. See
+  the hooks section above. The guard has still never been observed firing in
+  real use; what changed is that it is now proven to fire when it should.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.

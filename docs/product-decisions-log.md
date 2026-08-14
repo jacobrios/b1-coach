@@ -6,6 +6,52 @@
 
 ---
 
+## Micro-PR: the guard on the secrets file has now been seen to work (August 14)
+
+*What we changed:* Added 18 tests for `protect-paths.mjs`, the hook that blocks
+edits to `.env` files, and re-recorded the two remaining template differences.
+The safety-net drift report is clean for the first time.
+
+*Why this one and not the other two.* The drift report had been showing three
+lines every session. Two were about a hook this project deliberately does not
+have, one that runs the whole suite at the end of a task rather than after every
+edit; that split exists to keep a large slow suite off every keystroke, and this
+suite is 240 tests in about a third of a second, so it buys nothing here. Those
+two only needed their reason re-recorded against the changed template. The third
+was different in kind: the guard standing between an agent and the file holding
+the Anthropic key had never been observed working. This project's entire cost
+story rests on that key being spendable but never readable, which makes an
+unproven guard the wrong thing to keep trusting on faith.
+
+**The tests were seen failing in both directions, which is the only reason they
+count.** Blanking the protected pattern turned 8 of them red. Emptying the
+allowlist turned the 4 `.env.example` tests red. A guard that only over-blocks is
+not correct either: an agent adding a new variable has to be able to keep the
+committed placeholder file in sync, so "stays editable" is as load-bearing as
+"gets refused."
+
+**Writing the test found an error in the test, not in the guard.** One case
+asserted that a path arriving as a list rather than a string should be waved
+through. The guard refused it instead, which is the safer answer and the one the
+template also expects. The assertion was wrong and was corrected. Worth recording
+because it is the ordinary case for a first test over existing behavior: the
+thing under test was right and the new expectation was wrong.
+
+**Silencing a real gap is a lie; recording a genuine difference is not.** On 13
+August this line was deliberately left reporting, because the honest description
+of it was "we have no test," and writing "deliberate" next to that would have
+been false. Today it is recorded, because the test exists and the report would
+otherwise keep asserting something untrue. The test to apply next time: would the
+report still be true after you silence it? The difference itself is real, since
+the drift check matches on exact filename and this project's copy is JavaScript
+rather than TypeScript, there being no TypeScript anywhere in this repo.
+
+*One process note.* A guardrail blocked the cleanup of a scratch file written to
+`/tmp`, correctly, if conservatively: the file was genuinely outside the project.
+The underlying mistake was writing it there at all. It also swallowed the command
+that would have restored the deliberately broken guard, which was caught only
+because the suite was re-run rather than assumed green.
+
 ## Micro-PR: two agreed slices existed only in a chat window (August 14)
 
 *What we changed:* Wrote `docs/queued-slices.md`, holding the agreed scope for
