@@ -5,7 +5,7 @@ import { generateDebrief, sendChatMessage, CoachError } from './coachApi'
 import { computeStats, topExitVelocity } from './sessionStats'
 import { launchAngleRangeLabel } from './goalTargets'
 import { failureCopy, MID_WAIT_MESSAGE, RETRYING_MESSAGE } from './failureCopy'
-import { carryDistance } from './ballFlight'
+import { generateSwings } from './swingGenerator'
 
 // ── Goal definitions ───────────────────────────────────────────────────────
 // These are the app's predefined coaching focus options.
@@ -698,45 +698,6 @@ export default function App() {
     }
   }, [])
 
-  const generateSwings = (sessionNum = 2) => {
-    const prevEV = mockSwings.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / mockSwings.length
-    const prevLA = mockSwings.reduce((s, w) => s + w.hit.launch.angle, 0) / mockSwings.length
-
-    // 65/35 improvement bias on session average
-    const improving = Math.random() < 0.65
-    const sessionEV = prevEV + (improving ? (1 + Math.random() * 3) : -(1 + Math.random() * 2))
-    const sessionLA = prevLA + (improving ? (0.5 + Math.random() * 2) : -(0.5 + Math.random() * 1.5))
-
-    // Variance shrinks slightly as sessions progress (more consistent with practice)
-    // Session 2: 100% of session 1 spread, Session 3: 95%, Session 4: 90%. The
-    // 0.85 floor never binds, because the app only ever reaches session 4.
-    //
-    // The comment here used to promise 87%, 75% and 65%, which the formula below
-    // has never produced. Corrected in Slice 4 by fixing the comment rather than
-    // the formula: how much the demo visibly improves session over session is a
-    // product decision, and it is on the What's Next list as its own question.
-    const varianceFactor = Math.max(0.85, 1 - (sessionNum - 2) * 0.05)
-
-    return Array.from({ length: 15 }, () => {
-      const ev = Math.round(Math.max(65, Math.min(97, sessionEV + (Math.random() - 0.5) * 16 * varianceFactor)))
-      const la = Math.round(Math.max(-5, Math.min(35, sessionLA + (Math.random() - 0.5) * 22 * varianceFactor)))
-      const dir = Math.round((Math.random() - 0.45) * 70 * varianceFactor)
-      const dist = carryDistance({ exitSpeed: ev, angle: la })
-      const inZonePitch = Math.random() < 0.70
-      const plateLocHeight = inZonePitch
-        ? 1.5 + Math.random() * 2.0
-        : Math.random() < 0.5
-          ? 0.5 + Math.random() * 0.9
-          : 3.6 + Math.random() * 0.5
-      const plateLocSide = inZonePitch
-        ? -0.7 + Math.random() * 1.4
-        : Math.random() < 0.5
-          ? -0.8 - Math.random() * 0.3
-          : 0.8 + Math.random() * 0.3
-      return { plateLocHeight: Math.round(plateLocHeight * 100) / 100, plateLocSide: Math.round(plateLocSide * 100) / 100, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
-    })
-  }
-
   const handleHome = () => {
     setSelectedGoal(null)
     setSessionNumber(1)
@@ -1049,7 +1010,14 @@ export default function App() {
           sessionCapReached={sessionHistory.length >= SESSION_MEMORY_DEPTH}
           onNewSession={() => {
             if (sessionHistory.length >= SESSION_MEMORY_DEPTH) return
-            const newSwings = generateSwings(sessionNumber + 1)
+            // The player's chosen goal goes to the generator, so a hitter
+            // working on Power actually starts getting the ball in the air and
+            // a session that would show an empty target band is re-rolled.
+            const newSwings = generateSwings({
+              sessionNum: sessionNumber + 1,
+              goalId: selectedGoal?.id,
+              baselineSwings: mockSwings,
+            })
             const newNum = sessionNumber + 1
             setActiveSwings(newSwings)
             setSessionNumber(newNum)
