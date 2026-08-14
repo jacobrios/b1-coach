@@ -619,8 +619,9 @@ Full scope for both, with the reasoning behind every decision and everything
 ruled out, is in **`docs/queued-slices.md`**. Detail lives there rather than here
 on purpose: this file loads at the start of every session, so it is an index.
 
-- **Slice 6, credibility polish.** Nine items an informed visitor would notice
-  and quietly judge, none of which break the app. The two that matter most:
+- **Slice 6, credibility polish.** Eight defects an informed visitor would notice
+  and quietly judge, none of which break the app, plus one feel decision. The two
+  that matter most:
   simulated hit distances that are physically impossible for the exit velocities
   printed beside them, which the coach then quotes in its opening sentence; and
   the browser tab still showing the build tool's own logo. Also carries a feel

@@ -57,7 +57,9 @@ quietly judge, none of which break the app.
 verifier and a live browser pass. Every one of them is visible without opening
 the code, and most are cheap.
 
-**A warning about size.** This is eight items. It may be too large for one slice.
+**A warning about size.** This is eight defects plus one feel decision (item 9,
+which is a question for the product manager rather than something to fix). It may
+be too large for one slice.
 The product manager's own rule is to prefer the largest slice that can still be
 verified honestly, and all of these are verifiable in a single browser pass,
 which is the argument for keeping them together. If it needs splitting, the
@@ -105,14 +107,30 @@ a physics model. The direction is certain; the exact feet are approximate.)*
 
 ### 2. The distance buckets depend on item 1
 
-`src/DebriefScreen.jsx:547-549` starts its buckets at 160-220 feet. The shortest
+`src/DebriefScreen.jsx:547-553` starts its buckets at 160-220 feet. The shortest
 ball the current formula can produce is 251 feet, so that column can never fill
 and the next one almost never does. The first debrief renders as 0, 0, 1, 4, 10:
 two empty columns and one enormous bar. This chart is a default for the Power
-goal, so a first-click visitor lands on it.
+goal (the debrief prompt names it at `src/coachApi.js:84`; checking
+`FALLBACK_CHART_KEYS` in `src/chartSlots.js` instead would wrongly suggest
+otherwise, since those are only the stand-ins used when the model names nothing
+usable), so a first-click visitor lands on it.
 
-The same empty ranges are handed to the coach at `src/coachApi.js:379-381`, which
-can then congratulate the player for having nothing under 220 feet.
+The same empty ranges are handed to the coach, which can then congratulate the
+player for having nothing under 220 feet.
+
+**The bucket edges are written out in three places and all three must move
+together.** This was found by review on 14 August 2026 after the first draft of
+this document named only one:
+
+    src/DebriefScreen.jsx:547-553   the chart itself
+    src/coachApi.js:382             the debrief prompt
+    src/coachApi.js:407             the chat prompt, easy to miss
+
+CLAUDE.md's known-debt section already records the buckets as living in three
+places. Fixing two of three would leave the chat prompt describing ranges the
+chart no longer uses, which is the exact drift this project keeps having to
+clean up.
 
 **Do this after item 1**, since fixing the formula moves all the data, then set
 the buckets from the range the data actually occupies.
@@ -160,19 +178,24 @@ An engineer gut-checking this repo runs install, then test, then lint. Tests com
 back perfect. Lint dumps a wall of red, which reads as nobody having run it
 recently.
 
-**The audit reported 13 errors on 12 August. It is 22 as of 14 August**, because
-Slice 5 added server code that trips a browser-globals rule. Re-run it rather
-than trusting either number.
+**The audit reported 13 errors on 12 August. It is 22 as of 14 August.** The nine
+new ones all come from `.claude/hooks/run-tests-unless-docs.test.js`, which was
+added on 13 August by PR #15 and is a Node test file being linted as though it
+ran in a browser. Slice 5 is not the cause; a first draft of this document said
+it was, and review disproved it on 14 August. Re-run the check rather than
+trusting any number written here.
 
 Most are the checker aimed at files it was never meant to lint. `eslint.config.js`
 ignores only `dist`, and applies browser globals to everything:
 
-- `design/trackman-b1-coach/project/ios-frame.jsx` is a design mockup, not app
-  code. Eight errors.
-- `api/coach.js` and `vite.config.js` are server-side and legitimately use
-  `process`. Six errors.
-- `.claude/hooks/run-tests-unless-docs.test.js` is a Node test file. Errors for
-  the same reason.
+Counted per file on 14 August 2026:
+
+    .claude/hooks/run-tests-unless-docs.test.js   9   Node test file
+    design/trackman-b1-coach/project/ios-frame.jsx 8  design mockup, not app code
+    api/coach.js                                  1   server-side, uses process
+    vite.config.js                                1   server-side, uses process
+    src/App.jsx                                   2   genuine, see below
+    src/LiveSessionScreen.jsx                     1   genuine, see below
 
 Three are genuine and worth judging on their own merits:
 
@@ -239,7 +262,7 @@ player look superhuman by session four.
 The separate thing is that the Power band sits at 25 to 35 degrees while the
 simulated hitter averages 17 to 19, so a swing has to be an outlier on launch
 angle *and* on exit velocity in the same moment. Exit velocity and launch angle
-are drawn independently at `src/App.jsx:718-720`. That is why a third of sessions
+are drawn independently at `src/App.jsx:720-721`. That is why a third of sessions
 that genuinely *improved* still show nothing highlighted.
 
 The risk is not that the player failed. It is that the chart's orange target band
@@ -274,6 +297,14 @@ The two next-session tips are stored as the literal placeholder string
 `__tips__` at `src/App.jsx:794`, rendered from a separate field at
 `src/DebriefScreen.jsx:245`, and stripped out of prior sessions' history at
 `src/coachApi.js:417`.
+
+**The seam where a fix has to land is `src/coachApi.js:429`**, added here after
+review on 14 August 2026 pointed out that the three lines above describe the
+problem but none of them is where it can be corrected. That line flattens the
+current session's conversation into the chat prompt, and it is the point at which
+the model is handed the bare string `__tips__` instead of the tips. The coach
+does receive `coachingSummary` (`src/coachApi.js:408`), so the session context is
+there; only the tips text is missing.
 
 The tips sit at the top of the chat panel looking exactly like something the
 coach said. When a visitor asks the most natural possible follow-up, the coach
@@ -335,6 +366,38 @@ report** without evidence. CLAUDE.md warns against folding those together and
 that warning stands.
 
 ---
+
+# How this maps onto the list already in CLAUDE.md
+
+Added 14 August 2026 after review pointed out that this document sits beside an
+existing "Queued, not parked" list in CLAUDE.md and never said how the two
+relate. **This file is not the whole backlog.** A session that reads it as the
+authoritative list of what is left would silently drop five items.
+
+Already covered here, and duplicated rather than moved:
+
+- **The Reduce Pop-Ups goal card** is CLAUDE.md's parked item 2 and Slice 6 item
+  8. Same thing, still needs the same copy decision from the product manager.
+- **Consolidating rules that exist in several copies** is ruled out below as a
+  standalone job, but Slice 6 item 2 does half of it anyway, because fixing the
+  distance buckets means touching all three copies. The strike-zone bounds, the
+  other half, stay untouched and the existing trigger still stands.
+- **Retuning how much the demo improves session over session** is *related to but
+  not the same as* Slice 6 item 9. The queued item is about `varianceFactor` and
+  the size of the improvement arc. Item 9 is about the Power target band sitting
+  above where the hitter lives. Both are feel decisions and both are worth
+  deciding in the same sitting, but fixing one does not fix the other.
+
+**Not in either slice, still open, and nobody has scheduled them:**
+
+- Decide whether the 88 mph "hard hit" highlight should be per goal.
+- Tie the "40 seconds" wording in `src/failureCopy.js` to `UPSTREAM_DEADLINE_MS`
+  in `api/coach.js`, so changing the constant cannot silently make the copy lie.
+- Decide what the app should say when the browser's own 50 second backstop fires
+  before the server answers. Needs a copy decision first.
+- Test the `.env` guard in `protect-paths.mjs`, or record a reason for having no
+  test. This is the last unrecorded safety-net drift line.
+- A committed reviewer config, so a code review is not a per-session choice.
 
 # Ruled out, with reasons
 

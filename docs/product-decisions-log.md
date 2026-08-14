@@ -34,7 +34,7 @@ a generic bolt. It stays in the slice only because it costs ten minutes. None of
 that reasoning existed anywhere, so the next session to meet that item would
 have re-argued a settled question, and would have argued it at the wrong
 severity. `docs/queued-slices.md` therefore records why things were decided, and
-records five things that were ruled out, which a task list would have dropped
+records seven things that were ruled out, which a task list would have dropped
 entirely.
 
 **Scope goes on main; plans travel with their branch.** These two are different
@@ -49,14 +49,27 @@ lines. Pasting it into CLAUDE.md would have made every future session in this
 project more expensive, forever, to save one file open. The pointer is two
 bullets; the detail is a file away.
 
-*Corrections made while writing this, all verified against the code rather than
+*Corrections made while writing this, each verified against the code rather than
 remembered:* the lint failure count is 22 across six files, not the 13 the audit
-reported two days earlier, because Slice 5 added server code that trips a
-browser-globals rule; the README's Tailwind overclaim has already been fixed and
-is off the list; and Slice 5 delivered only the second half of what its slice was
-scoped to cover, since the cause of the 12 August timeout is still not known. The
-last one is recorded rather than treated as debt: the visitor-facing problem was
-solved another way, by capping the wait and saying honestly what happened.
+reported two days earlier; the README's Tailwind overclaim has already been fixed
+and is off the list; and Slice 5 delivered only the second half of what its slice
+was scoped to cover, since the cause of the 12 August timeout is still not known.
+That last one is recorded rather than treated as debt, because the
+visitor-facing problem was solved another way, by capping the wait and saying
+honestly what happened.
+
+*And one correction to the corrections, which is the part worth keeping.* The
+first draft of this entry explained the lint jump by saying Slice 5 had added
+server code that trips a browser-globals rule. An independent review checked it
+and it was false: `api/coach.js` produced exactly one such error both before and
+after Slice 5, and all nine new errors came from a hook test file added by PR #15
+the day before. The claim was wrong in the one paragraph that told the reader
+everything in it had been verified, which is the most expensive place to be
+wrong. The same review found two more: the distance bucket edges live in three
+places rather than the one this document originally named, and the count of
+ruled-out items was understated. **A verification claim is itself a claim, and
+this is the second time in three days that writing one down confidently is what
+made it wrong.**
 
 ## Slice 5: the app now says what actually went wrong (August 13)
 
