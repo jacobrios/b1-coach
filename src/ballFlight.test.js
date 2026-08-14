@@ -118,7 +118,7 @@ describe('the labels a visitor and the coach both see', () => {
   // whether the right ranges were chosen.
   it('are exactly the five the plan specified, in order', () => {
     expect(DISTANCE_BUCKETS.map((b) => b.label)).toEqual([
-      'Under 150', '150-200', '200-250', '250-300', '300+',
+      'Under 175', '175-225', '225-265', '265-305', '305+',
     ])
   })
 })
@@ -128,14 +128,14 @@ describe('boundary swings under the half-open convention', () => {
   // target already use. A ball at exactly one of these three edges belongs to
   // the bucket that starts there, not the one that ends there.
   it.each([
-    [149.9, 'Under 150'],
-    [150, '150-200'],
-    [199.9, '150-200'],
-    [200, '200-250'],
-    [249.9, '200-250'],
-    [250, '250-300'],
-    [299.9, '250-300'],
-    [300, '300+'],
+    [174.9, 'Under 175'],
+    [175, '175-225'],
+    [224.9, '175-225'],
+    [225, '225-265'],
+    [264.9, '225-265'],
+    [265, '265-305'],
+    [304.9, '265-305'],
+    [305, '305+'],
   ])('%s feet lands in %s', (distance, label) => {
     const counts = distanceBucketCounts([swingAt(distance)])
     const withOne = counts.filter((b) => b.count === 1)
@@ -151,11 +151,11 @@ describe('nothing falls through the bottom or off the top', () => {
   // are what rule that out structurally rather than by a number that happens
   // to be low enough today.
   it.each([
-    [0, 'Under 150'],
-    [1, 'Under 150'],
-    [74, 'Under 150'],
-    [383, '300+'],
-    [1000, '300+'],
+    [0, 'Under 175'],
+    [1, 'Under 175'],
+    [74, 'Under 175'],
+    [383, '305+'],
+    [1000, '305+'],
   ])('%s feet still lands somewhere, in %s', (distance, label) => {
     const counts = distanceBucketCounts([swingAt(distance)])
     expect(counts.reduce((sum, b) => sum + b.count, 0)).toBe(1)
@@ -165,18 +165,23 @@ describe('nothing falls through the bottom or off the top', () => {
 
 describe('the exact fifteen distances the app opens on', () => {
   // src/App.jsx's mockSwings, the hand-written session 1 every visitor sees
-  // first. Before this task the chart rendered 0, 0, 1, 4, 10 against these
-  // same distances: two columns permanently empty, one enormous bar.
+  // first. Before Task 4 the chart rendered 0, 0, 1, 4, 10 against these same
+  // distances: two columns permanently empty, one enormous bar. Task 4's own
+  // edges (150/200/250/300) rendered this as an even 3, 3, 3, 3, 3. Task 10
+  // moved the edges to 175/225/265/305, the product manager's choice from a
+  // rendered comparison (see the header comment in ballFlight.js), which
+  // renders this same session as 5, 3, 1, 3, 3 — uneven, the way a real
+  // measurement reads, rather than five identical bars.
   const mockDistances = [170, 122, 310, 126, 345, 224, 150, 277, 185, 241, 279, 97, 290, 201, 346]
   const swings = mockDistances.map(swingAt)
 
-  it('gives every column real fill: 3, 3, 3, 3, 3', () => {
-    expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([3, 3, 3, 3, 3])
+  it('gives every column real fill: 5, 3, 1, 3, 3', () => {
+    expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([5, 3, 1, 3, 3])
   })
 
   it('writes the same five numbers into the sentence the coach reads', () => {
     expect(distanceDistributionLine(swings)).toBe(
-      'Under 150ft: 3 swings, 150-200ft: 3 swings, 200-250ft: 3 swings, 250-300ft: 3 swings, 300+ft: 3 swings',
+      'Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 })

@@ -65,9 +65,10 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 // distanceBucketCounts below is the only place a swing gets sorted into one
 // of them. The chart and both prompts call these; they do not recompute them.
 //
-// Edges come from scripts/measure-swing-generation.mjs, 20,000 replays per
-// cell across sessions 2-4 and every goal that has a target, run against the
-// carry formula above:
+// The raw distribution these edges sit against, from
+// scripts/measure-swing-generation.mjs, 20,000 replays per cell across
+// sessions 2-4 and every goal that has a target, run against the carry
+// formula above:
 //
 //   shortest ball   74-108ft    10th pct   155-200ft    25th pct  185-229ft
 //   middle (50th)  224-259ft    75th pct   262-289ft    90th pct  294-311ft
@@ -77,22 +78,43 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 //     nothing here, but a future reader comparing numbers should know they
 //     came from different sample sizes rather than assume one is wrong)
 //
-// "Under 150" catches the shortest real balls: the old chart's floor of 160
-// let a 74-foot grounder fall through with no bucket to land in at all.
-// "300+" catches the longest without adding a sixth column the chart is not
-// laid out for.
+// A first draft placed the edges straight on those percentiles —
+// 150/200/250/300 — and shipped in this slice's Task 4. It fixed the
+// original bug (two columns that could never fill under the old, dishonest
+// formula) but on a strong session it just pushed the same lopsided shape to
+// the other end of the range: a Power session 4 rendered as 0, 0, 0, 12, 3,
+// three empty columns and one enormous bar.
+//
+// The edges below are the product manager's choice from a rendered
+// comparison of three candidate schemes shown side by side on 14 August
+// 2026, not a further percentile calculation. Measured over 2,500 sessions
+// per cell (scripts/measure-swing-generation.mjs), average empty columns per
+// chart across every goal and session that has a target:
+//
+//   150/200/250/300 (Task 4's draft)   0.97 overall, 1.38 on Power session 4
+//   175/225/265/305 (shipped)          0.70 overall, 0.99 on Power session 4
+//
+// The hand-written session 1 (src/App.jsx's mockSwings) renders 3, 3, 3, 3, 3
+// under the draft edges and 5, 3, 1, 3, 3 under these. The product manager
+// preferred the uneven shape on sight: five identical bars reads as
+// placeholder data, not as something real measurement produced.
+//
+// "Under 175" catches the shortest real balls: the pre-Task-4 chart's floor
+// of 160 let a 74-foot grounder fall through with no bucket to land in at
+// all. "305+" catches the longest without adding a sixth column the chart is
+// not laid out for.
 export const DISTANCE_BUCKETS = [
-  { label: 'Under 150', min: -Infinity, max: 150 },
-  { label: '150-200', min: 150, max: 200 },
-  { label: '200-250', min: 200, max: 250 },
-  { label: '250-300', min: 250, max: 300 },
-  { label: '300+', min: 300, max: Infinity },
+  { label: 'Under 175', min: -Infinity, max: 175 },
+  { label: '175-225', min: 175, max: 225 },
+  { label: '225-265', min: 225, max: 265 },
+  { label: '265-305', min: 265, max: 305 },
+  { label: '305+', min: 305, max: Infinity },
 ]
 
 // Sort a session's swings into the five buckets above. Membership is
 // half-open, dist >= min && dist < max, the same convention the rest of the
-// app already uses for a strike zone or a goal target: a ball at exactly 200
-// feet belongs to 200-250, not 150-200. The lowest bucket's min of -Infinity
+// app already uses for a strike zone or a goal target: a ball at exactly 175
+// feet belongs to 175-225, not Under 175. The lowest bucket's min of -Infinity
 // and the top bucket's max of Infinity mean a swing can never land in zero
 // buckets or in more than one, whatever distance the generator produces.
 export function distanceBucketCounts(swings) {

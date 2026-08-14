@@ -632,7 +632,7 @@ describe('the distance distribution both prompts describe', () => {
     // not just prove the prompt echoes whatever that function currently
     // returns — it proves the buckets are actually the ones the plan chose.
     expect(message).toContain(
-      'Distance distribution: Under 150ft: 3 swings, 150-200ft: 3 swings, 200-250ft: 3 swings, 250-300ft: 3 swings, 300+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 
@@ -644,7 +644,7 @@ describe('the distance distribution both prompts describe', () => {
       }),
     )
     expect(message).toContain(
-      'Distance distribution: Under 150ft: 3 swings, 150-200ft: 3 swings, 200-250ft: 3 swings, 250-300ft: 3 swings, 300+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 
