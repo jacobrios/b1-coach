@@ -58,7 +58,16 @@ export function goalContext(goal) {
 // drifts, and it drifts invisibly, which is worst at exactly the moment the
 // bench is most trusted. Nothing in src/ should import this; the two call sites
 // below are the only ones in the app.
-export const DEBRIEF_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You speak like an experienced high school or college hitting coach — direct, encouraging, and plain-spoken. You never sound like a data analyst. You never say 'statistically speaking' or 'your data shows.' You say things like 'your bat speed is there' or 'you're getting under the ball too much.'
+//
+// This is the prompt with no length budget attached, kept separate from
+// DEBRIEF_SYSTEM below on purpose. The bench's baseline condition exists to
+// answer "how much does the coach write with no budget at all," and it can
+// only keep answering that question if there is a version of this prompt with
+// no budget baked in. Appending the budget straight onto this constant would
+// have quietly turned every future "baseline" run into a comparison between
+// two budgets, and nobody would have noticed until the numbers stopped making
+// sense.
+export const DEBRIEF_SYSTEM_BASE = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You speak like an experienced high school or college hitting coach — direct, encouraging, and plain-spoken. You never sound like a data analyst. You never say 'statistically speaking' or 'your data shows.' You say things like 'your bat speed is there' or 'you're getting under the ball too much.'
 
 Rules:
 - Lead with what the player did well before addressing improvements
@@ -100,6 +109,42 @@ Goal-based defaults (deviate if data tells a more interesting story):
 - allfields: spray_direction + scatter_ev_la (consider pitch_location to show pull/center/oppo patterns by pitch location)
 - popup: scatter_ev_la + trend_ev (consider pitch_location to show if pop-ups correlate with high pitch locations)
 - open: choose any two based on the most interesting patterns — do NOT select pitch_location for this goal`
+
+// The length-budget instruction, as a function of the four numbers rather than
+// four numbers baked into prose, because the eval bench under scripts/ needed
+// to try several sets of numbers against the same wording to find out which one
+// a panel could actually hold. Moved here verbatim from the bench once the
+// product manager picked a set; the wording itself is what was measured, so it
+// is not rewritten in the move. Two things in it are load-bearing: it counts
+// words, not sentences, because the model already obeys the three-sentence cap
+// on each tip by writing longer sentences, so a sentence-counting instruction
+// would report success while the summary box overflowed anyway; and it says
+// out loud that a vague tip inside budget is a failure, because the risk this
+// slice was warned about is not that the coach writes too much, it is that it
+// gets short by getting vague.
+export const lengthBudget = ({ summary, means, intro, tip }) => `LENGTH BUDGET. These are hard limits, not suggestions. Count words, not sentences.
+- coachingSummary: ${summary} words maximum.
+- whatThisMeans: ${means} words maximum.
+- tipsIntro: ${intro} words maximum.
+- each tip in nextSessionTips: ${tip} words maximum.
+
+Stay inside the budget by cutting words, never by cutting specifics. Every number you were going to cite, still cite. Keep the three-part shape of each tip exactly as described above: an observation quoting real numbers from the session, then what it means in baseball terms, then one physical cue. Write shorter sentences rather than dropping one of the three parts. A vague tip that fits the budget is a failure, not a success.`
+
+// Condition B out of the four the bench measured over 24 real API calls each:
+// the middle of three budget sizes tried, and the one the product manager
+// picked after reading how each held up against real panel space and against
+// whether the coach kept citing real swings. Kept as its own constant, not
+// inlined into DEBRIEF_SYSTEM below, so the eval bench can name these exact
+// numbers again the next time this prompt is re-measured, rather than reading
+// them back out of DEBRIEF_SYSTEM by eye.
+export const DEBRIEF_BUDGET = lengthBudget({ summary: 45, means: 30, intro: 12, tip: 50 })
+
+// What generateDebrief actually sends. Everything downstream of this line
+// (generateDebrief itself, and every real debrief a visitor sees) reads this
+// constant and nothing else; DEBRIEF_SYSTEM_BASE and DEBRIEF_BUDGET above exist
+// so the bench can keep measuring "no budget" and "the shipped budget" as two
+// distinct, honest conditions rather than one collapsing into the other.
+export const DEBRIEF_SYSTEM = `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}`
 
 const CHAT_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You are in a conversation with a player reviewing their session data. Speak like an experienced high school or college hitting coach — direct, encouraging, plain-spoken. Never sound like a data analyst.
 

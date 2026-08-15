@@ -83,6 +83,9 @@ register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK
 
 const {
   DEBRIEF_SYSTEM,
+  DEBRIEF_SYSTEM_BASE,
+  DEBRIEF_BUDGET,
+  lengthBudget,
   MAX_TOKENS,
   MODEL,
   buildDebriefUserMessage,
@@ -195,44 +198,44 @@ const CELLS = [
   { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, why: 'no target, so the coach has the most latitude' },
 ]
 
-// A condition is an instruction appended to the real system prompt, or nothing
-// at all for the baseline. Budgets are word counts on purpose: the prompt
-// already caps each tip at three sentences and the model already obeys that,
-// writing longer sentences instead. Anything that counts sentences would report
-// success while the panel overflowed.
+// A condition is a complete system prompt: the real base prompt, plus whatever
+// budget wording (if any) that condition is testing. Every condition below is
+// built on DEBRIEF_SYSTEM_BASE rather than on DEBRIEF_SYSTEM, on purpose. Once
+// Task 2 baked condition B's budget into DEBRIEF_SYSTEM itself, building
+// baseline/A/C on top of that constant would have silently turned every one of
+// them into "budget B plus a second budget," and the baseline condition would
+// have stopped measuring what its own label claims. lengthBudget and its
+// wording live in src/coachApi.js now, imported rather than copied, for the
+// same reason DEBRIEF_SYSTEM_BASE is imported: a bench grading its own copy of
+// the wording grades nothing, because the copy can drift from what the app
+// actually sends and nothing would notice.
 //
-// The three budgets are pitched at measured panel capacity, not at taste. On a
-// 1440x790 window (the viewport a MacBook Air actually gives) the Session
-// Summary box holds 154 words at today's 16px, 106 at 18px and 96 at 20px.
-// Baseline output runs 78 to 181 words. So: A is sized to clear 18px, B to
-// clear 20px with room, C to clear 20px on a smaller window too.
-//
-// Every instruction names the failure mode out loud, because the risk here is
-// not that the coach writes too much, it is that it gets short by getting
-// vague. A shorter coach that stops quoting the player's swings is worse than
-// the long one, and the grader above is what checks that it didn't.
-const budget = ({ summary, means, intro, tip }) => `LENGTH BUDGET. These are hard limits, not suggestions. Count words, not sentences.
-- coachingSummary: ${summary} words maximum.
-- whatThisMeans: ${means} words maximum.
-- tipsIntro: ${intro} words maximum.
-- each tip in nextSessionTips: ${tip} words maximum.
-
-Stay inside the budget by cutting words, never by cutting specifics. Every number you were going to cite, still cite. Keep the three-part shape of each tip exactly as described above: an observation quoting real numbers from the session, then what it means in baseball terms, then one physical cue. Write shorter sentences rather than dropping one of the three parts. A vague tip that fits the budget is a failure, not a success.`
-
+// The three sized budgets (A, B, C) are pitched at measured panel capacity, not
+// at taste. On a 1440x790 window (the viewport a MacBook Air actually gives)
+// the Session Summary box holds 154 words at today's 16px, 106 at 18px and 96
+// at 20px. Baseline output runs 78 to 181 words. So: A is sized to clear 18px,
+// B to clear 20px with room, C to clear 20px on a smaller window too.
 const CONDITIONS = {
-  baseline: { label: 'baseline (today, no budget)', instruction: null },
+  baseline: { label: 'baseline (today, no budget)', system: DEBRIEF_SYSTEM_BASE },
   A: {
     label: 'A, light: box target 90 words',
-    instruction: budget({ summary: 55, means: 35, intro: 15, tip: 60 }),
+    system: `${DEBRIEF_SYSTEM_BASE}\n\n${lengthBudget({ summary: 55, means: 35, intro: 15, tip: 60 })}`,
   },
   B: {
-    label: 'B, medium: box target 75 words',
-    instruction: budget({ summary: 45, means: 30, intro: 12, tip: 50 }),
+    label: 'B, medium: box target 75 words (the budget that shipped)',
+    system: `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}`,
   },
   C: {
     label: 'C, tight: box target 60 words',
-    instruction: budget({ summary: 35, means: 25, intro: 10, tip: 40 }),
+    system: `${DEBRIEF_SYSTEM_BASE}\n\n${lengthBudget({ summary: 35, means: 25, intro: 10, tip: 40 })}`,
   },
+  // Not one of the four sizes the original comparison ran. This condition
+  // exists so the prompt can be re-measured exactly as the app ships it,
+  // markdown fences, chart-key instructions and all, rather than trusting that
+  // stitching DEBRIEF_SYSTEM_BASE and DEBRIEF_BUDGET back together by hand
+  // reproduces DEBRIEF_SYSTEM byte for byte. Task 5 is the slice task that runs
+  // this one for real.
+  shipped: { label: 'shipped (DEBRIEF_SYSTEM exactly as the app sends it)', system: DEBRIEF_SYSTEM },
 }
 
 const PLAYER = { firstName: 'Jake' }
@@ -488,7 +491,7 @@ function dryRun(conditionKeys) {
 
   for (const conditionKey of conditionKeys) {
     const condition = CONDITIONS[conditionKey]
-    const system = condition.instruction ? `${DEBRIEF_SYSTEM}\n\n${condition.instruction}` : DEBRIEF_SYSTEM
+    const system = condition.system
     for (const cell of CELLS) {
       const sessions = buildSessions({ goalId: cell.goal.id, upTo: cell.session, seed: 20260814 })
       const values = sessionValueSets(sessions)
@@ -563,9 +566,7 @@ async function main() {
 
   for (const conditionKey of conditionKeys) {
     const condition = CONDITIONS[conditionKey]
-    const system = condition.instruction
-      ? `${DEBRIEF_SYSTEM}\n\n${condition.instruction}`
-      : DEBRIEF_SYSTEM
+    const system = condition.system
 
     for (const cell of CELLS) {
       const sessions = buildSessions({ goalId: cell.goal.id, upTo: cell.session, seed: args.seed })

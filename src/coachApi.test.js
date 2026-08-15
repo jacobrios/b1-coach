@@ -7,7 +7,10 @@
 // added because the real thing went wrong; both are silent when they work.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { callApi, goalContext, generateDebrief, sendChatMessage, CoachError } from './coachApi.js'
+import {
+  callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
+  DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET,
+} from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 
 const RETRY_DELAY_MS = 1500
@@ -666,5 +669,26 @@ describe('the distance distribution both prompts describe', () => {
     // Also matches the function both prompts actually call, confirming the
     // request that left the browser is not some third, independent value.
     expect(extract(debriefMessage)).toBe(`Distance distribution: ${distanceDistributionLine(swings)}`)
+  })
+})
+
+// The bench that picked budget B measured DEBRIEF_SYSTEM_BASE plus condition
+// B's wording, not the prompt this app actually sends. These two tests are
+// what keeps that true after this file ships: one holds the shipped prompt to
+// exactly base-plus-budget so nobody can slip a change into either half
+// without the other noticing, and the other holds the shipped budget to the
+// exact numbers the product manager picked (45/30/12/50), so a future edit
+// that quietly reaches for a different set of numbers is caught here rather
+// than by someone re-reading the bench output from three weeks ago.
+describe('the length budget the coach was shipped with', () => {
+  it('DEBRIEF_SYSTEM is exactly the base prompt plus a blank line plus the shipped budget', () => {
+    expect(DEBRIEF_SYSTEM).toBe(`${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}`)
+  })
+
+  it('the shipped budget names all four fields at the numbers the bench picked', () => {
+    expect(DEBRIEF_BUDGET).toContain('coachingSummary: 45 words maximum.')
+    expect(DEBRIEF_BUDGET).toContain('whatThisMeans: 30 words maximum.')
+    expect(DEBRIEF_BUDGET).toContain('tipsIntro: 12 words maximum.')
+    expect(DEBRIEF_BUDGET).toContain('each tip in nextSessionTips: 50 words maximum.')
   })
 })
