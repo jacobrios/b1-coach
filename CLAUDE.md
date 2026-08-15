@@ -942,6 +942,13 @@ on purpose: this file loads at the start of every session, so it is an index.
   2026 as the coach's length budget and type-size bump**, an unrelated slice
   that took the number first. This item's scope is unchanged and still lives
   in `docs/queued-slices.md`; only its number is gone.
+  **Baseline measured 15 August 2026, ahead of scheduling this work:**
+  re-grading 96 saved debrief transcripts for factual errors found 8, about
+  one in twelve. See the Slice 7 postscript in the decision log for the
+  breakdown by condition. Session 1, the screen where the product manager's
+  own QA pass actually found an error, is not among the 96; the bench cannot
+  reach it yet. One in twelve on measurable sessions is the number this work
+  should improve against.
 
 Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and the
 formerly-numbered-7 coach fidelity work above. Slice 5 shipped on 14 August
@@ -1189,7 +1196,10 @@ rewritten, per the append-only rule.
   saying "320 feet or more" against a session whose real bucket was "305
   plus." Not invention, the number is in the right neighborhood, but not
   exact either. Worth a look if the citation-accuracy trade this slice made
-  ever gets revisited.
+  ever gets revisited. **A distinct, harder error class was found by QA on
+  15 August 2026**: outright miscounts, not rounding, at roughly one in
+  twelve measurable debriefs. See the coach fidelity item above for the
+  baseline.
 - **Widened 14 August 2026: nothing pins any prompt prose at all, not just
   the two sentences first named here.** The suite pins the budget's four
   numbers (45/30/12/50) and pins `DEBRIEF_SYSTEM` to equal

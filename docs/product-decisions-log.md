@@ -72,6 +72,26 @@ from Barlow to Barlow Condensed. Neither was approved before it shipped. Both
 were disclosed after the fact and verified in a browser, but the product
 manager has not yet looked at them himself.
 
+*Postscript, August 15:* The product manager's QA pass found the coach
+stating something false on session 1, the first debrief every visitor sees:
+it said four of six swings under 15 degrees were also under 80 mph, when all
+six were. Before merging, we checked whether the budget caused this by
+re-grading 96 already-saved debriefs from the measurement round for factual
+errors, no new API calls. Confirmed errors: baseline 2 of 24, condition A
+(loosest budget) 2 of 24, the shipped budget 0 of 24, condition C (tightest
+budget) 4 of 24, eight in total. The rate does not climb as the budget
+tightens, so this reads as a pre-existing fault rather than something the
+budget introduced.
+
+Three things this does not settle. Session 1 is not in the 96; the bench
+cannot load its hand-written swings, so the screen where the error actually
+appeared is unmeasured. A clean sheet on the shipped condition may partly
+reflect shorter prose attempting fewer of the elaborate claims that are
+error-prone in the first place, not better arithmetic. And the error class is
+wider than one instance: four of the eight were miscounts of a whole
+session's swings above 20 degrees, not the subset claim session 1 showed.
+Baseline for future work: roughly one error in twelve measurable debriefs.
+
 ---
 
 ## Slice 6: the ball flight stops being a lie (August 14)
