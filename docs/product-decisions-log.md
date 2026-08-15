@@ -6,6 +6,66 @@
 
 ---
 
+## Slice 7: the coach says less, and the screen gets bigger (August 14)
+
+*What we changed:* The coach wrote a full page into a box built for a
+paragraph, so the type had to stay small to avoid overflowing it. Two earlier
+attempts to fix this by asking the model to "be brief" did not hold: an
+unmeasured instruction is one nobody notices drifting. This slice put a real
+word budget on four debrief fields, built a bench that scores compliance
+against 24 live API calls, and only then grew the type.
+
+*The motive is the player, not the layout.* This app is built for high school
+hitters with short attention spans. A shorter, larger-type debrief is the
+actual goal; the type bump and the roughly three-second speed gain are
+consequences of writing less, not the reason for it.
+
+*The budget:* 45 words for the session summary, 30 for what it means, 12 for
+the tips intro, 50 per tip, counted in words rather than sentences. Sentences
+were tried first, and the model obeyed the letter of that rule by writing
+fewer, longer sentences, which produced no shorter a box. The prompt also
+says plainly that a vague tip inside the budget is a failure, since cutting
+real numbers to hit a word count trades one problem for a worse one.
+
+*Type sizes, and why 18 and not 20.* Summary body text moved from 16px to
+18px, the chat panel from 14px to 16px. 20 was tried and rejected: at 20px
+the gap between the two panels' type closed enough that they read as two
+documents instead of one screen. 18 keeps that 2px gap and leaves more
+headroom against the budget than 20 would have.
+
+*The fade, and the truncation it exposed.* The summary box already scrolled;
+its scrollbar was a 3px sliver at 10% white, invisible in practice. At
+1280x720 the box was already cutting text off mid-sentence with nothing to
+say so. A fade now appears at the bottom edge only when real text sits below
+the fold, making that same truncation honest instead of removing it: the
+product manager chose scrolling over shrinking the two charts to make room.
+
+*The numbers, all from 24 live calls per condition.* Before, the summary box
+ran a median of 112 words and a worst case of 181. After: median 62, worst
+72, comfortably inside the 106-word capacity the 18px box holds on a
+1440x790 window. Wall-clock time for a debrief fell from a 13.2 second
+median to 10.1 seconds, since shorter output is the main thing a debrief
+waits on.
+
+*The cost, stated plainly.* Cutting the coach's output cut how much it backs
+up what it says. Grounded citations per debrief fell from 8.5 to 6.13, about
+28%. Tips whose first sentence leads with a real cited number fell from 96%
+to 88%, roughly four tips out of 48. Both are measured effects of the budget,
+not noise; the product manager shipped knowing there would be a cost, and
+this is what it turned out to be.
+
+*The bench makes this checkable going forward.* `scripts/bench-coach-brevity.mjs`
+is this project's first eval bench: it sends the app's real prompt, now
+exported from `src/coachApi.js` rather than copied, to 24 live sessions and
+grades length and citation grounding together, so the next prompt change can
+be measured, not argued about. It cannot yet grade session 1, the first
+debrief every visitor sees, since those fifteen swings are hand-written
+inside JSX and a plain script cannot load them; it uses a stand-in pinned to
+session 1's real averages instead. Closing that gap is the first task of the
+next slice.
+
+---
+
 ## Slice 6: the ball flight stops being a lie (August 14)
 
 *The problem.* Every hit distance in this app was invented by a formula that

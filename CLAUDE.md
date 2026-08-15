@@ -239,22 +239,33 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 14 August 2026, at the close of Slice 6.
+Line counts current as of 14 August 2026, at the close of Slice 7.
 
     src/App.jsx             1046 lines. Screen routing, player and session state,
                              debrief orchestration, and the fifteen hand-written
                              session-1 swings. Swing generation moved out in
                              Slice 6.
-    src/DebriefScreen.jsx   1451 lines. The results screen, all six chart
-                             components, and the chat panel.
+    src/DebriefScreen.jsx   1534 lines. The results screen, all six chart
+                             components, the chat panel, the session summary's
+                             scroll fade, and the shared axis-text style
+                             constants, both added in Slice 7.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
-    src/coachApi.js          445 lines. System prompts, the goal-context block both
-                             prompts share, response parsing, failure
-                             classification, the retry policy, and the two calls.
-    src/ballFlight.js        225 lines. How far a struck ball carries, the five
+    src/coachApi.js          510 lines. System prompts, the length budget
+                             appended to the debrief prompt, the goal-context
+                             block both prompts share, response parsing,
+                             failure classification, the retry policy, and the
+                             two calls. Slice 7 exported `DEBRIEF_SYSTEM_BASE`,
+                             `lengthBudget`, `DEBRIEF_BUDGET`, `DEBRIEF_SYSTEM`,
+                             `MODEL` and `MAX_TOKENS` so the bench can send the
+                             real prompt rather than a copy of it.
+    src/ballFlight.js        228 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
                              Added in Slice 6. See the ball flight section below.
+    src/scrollFade.js         18 lines. Whether the session summary box's bottom
+                             fade should show, as a pure function of scroll
+                             position. Added in Slice 7 so the decision could
+                             be tested without a browser.
     src/swingGenerator.js    180 lines. Generates a session's fifteen swings.
                              Carved out of App.jsx in Slice 6 so the re-roll
                              could be tested. Takes an injectable random source.
@@ -267,13 +278,14 @@ Line counts current as of 14 August 2026, at the close of Slice 6.
                              whether a single key from a chat reply is usable.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           1714 lines across eight files, beside what they test.
+    src/*.test.js           1794 lines across nine files, beside what they test.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
-                             counted in the rows above; together the eleven test
-                             files vitest collects are 2525 lines.
-    scripts/*.mjs            804 lines across two hand-run measurement scripts,
-                             deliberately outside the test runner. See below.
+                             counted in the rows above; together the twelve test
+                             files vitest collects are 2605 lines.
+    scripts/*.mjs           1540 lines across three hand-run scripts,
+                             deliberately outside the test runner. See below and
+                             the bench section further down.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -287,8 +299,10 @@ it. `failureCopy.js` was added in Slice 5 on the same pattern, so the debrief
 screen and the chat panel read one copy table instead of each carrying its own
 guess. `ballFlight.js` and `swingGenerator.js` were added in Slice 6, the second
 because the generator's re-roll cannot be tested while it is a closure inside a
-React component. Do not move anything else out on the same excuse without a test
-that needs it.
+React component. `scrollFade.js` was added in Slice 7 for the same reason: the
+show-or-hide decision needed to be a pure function so `scrollFade.test.js`
+could pin its tolerance without a browser. Do not move anything else out on the
+same excuse without a test that needs it.
 
 **One thing was exported rather than extracted, deliberately.** Slice 6 changed
 `GOALS` in `App.jsx` from a file-local `const` to an `export const` so a test
@@ -363,6 +377,50 @@ the empty-column measure and beats them on the strongest Power session; the
 choice between them was the product manager's, made on how the three rendered.
 Neither script is fast to eyeball; both print plain-language output meant to be
 read directly.
+
+## The bench that measures how much the coach writes
+
+Added in Slice 7 on 14 August 2026. Two earlier attempts to shorten the coach
+by prompt instruction alone did not hold, because "be brief" is unmeasured:
+nothing notices when it drifts back. `scripts/bench-coach-brevity.mjs` exists
+to notice.
+
+**What it grades, and why two things at once.** A prompt that only measures
+length rewards vagueness: a coach can hit any word count by dropping every
+real number from the swing. So the bench scores length and citation grounding
+together, against the same 24 live debriefs, using the app's own real swing
+data across three session shapes (`power-s2`, `contact-s4`, `open-s4`).
+"Grounded" means a citation carrying a unit that matches a real value from
+that session; "target" means the goal's own numbers, legitimate but not
+evidence the coach looked at the swings; "unmatched" is a lead worth
+eyeballing rather than an automatic fabrication call, because the coach is
+known to round ("320 feet or more" against a 305-plus bucket) rather than
+invent outright.
+
+**It imports the real prompt, not a copy.** `MODEL`, `MAX_TOKENS`,
+`DEBRIEF_SYSTEM_BASE` and `lengthBudget` are now exported from
+`src/coachApi.js` for exactly this reason: a bench grading a paraphrase of the
+prompt would validate nothing about what the app actually sends. Same
+discipline `DISTANCE_BUCKETS` enforces for hit distance, applied to a prompt
+instead of a number.
+
+**How to run it, and what it costs.** `node --env-file=.env.local
+scripts/bench-coach-brevity.mjs --condition shipped --runs 8` runs 24 live
+Anthropic calls and spends real money, roughly $0.43 at about 1.8 cents a
+debrief as measured 14 August 2026. `--dry-run` builds every prompt and grades
+a canned reply with no network calls and no spend, for checking the bench
+itself. `--condition all` still exists but now duplicates work: `B` and
+`shipped` build byte-identical system prompts once the budget lives inside
+`DEBRIEF_SYSTEM`, so running both spends 24 extra calls measuring the same
+string twice.
+
+**Its session-1 blind spot.** The bench cannot grade the very first debrief a
+real visitor sees. Session 1 is not generated: it is fifteen swings
+hand-written inside `src/App.jsx`, and a plain Node script cannot load a file
+with JSX in it. The bench's three cells use a stand-in pinned to session 1's
+real averages (81.6 mph, 17.33 degrees) rather than the actual fifteen
+swings. Closing that gap needs those swings extracted into their own module
+first, which is the first task of the next slice.
 
 ## The data is synthetic
 
@@ -443,12 +501,16 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest. It covers the serverless proxy's method routing, validation, and size
+   vitest, and as of Slice 7 on 14 August 2026 it is 337 tests across 12 files.
+   It covers the serverless proxy's method routing, validation, and size
    cap; `callApi`'s one retry and its unwrapping of a fenced model response; the
    chart-slot fallback and dedupe; the chat reply's chart key; the goal targets
-   and the coach prompt built from them; and `computeStats`. It covers **no
-   screens and no rendering at all**, so a green suite says nothing about what a
-   visitor sees. Never imply broader coverage than that. New behavior gets a test
+   and the coach prompt built from them; the summary box's scroll-fade
+   tolerance; and `computeStats`. It covers **no screens and no rendering at
+   all**, so a green suite says nothing about what a visitor sees, and it
+   still never calls the model: the length budget's four numbers are pinned,
+   but whether the coach actually obeys them is the bench's job, not the
+   suite's. Never imply broader coverage than that. New behavior gets a test
    shown failing first; a test written over existing behavior is worthless until
    the thing it covers has been broken on purpose and seen to go red.
 2. ~~**Some tests deliberately pin behavior that is wrong.**~~ Resolved in
@@ -680,6 +742,28 @@ owner's own use explains. Do not build rate limiting without that signal.
   in TWO places since Slice 2: `src/coachApi.js:8` is what local development
   runs on, `api/coach.js` is what production actually sends. Change both or
   local development silently tests a different model than production ships.
+- **The length budget trades citations for brevity, on purpose.** 45/30/12/50
+  words for summary/what-this-means/tips-intro/tip, chosen from three measured
+  options on 14 August 2026 because two earlier "just be brief" prompt
+  instructions did not hold. The bench measured what it costs: grounded
+  citations per debrief fell from 8.5 to about 6.1, roughly 28%, and the share
+  of tips leading with a real cited number fell from 96% to 88%. Shipped
+  anyway, because the audience is a high school hitter's attention span, not a
+  data-completeness score. Revisit only with bench evidence, not a hunch.
+- **Session summary body text is 18px, not 16 or 20.** 16 was the size before
+  Slice 7; 20 was tried and rejected because it closed the visual gap to the
+  chat panel's own type (14px to 16px), so the two panels started reading as
+  two different documents rather than one screen. 18 keeps that 2px gap and
+  leaves more box capacity against the budget than 20 would have. The product
+  manager is half-inclined to drop it back to 16 to match the chat exactly;
+  see the What's Next list.
+- **The summary box scrolls; the charts do not shrink.** Slice 7 chose to let
+  a long summary scroll inside its existing box rather than making the two
+  chart panels smaller to fit more text. A bottom fade now shows only when
+  there is real text below the fold (`src/scrollFade.js`), which also exposed
+  and made honest a truncation bug that predated the slice: at 1280x720 the
+  box was already cutting text off mid-sentence, with only a near-invisible
+  3px scrollbar as a clue that anything was missing.
 
 ## Known debt and open questions
 
@@ -786,6 +870,16 @@ block above is kept as written because it records what was true when written, an
 because the process finding in it is the point. That finding now has its own
 entry in the decision log for 14 August 2026.
 
+**Correction, later the same day, 14 August 2026: "Slice 7" collided.** A
+separate, unrelated slice (the coach's length budget and the type-size bump)
+was cut on branch `slice-7-coach-brevity` and took the number 7 as the next one
+in the repo's own sequence, before "coach fidelity" had been built. Coach
+fidelity was never built under that number and keeps its scope in
+`docs/queued-slices.md`, which carries its own dated annotation; it no longer
+has a number of its own until it is actually scheduled. Every "Slice 7" naming
+coach fidelity below and in that file describes a plan that was never built
+under that name, not work that shipped.
+
 ### The next two slices, agreed 12 August 2026
 
 Full scope for both, with the reasoning behind every decision and everything
@@ -819,15 +913,20 @@ on purpose: this file loads at the start of every session, so it is an index.
   Pop-Ups tag becomes `LA 10–25° · Level it out`, and the README's goal list must
   also pick up the Power goal's rename to "Power & Distance". Cheap, independent
   of each other, and all six are verifiable in one browser pass.
-- **Slice 7, coach fidelity.** Four ways the coach can contradict the screen
-  beside it, the largest being that it is never told the two tips it just gave.
-  **Two of the four failed to reproduce in a live walkthrough**, so the slice
-  starts by deciding whether they are worth fixing at all, and it needs
-  model-behavior evidence rather than unit tests.
+- **Coach fidelity, formerly labelled Slice 7, not yet scheduled or numbered.**
+  Four ways the coach can contradict the screen beside it, the largest being
+  that it is never told the two tips it just gave. **Two of the four failed to
+  reproduce in a live walkthrough**, so the slice starts by deciding whether
+  they are worth fixing at all, and it needs model-behavior evidence rather
+  than unit tests. See the correction above: **Slice 7 shipped on 14 August
+  2026 as the coach's length budget and type-size bump**, an unrelated slice
+  that took the number first. This item's scope is unchanged and still lives
+  in `docs/queued-slices.md`; only its number is gone.
 
-Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and 7. Slice 5
-shipped on 14 August 2026 but delivered only the second half of what Slice A
-covered; `docs/queued-slices.md` records which half and why that was accepted.
+Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and the
+formerly-numbered-7 coach fidelity work above. Slice 5 shipped on 14 August
+2026 but delivered only the second half of what Slice A covered;
+`docs/queued-slices.md` records which half and why that was accepted.
 
 ### Parked at Slice 4 close, 3 August 2026
 
@@ -1028,35 +1127,74 @@ rewritten, per the append-only rule.
   tests still passed, because every test drives noise at a neutral value. This
   does not matter until someone retunes the improvement arc, which is the queued
   item two above this one, and at that point it matters a lot. Worth pairing.
-- **The coach is long-winded, and the type is too small, and these are one
-  problem.** Raised by the owner on 14 August 2026 after running QA on Slice 6.
-  He wants larger text in the session summary box and in the chat panel; his own
-  reasoning for not doing it yet is the right one, that bigger type plus an
-  unbounded coach could fill the whole panel with the first message. He has tried
-  to fix the length by prompt instruction twice and it did not hold. The reason
-  is that "be brief" is unmeasured: nothing notices when it drifts. The fix is a
-  concrete budget per field (a word count, not an adjective) plus an eval bench
-  scoring compliance as a rate over N runs, which this project has never built
-  and which CLAUDE.md's own model-evidence rule already asks for. **Second,
-  independent argument for doing it:** output length is the main driver of how
-  long a debrief takes, so halving it is also the latency win that streaming was
-  declined for.
-- **The two font bumps are not equally risky.** The chat panel already scrolls,
-  so enlarging its text is close to free. The session summary box is fixed
-  height and must not scroll, so its type size is capped by the longest summary
-  the coach can produce, not the typical one. Do not size it against a good
-  example.
-- **Session 1's rewrite needs the coach checked, and that check should not be
-  done by hand.** The owner intends to fix the straight-line swings (see the item
-  above) and named the real risk: he did significant prompt engineering against
-  that data set and does not want a whack-a-mole hunt through sessions afterwards.
-  He has explicitly handed that verification over rather than doing it himself.
-  Do it with the same eval bench as the brevity work, grading whether the coach's
-  claims still match the data over many runs, which is the argument for building
-  the bench first and rewriting session 1 second.
+- ~~**The coach is long-winded, and the type is too small, and these are one
+  problem.**~~ **Shipped 14 August 2026 as Slice 7.** A concrete word budget
+  (45/30/12/50) plus the eval bench this item asked for, both described above;
+  type grew from 16px to 18px in the summary and 14px to 16px in the chat. The
+  cost: grounded citations per debrief fell from 8.5 to about 6.1, and tips
+  leading with a real number fell from 96% to 88%. See the decision log entry
+  for 14 August 2026 for the full trade.
+- ~~**The two font bumps are not equally risky.**~~ **Followed exactly in
+  Slice 7.** The chat panel's 14px to 16px bump shipped with no incident; the
+  summary panel's 16px to 18px bump was sized against the bench's worst
+  measured box (72 words), not a typical one, and a fade now covers the case
+  where a window is short enough to overflow anyway. See the deliberate
+  decisions above.
+- **Session 1's rewrite still needs the coach checked, and that check still
+  should not be done by hand. Half done 14 August 2026.** The eval bench this
+  item asked for now exists (`scripts/bench-coach-brevity.mjs`), built in
+  Slice 7. What is still open is the session 1 rewrite itself and grading it
+  through the bench once it exists as real data: both are blocked on
+  extracting the fifteen hand-written swings into their own module first,
+  which is the first task of the next slice. See the bench's session-1 blind
+  spot, described above.
 - **The distance-bucket drift test does not reach the chart.** Recorded in the
   known-debt section above with its reasoning. Only worth revisiting if this
   project ever grows rendering tests, which it deliberately has not.
+
+*Added at the close of Slice 7, 14 August 2026:*
+
+- **Extract session 1's fifteen hand-written swings into their own module.**
+  Needed so the bench can grade the first debrief a real visitor sees, rather
+  than the pinned-average stand-in it uses today. First task of the next
+  slice; the session-1 rewrite itself and the coach-fidelity check it needs
+  both wait on this.
+- **The coach rounds numbers loosely.** The bench's own transcripts show it
+  saying "320 feet or more" against a session whose real bucket was "305
+  plus." Not invention, the number is in the right neighborhood, but not
+  exact either. Worth a look if the citation-accuracy trade this slice made
+  ever gets revisited.
+- **Pin the budget's two load-bearing sentences in a test, not just its four
+  numbers.** The suite pins 45/30/12/50 but not "count words, not sentences"
+  or "a vague tip that fits the budget is a failure." Either sentence could
+  be rewritten out of the prompt with the suite staying green, silently
+  undoing the reasoning that made the budget work instead of just shortening
+  the text.
+- **Confirm the shipped-prompt drift test actually bites.** It has only ever
+  been seen failing for absence (the constant not existing yet), never for
+  drift (the constant existing but having changed). Worth one deliberate
+  mutation to prove a future edit to the prompt would turn it red.
+- **The dev server cannot be reached from a phone.** Vite binds to localhost
+  only; neither `vite.config.js` nor `.claude/launch.json` passes `--host`.
+  Separate from the layout question below: even a real phone on the same
+  network could not currently load this app at all, so the standing
+  real-phone-before-QA rule cannot be honoured for this project as configured.
+- **At 390px wide, the chat panel's send button is entirely off-canvas, with
+  no horizontal scroll to reach it.** Found during this slice's browser pass,
+  pre-existing and not something this slice introduced. Worse than
+  "cramped": the button and part of the text input sit past the visible
+  right edge with no way to bring them into view. Matches CLAUDE.md's
+  standing note that this app has no mobile layout, but this is the first
+  time the specific failure was measured rather than assumed.
+- **Three small cosmetic issues on the new summary-box fade**, none blocking:
+  its gradient interpolates between two slightly different background
+  colours rather than one colour fading to transparent; it sits on top of
+  the scrollbar thumb rather than behind it; and its bottom corner radius
+  assumes a panel corner radius it may not actually reach.
+- **The product manager may want the summary body back at 16px, matching the
+  chat panel exactly**, rather than the shipped 18px. A two-number change
+  with no other consequence; 16px holds more words than 18px, so nothing
+  about the budget would need to move.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
