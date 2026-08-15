@@ -5,6 +5,7 @@ import { resolveChartSlots, validChartKey } from './chartSlots'
 import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
 import { distanceBucketCounts, sprayRadius, SPRAY_RINGS, SPRAY_FAIR_RADIUS } from './ballFlight'
 import { failureCopy } from './failureCopy'
+import { shouldShowScrollFade } from './scrollFade'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
   XAxis, YAxis, CartesianGrid,
@@ -20,6 +21,28 @@ const ACCENT = '#FF6B1A'
 // Session visitor used to see.
 const NEUTRAL_SWING_FILL = 'rgba(255,255,255,0.55)'
 const NEUTRAL_SWING_OPACITY = 0.85
+
+// Axis title and tick text, shared across all six charts below. Before this,
+// each chart wrote its own copy: axis titles were nine separate objects at
+// 9px and 30% white, faint enough that the size and the faintness were both
+// costing legibility, and tick numbers were ten separate objects that had
+// quietly drifted to three different sizes (9px, 10px, 11px) with nobody
+// deciding the spread. Changing either one now is a single edit here instead
+// of hunting down every chart again.
+const AXIS_TITLE_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif" }
+const AXIS_TICK_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: 'Barlow, sans-serif' }
+
+// Category and value labels: short words or a counted number that names or
+// states something outright, rather than a number reading a position along a
+// numeric scale. That covers the bar-count labels on BarDistance and
+// ZoneBreakdown and the "In Strike Zone" / "Outside Zone" row names on
+// ZoneBreakdown's Y axis. These carry a little more weight on purpose, so
+// they sit at a stronger opacity than AXIS_TICK_STYLE rather than the same
+// faint one used for a run of numbers. Added 14 August 2026 after review
+// found these three sites had started a second drift right beside the one
+// this file just closed: one was 10px where the other two were 11, and one
+// used plain Barlow where the other two used Barlow Condensed.
+const CATEGORY_LABEL_STYLE = { fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow Condensed, sans-serif' }
 
 const PAD = 14
 const GAP = 8
@@ -258,7 +281,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                   borderRadius: '12px 12px 12px 4px',
                   background: `${ACCENT}15`,
                   border: `1px solid ${ACCENT}30`,
-                  fontFamily: "'Barlow', sans-serif", fontSize: 14, lineHeight: 1.5,
+                  fontFamily: "'Barlow', sans-serif", fontSize: 16, lineHeight: 1.5,
                   color: 'rgba(255,255,255,0.9)',
                 }}>
                   {m.tipsIntro && <div style={{ marginBottom: 8 }}>{m.tipsIntro}</div>}
@@ -278,7 +301,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                         </div>
                         <div style={{
                           fontFamily: "'Barlow', sans-serif",
-                          fontSize: 14, lineHeight: 1.5,
+                          fontSize: 16, lineHeight: 1.5,
                           color: 'rgba(255,255,255,0.85)',
                         }}>{tip}</div>
                       </div>
@@ -306,7 +329,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                 borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
                 background: m.role === 'user' ? 'rgba(255,255,255,0.08)' : `${ACCENT}15`,
                 border: m.role === 'user' ? '1px solid rgba(255,255,255,0.1)' : `1px solid ${ACCENT}30`,
-                fontFamily: "'Barlow', sans-serif", fontSize: 14, lineHeight: 1.5,
+                fontFamily: "'Barlow', sans-serif", fontSize: 16, lineHeight: 1.5,
                 color: m.role === 'user' ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.9)',
               }}>
                 <ReactMarkdown components={{ p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p> }}>{m.content}</ReactMarkdown>
@@ -356,7 +379,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
               flex: 1, background: 'transparent',
               border: 'none', outline: 'none', resize: 'none',
               fontFamily: "'Barlow', sans-serif",
-              fontSize: 14, color: 'rgba(255,255,255,0.85)',
+              fontSize: 16, color: 'rgba(255,255,255,0.85)',
               lineHeight: 1.5, padding: 0, overflow: 'hidden',
             }}
           />
@@ -412,25 +435,25 @@ function ScatterEVLA({ swings, goalId }) {
             dataKey="ev"
             type="number"
             domain={[dataMin => dataMin - 3, dataMax => dataMax + 3]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'EXIT VELOCITY (MPH)',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="la"
             type="number"
             domain={[dataMin => Math.min(dataMin - 2, 0), dataMax => Math.max(dataMax + 2, 38)]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'LAUNCH ANG.',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           {target ? <ReferenceLine y={target.launchAngle.min} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" /> : null}
@@ -488,25 +511,25 @@ function TrendEV({ swings }) {
             type="number"
             domain={[1, 15]}
             ticks={[1, 3, 5, 7, 9, 11, 13, 15]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWING #',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="ev"
             type="number"
             domain={[dataMin => dataMin - 3, dataMax => dataMax + 3]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'EXIT VELO',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <ReferenceLine
@@ -563,24 +586,24 @@ function BarDistance({ swings }) {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
           <XAxis
             dataKey="range"
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'DISTANCE (FT)',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="count"
             allowDecimals={false}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWINGS',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <Bar dataKey="count" radius={[3, 3, 0, 0]}>
@@ -593,7 +616,7 @@ function BarDistance({ swings }) {
             <LabelList
               dataKey="count"
               position="top"
-              style={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: 'Barlow Condensed, sans-serif' }}
+              style={CATEGORY_LABEL_STYLE}
             />
           </Bar>
           <Tooltip
@@ -770,14 +793,14 @@ function PitchLocation({ swings, goalId }) {
           <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="x" type="number" domain={[dataMin => Math.min(dataMin - 0.15, -0.85), dataMax => Math.max(dataMax + 0.15, 0.85)]}
-              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+              tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
-              label={{ value: 'Side (ft)', position: 'insideBottom', offset: -15, style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" } }}
+              label={{ value: 'Side (ft)', position: 'insideBottom', offset: -15, style: AXIS_TITLE_STYLE }}
             />
             <YAxis dataKey="y" type="number" domain={[dataMin => Math.min(dataMin - 0.15, 1.35), dataMax => Math.max(dataMax + 0.15, 3.65)]}
-              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+              tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
-              label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', offset: 15, style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" } }}
+              label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', offset: 15, style: AXIS_TITLE_STYLE }}
             />
             <ReferenceArea x1={-0.7} x2={0.7} y1={1.5} y2={3.5}
               fill={ACCENT} fillOpacity={0.08}
@@ -849,19 +872,19 @@ function ZoneBreakdown({ swings }) {
           <XAxis
             type="number"
             allowDecimals={false}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWINGS',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             type="category"
             dataKey="label"
             width={90}
-            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow, sans-serif' }}
+            tick={CATEGORY_LABEL_STYLE}
           />
           <Bar dataKey="count" radius={[0, 3, 3, 0]}>
             {data.map((entry, i) => (
@@ -873,7 +896,7 @@ function ZoneBreakdown({ swings }) {
             <LabelList
               dataKey="count"
               position="right"
-              style={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow Condensed, sans-serif' }}
+              style={CATEGORY_LABEL_STYLE}
             />
           </Bar>
           <Tooltip
@@ -938,11 +961,54 @@ export default function DebriefScreen({
 }) {
   const [revealed, setRevealed] = useState(false)
   const [showRawData, setShowRawData] = useState(false)
+  const [showSummaryFade, setShowSummaryFade] = useState(false)
+  const summaryScrollRef = useRef(null)
+  const summaryContentRef = useRef(null)
 
   useEffect(() => {
     const t = setTimeout(() => setRevealed(true), 60)
     return () => clearTimeout(t)
   }, [])
+
+  // Whether the Session Summary box has more text below the fold. Re-checked
+  // on scroll (so the fade drops once the visitor reaches the bottom), and on
+  // resize of two different elements, because one ResizeObserver target is
+  // not enough to catch every cause.
+  //
+  // The scroll box itself (`el` below) sits at `flex: 1` inside a
+  // fixed-height panel, so its own border-box height does not change just
+  // because the text inside it grows or shrinks: that is the entire point of
+  // giving it `overflow-y: auto` in the first place. Observing only `el`
+  // would catch the Raw Data toggle and the reveal animation, both of which
+  // do resize the box itself, but would miss a late web font swap, which
+  // changes how tall the text renders without changing how tall the box is
+  // allowed to be. So the content wrapper (`contentEl` below, a plain div
+  // with no flex sizing of its own) is observed too: its natural height
+  // tracks the text exactly, so a font swap that reflows it is a real size
+  // change on that element even though `el` never moves.
+  useEffect(() => {
+    const el = summaryScrollRef.current
+    const contentEl = summaryContentRef.current
+    if (!el || !contentEl) return
+
+    const recompute = () => {
+      setShowSummaryFade(shouldShowScrollFade({
+        scrollHeight: el.scrollHeight,
+        clientHeight: el.clientHeight,
+        scrollTop: el.scrollTop,
+      }))
+    }
+
+    recompute()
+    el.addEventListener('scroll', recompute)
+    const resizeObserver = new ResizeObserver(recompute)
+    resizeObserver.observe(el)
+    resizeObserver.observe(contentEl)
+    return () => {
+      el.removeEventListener('scroll', recompute)
+      resizeObserver.disconnect()
+    }
+  }, [coachingSummary, whatThisMeans])
 
   // Player display
   const initials = player
@@ -1136,40 +1202,57 @@ export default function DebriefScreen({
             delay={0.08}
             style={{ flex: 1 }}
           >
-            <div className="debrief-scroll" style={{
-              flex: 1, overflowY: 'auto', minHeight: 0,
+            <div style={{
+              position: 'relative', flex: 1, minHeight: 0,
               display: 'flex', flexDirection: 'column',
             }}>
-              <div style={{
-                fontFamily: "'Barlow', sans-serif",
-                fontSize: 16, lineHeight: 1.6,
-                color: 'rgba(255,255,255,0.78)',
+              <div ref={summaryScrollRef} className="debrief-scroll" style={{
+                flex: 1, overflowY: 'auto', minHeight: 0,
+                display: 'flex', flexDirection: 'column',
               }}>
-                {coachingSummary ?? (
-                  <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
-                    Session summary will appear here once generated by your coach.
-                  </span>
-                )}
+                {/* Plain content wrapper, sized by its own text rather than by
+                    the flex column around it, so a ResizeObserver on it sees a
+                    font-driven reflow that the scroll box above never does. */}
+                <div ref={summaryContentRef}>
+                  <div style={{
+                    fontFamily: "'Barlow', sans-serif",
+                    fontSize: 18, lineHeight: 1.6,
+                    color: 'rgba(255,255,255,0.78)',
+                  }}>
+                    {coachingSummary ?? (
+                      <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+                        Session summary will appear here once generated by your coach.
+                      </span>
+                    )}
+                  </div>
+                  <div style={{
+                    fontFamily: "'Barlow Condensed', sans-serif",
+                    fontWeight: 700, fontSize: 17, letterSpacing: '0.08em',
+                    textTransform: 'uppercase', color: ACCENT,
+                    marginTop: 10, marginBottom: 6,
+                  }}>
+                    What This Means
+                  </div>
+                  <div style={{
+                    fontFamily: "'Barlow', sans-serif",
+                    fontSize: 18, lineHeight: 1.65,
+                    color: 'rgba(255,255,255,0.78)',
+                  }}>
+                    {whatThisMeans ?? (
+                      <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+                        Coaching context will appear here once generated.
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div style={{
-                fontFamily: "'Barlow Condensed', sans-serif",
-                fontWeight: 700, fontSize: 17, letterSpacing: '0.08em',
-                textTransform: 'uppercase', color: ACCENT,
-                marginTop: 10, marginBottom: 6,
-              }}>
-                What This Means
-              </div>
-              <div style={{
-                fontFamily: "'Barlow', sans-serif",
-                fontSize: 16, lineHeight: 1.65,
-                color: 'rgba(255,255,255,0.78)',
-              }}>
-                {whatThisMeans ?? (
-                  <span style={{ color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
-                    Coaching context will appear here once generated.
-                  </span>
-                )}
-              </div>
+              {showSummaryFade && (
+                <div style={{
+                  position: 'absolute', left: 0, right: 0, bottom: 0, height: 44,
+                  background: 'linear-gradient(to bottom, rgba(20,22,28,0) 0%, rgba(19,21,27,0.95) 80%)',
+                  pointerEvents: 'none', borderRadius: '0 0 4px 4px',
+                }} />
+              )}
             </div>
           </Panel>
 

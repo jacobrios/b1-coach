@@ -35,6 +35,21 @@ existing sequence. Anyone who finds a reference to the letters should read it as
     Slice A  ->  Slice 5   Reliability. SHIPPED 14 August 2026 as PR #17.
     Slice B  ->  Slice 6   Credibility polish. Queued, scope below.
     Slice C  ->  Slice 7   Coach fidelity. Queued, scope below.
+                           RENUMBERED: see the annotation immediately below.
+
+**Annotation, later on 14 August 2026: "Slice 7" no longer means this.** A
+separate, unrelated slice, the coach's length budget and the type-size bump,
+was cut on branch `slice-7-coach-brevity` and took the number 7 as the next
+one in the repo's own sequence, before Slice C below had been built. That
+slice shipped the same day; see the decision log entry for 14 August 2026.
+Slice C, coach fidelity, was never built under the number 7 and its scope
+below is unchanged, but it no longer has a number of its own. The natural
+next slice is session 1's rewrite (extracting the fifteen hand-written swings
+so the new eval bench can grade the first debrief a visitor sees, per
+CLAUDE.md's What's Next list), which is not this slice either, so guessing
+"Slice 8" here would just be a second wrong number. Whoever schedules coach
+fidelity gets to pick its number. Read every "Slice 7" below as "coach
+fidelity, unscheduled."
 
 **Slice 5 delivered half of what Slice A was scoped to cover, and that is worth
 knowing.** Slice A had two halves: find out why a debrief timed out, and stop the
@@ -274,6 +289,12 @@ Power is the first card on the grid and the likeliest first click.
 ---
 
 # Slice 7: coach fidelity
+
+**No longer Slice 7. See the annotation under "Letter-to-number mapping"
+above, added 14 August 2026: a different, unrelated slice shipped as Slice 7
+the same day and this scope is unscheduled and unnumbered until someone picks
+it up.** The heading and every reference below are kept as originally
+written, per this project's append-only convention.
 
 **What it is, in one line:** stop the coach from being able to contradict the
 screen it is sitting next to.
