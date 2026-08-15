@@ -379,7 +379,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
               flex: 1, background: 'transparent',
               border: 'none', outline: 'none', resize: 'none',
               fontFamily: "'Barlow', sans-serif",
-              fontSize: 14, color: 'rgba(255,255,255,0.85)',
+              fontSize: 16, color: 'rgba(255,255,255,0.85)',
               lineHeight: 1.5, padding: 0, overflow: 'hidden',
             }}
           />

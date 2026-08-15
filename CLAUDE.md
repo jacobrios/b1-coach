@@ -397,12 +397,32 @@ eyeballing rather than an automatic fabrication call, because the coach is
 known to round ("320 feet or more" against a 305-plus bucket) rather than
 invent outright.
 
-**It imports the real prompt, not a copy.** `MODEL`, `MAX_TOKENS`,
-`DEBRIEF_SYSTEM_BASE` and `lengthBudget` are now exported from
-`src/coachApi.js` for exactly this reason: a bench grading a paraphrase of the
-prompt would validate nothing about what the app actually sends. Same
-discipline `DISTANCE_BUCKETS` enforces for hit distance, applied to a prompt
-instead of a number.
+**A caveat on `grounded` that this section did not carry before 14 August
+2026.** The value sets it matches against do not discriminate evenly: on the
+two session-4 cells they cover only 18 of 33 plausible exit-velocity
+integers, 46 of 71 launch-angle integers, and 33 of 36 pitch-location
+tenths, so a match against one of those is a weak signal by itself. Distance
+is the one that actually discriminates, at 51 of 311. This does not undo the
+shipped comparison: `grounded` is read as a citation-DENSITY measure (8.5 to
+6.13), and density is the right proxy for the question that was asked,
+whether the coach stopped quoting numbers at all. What it means is that a
+`grounded` count should get the same hedge `unmatched` already gets, not be
+read as proof against fabrication on its own. The bench's own dry run makes
+the point concretely: a canned reply, hand-written before any session
+existed, scores 8 grounded and 0 unmatched on both session-4 cells.
+
+**It imports the real prompt, not a copy, with one disclosed exception.**
+`MODEL`, `MAX_TOKENS`, `DEBRIEF_SYSTEM_BASE` and `lengthBudget` are now
+exported from `src/coachApi.js` for exactly this reason: a bench grading a
+paraphrase of the prompt would validate nothing about what the app actually
+sends. Same discipline `DISTANCE_BUCKETS` enforces for hit distance, applied
+to a prompt instead of a number. The one thing it does NOT import is the goal
+labels in `CELLS`: `src/App.jsx` holds the real `GOALS` array and has JSX in
+it, which a plain Node script cannot load, so the bench hand-copies the two
+labels it needs and says so in its own comment. That is a fourth copy of the
+same data this project otherwise consolidates hard against, kept only
+because there was no way to import it, and it is not hypothetical: Slice 6
+renamed the Power goal, and the bench's copy has to be kept in step by hand.
 
 **How to run it, and what it costs.** `node --env-file=.env.local
 scripts/bench-coach-brevity.mjs --condition shipped --runs 8` runs 24 live
@@ -1170,12 +1190,23 @@ rewritten, per the append-only rule.
   plus." Not invention, the number is in the right neighborhood, but not
   exact either. Worth a look if the citation-accuracy trade this slice made
   ever gets revisited.
-- **Pin the budget's two load-bearing sentences in a test, not just its four
-  numbers.** The suite pins 45/30/12/50 but not "count words, not sentences"
-  or "a vague tip that fits the budget is a failure." Either sentence could
-  be rewritten out of the prompt with the suite staying green, silently
-  undoing the reasoning that made the budget work instead of just shortening
-  the text.
+- **Widened 14 August 2026: nothing pins any prompt prose at all, not just
+  the two sentences first named here.** The suite pins the budget's four
+  numbers (45/30/12/50) and pins `DEBRIEF_SYSTEM` to equal
+  `DEBRIEF_SYSTEM_BASE` plus a blank line plus `DEBRIEF_BUDGET`, but every
+  word of `DEBRIEF_SYSTEM_BASE`, every word of the budget's surrounding
+  wording ("count words, not sentences," "a vague tip that fits the budget
+  is a failure"), and the anti-fabrication guard sentence ("Only reference
+  specific numbers that appear in the session data") can all be rewritten
+  with the suite staying green. Rewriting any of them would silently undo
+  the reasoning that made the budget or the guard work, not just shorten the
+  text. **A related limit on the test that does exist:** the drift test
+  pinning `DEBRIEF_SYSTEM` to base-plus-budget is close to a tautology,
+  because that concatenation IS how the constant is defined in
+  `src/coachApi.js`. It bites for exactly one kind of drift, someone
+  appending to or inlining something into the shipped constant instead of
+  building it from the two pieces, and it cannot bite for anything else. A
+  future reader should not mistake it for broader prompt coverage than that.
 - **Confirm the shipped-prompt drift test actually bites.** It has only ever
   been seen failing for absence (the constant not existing yet), never for
   drift (the constant existing but having changed). Worth one deliberate

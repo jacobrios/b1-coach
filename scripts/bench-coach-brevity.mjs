@@ -374,6 +374,29 @@ function classifyNumbers(text, values, targets) {
 const firstSentence = (text) =>
   typeof text === 'string' ? text.split(/(?<=[.!?])\s+/)[0] ?? '' : ''
 
+// A run that parses as valid JSON is not automatically a real answer. The
+// model can drop a field, or hand back an empty string for it, and neither
+// trips parseCoachResponse's throw: a hard parse failure is already caught,
+// excluded from every statistic, and counted separately in the report. This
+// is the quieter failure a hard parse failure cannot see. `words()` returns 0
+// for `undefined`, so a missing field just pulls the box-words median DOWN
+// and reads as excellent brevity discipline instead of as a broken reply.
+// Found in review, 14 August 2026: nothing before this line ever flagged it.
+function isRealString(v) {
+  return typeof v === 'string' && v.trim().length > 0
+}
+
+function missingFields(parsed) {
+  const tips = Array.isArray(parsed?.nextSessionTips) ? parsed.nextSessionTips : []
+  const missing = []
+  if (!isRealString(parsed?.coachingSummary)) missing.push('coachingSummary')
+  if (!isRealString(parsed?.whatThisMeans)) missing.push('whatThisMeans')
+  if (!isRealString(parsed?.tipsIntro)) missing.push('tipsIntro')
+  if (!isRealString(tips[0])) missing.push('nextSessionTips[0]')
+  if (!isRealString(tips[1])) missing.push('nextSessionTips[1]')
+  return missing
+}
+
 function grade(parsed, values, targets) {
   const tips = Array.isArray(parsed?.nextSessionTips) ? parsed.nextSessionTips : []
   const fields = {
@@ -383,6 +406,7 @@ function grade(parsed, values, targets) {
     tip1: tips[0],
     tip2: tips[1],
   }
+  const missing = missingFields(parsed)
 
   const wordCounts = Object.fromEntries(
     Object.entries(fields).map(([k, v]) => [k, words(v)]),
@@ -401,7 +425,7 @@ function grade(parsed, values, targets) {
     (t) => classifyNumbers(firstSentence(t), values, targets).grounded > 0,
   )
 
-  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields }
+  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -482,7 +506,7 @@ function parseArgs(argv) {
 // first line. That one cost nothing, because it happened to throw before the
 // first call rather than after the fortieth. Run this before any run that
 // matters.
-function dryRun(conditionKeys) {
+function dryRun(conditionKeys, seed) {
   console.log('DRY RUN. No API calls, no spend. Exercising every path but the network.')
   console.log('')
   const canned = {
@@ -496,11 +520,25 @@ function dryRun(conditionKeys) {
     charts: ['scatter_ev_la', 'bar_distance'],
   }
 
+  // A second canned reply, deliberately incomplete, so this dry run also
+  // proves the missing-field counter fires rather than trusting that by
+  // reading the code. One field blanked to an empty string, one tip dropped
+  // entirely: the two shapes a partial reply has actually been seen to take.
+  const broken = {
+    coachingSummary: 'You hit 92 mph and got it out to 305 feet on swing 4.',
+    whatThisMeans: '',
+    tipsIntro: 'Two things before next round.',
+    nextSessionTips: [
+      'Swing 12 came off at 80 mph and 191 feet. You got on top of it. Stay back a half beat longer.',
+    ],
+    charts: ['scatter_ev_la', 'bar_distance'],
+  }
+
   for (const conditionKey of conditionKeys) {
     const condition = CONDITIONS[conditionKey]
     const system = condition.system
     for (const cell of CELLS) {
-      const sessions = buildSessions({ goalId: cell.goal.id, upTo: cell.session, seed: 20260814 })
+      const sessions = buildSessions({ goalId: cell.goal.id, upTo: cell.session, seed })
       const values = sessionValueSets(sessions)
       const targets = goalTargetSet(cell.goal.id)
       const userMessage = buildDebriefUserMessage({
@@ -514,10 +552,25 @@ function dryRun(conditionKeys) {
         `  ${conditionKey.padEnd(9)} ${cell.key.padEnd(12)} ` +
         `system ${String(system.length).padStart(5)} chars, prompt ${String(userMessage.length).padStart(5)} chars, ` +
         `grader ok (box ${graded.wordCounts.box}w, ${graded.numbers.grounded} grounded, ` +
-        `${graded.numbers.unmatched} unmatched)`,
+        `${graded.numbers.unmatched} unmatched, ${graded.missing.length} missing)`,
       )
     }
   }
+
+  console.log('')
+  const sample = buildSessions({ goalId: CELLS[0].goal.id, upTo: CELLS[0].session, seed })
+  const sampleValues = sessionValueSets(sample)
+  const sampleTargets = goalTargetSet(CELLS[0].goal.id)
+  const cannedGraded = grade(canned, sampleValues, sampleTargets)
+  const brokenGraded = grade(broken, sampleValues, sampleTargets)
+  console.log(
+    `Missing-field self-check: complete reply -> ${cannedGraded.missing.length} missing (expect 0), ` +
+    `broken reply -> ${brokenGraded.missing.length} missing (expect 2: ${brokenGraded.missing.join(', ')})`,
+  )
+  if (cannedGraded.missing.length !== 0 || brokenGraded.missing.length !== 2) {
+    throw new Error('Missing-field self-check failed: see the two counts printed above.')
+  }
+
   console.log('')
   console.log('Every path exercised. Drop --dry-run to spend money.')
 }
@@ -530,7 +583,7 @@ async function main() {
     if (!CONDITIONS[key]) throw new Error(`Unknown condition: ${key}. Known: ${Object.keys(CONDITIONS).join(', ')}`)
   }
   if (args.dryRun) {
-    dryRun(conditionKeysForDryRun)
+    dryRun(conditionKeysForDryRun, args.seed)
     return
   }
 
@@ -617,6 +670,33 @@ async function main() {
 
 function report(records, conditionKeys) {
   const ok = records.filter((r) => !r.failed)
+
+  // Printed first and loudly on purpose, before a single brevity or citation
+  // number. A hard parse failure is already safe: parseCoachResponse throws,
+  // the run lands in `failed` above, and it is excluded from every statistic
+  // in this report. A PARTIAL reply is not safe the same way: it parses as
+  // valid JSON, so it counts as an ok run everywhere below, and a missing
+  // field just pulls the box-words median DOWN, which reads as excellent
+  // brevity compliance instead of as a broken answer. If this count is
+  // non-zero, every number in the two sections after it is describing some
+  // share of partly-empty answers, not a clean sample.
+  const incomplete = ok.filter((r) => r.missing.length > 0)
+  console.log('')
+  console.log('='.repeat(70))
+  console.log('PARSED BUT INCOMPLETE')
+  console.log('='.repeat(70))
+  console.log('')
+  if (incomplete.length) {
+    console.log(`⚠ ${incomplete.length} of ${ok.length} successfully-parsed runs were missing a`)
+    console.log('required field. The numbers in every section below include these runs,')
+    console.log('so read them as compromised until this list is empty.')
+    console.log('')
+    for (const r of incomplete) {
+      console.log(`  ${r.conditionKey} / ${r.cell} / run ${r.run}: missing ${r.missing.join(', ')}`)
+    }
+  } else {
+    console.log(`0 of ${ok.length} successfully-parsed runs were missing a required field.`)
+  }
 
   console.log('')
   console.log('='.repeat(70))
