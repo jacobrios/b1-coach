@@ -1140,11 +1140,17 @@ rewritten, per the append-only rule.
   measured box (72 words), not a typical one, and a fade now covers the case
   where a window is short enough to overflow anyway. See the deliberate
   decisions above.
-- **Session 1's rewrite still needs the coach checked, and that check still
-  should not be done by hand. Half done 14 August 2026.** The eval bench this
-  item asked for now exists (`scripts/bench-coach-brevity.mjs`), built in
-  Slice 7. What is still open is the session 1 rewrite itself and grading it
-  through the bench once it exists as real data: both are blocked on
+- ~~**Session 1's rewrite needs the coach checked, and that check should not be
+  done by hand.** The owner intends to fix the straight-line swings (see the item
+  above) and named the real risk: he did significant prompt engineering against
+  that data set and does not want a whack-a-mole hunt through sessions afterwards.
+  He has explicitly handed that verification over rather than doing it himself.
+  Do it with the same eval bench as the brevity work, grading whether the coach's
+  claims still match the data over many runs, which is the argument for building
+  the bench first and rewriting session 1 second.~~ **Half done 14 August 2026.**
+  The eval bench this item asked for now exists (`scripts/bench-coach-brevity.mjs`),
+  built in Slice 7. What is still open is the session 1 rewrite itself and
+  grading it through the bench once it exists as real data: both are blocked on
   extracting the fifteen hand-written swings into their own module first,
   which is the first task of the next slice. See the bench's session-1 blind
   spot, described above.
@@ -1195,6 +1201,13 @@ rewritten, per the append-only rule.
   chat panel exactly**, rather than the shipped 18px. A two-number change
   with no other consequence; 16px holds more words than 18px, so nothing
   about the budget would need to move.
+- **Two chart-text changes shipped without the product manager's prior
+  sign-off and he has not yet looked at them.** The Distance Distribution
+  chart's bar-count labels moved from 10px to 11px, and the "In Strike Zone" /
+  "Outside Zone" labels changed font family from Barlow to Barlow Condensed.
+  Both were found mid-task while consolidating the chart label styles,
+  disclosed after the fact, and verified in a browser, but neither was
+  approved before it shipped. See the decision log entry for 14 August 2026.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

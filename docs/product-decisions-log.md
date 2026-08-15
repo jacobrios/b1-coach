@@ -64,6 +64,14 @@ inside JSX and a plain script cannot load them; it uses a stand-in pinned to
 session 1's real averages instead. Closing that gap is the first task of the
 next slice.
 
+*Two chart-text changes shipped without prior sign-off.* Consolidating the
+chart's axis and category label styles also changed two things a visitor can
+see: the Distance Distribution chart's bar-count labels moved from 10px to
+11px, and the "In Strike Zone" / "Outside Zone" labels changed font family
+from Barlow to Barlow Condensed. Neither was approved before it shipped. Both
+were disclosed after the fact and verified in a browser, but the product
+manager has not yet looked at them himself.
+
 ---
 
 ## Slice 6: the ball flight stops being a lie (August 14)
