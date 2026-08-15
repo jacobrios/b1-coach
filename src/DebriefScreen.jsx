@@ -258,7 +258,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                   borderRadius: '12px 12px 12px 4px',
                   background: `${ACCENT}15`,
                   border: `1px solid ${ACCENT}30`,
-                  fontFamily: "'Barlow', sans-serif", fontSize: 14, lineHeight: 1.5,
+                  fontFamily: "'Barlow', sans-serif", fontSize: 16, lineHeight: 1.5,
                   color: 'rgba(255,255,255,0.9)',
                 }}>
                   {m.tipsIntro && <div style={{ marginBottom: 8 }}>{m.tipsIntro}</div>}
@@ -278,7 +278,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                         </div>
                         <div style={{
                           fontFamily: "'Barlow', sans-serif",
-                          fontSize: 14, lineHeight: 1.5,
+                          fontSize: 16, lineHeight: 1.5,
                           color: 'rgba(255,255,255,0.85)',
                         }}>{tip}</div>
                       </div>
@@ -306,7 +306,7 @@ function ChatPanel({ messages = [], onMessagesChange, delay, sessionContext, onC
                 borderRadius: m.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
                 background: m.role === 'user' ? 'rgba(255,255,255,0.08)' : `${ACCENT}15`,
                 border: m.role === 'user' ? '1px solid rgba(255,255,255,0.1)' : `1px solid ${ACCENT}30`,
-                fontFamily: "'Barlow', sans-serif", fontSize: 14, lineHeight: 1.5,
+                fontFamily: "'Barlow', sans-serif", fontSize: 16, lineHeight: 1.5,
                 color: m.role === 'user' ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.9)',
               }}>
                 <ReactMarkdown components={{ p: ({ children }) => <p style={{ margin: '0 0 8px 0' }}>{children}</p> }}>{m.content}</ReactMarkdown>
@@ -1142,7 +1142,7 @@ export default function DebriefScreen({
             }}>
               <div style={{
                 fontFamily: "'Barlow', sans-serif",
-                fontSize: 16, lineHeight: 1.6,
+                fontSize: 18, lineHeight: 1.6,
                 color: 'rgba(255,255,255,0.78)',
               }}>
                 {coachingSummary ?? (
@@ -1161,7 +1161,7 @@ export default function DebriefScreen({
               </div>
               <div style={{
                 fontFamily: "'Barlow', sans-serif",
-                fontSize: 16, lineHeight: 1.65,
+                fontSize: 18, lineHeight: 1.65,
                 color: 'rgba(255,255,255,0.78)',
               }}>
                 {whatThisMeans ?? (
