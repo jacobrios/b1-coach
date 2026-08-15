@@ -22,6 +22,16 @@ const ACCENT = '#FF6B1A'
 const NEUTRAL_SWING_FILL = 'rgba(255,255,255,0.55)'
 const NEUTRAL_SWING_OPACITY = 0.85
 
+// Axis title and tick text, shared across all six charts below. Before this,
+// each chart wrote its own copy: axis titles were nine separate objects at
+// 9px and 30% white, faint enough that the size and the faintness were both
+// costing legibility, and tick numbers were ten separate objects that had
+// quietly drifted to three different sizes (9px, 10px, 11px) with nobody
+// deciding the spread. Changing either one now is a single edit here instead
+// of hunting down every chart again.
+const AXIS_TITLE_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif" }
+const AXIS_TICK_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: 'Barlow, sans-serif' }
+
 const PAD = 14
 const GAP = 8
 
@@ -413,25 +423,25 @@ function ScatterEVLA({ swings, goalId }) {
             dataKey="ev"
             type="number"
             domain={[dataMin => dataMin - 3, dataMax => dataMax + 3]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'EXIT VELOCITY (MPH)',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="la"
             type="number"
             domain={[dataMin => Math.min(dataMin - 2, 0), dataMax => Math.max(dataMax + 2, 38)]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'LAUNCH ANG.',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           {target ? <ReferenceLine y={target.launchAngle.min} stroke="#FF6B1A" strokeOpacity={0.4} strokeDasharray="4 4" /> : null}
@@ -489,25 +499,25 @@ function TrendEV({ swings }) {
             type="number"
             domain={[1, 15]}
             ticks={[1, 3, 5, 7, 9, 11, 13, 15]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWING #',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="ev"
             type="number"
             domain={[dataMin => dataMin - 3, dataMax => dataMax + 3]}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'EXIT VELO',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <ReferenceLine
@@ -564,24 +574,24 @@ function BarDistance({ swings }) {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
           <XAxis
             dataKey="range"
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 9, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'DISTANCE (FT)',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
             dataKey="count"
             allowDecimals={false}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWINGS',
               angle: -90,
               position: 'insideLeft',
               offset: 15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <Bar dataKey="count" radius={[3, 3, 0, 0]}>
@@ -771,14 +781,14 @@ function PitchLocation({ swings, goalId }) {
           <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="x" type="number" domain={[dataMin => Math.min(dataMin - 0.15, -0.85), dataMax => Math.max(dataMax + 0.15, 0.85)]}
-              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+              tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
-              label={{ value: 'Side (ft)', position: 'insideBottom', offset: -15, style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" } }}
+              label={{ value: 'Side (ft)', position: 'insideBottom', offset: -15, style: AXIS_TITLE_STYLE }}
             />
             <YAxis dataKey="y" type="number" domain={[dataMin => Math.min(dataMin - 0.15, 1.35), dataMax => Math.max(dataMax + 0.15, 3.65)]}
-              tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+              tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
-              label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', offset: 15, style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" } }}
+              label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', offset: 15, style: AXIS_TITLE_STYLE }}
             />
             <ReferenceArea x1={-0.7} x2={0.7} y1={1.5} y2={3.5}
               fill={ACCENT} fillOpacity={0.08}
@@ -850,12 +860,12 @@ function ZoneBreakdown({ swings }) {
           <XAxis
             type="number"
             allowDecimals={false}
-            tick={{ fill: 'rgba(255,255,255,0.35)', fontSize: 10, fontFamily: 'Barlow, sans-serif' }}
+            tick={AXIS_TICK_STYLE}
             label={{
               value: 'SWINGS',
               position: 'insideBottom',
               offset: -15,
-              style: { fill: 'rgba(255,255,255,0.3)', fontSize: 9, fontFamily: "'Barlow Condensed', sans-serif" },
+              style: AXIS_TITLE_STYLE,
             }}
           />
           <YAxis
