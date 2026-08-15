@@ -32,6 +32,18 @@ const NEUTRAL_SWING_OPACITY = 0.85
 const AXIS_TITLE_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: "'Barlow Condensed', sans-serif" }
 const AXIS_TICK_STYLE = { fill: 'rgba(255,255,255,0.45)', fontSize: 11, fontFamily: 'Barlow, sans-serif' }
 
+// Category and value labels: short words or a counted number that names or
+// states something outright, rather than a number reading a position along a
+// numeric scale. That covers the bar-count labels on BarDistance and
+// ZoneBreakdown and the "In Strike Zone" / "Outside Zone" row names on
+// ZoneBreakdown's Y axis. These carry a little more weight on purpose, so
+// they sit at a stronger opacity than AXIS_TICK_STYLE rather than the same
+// faint one used for a run of numbers. Added 14 August 2026 after review
+// found these three sites had started a second drift right beside the one
+// this file just closed: one was 10px where the other two were 11, and one
+// used plain Barlow where the other two used Barlow Condensed.
+const CATEGORY_LABEL_STYLE = { fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow Condensed, sans-serif' }
+
 const PAD = 14
 const GAP = 8
 
@@ -604,7 +616,7 @@ function BarDistance({ swings }) {
             <LabelList
               dataKey="count"
               position="top"
-              style={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: 'Barlow Condensed, sans-serif' }}
+              style={CATEGORY_LABEL_STYLE}
             />
           </Bar>
           <Tooltip
@@ -872,7 +884,7 @@ function ZoneBreakdown({ swings }) {
             type="category"
             dataKey="label"
             width={90}
-            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow, sans-serif' }}
+            tick={CATEGORY_LABEL_STYLE}
           />
           <Bar dataKey="count" radius={[0, 3, 3, 0]}>
             {data.map((entry, i) => (
@@ -884,7 +896,7 @@ function ZoneBreakdown({ swings }) {
             <LabelList
               dataKey="count"
               position="right"
-              style={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Barlow Condensed, sans-serif' }}
+              style={CATEGORY_LABEL_STYLE}
             />
           </Bar>
           <Tooltip
