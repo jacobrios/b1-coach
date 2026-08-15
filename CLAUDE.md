@@ -167,9 +167,24 @@ tests in about a third of a second, so the reasoning holds more strongly than
 when it was written, and the decision was re-recorded rather than revisited.)*
 *(Later the same day, at the close of Slice 6: 326 tests in about nine tenths of
 a second. The decision still holds, and it is now the third time it has been
-re-checked rather than revisited. If a future session finds the suite slow
+re-checked rather than revisited.)* ~~If a future session finds the suite slow
 enough that a full run on every edit is painful, that is the trigger to adopt
-the template's split, not a reason to weaken the hook.)*
+the template's split, not a reason to weaken the hook.~~
+
+**That "painful" line was an adjective standing in for a threshold, and nothing
+could ever actually trigger on it. Fixed 14 August 2026, at the start of Slice
+7.** The trigger is now a number: 10 seconds of wall clock, measured from the
+moment an edit finishes to the moment the hook returns control. The reasoning:
+below roughly 10 seconds, an edit-time full-suite run is a safety net people
+forget is even running. Past that point the same run becomes a pause people
+notice, and a noticed pause is what sends someone reaching for `--no-verify` or
+a similar workaround, at which point the hook is only as good as the discipline
+it was meant to remove. The split earns its extra moving part past that line,
+not before it. Measured the same day: 326 tests, about 1.0 second of runner
+time and about 1.5 seconds of wall clock including npm's own startup,
+consistent with the "nine tenths of a second" recorded just above. That puts
+the suite at roughly one seventh of the 10 second threshold, nowhere near the
+point that would justify adopting the split.
 
 **Do not switch this hook to `npx vitest run`.** Measured 12 August 2026
 standing in `src/`: `npm test` ran all 171 tests, `npx vitest run` ran 127 and
