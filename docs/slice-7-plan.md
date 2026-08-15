@@ -16,7 +16,20 @@ seconds it saves are consequences, not the motive.
 **The charts keep their height.** They are already small. When the summary text
 is too long the box scrolls, which is what it does today. No layout change.
 
-**Type goes up**: session summary 16px to 20px, chat panel 14px to 16px.
+**Type goes up**: session summary body 16px to **18px**, chat panel 14px to
+**16px**, panel labels and the `WHAT THIS MEANS` heading stay at **17px**. 18 not
+20, chosen by the product manager to keep the gap between the summary and the
+chat at the 2px it is today; at 20px the two panels start reading as two
+different documents. 18px also has more headroom against the budget than 20px
+would, so nothing is being traded away for it.
+
+**The scroll gets a fade**, shown only when there is genuinely more text below.
+The box already scrolls and already has a scrollbar; it is 3px wide at 10% white
+(`src/index.css:63-66`), which is invisible in practice.
+
+**The chart axis text goes up too**, added to this slice by the product manager
+rather than deferred to 6b, because the browser pass that verifies the font bumps
+is looking at exactly these screens and verifying it later costs a second pass.
 
 **Model behaviour is proven by the bench, never by the test suite**, which still
 must not call the model.
@@ -28,7 +41,10 @@ must not call the model.
 - **A length budget for the chat prompt.** The bench grades debriefs only, so a
   chat budget would be an unmeasured guess, which is the exact thing this slice
   exists to stop. Belongs to a slice that benches the chat path.
-- **Slice 6b surface polish.** After the session-1 slice, unchanged.
+- **Slice 6b surface polish.** After the session-1 slice, unchanged, **except
+  that the chart axis text has been pulled out of it into Task 7 here**, on the
+  product manager's call, because this slice already pays for the browser pass
+  that would verify it.
 
 ## How this is verified, written before any code
 
@@ -93,8 +109,17 @@ bitten by twice.
 to. Three sizes at `src/DebriefScreen.jsx:261`, `:281` and `:309`, plus the
 `__tips__` block that renders the two tips.
 
-**Session summary, 16px to 20px** at `src/DebriefScreen.jsx:1145` and `:1164`.
-The 17px "WHAT THIS MEANS" heading between them scales to match.
+**Session summary, 16px to 18px** at `src/DebriefScreen.jsx:1145` and `:1164`.
+
+**The headers do not move.** `WHAT THIS MEANS` (`:1156`) and the panel labels
+(`:143`) stay at 17px. They read as headers on weight, uppercase, letter-spacing
+and colour rather than on size, and the panel label is drawn by the shared
+`Panel` component, so changing it would also move `VIRTUAL COACH` and every chart
+title on the screen. Render 16px and 18px side by side for the product manager
+before committing to either: he is half-inclined to keep the body at 16 so it
+matches the chat exactly, and that is a decision to make by looking, not by
+arguing. Reverting later is two numbers in this file and affects nothing else,
+because 16px holds more words than 18px does.
 
 Measured capacity of the summary box, so a future reader does not have to
 re-derive it:
@@ -112,16 +137,19 @@ those runs on 1440x790 and up, with 19 words to spare. It will scroll on
 
 ## Task 4: make the scroll visible
 
-**Proposed, needs the product manager's yes before building.**
+The box already scrolls, and it already has a scrollbar: `src/index.css:63-66`
+gives it a 3px track with a thumb at 10% white on a dark panel. In practice that
+is invisible, which is why the 1280x720 screenshot read as broken software rather
+than as a long summary: the text simply stopped mid-sentence.
 
-The box already scrolls. What it does not do is admit it: text stops mid-sentence
-with no scrollbar, no fade, no hint. That is what made the 1280x720 screenshot
-read as broken software rather than as a long summary, and accepting scrolling
-makes the affordance matter more, not less.
+Add a fade at the bottom edge, **shown only when there is more text below** and
+gone the moment everything fits. The product manager was explicit that a
+permanent affordance on a panel that fits nicely would be worse than none.
 
-Cheapest honest fix is a fade at the bottom edge that appears only when there is
-more below. If the product manager declines, this comes out and goes on the
-What's Next list; nothing else in the slice depends on it.
+That conditional behaviour is the part to get right and the part to prove: it
+needs a scroll listener or equivalent, and it has to re-evaluate on window resize,
+because whether the box overflows depends on the window height more than on
+anything else. Verify it at all four window sizes, both states.
 
 ## Task 5: re-run the bench against the shipped prompt
 
@@ -146,7 +174,38 @@ Also serve on the LAN and look at it on a real phone, per the standing rule.
 the honest outcome is probably "unusable on a phone, pre-existing, out of scope,
 recorded". Say that plainly rather than skipping the step.
 
-## Task 7: the record
+## Task 7: the chart axis text
+
+Added to this slice by the product manager on 14 August 2026 after asking whether
+it was cheap. It is cheap in risk and not cheap in touch points, and the reason
+to do it here is timing: Task 6 already sits a human in front of these exact
+screens at four window sizes, and verifying chart legibility separately later
+means paying for that pass twice.
+
+What is there today, all of it inline in `src/DebriefScreen.jsx`:
+
+- **Axis titles** ("Exit Velocity (MPH)", "Height (ft)", "Side (ft)") at
+  **9px, 30% white**, written out **nine times**.
+- **Tick numbers** at **35% white**, written out about ten times, and **already
+  drifted**: 9px in one chart, 10px in most, 11px in another. Nobody chose that
+  spread; it accumulated.
+
+So this is a consolidation, not a resize. Introduce two shared style constants in
+that file, point all six charts at them, then change the value once. The same
+pattern `goalTargets.js` and `DISTANCE_BUCKETS` already established: the reason
+those exist is that duplicated display rules drift, and here is a set that
+demonstrably has.
+
+Axis titles to **11px** with a lift in opacity, since at 30% white the faintness
+costs as much legibility as the size does. Ticks to a **single** size across all
+six charts. Exact values are a judgment call to settle against the rendered
+screen, not in this document.
+
+**Scope discipline:** touch the axis title and tick styles only. Chart colours,
+gridlines, margins, tooltip styling and the spray chart's hand-drawn SVG labels
+are not in this task, however tempting they look while in there.
+
+## Task 8: the record
 
 Decision log entry for 14 August 2026, 400 to 600 words, in product language:
 what the budget is, why brevity is about the player's attention rather than the
