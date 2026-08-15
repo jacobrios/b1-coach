@@ -13,8 +13,11 @@ const POWER = goalTarget('power')
 // api.anthropic.com, which requires both fields in the body. Change one place
 // without the other and local development quietly tests a different model than
 // production ships.
-const MODEL = 'claude-sonnet-4-6'
-const MAX_TOKENS = 4096
+// Exported only so the eval bench under scripts/ runs the model and the length
+// ceiling production runs. A bench that quietly benchmarked a different model
+// would produce numbers that look like evidence and are not.
+export const MODEL = 'claude-sonnet-4-6'
+export const MAX_TOKENS = 4096
 
 // The coaching context for one goal, in the coach's own words.
 //
@@ -50,7 +53,12 @@ export function goalContext(goal) {
   }
 }
 
-const DEBRIEF_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You speak like an experienced high school or college hitting coach — direct, encouraging, and plain-spoken. You never sound like a data analyst. You never say 'statistically speaking' or 'your data shows.' You say things like 'your bat speed is there' or 'you're getting under the ball too much.'
+// Exported so the eval bench under scripts/ can send the real system prompt
+// rather than a copy of it. A bench grading a copy grades nothing: the copy
+// drifts, and it drifts invisibly, which is worst at exactly the moment the
+// bench is most trusted. Nothing in src/ should import this; the two call sites
+// below are the only ones in the app.
+export const DEBRIEF_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You speak like an experienced high school or college hitting coach — direct, encouraging, and plain-spoken. You never sound like a data analyst. You never say 'statistically speaking' or 'your data shows.' You say things like 'your bat speed is there' or 'you're getting under the ball too much.'
 
 Rules:
 - Lead with what the player did well before addressing improvements
@@ -183,7 +191,10 @@ function parseOutermostObject(text) {
   }
 }
 
-function parseCoachResponse(text) {
+// Exported for the same reason as DEBRIEF_SYSTEM above: the bench has to turn a
+// model reply into fields the way production does, fenced answers and all, or
+// it is measuring a different parser than the visitor gets.
+export function parseCoachResponse(text) {
   const trimmed = text.trim()
 
   // Almost always this, and it is the only reading that cannot mangle a fence
@@ -369,10 +380,14 @@ export async function callApi(body, { onRetry } = {}) {
   }
 }
 
-export async function generateDebrief({ goal, player, sessions, viewingSessionNumber, onRetry }) {
+// The user half of the debrief prompt: every session the player has seen so far,
+// with the current one named at the end. Split out of generateDebrief and
+// exported for the bench, for the reason given on DEBRIEF_SYSTEM above.
+// generateDebrief immediately below is its only caller in the app.
+export function buildDebriefUserMessage({ goal, player, sessions, viewingSessionNumber }) {
   const filteredSessions = sessions.filter((s) => s.sessionNumber <= viewingSessionNumber)
 
-  const userMessage = `Player: ${player.firstName}
+  return `Player: ${player.firstName}
 Goal: ${goal.label}
 ${goalContext(goal)}
 
@@ -390,12 +405,17 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
   ).join('\n\n')}
 
 Current session being debriefed: Session ${viewingSessionNumber}`
+}
 
+export async function generateDebrief({ goal, player, sessions, viewingSessionNumber, onRetry }) {
   return callApi({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: DEBRIEF_SYSTEM,
-    messages: [{ role: 'user', content: userMessage }],
+    messages: [{
+      role: 'user',
+      content: buildDebriefUserMessage({ goal, player, sessions, viewingSessionNumber }),
+    }],
   }, { onRetry })
 }
 
