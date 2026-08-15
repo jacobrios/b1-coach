@@ -12,7 +12,10 @@ describe('shouldShowScrollFade', () => {
     expect(shouldShowScrollFade({ scrollHeight: 400, clientHeight: 400, scrollTop: 0 })).toBe(false)
   })
 
-  it('is false when content is shorter than the box', () => {
+  it('is false in the degenerate case of scrollHeight under clientHeight', () => {
+    // A real scroll container never reports scrollHeight less than
+    // clientHeight; this only pins that the function does not blow up or
+    // flip true if it ever saw that shape.
     expect(shouldShowScrollFade({ scrollHeight: 300, clientHeight: 400, scrollTop: 0 })).toBe(false)
   })
 
@@ -37,5 +40,17 @@ describe('shouldShowScrollFade', () => {
 
   it('is false when scrollTop overshoots past the max (elastic scroll)', () => {
     expect(shouldShowScrollFade({ scrollHeight: 800, clientHeight: 400, scrollTop: 410 })).toBe(false)
+  })
+
+  // These two pin the tolerance itself. Without them, any tolerance under 200
+  // still passes every other case in this file, so the constant the whole
+  // feature's correctness turns on was untested. The missing case is exactly
+  // the one the feature exists for: a summary clipped by part of a line.
+  it('is true with 2px of real content remaining below the fold', () => {
+    expect(shouldShowScrollFade({ scrollHeight: 802, clientHeight: 400, scrollTop: 400 })).toBe(true)
+  })
+
+  it('is false with exactly 1px remaining, pinning the tolerance boundary', () => {
+    expect(shouldShowScrollFade({ scrollHeight: 801, clientHeight: 400, scrollTop: 400 })).toBe(false)
   })
 })

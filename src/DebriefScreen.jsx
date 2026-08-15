@@ -949,10 +949,18 @@ export default function DebriefScreen({
 
   // Whether the Session Summary box has more text below the fold. Re-checked
   // on scroll (so the fade drops once the visitor reaches the bottom) and on
-  // window resize (the box's own height, and therefore whether it overflows
-  // at all, depends far more on the window than on the text). Also re-runs
-  // whenever the summary text itself changes, which covers both the debrief
-  // arriving and the visitor switching sessions with the header pills.
+  // any resize of the box itself, via ResizeObserver rather than a plain
+  // window resize listener: window resize is one cause of the box changing
+  // size, but not the only one. The Raw Data toggle and the reveal animation
+  // can also change how much room the box has without the window moving, and
+  // a ResizeObserver on the element catches all of them the same way. It also
+  // catches the fits/overflows transition itself: this box's scrollbar is
+  // styled with a reserved width (src/index.css), so a webkit browser shrinks
+  // the box's own content width the moment the scrollbar appears or
+  // disappears, which is exactly the moment the fade needs to be
+  // recalculated. Also re-runs whenever the summary text itself changes,
+  // which covers both the debrief arriving and the visitor switching sessions
+  // with the header pills.
   useEffect(() => {
     const el = summaryScrollRef.current
     if (!el) return
@@ -967,10 +975,11 @@ export default function DebriefScreen({
 
     recompute()
     el.addEventListener('scroll', recompute)
-    window.addEventListener('resize', recompute)
+    const resizeObserver = new ResizeObserver(recompute)
+    resizeObserver.observe(el)
     return () => {
       el.removeEventListener('scroll', recompute)
-      window.removeEventListener('resize', recompute)
+      resizeObserver.disconnect()
     }
   }, [coachingSummary, whatThisMeans])
 
