@@ -216,7 +216,7 @@ const CELLS = [
 // at 20px. Baseline output runs 78 to 181 words. So: A is sized to clear 18px,
 // B to clear 20px with room, C to clear 20px on a smaller window too.
 const CONDITIONS = {
-  baseline: { label: 'baseline (today, no budget)', system: DEBRIEF_SYSTEM_BASE },
+  baseline: { label: 'baseline (the prompt before budget B, no budget)', system: DEBRIEF_SYSTEM_BASE },
   A: {
     label: 'A, light: box target 90 words',
     system: `${DEBRIEF_SYSTEM_BASE}\n\n${lengthBudget({ summary: 55, means: 35, intro: 15, tip: 60 })}`,
@@ -235,6 +235,13 @@ const CONDITIONS = {
   // stitching DEBRIEF_SYSTEM_BASE and DEBRIEF_BUDGET back together by hand
   // reproduces DEBRIEF_SYSTEM byte for byte. Task 5 is the slice task that runs
   // this one for real.
+  //
+  // Since budget B was re-expressed as DEBRIEF_BUDGET, this condition and
+  // condition B now send byte-identical system prompts. Both stay defined
+  // because they answer different questions, but running them together
+  // (--condition all) measures the same string twice for no reason, at the
+  // cost of another 24 live calls. Use --condition shipped when the question
+  // is what the app sends today.
   shipped: { label: 'shipped (DEBRIEF_SYSTEM exactly as the app sends it)', system: DEBRIEF_SYSTEM },
 }
 
