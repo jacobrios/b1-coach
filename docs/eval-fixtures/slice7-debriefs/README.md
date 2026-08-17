@@ -110,6 +110,19 @@ invalidate all eight findings above.
 often the swing 12/14 pair is stated explicitly at all, so that transposition
 rate can be read against attempts rather than against all 24.
 
+## Postscript, 17 August 2026: the grader this fixture was built for
+
+`scripts/grade-coach-accuracy.mjs` now exists, built in Slice 7b against a
+deterministic fact sheet (`scripts/factSheet.js`) so the grading model only
+has to find and compare claims rather than count anything itself. Per the plan
+that built it, it was supposed to be validated against this fixture's 8
+known-wrong debriefs before being used for anything. That validation did not
+happen: Slice 7b pivoted mid-flight to a live session-1 parse-failure bug (see
+the product decisions log entry for 17 August 2026) before its `--validate`
+run against these files was ever executed. Until that run happens, the
+grader's verdicts should not be trusted, and this fixture's actual job,
+grading the grader, is still undone.
+
 ## What was deliberately left out
 
 The scratch directory also held Slice 7's own working files: a console log of
