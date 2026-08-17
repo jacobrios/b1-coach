@@ -1,0 +1,4872 @@
+[
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two swings below 15 degrees",
+            "sentence": "You also cut your weak-contact swings way down, finishing with just two swings below 15 degrees compared to five in Session 1.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your bat speed is really coming through — you hit three swings at 92 mph in Session 4, and you had zero swings under 175 feet for the first time all day.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          },
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You went from 2 swings below 15 degrees in Session 3 down to just 2 again in Session 4, and you're putting the ball in play more consistently inside the zone, 12 out of 15 pitches.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "4 came in above 20 degrees",
+            "sentence": "Nine of your 15 swings in Session 4 came in above 20 degrees, which puts them in fly ball territory instead of the line drive window you're going for.",
+            "countVal": 4,
+            "dir": "above",
+            "threshold": 20,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 7,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Your average exit velocity climbed to 86 mph, you had zero swings under 175 feet, and you matched your top exit velocity from Session 2 with three swings at 92 mph.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "five swings below 15 degrees",
+            "sentence": "You cut your weak-contact swings nearly in half, going from five swings below 15 degrees in Sessions 1 and 3 down to just two this round.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also dropped your weak swings way down, going from 5 swings below 15 degrees in Session 1 to just 2 here.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You only had 2 swings below 15 degrees this session compared to 5 in Session 1, and that is a real improvement worth recognizing.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings below 15 degrees",
+            "sentence": "You also cut your weak-contact swings way down, going from 5 swings below 15 degrees in Sessions 1 and 3 all the way to just 2 this round.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "You had zero swings under 175 feet this whole round — nothing weak, nothing soft, nothing that dies in the infield.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your bat speed took a real jump this round — you hit 92 mph three times, and you had zero swings under 175 feet, which tells me you're squaring the ball up consistently.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings under 15 degrees",
+            "sentence": "You only had 2 swings under 15 degrees, which is the cleanest number you've posted all four sessions.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "Your exit velocity climbed from 81 mph in Session 1 all the way to 86 mph here, your ground ball rate dropped to just 2 swings below 15 degrees, and you put 4 balls over 305 feet for the first time all session.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [
+          {
+            "quoted": "Swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 12,
+            "claimedValue": 11,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 14,
+              "direction": -25,
+              "distance": 191
+            },
+            "kind": "list-position-1-of-2"
+          },
+          {
+            "quoted": "Swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 14,
+            "claimedValue": 14,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 11,
+              "direction": 32,
+              "distance": 175
+            },
+            "kind": "list-position-2-of-2"
+          }
+        ],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two swings below 15 degrees",
+            "sentence": "Jake, this was your best round of the day — your average exit velocity climbed to 86 mph, you put four balls 305 feet or more, and you only had two swings below 15 degrees launch angle all session.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two of those came in under 84 mph",
+            "sentence": "Swings 3, 8, and 12 were on pitches well outside the zone, and two of those came in under 84 mph with launch angles that missed the target.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 84,
+            "unit": "mph",
+            "isOfThose": true,
+            "wholeSessionReading": 5,
+            "subsetReading": {
+              "antecedent": [
+                3,
+                8,
+                12
+              ],
+              "subsetCount": 1,
+              "source": "same sentence, before the phrase"
+            }
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "one swing below 15 degrees",
+            "sentence": "You only had one swing below 15 degrees this round compared to five in Session 1, but your average launch angle is still sitting at 22 degrees, just under that 25-degree target.",
+            "countVal": 1,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "one swing came in under 15 degrees",
+            "sentence": "You also cut your ground balls way down — only one swing came in under 15 degrees this round compared to five last time.",
+            "countVal": 1,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "five swings below 15 degrees",
+            "sentence": "You also cut your ground balls way down, going from five swings below 15 degrees all the way down to one.",
+            "countVal": 5,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "power-s2",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two under 15 degrees",
+            "sentence": "Swings 12 and 14 were your only two under 15 degrees, at 80 mph and 80 mph, and both came on pitches middle-to-pull side.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity climbed to 86 mph in Session 4, up from 81 in Session 1, and you had zero swings under 175 feet for the first time all day.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "Your launch angle dropped to just 2 swings below 15 degrees in Session 4, compared to 5 in both Session 1 and Session 3 — that is a real improvement.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "4 came in above 20 degrees",
+            "sentence": "Six of your 15 swings in Session 4 came in above 20 degrees — swings 2, 4, 5, 6, 7, and 8 — and your average sat at 21, just outside your 8 to 18 target.",
+            "countVal": 4,
+            "dir": "above",
+            "threshold": 20,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 7,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "3 under 175ft",
+            "sentence": "Exit velocity climbed from 81 to 86 mph, your soft contact rounds dropped from 3 under 175ft down to zero, and you put four balls 305-plus feet in Session 4.",
+            "countVal": 3,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings under 15 degrees",
+            "sentence": "You went from 5 swings under 15 degrees in Session 1 down to just 2 in Session 4 — swings 12 and 14 — and that is a real improvement worth holding onto.",
+            "countVal": 5,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity is up to 86 mph average in Session 4, your best across all four rounds, and you had zero swings under 175 feet.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You only had 2 swings below 15 degrees in Session 4, down from 5 in both Sessions 1 and 3 — that is a real improvement in your launch angle floor.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Your avg exit velocity hit 86 mph, you had zero swings under 175 feet, and four balls went 305 feet or more.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "contact-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You only had 2 swings below 15 degrees launch angle in Session 4, down from 5 in both Sessions 1 and 3.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Your avg exit velocity climbed to 86 mph, you hit four balls 305 feet or more, and you had zero swings under 175 feet.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings under 15 degrees",
+            "sentence": "You still had 2 swings under 15 degrees on swings 12 and 14, and both went under 200 feet.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Your avg exit velocity climbed to 86 mph, you had zero swings under 175 feet, and you put 4 balls over 305 feet.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "A",
+    "cell": "open-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "one swing below 15 degrees",
+            "sentence": "You had only one swing below 15 degrees in Session 2, down from five in Session 1, but your average launch angle is still sitting at 22 degrees, just shy of that 25-degree target.",
+            "countVal": 1,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 1,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "power-s2",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velo climbed from 81 mph in Session 1 to 86 mph now, and you had zero swings under 175 feet this round.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          },
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "Your under-the-ball problem from Sessions 2 and 3 is shrinking — only 2 swings below 15 degrees compared to 5 in Session 3.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two below 15 degrees",
+            "sentence": "Swings 12 and 14 were your only two below 15 degrees, both at 80 mph and landing at 191 and 175 feet.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your bat speed is trending up all session long — 86 mph average exit velocity in Session 4 is your best mark, and zero swings under 175 feet is a first.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity climbed to 86 mph in Session 4, up from 81 in Session 1, and you had zero swings under 175 feet.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "contact-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity climbed to 86 mph and you had zero swings under 175 feet this round.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "5 swings under 15 degrees",
+            "sentence": "You dropped from 5 swings under 15 degrees in Session 1 down to just 2 this round, and your hard-contact swings are staying in the 18-24 degree range.",
+            "countVal": 5,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings came in under 15 degrees",
+            "sentence": "Only 2 swings came in under 15 degrees launch angle all session.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175",
+            "sentence": "Three power-zone swings, four balls at 305-plus feet, and zero swings under 175.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "You hit 4 balls 305 feet or more, had zero swings under 175 feet, and put 3 swings in the power zone.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "B",
+    "cell": "open-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "power-s2",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, exit velocity jumped from 81 mph in Session 1 to 86 mph now, and you had zero swings under 175 feet this round.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "14 were under 15 degrees",
+            "sentence": "Only swings 12 and 14 were under 15 degrees this round, down from 5 in Session 1 — that's real progress, but both came in at 80 mph with short distances of 191 and 175 feet.",
+            "countVal": 14,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two swings below 15 degrees",
+            "sentence": "You only had two swings below 15 degrees, down from five in Session 1.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity climbed from 81 mph in Session 1 to 86 mph now, and you had zero swings under 175 feet this round.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You had only 2 swings below 15 degrees this round compared to 5 in Sessions 1 and 3 — but your average launch angle was 21 degrees, with swings 2, 5, and 6 all at 28-31 degrees.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Jake, your exit velocity climbed to 86 mph and you put four balls 305-plus feet with zero swings under 175 feet.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings came in under 15 degrees",
+            "sentence": "Only 2 swings came in under 15 degrees this session, down from 5 in Sessions 1 and 3 — that's a real improvement.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "two swings came in under 15 degrees",
+            "sentence": "Only two swings came in under 15 degrees this round, down from five in Session 1.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "contact-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "Your launch angle dropped to just 2 swings below 15 degrees in Session 4, down from 5 in Sessions 1 and 3 — that improvement is real.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [
+          {
+            "quoted": "Six of your 15 swings in Session 4 came in above 20 degrees, including swings 2, 5, and 6 at 30, 31, and 28 degrees.",
+            "reason": "states \"Six of your 15\" (count 6) but the list beside it has 3 numbers: [2, 5, 6]",
+            "countVal": 6,
+            "listLen": 3
+          }
+        ],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "4 came in above 20 degrees",
+            "sentence": "Six of your 15 swings in Session 4 came in above 20 degrees, including swings 2, 5, and 6 at 30, 31, and 28 degrees.",
+            "countVal": 4,
+            "dir": "above",
+            "threshold": 20,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 7,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 1,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "zero swings under 175 feet",
+            "sentence": "Power zone hits went from 0 in Session 1 to 3 this session, and your floor lifted — zero swings under 175 feet for the first time all day.",
+            "countVal": 0,
+            "dir": "under",
+            "threshold": 175,
+            "unit": "feet",
+            "isOfThose": false,
+            "wholeSessionReading": 0,
+            "subsetReading": null
+          }
+        ]
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 2,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [
+          {
+            "quoted": "swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 12,
+            "claimedValue": 11,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 14,
+              "direction": -25,
+              "distance": 191
+            },
+            "kind": "list-position-1-of-2"
+          },
+          {
+            "quoted": "swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 14,
+            "claimedValue": 14,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 11,
+              "direction": 32,
+              "distance": 175
+            },
+            "kind": "list-position-2-of-2"
+          }
+        ],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings came in under 15 degrees",
+            "sentence": "Only 2 swings came in under 15 degrees in Session 4, down from 5 in Session 1 — that's a real improvement.",
+            "countVal": 2,
+            "dir": "under",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 3,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 4,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "You had just 2 swings below 15 degrees in Session 4, down from 5 in Sessions 1 and 3.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 5,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 6,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": [
+          {
+            "quoted": "2 swings below 15 degrees",
+            "sentence": "Only 2 swings below 15 degrees this round, down from 5 in Session 1 — that's a real improvement in your launch angle consistency.",
+            "countVal": 2,
+            "dir": "below",
+            "threshold": 15,
+            "unit": "degrees",
+            "isOfThose": false,
+            "wholeSessionReading": 2,
+            "subsetReading": null
+          }
+        ]
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 7,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      }
+    }
+  },
+  {
+    "conditionKey": "C",
+    "cell": "open-s4",
+    "run": 8,
+    "perField": {
+      "coachingSummary": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "whatThisMeans": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tipsIntro": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip1": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [],
+        "thresholdCandidates": []
+      },
+      "tip2": {
+        "impossible": [],
+        "statedTotal": [],
+        "countVsList": [],
+        "misattributed": [
+          {
+            "quoted": "Swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 12,
+            "claimedValue": 11,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 14,
+              "direction": -25,
+              "distance": 191
+            },
+            "kind": "list-position-1-of-2"
+          },
+          {
+            "quoted": "Swings 12 and 14 ... 11 and 14 degrees",
+            "swingNum": 14,
+            "claimedValue": 14,
+            "claimedUnit": "degrees",
+            "real": {
+              "ev": 80,
+              "angle": 11,
+              "direction": 32,
+              "distance": 175
+            },
+            "kind": "list-position-2-of-2"
+          }
+        ],
+        "thresholdCandidates": []
+      }
+    }
+  }
+]

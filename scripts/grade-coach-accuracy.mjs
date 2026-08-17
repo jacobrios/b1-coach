@@ -1,0 +1,868 @@
+#!/usr/bin/env node
+//
+// The coach claim-accuracy grader: reads a debrief against the exact session
+// data it was given and produces a TRUE / FALSE / UNVERIFIABLE verdict for
+// every countable claim, with the fact-sheet data that settles it.
+//
+// Built for Slice 7b Task 4. The product manager's question this instrument
+// answers: does lengthening "What This Means" make the coach more factually
+// wrong? A human reading 96 transcripts by hand already answered that once
+// (docs/eval-fixtures/slice7-debriefs/regrade-report.md) and found the coach
+// reliably repeats a count the prompt hands it, and is unreliable at a count
+// it has to derive itself. Automated pattern-matching in that same report had
+// poor recall and one actively misleading collision (a regex read "Six of
+// your 15 swings in Session 4 came in above 20 degrees" as the count being
+// FOUR, grabbing the digit out of "Session 4"). This script is built to be
+// neither of those: it hands the model a fact sheet with the counting
+// already done, so the model's only job is finding a claim in the prose and
+// reading a table, the same shape of task the report found humans reliable
+// at.
+//
+// *** METHODOLOGICAL NOTE, READ BEFORE CHANGING THE --validate PATH ***
+// This script must never be fitted to the fixture's 8 known-wrong records by
+// name. --validate reports only what it flagged; it does not compute or
+// print a recall number against ground truth, because it is never told which
+// records are the known-wrong ones. A separate, blind comparison is the
+// controller's job, run once, so the resulting recall number is an honest
+// test score rather than training accuracy. If a future change references a
+// specific cell/run/condition triple to special-case a result, that change
+// is wrong regardless of how it makes the numbers look.
+//
+// WHAT THE MODEL DOES AND DOES NOT DO
+// The model does no arithmetic. scripts/factSheet.js computes, in plain JS,
+// a per-swing table and threshold counts (above / below / equal / at-least /
+// at-most, each with the qualifying swing numbers) at every threshold a
+// coach plausibly cites: every value actually present in the session, plus a
+// small fixed set of round numbers and the two thresholds the regrade report
+// named by name (15, spelled out in the debrief prompt; 20, the exact
+// "above 20 degrees" threshold every real attempt in the 96-debrief fixture
+// got wrong). The model's job is to find a countable claim in the prose and
+// read the matching table row. The one place this is not perfectly
+// arithmetic-free is an "N of those [swings X, Y, Z] were under T" claim:
+// the model still has to intersect the named swing numbers with the
+// threshold row's full qualifying set, a small, bounded lookup rather than a
+// derivation from scratch. That is disclosed as a known limit in this
+// script's own report, not hidden.
+//
+// HOW TO RUN
+//   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --dry-run
+//   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate --sample 40
+// THIS SPENDS REAL MONEY in --validate mode without --dry-run. It prints the
+// planned call count and model before spending a cent, and refuses outright
+// to plan more than MAX_PLANNED_CALLS.
+//
+// WHY IT IS NOT A TEST, AND CANNOT BECOME ONE BY ACCIDENT
+// It lives under scripts/ beside the project's other hand-run scripts,
+// outside the test runner's collection: vitest has no config here, so its
+// default glob takes only *.test.* files, and this filename does not match
+// it. That claim is checked by file count in this task's report, the same
+// way bench-coach-brevity.mjs's own header checks it. The test suite must
+// never call the model, and this script does, so it must never be
+// collected.
+
+import { register } from 'node:module'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+
+// THE SAME LOADER WRINKLE every hand-run script in this project documents:
+// files under src/ import their neighbours without a file extension
+// (`./goalTargets`), which Vite and vitest both resolve and plain `node`
+// refuses with ERR_MODULE_NOT_FOUND. This registers the same tiny inline
+// hook scripts/measure-swing-generation.mjs and scripts/bench-coach-brevity.mjs
+// each carry their own copy of: retry a failed extensionless relative import
+// with `.js` on the end. It is only needed for the "current" session
+// builder below, which imports src/swingGenerator.js; scripts/factSheet.js
+// needs no such hook, because every module it imports uses full `.js`
+// extensions already.
+const EXTENSIONLESS_RESOLVE_HOOK = `
+  export async function resolve(specifier, context, nextResolve) {
+    try {
+      return await nextResolve(specifier, context)
+    } catch (err) {
+      const looksExtensionless = specifier.startsWith('.') && !/\\.[a-zA-Z0-9]+$/.test(specifier)
+      if (err && err.code === 'ERR_MODULE_NOT_FOUND' && looksExtensionless) {
+        return await nextResolve(specifier + '.js', context)
+      }
+      throw err
+    }
+  }
+`
+register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK), import.meta.url)
+
+import { buildFactSheet, goalExtraThresholds } from './factSheet.js'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const REPO_ROOT = path.resolve(__dirname, '..')
+const FIXTURE_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice7-debriefs')
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Model, pricing, cost guardrails
+// ─────────────────────────────────────────────────────────────────────────────
+
+// The task brief's own instruction: default to the cheap model so the
+// controller can try it first and escalate only if validation misses the 8
+// known-wrong records. This is the full dated ID (not the bare alias) on
+// purpose, matching how docs/eval-fixtures/slice7-debriefs itself pins
+// dates rather than aliases wherever a specific measurement depends on it.
+const DEFAULT_MODEL = 'claude-haiku-4-5-20251001'
+const GRADER_MAX_TOKENS = 4096
+
+// Dollars per million tokens, list pricing, for the cost line only. Nothing
+// behaves differently if these drift; the printed estimate just gets less
+// useful. Source: the claude-api skill's cached pricing table, confirmed
+// against Claude Haiku 4.5 / Sonnet 4.6 current at the time this was written.
+const PRICING = {
+  'claude-haiku-4-5-20251001': { input: 1, output: 5 },
+  'claude-haiku-4-5': { input: 1, output: 5 },
+  'claude-sonnet-4-6': { input: 3, output: 15 },
+  'claude-sonnet-5': { input: 3, output: 15 },
+}
+const FALLBACK_PRICING = PRICING['claude-haiku-4-5-20251001']
+
+// A hard stop, not a budget: the realistic accident here is a typo in
+// --sample or --limit, not a deliberate large run. The controller's own plan
+// is 40 calls; this leaves headroom for a bigger deliberate run without
+// leaving the door open to an unbounded one.
+const MAX_PLANNED_CALLS = 100
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Session builders: frozen (the 96-debrief fixture) vs current (a fresh bench run)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// This is the subtlest part of the task, so the mechanism is spelled out
+// here rather than left implicit in the flag parsing below.
+//
+// The 96 fixture debriefs were written in August 2026 against a STAND-IN
+// session 1 (mulberry32-seeded random swings pinned to session 1's real
+// averages), because at that time the bench could not import the real
+// hand-written session-1 swings out of src/App.jsx (JSX, no plain script
+// could load it). docs/eval-fixtures/slice7-debriefs/rebuild.mjs is a
+// frozen, deliberately-unmaintained copy of that exact stand-in generator,
+// kept exactly as it was so it keeps reconstructing what those 96 debriefs
+// actually saw. Grading them against anything else, including today's real
+// session-1 swings, would silently invalidate every verdict: the swing
+// numbers and values in the coach's own prose would no longer match the
+// "current" fact sheet's per-swing table at all.
+//
+// A bench run from today onward uses the REAL session-1 swings
+// (src/sessionOneSwings.js, extracted in this same slice's earlier task),
+// so grading a NEW records file needs the opposite: the current generator,
+// not the frozen stand-in.
+//
+// The flag design makes the choice unavoidable rather than defaulted:
+//   - No --records flag (the default: grade the 96-debrief fixture) locks
+//     the builder to "frozen" outright. Passing --builder current in this
+//     mode is refused with an error, because that combination is exactly
+//     the mistake that would silently produce wrong verdicts against the
+//     fixture's own ground truth.
+//   - A --records flag REQUIRES an explicit --builder. There is no default,
+//     on purpose: a silent default here is the one mistake with no error
+//     message to catch it, since both builders produce a plausible-looking
+//     fact sheet, just for the wrong swings.
+
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return function random() {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Hand-copied from the CELLS array in scripts/bench-coach-brevity.mjs, the
+// same category of duplication CLAUDE.md already accepts for that file's own
+// copy of the GOALS labels: a plain Node script cannot import src/App.jsx,
+// so goal id/label pairs and cell definitions get copied by hand instead.
+// This is a THIRD hand-maintained copy of the same small facts (bench,
+// rebuild.mjs's frozen CELLS, and now this one); see this task's report for
+// why a fourth consolidation pass was judged out of scope here.
+const CURRENT_CELLS = [
+  { key: 'power-s1', goal: { id: 'power', label: 'Power & Distance' }, session: 1 },
+  { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2 },
+  { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4 },
+  { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4 },
+]
+
+let _currentBuilderDeps = null
+async function loadCurrentBuilderDeps() {
+  if (_currentBuilderDeps) return _currentBuilderDeps
+  const { generateSwings } = await import(`${REPO_ROOT}/src/swingGenerator.js`)
+  const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
+  const { SESSION_ONE_SWINGS } = await import(`${REPO_ROOT}/src/sessionOneSwings.js`)
+  _currentBuilderDeps = { generateSwings, computeStats, SESSION_ONE_SWINGS }
+  return _currentBuilderDeps
+}
+
+async function buildSessionsCurrent({ goalId, upTo, seed }) {
+  const { generateSwings, computeStats, SESSION_ONE_SWINGS } = await loadCurrentBuilderDeps()
+  const random = mulberry32(seed)
+  const baseline = SESSION_ONE_SWINGS
+  const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
+  for (let n = 2; n <= upTo; n++) {
+    const swings = generateSwings({ sessionNum: n, goalId, baselineSwings: baseline, random })
+    sessions.push({ sessionNumber: n, swings, stats: computeStats(swings) })
+  }
+  return sessions
+}
+
+let _frozenRebuild = null
+async function loadFrozenRebuild() {
+  if (_frozenRebuild) return _frozenRebuild
+  _frozenRebuild = await import(path.join(FIXTURE_DIR, 'rebuild.mjs'))
+  return _frozenRebuild
+}
+
+// Resolves ONE cell's session data through the named builder. Throws loudly
+// on an unknown builder name or an unknown cell for that builder, rather
+// than silently falling through to a default.
+async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
+  if (builder === 'frozen') {
+    const { sessionsForCell, CELLS } = await loadFrozenRebuild()
+    const cell = CELLS.find((c) => c.key === cellKey)
+    if (!cell) {
+      throw new Error(
+        `Unknown cell "${cellKey}" for the frozen builder. Known: ${CELLS.map((c) => c.key).join(', ')}`,
+      )
+    }
+    return { sessions: sessionsForCell(cellKey), goal: cell.goal, viewingSessionNumber: cell.session }
+  }
+  if (builder === 'current') {
+    const cell = CURRENT_CELLS.find((c) => c.key === cellKey)
+    if (!cell) {
+      throw new Error(
+        `Unknown cell "${cellKey}" for the current builder. Known: ${CURRENT_CELLS.map((c) => c.key).join(', ')}`,
+      )
+    }
+    const sessions = await buildSessionsCurrent({ goalId: cell.goal.id, upTo: cell.session, seed })
+    return { sessions, goal: cell.goal, viewingSessionNumber: cell.session }
+  }
+  throw new Error(`Unknown builder "${builder}". Must be "frozen" or "current".`)
+}
+
+// Same PLAYER every bench run has used (scripts/bench-coach-brevity.mjs);
+// the player's name plays no role in any verdict, it only appears inside
+// quoted prose the model reads, so a mismatch here could not produce a wrong
+// grade. Kept fixed rather than plumbed through the record format, which
+// carries no player field.
+const PLAYER = { firstName: 'Jake' }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Loading records, and deciding which builder applies to them
+// ─────────────────────────────────────────────────────────────────────────────
+
+function loadFixtureRecords() {
+  const baseline = JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'baseline-records.json'), 'utf8'))
+  const budget = JSON.parse(readFileSync(path.join(FIXTURE_DIR, 'budget-records.json'), 'utf8'))
+  return [...baseline, ...budget]
+}
+
+function resolveRecordsAndBuilder(args) {
+  if (!args.records) {
+    if (args.builder && args.builder !== 'frozen') {
+      throw new Error(
+        'The default records (the 96-debrief fixture) were written against the frozen stand-in session 1. ' +
+        `--builder ${args.builder} would grade them against the wrong swings. Omit --builder (frozen is ` +
+        'implied), or pass --records to point at a different file first.',
+      )
+    }
+    return { records: loadFixtureRecords(), builder: 'frozen', source: 'docs/eval-fixtures/slice7-debriefs (both files)' }
+  }
+  if (!args.builder) {
+    throw new Error(
+      '--records was given without --builder. There is no default: pass --builder frozen only if this file ' +
+      'was generated against the old stand-in session 1 (rare, and you should know why), or --builder current ' +
+      'for anything produced by the bench as it runs today.',
+    )
+  }
+  const records = JSON.parse(readFileSync(args.records, 'utf8'))
+  if (!Array.isArray(records)) throw new Error(`${args.records} did not parse to a JSON array of records.`)
+  return { records, builder: args.builder, source: args.records }
+}
+
+// --limit takes the first N records as they appear in the file(s), in order.
+// --sample takes a reproducible pseudo-random N, selected with the same
+// seeded PRNG the session builders use, then sorted back into original order
+// so the printed report reads top-to-bottom the way the source file does.
+function selectSubset(records, args) {
+  if (args.limit != null && args.sample != null) {
+    throw new Error('Pass --limit or --sample, not both.')
+  }
+  if (args.limit != null) return records.slice(0, args.limit)
+  if (args.sample != null) {
+    const n = Math.min(args.sample, records.length)
+    const random = mulberry32(args.seed)
+    const indices = records.map((_, i) => i)
+    // Fisher-Yates using the seeded source, so --sample is reproducible run
+    // to run at the same --seed.
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(random() * (i + 1))
+      ;[indices[i], indices[j]] = [indices[j], indices[i]]
+    }
+    const chosen = indices.slice(0, n).sort((a, b) => a - b)
+    return chosen.map((i) => records[i])
+  }
+  return records
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The grading prompt
+// ─────────────────────────────────────────────────────────────────────────────
+
+const GRADER_SYSTEM = `You are a fact-checker for an AI hitting coach. You will be given a FACT SHEET (the exact swing-by-swing data and precomputed counts the coach was shown) and the debrief the coach actually wrote, as five text fields.
+
+Your only job is to find every COUNTABLE claim in the debrief and check it against the fact sheet. A countable claim is one of these three shapes:
+1. A specific value for a specific swing ("swing 4 hit 92 mph", "at 24 degrees").
+2. A count of swings meeting a threshold, whole-session or restricted to named swings ("6 of your 15 swings came in above 20 degrees", "two of swings 3, 8, and 12 were under 84 mph").
+3. A whole-session statistic that also appears in the fact sheet's stats block (average exit velocity, average launch angle, top exit velocity, in-zone count, the under-15-degree count, the power-zone count).
+
+Ignore everything else: coaching advice, encouragement, physical cues, and any sentence with no checkable number in it.
+
+YOU DO NO ARITHMETIC. Every number you need is already computed in the fact sheet.
+- For a per-swing value claim: look up that swing's row in the per-swing table and compare directly.
+- For a whole-session threshold claim: find the row in that metric's threshold table matching the exact threshold and comparison the coach used ("above"/"more than" -> the "above" field, strictly greater; "under"/"below"/"less than" -> "below", strictly less; "at least"/"or more" -> "atLeast"; "at most"/"or fewer" -> "atMost"; an exact number with no direction -> "equal"). Compare the coach's stated count directly to that row's count field. If the coach also lists specific swing numbers, compare them to that row's swings list.
+- For an "N of those [swings X, Y, Z] were under T" claim: find the threshold row for T on the right metric, take its FULL swings list, and intersect it with the named swing numbers X, Y, Z. Compare the size of that intersection to the coach's stated N. This is the one place you do a small, bounded set comparison rather than a pure lookup; do not recount the whole session by hand.
+- If the exact threshold the coach used does not appear as a row in that metric's table, mark the claim UNVERIFIABLE. Never estimate or interpolate a count that is not precomputed.
+
+Other rules:
+- A claim naming a session number checks against THAT session's block in the fact sheet, not necessarily the one being viewed.
+- A swing number outside 1-15, or a session number not present in the fact sheet, makes the claim FALSE (an impossible reference), not UNVERIFIABLE.
+- Distance claims are sometimes honestly rounded to a bucket-friendly figure ("320 feet or more" against a real value of 305). If the stated number is a plausible round-up or round-down of a real fact-sheet value in the same direction the coach's wording implies, mark it TRUE and say so in "actual". Only mark FALSE when no reasonable rounding reaches the fact-sheet value.
+- If you genuinely cannot settle a claim from the fact sheet, mark it UNVERIFIABLE and say in "reasoning" what data would be needed. Never guess a verdict.
+
+Respond ONLY with valid JSON, no prose before or after, in exactly this shape:
+{"claims": [
+  {"field": "coachingSummary|whatThisMeans|tipsIntro|tip1|tip2", "quote": "the exact clause making the claim", "verdict": "TRUE|FALSE|UNVERIFIABLE", "actual": "the fact-sheet data that settles it, as a short string", "reasoning": "one sentence"}
+]}
+If the debrief contains no countable claims at all, respond {"claims": []}.`
+
+function buildGraderUserPrompt({ record, factSheet, goal }) {
+  const fields = record.fields ?? {}
+  return `Player: ${PLAYER.firstName}
+Goal: ${goal.label}
+Session being debriefed: ${factSheet.viewingSessionNumber}
+
+FACT SHEET (JSON):
+${JSON.stringify(factSheet)}
+
+THE DEBRIEF THE COACH WROTE:
+coachingSummary: ${fields.coachingSummary ?? ''}
+whatThisMeans: ${fields.whatThisMeans ?? ''}
+tipsIntro: ${fields.tipsIntro ?? ''}
+tip1: ${fields.tip1 ?? ''}
+tip2: ${fields.tip2 ?? ''}`
+}
+
+function buildGraderPrompt(record, factSheet, goal) {
+  return { system: GRADER_SYSTEM, user: buildGraderUserPrompt({ record, factSheet, goal }) }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Parsing and normalizing the model's response
+// ─────────────────────────────────────────────────────────────────────────────
+
+// The outermost { ... } of a string, parsed, or undefined if there is none
+// or it does not parse. Mirrors the fenced/preamble tolerance
+// parseCoachResponse in src/coachApi.js needed for the same reason: a small
+// model asked for bare JSON sometimes wraps it in a fence anyway.
+function parseOutermostObject(text) {
+  const start = text.indexOf('{')
+  const end = text.lastIndexOf('}')
+  if (start === -1 || end <= start) return undefined
+  try {
+    return JSON.parse(text.slice(start, end + 1))
+  } catch {
+    return undefined
+  }
+}
+
+function parseGraderJson(text) {
+  const trimmed = text.trim()
+  try {
+    return JSON.parse(trimmed)
+  } catch {
+    // fall through
+  }
+  const fenced = trimmed.match(/```(?:json)?[ \t]*\r?\n?([\s\S]*)\r?\n?[ \t]*```/)
+  if (fenced) {
+    try {
+      return JSON.parse(fenced[1].trim())
+    } catch {
+      const inner = parseOutermostObject(fenced[1].trim())
+      if (inner !== undefined) return inner
+    }
+  }
+  const outer = parseOutermostObject(trimmed)
+  if (outer !== undefined) return outer
+  throw new Error('Failed to parse grader response as JSON')
+}
+
+const VALID_VERDICTS = new Set(['TRUE', 'FALSE', 'UNVERIFIABLE'])
+const KNOWN_FIELDS = new Set(['coachingSummary', 'whatThisMeans', 'tipsIntro', 'tip1', 'tip2'])
+
+// Raw model output is a claim, not a fact about its own shape. Every claim
+// is normalized here rather than trusted: an unrecognized verdict, a missing
+// field, or a non-string quote becomes an UNVERIFIABLE entry that says so,
+// instead of throwing and losing every other claim in the same response or
+// silently passing a bad value on to whoever reads the report.
+function normalizeClaims(rawClaims) {
+  const list = Array.isArray(rawClaims) ? rawClaims : []
+  let malformedCount = 0
+  const claims = list.map((raw, i) => {
+    const problems = []
+    if (typeof raw !== 'object' || raw === null) {
+      malformedCount++
+      return {
+        field: 'unknown',
+        quote: '(malformed claim entry)',
+        verdict: 'UNVERIFIABLE',
+        actual: null,
+        reasoning: `Claim #${i + 1} was not an object.`,
+      }
+    }
+    const field = KNOWN_FIELDS.has(raw.field) ? raw.field : 'unknown'
+    if (!KNOWN_FIELDS.has(raw.field)) problems.push(`unrecognized field "${raw.field}"`)
+    const quote = typeof raw.quote === 'string' && raw.quote.trim() ? raw.quote : '(no quote given)'
+    if (quote === '(no quote given)') problems.push('missing quote')
+    const verdictRaw = typeof raw.verdict === 'string' ? raw.verdict.toUpperCase() : ''
+    const verdictValid = VALID_VERDICTS.has(verdictRaw)
+    if (!verdictValid) problems.push(`invalid verdict "${raw.verdict}"`)
+    const verdict = verdictValid ? verdictRaw : 'UNVERIFIABLE'
+    const actual =
+      raw.actual == null
+        ? null
+        : typeof raw.actual === 'string'
+          ? raw.actual
+          : JSON.stringify(raw.actual)
+    const reasoning = typeof raw.reasoning === 'string' ? raw.reasoning : ''
+    if (problems.length) {
+      malformedCount++
+      return {
+        field,
+        quote,
+        verdict: 'UNVERIFIABLE',
+        actual,
+        reasoning: `Normalized from a malformed model claim (${problems.join('; ')}). Original reasoning: ${reasoning}`,
+      }
+    }
+    return { field, quote, verdict, actual, reasoning }
+  })
+  return { claims, malformedCount }
+}
+
+// Parses and normalizes one grader response end to end. Never throws for a
+// malformed BODY (a bad claim shape); it throws only when the whole response
+// is not JSON at all, which the caller treats as a hard failure for that
+// record (excluded from the report, not silently graded as clean).
+function gradeParsedResponse(text) {
+  const parsed = parseGraderJson(text)
+  const { claims, malformedCount } = normalizeClaims(parsed?.claims)
+  const flagged = claims.some((c) => c.verdict === 'FALSE')
+  return { claims, flagged, malformedCount }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The live model call
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function callGraderModel({ system, user, apiKey, model }) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: GRADER_MAX_TOKENS,
+      system,
+      messages: [{ role: 'user', content: user }],
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`Anthropic returned ${res.status} ${res.statusText}`)
+  }
+  const data = await res.json()
+  const text = data?.content?.[0]?.text
+  if (!text) throw new Error('No text content in the response')
+  return { text, usage: data.usage ?? {} }
+}
+
+async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
+  const { system, user } = buildGraderPrompt(record, factSheet, goal)
+  const { text, usage } = await callGraderModel({ system, user, apiKey, model })
+  const graded = gradeParsedResponse(text)
+  return { ...graded, usage }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reporting
+// ─────────────────────────────────────────────────────────────────────────────
+
+const recordId = (r) => `${r.conditionKey}/${r.cell}/run${r.run}`
+
+function costOf(model, inputTokens, outputTokens) {
+  const rates = PRICING[model] ?? FALLBACK_PRICING
+  return (inputTokens / 1e6) * rates.input + (outputTokens / 1e6) * rates.output
+}
+
+function printReport({ model, results, inputTokens, outputTokens, source, builder }) {
+  console.log('')
+  console.log('='.repeat(70))
+  console.log('GRADING REPORT')
+  console.log('='.repeat(70))
+  console.log(`Model            ${model}`)
+  console.log(`Records source   ${source} (builder: ${builder})`)
+  console.log(`Records graded   ${results.length}`)
+
+  const failures = results.filter((r) => r.error)
+  const ok = results.filter((r) => !r.error)
+  const flagged = ok.filter((r) => r.flagged)
+  const totalClaims = ok.reduce((s, r) => s + r.claims.length, 0)
+  const byVerdict = { TRUE: 0, FALSE: 0, UNVERIFIABLE: 0 }
+  for (const r of ok) for (const c of r.claims) byVerdict[c.verdict]++
+  const totalMalformed = ok.reduce((s, r) => s + r.malformedCount, 0)
+
+  console.log('')
+  console.log(`Claims found     ${totalClaims} (TRUE ${byVerdict.TRUE}, FALSE ${byVerdict.FALSE}, UNVERIFIABLE ${byVerdict.UNVERIFIABLE})`)
+  if (totalMalformed) {
+    console.log(`Malformed claims ${totalMalformed} model claim(s) did not parse cleanly and were normalized to UNVERIFIABLE; see reasoning text.`)
+  }
+  if (failures.length) {
+    console.log(`Hard failures    ${failures.length} record(s) whose response was not JSON at all (excluded above): ${failures.map((r) => recordId(r.record)).join(', ')}`)
+  }
+
+  console.log('')
+  console.log('='.repeat(70))
+  console.log(`FLAGGED DEBRIEFS: ${flagged.length} of ${ok.length}`)
+  console.log('='.repeat(70))
+  console.log('This script does not know which records are known-wrong. It only')
+  console.log('reports what it flagged; comparing that list to ground truth is the')
+  console.log('controller\'s job, done blind, once.')
+  console.log('')
+  if (!flagged.length) {
+    console.log('(nothing flagged)')
+  }
+  for (const r of flagged) {
+    console.log(`  ${recordId(r.record)}`)
+    for (const c of r.claims.filter((c) => c.verdict === 'FALSE')) {
+      console.log(`    [${c.field}] "${c.quote}"`)
+      console.log(`      actual: ${c.actual}`)
+      console.log(`      why: ${c.reasoning}`)
+    }
+  }
+
+  console.log('')
+  console.log('='.repeat(70))
+  console.log('COST')
+  console.log('='.repeat(70))
+  const cost = costOf(model, inputTokens, outputTokens)
+  console.log(`${inputTokens} input + ${outputTokens} output tokens = $${cost.toFixed(4)}`)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// --dry-run: every path but the network
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function dryRun(args) {
+  console.log('DRY RUN. No API calls, no spend. Exercising every path but the network.')
+  console.log('')
+
+  // 1. Both session builders, against real project data.
+  console.log('Session builders')
+  console.log('-'.repeat(70))
+  const frozen = await resolveSessions({ builder: 'frozen', cellKey: 'power-s2' })
+  console.log(
+    `  frozen  / power-s2   ${frozen.sessions.length} sessions, ` +
+    `${frozen.sessions.reduce((s, ss) => s + ss.swings.length, 0)} total swings, ` +
+    `goal ${frozen.goal.id}, viewing session ${frozen.viewingSessionNumber}`,
+  )
+  const current = await resolveSessions({ builder: 'current', cellKey: 'power-s1', seed: 20260814 })
+  console.log(
+    `  current / power-s1   ${current.sessions.length} sessions, ` +
+    `${current.sessions.reduce((s, ss) => s + ss.swings.length, 0)} total swings, ` +
+    `goal ${current.goal.id}, viewing session ${current.viewingSessionNumber}`,
+  )
+  if (current.sessions[0].swings.length !== 15 || frozen.sessions[0].swings.length !== 15) {
+    throw new Error('Session builder self-check failed: expected 15 swings in session 1 for both builders.')
+  }
+
+  // 2. Builder-selection guardrails, exercised without ever making a real call.
+  console.log('')
+  console.log('Builder-selection guardrails')
+  console.log('-'.repeat(70))
+  let guardOk = 0
+  try {
+    resolveRecordsAndBuilder({ records: null, builder: 'current' })
+    console.log('  FAILED: expected an error for --builder current with no --records')
+  } catch (err) {
+    guardOk++
+    console.log(`  ok: default records + --builder current refused ("${err.message.slice(0, 60)}...")`)
+  }
+  try {
+    resolveRecordsAndBuilder({ records: 'somefile.json', builder: null })
+    console.log('  FAILED: expected an error for --records with no --builder')
+  } catch (err) {
+    guardOk++
+    console.log(`  ok: --records with no --builder refused ("${err.message.slice(0, 60)}...")`)
+  }
+  if (guardOk !== 2) throw new Error('Builder-selection guardrail self-check failed.')
+
+  // 3. Build the real fact sheet and the real prompt for one record, report sizes.
+  console.log('')
+  console.log('Fact sheet and prompt sizes (real data, one record)')
+  console.log('-'.repeat(70))
+  const extraThresholds = goalExtraThresholds(frozen.goal.id)
+  const factSheet = buildFactSheet({
+    sessions: frozen.sessions,
+    viewingSessionNumber: frozen.viewingSessionNumber,
+    extraThresholds,
+  })
+  const sampleRecord = {
+    conditionKey: 'dryrun',
+    cell: 'power-s2',
+    run: 0,
+    fields: {
+      coachingSummary: 'You hit 92 mph on swing 4 and drove it 310 feet.',
+      whatThisMeans: 'That is real power, and 6 of your 15 swings came in above 20 degrees.',
+      tipsIntro: 'Two things before next round.',
+      tip1: 'Swing 12 came off at 80 mph. Stay back a half beat longer.',
+      tip2: 'Your average exit velocity was 84 mph. Keep driving through the ball.',
+    },
+  }
+  const { system, user } = buildGraderPrompt(sampleRecord, factSheet, frozen.goal)
+  const thresholdRowCount = Object.values(factSheet.sessions[0].thresholds).reduce((s, arr) => s + arr.length, 0)
+  console.log(`  sessions in fact sheet   ${factSheet.sessions.length}`)
+  console.log(`  threshold rows/session   ${thresholdRowCount}`)
+  console.log(`  system prompt            ${system.length} chars`)
+  console.log(`  user prompt              ${user.length} chars (fact sheet + debrief fields)`)
+
+  // 4. Feed canned grader RESPONSES through the real parse/normalize/flag path.
+  console.log('')
+  console.log('Canned grader-response self-checks')
+  console.log('-'.repeat(70))
+
+  const cleanMixed = JSON.stringify({
+    claims: [
+      { field: 'coachingSummary', quote: 'swing 4 hit 92 mph', verdict: 'true', actual: 'swing 4 exitVelocity = 92', reasoning: 'matches the per-swing table' },
+      { field: 'whatThisMeans', quote: '9 of your 15 swings above 20 degrees', verdict: 'FALSE', actual: 'launchAngle above 20: count 7, swings [2,3,4,5,6,8,11]', reasoning: 'coach said 9, fact sheet says 7' },
+      { field: 'tip1', quote: 'your best swing this session', verdict: 'UNVERIFIABLE', actual: null, reasoning: 'no specific number to check' },
+    ],
+  })
+  const cleanMixedResult = gradeParsedResponse(cleanMixed)
+  console.log(`  mixed response      -> ${cleanMixedResult.claims.length} claims, flagged=${cleanMixedResult.flagged} (expect 3 claims, flagged=true)`)
+  if (cleanMixedResult.claims.length !== 3 || cleanMixedResult.flagged !== true) {
+    throw new Error('Self-check failed: mixed canned response did not grade as expected.')
+  }
+  if (cleanMixedResult.claims[0].verdict !== 'TRUE') {
+    throw new Error('Self-check failed: lowercase "true" was not normalized to TRUE.')
+  }
+
+  const allTrue = JSON.stringify({
+    claims: [{ field: 'tip2', quote: 'average exit velocity was 84 mph', verdict: 'TRUE', actual: 'avgExitVelocity = 84', reasoning: 'matches session stats' }],
+  })
+  const allTrueResult = gradeParsedResponse(allTrue)
+  console.log(`  all-true response   -> flagged=${allTrueResult.flagged} (expect false)`)
+  if (allTrueResult.flagged !== false) throw new Error('Self-check failed: an all-TRUE response was flagged.')
+
+  const noClaims = JSON.stringify({ claims: [] })
+  const noClaimsResult = gradeParsedResponse(noClaims)
+  console.log(`  no-claims response  -> ${noClaimsResult.claims.length} claims, flagged=${noClaimsResult.flagged} (expect 0, false)`)
+  if (noClaimsResult.claims.length !== 0 || noClaimsResult.flagged !== false) {
+    throw new Error('Self-check failed: an empty-claims response did not grade as empty.')
+  }
+
+  const malformed = JSON.stringify({
+    claims: [
+      { field: 'nope', quote: '', verdict: 'MAYBE', actual: 42 },
+      'not even an object',
+    ],
+  })
+  const malformedResult = gradeParsedResponse(malformed)
+  console.log(
+    `  malformed response  -> ${malformedResult.claims.length} claims, ` +
+    `${malformedResult.malformedCount} normalized as malformed, every verdict UNVERIFIABLE=` +
+    `${malformedResult.claims.every((c) => c.verdict === 'UNVERIFIABLE')} (expect 2, 2, true)`,
+  )
+  if (
+    malformedResult.claims.length !== 2 ||
+    malformedResult.malformedCount !== 2 ||
+    !malformedResult.claims.every((c) => c.verdict === 'UNVERIFIABLE')
+  ) {
+    throw new Error('Self-check failed: a malformed response was not fully normalized to UNVERIFIABLE.')
+  }
+
+  const notJsonAtAll = 'Sorry, I cannot help with that.'
+  let threwOnGarbage = false
+  try {
+    gradeParsedResponse(notJsonAtAll)
+  } catch {
+    threwOnGarbage = true
+  }
+  console.log(`  non-JSON response   -> throws=${threwOnGarbage} (expect true; caller records this as a hard failure, not a clean grade)`)
+  if (!threwOnGarbage) throw new Error('Self-check failed: a non-JSON response did not throw.')
+
+  // 5. Run the real --validate pipeline end to end against two real fixture
+  // records, substituting a canned response for the network call, so the
+  // load -> resolve -> fact-sheet -> prompt -> parse -> report path is
+  // exercised in full, not just its pieces.
+  console.log('')
+  console.log('End-to-end --validate pipeline (2 real fixture records, canned response)')
+  console.log('-'.repeat(70))
+  const { records, builder, source } = resolveRecordsAndBuilder({ records: null, builder: null })
+  const subset = selectSubset(records, { limit: 2, sample: null })
+  const cellCache = new Map()
+  const results = []
+  let inputTokens = 0
+  let outputTokens = 0
+  for (const record of subset) {
+    if (!cellCache.has(record.cell)) {
+      const resolved = await resolveSessions({ builder, cellKey: record.cell })
+      const sheet = buildFactSheet({
+        sessions: resolved.sessions,
+        viewingSessionNumber: resolved.viewingSessionNumber,
+        extraThresholds: goalExtraThresholds(resolved.goal.id),
+      })
+      cellCache.set(record.cell, { factSheet: sheet, goal: resolved.goal })
+    }
+    const { factSheet: sheet, goal } = cellCache.get(record.cell)
+    buildGraderPrompt(record, sheet, goal) // built, not sent — proves the real record's fields reach the prompt builder
+    const graded = gradeParsedResponse(allTrue) // canned, no network
+    inputTokens += 500
+    outputTokens += 80
+    results.push({ record, ...graded })
+  }
+  printReport({ model: `${args.model} (dry run, canned responses)`, results, inputTokens, outputTokens, source, builder })
+
+  console.log('')
+  console.log('Every path exercised. Drop --dry-run and add --validate to spend money.')
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// --validate: the real thing
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function validate(args) {
+  const apiKey = process.env.VITE_ANTHROPIC_API_KEY
+  if (!apiKey) {
+    console.error('No VITE_ANTHROPIC_API_KEY in the environment.')
+    console.error('Run this as: node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate')
+    process.exit(1)
+  }
+
+  const { records, builder, source } = resolveRecordsAndBuilder(args)
+  const subset = selectSubset(records, args)
+
+  if (subset.length > MAX_PLANNED_CALLS) {
+    console.error(`Refusing to plan ${subset.length} calls; the cap is ${MAX_PLANNED_CALLS}.`)
+    console.error('Lower --limit/--sample.')
+    process.exit(1)
+  }
+
+  console.log('B1 coach accuracy grader')
+  console.log('='.repeat(70))
+  console.log(`Model            ${args.model}`)
+  console.log(`Records source   ${source} (builder: ${builder})`)
+  console.log(`Records to grade ${subset.length} of ${records.length} available`)
+  console.log(`Rough cost       $${(subset.length * 0.01).toFixed(2)} at a rough ~1 cent/debrief guess; the real total prints at the end`)
+  console.log('')
+
+  const cellCache = new Map()
+  const results = []
+  let inputTokens = 0
+  let outputTokens = 0
+
+  for (const record of subset) {
+    const id = recordId(record)
+    process.stdout.write(`  ${id}... `)
+    try {
+      if (!cellCache.has(record.cell)) {
+        const resolved = await resolveSessions({ builder, cellKey: record.cell, seed: args.seed })
+        const factSheet = buildFactSheet({
+          sessions: resolved.sessions,
+          viewingSessionNumber: resolved.viewingSessionNumber,
+          extraThresholds: goalExtraThresholds(resolved.goal.id),
+        })
+        cellCache.set(record.cell, { factSheet, goal: resolved.goal })
+      }
+      const { factSheet, goal } = cellCache.get(record.cell)
+      const graded = await gradeDebrief(record, { factSheet, goal, apiKey, model: args.model })
+      inputTokens += graded.usage.input_tokens ?? 0
+      outputTokens += graded.usage.output_tokens ?? 0
+      results.push({ record, ...graded })
+      console.log(`${graded.claims.length} claims, flagged=${graded.flagged}`)
+    } catch (err) {
+      console.log(`FAILED: ${err.message}`)
+      results.push({ record, error: err.message, claims: [], flagged: false, malformedCount: 0 })
+    }
+  }
+
+  printReport({ model: args.model, results, inputTokens, outputTokens, source, builder })
+
+  if (args.out) {
+    writeFileSync(args.out, JSON.stringify(results, null, 2))
+    console.log('')
+    console.log(`Raw results      ${args.out}`)
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CLI
+// ─────────────────────────────────────────────────────────────────────────────
+
+function parseArgs(argv) {
+  const args = {
+    dryRun: false,
+    validate: false,
+    records: null,
+    builder: null,
+    limit: null,
+    sample: null,
+    seed: 20260814,
+    model: DEFAULT_MODEL,
+    out: null,
+  }
+  for (let i = 0; i < argv.length; i++) {
+    const flag = argv[i]
+    if (flag === '--dry-run') {
+      args.dryRun = true
+      continue
+    }
+    if (flag === '--validate') {
+      args.validate = true
+      continue
+    }
+    const value = argv[i + 1]
+    i += 1
+    if (flag === '--records') args.records = value
+    else if (flag === '--builder') args.builder = value
+    else if (flag === '--limit') args.limit = Number(value)
+    else if (flag === '--sample') args.sample = Number(value)
+    else if (flag === '--seed') args.seed = Number(value)
+    else if (flag === '--model') args.model = value
+    else if (flag === '--out') args.out = value
+    else throw new Error(`Unknown flag: ${flag}`)
+  }
+  return args
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2))
+
+  if (args.dryRun) {
+    await dryRun(args)
+    return
+  }
+  if (args.validate) {
+    await validate(args)
+    return
+  }
+
+  console.error('Pass --dry-run (exercises every path, spends nothing) or --validate (spends real money).')
+  console.error('Example: node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate --sample 40')
+  process.exit(1)
+}
+
+await main()

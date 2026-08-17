@@ -38,8 +38,13 @@
 // It lives under scripts/ beside the two measurement scripts, outside the test
 // runner's collection. Vitest has no config in this project, so its default
 // glob takes only *.test.* / *.spec.* files; nothing here matches. That claim
-// is checked by file count rather than asserted: `npm test` reported 11 files
-// and 326 tests before this file existed and must report 11 and 326 after.
+// is checked by file count rather than asserted: as measured 17 August 2026,
+// `npm test` reports 16 files and 392 tests with this file present in the
+// repo. (The same check read 11 files and 326 tests when this file was first
+// added in Slice 7, 14 August 2026; the counts move as the suite grows, the
+// point, that this file adds none of them, does not.) Re-measure before
+// trusting this comment if it has been a while; a dated number is a claim
+// about the day it was checked, not a promise it still holds.
 // The test suite must never call the model, and a bench that could be collected
 // by the runner would break that rule the first time someone ran it in CI.
 //
@@ -93,12 +98,26 @@ const {
 } = await import('../src/coachApi.js')
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { computeStats, topExitVelocity } = await import('../src/sessionStats.js')
-const { carryDistance, DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
+const { DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
+const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
+const { contentWordOverlap } = await import('./contentWordOverlap.js')
+const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecord.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
 // keeps the deployed demo alive.
+//
+// Left at its Slice 7 value on purpose. Slice 7b's power-s1 cell raised the
+// cost of a single condition from 24 calls (3 cells x 8 runs) to 36 (36 at
+// the default --runs 8: 12+8+8+8), so --condition all (5 conditions) now
+// needs 180, above this cap where it used to need 120. That is intentional,
+// not an oversight: --condition all was already a wasteful invocation before
+// this slice (B and shipped build byte-identical prompts) and this project's
+// owner has said it should never be run. Raising the cap to fit it would
+// remove the one thing stopping that command from working by default; the
+// refusal message at the call site explains this rather than reading as an
+// arbitrary number.
 const MAX_PLANNED_CALLS = 150
 
 // Sonnet 4.6 list pricing, dollars per million tokens, for the cost line only.
@@ -125,56 +144,25 @@ function mulberry32(seed) {
   }
 }
 
-// Session 1 in this app is not generated: it is fifteen swings typed out by hand
-// in src/App.jsx. That file imports React and JSX, so a plain Node script cannot
-// load it, and the two scripts beside this one solve that by keeping their own
-// full copies. This bench deliberately does NOT add a sixth copy. It builds a
-// stand-in instead, pinned to the two numbers that matter for everything
-// downstream: the scripted session 1 averages 81.6 mph and 17.33 degrees, and
-// those averages are all `generateSwings` reads off a baseline.
-//
-// What this costs, stated plainly rather than buried: the bench cannot grade the
-// debrief a visitor sees on their FIRST click, because that debrief is built on
-// the real hand-written swings and these are not them. Sessions 2 to 4 are the
-// app's own generator output and are exact. Closing that gap means extracting
-// those fifteen swings into a module of their own, which belongs to the slice
-// that rewrites them, not to this one.
-const SESSION_1_AVG_EV = 81.6
-const SESSION_1_AVG_LA = 17.3333
-
-// The stand-in is drawn with the same shared-contact-quality model the real
-// generator uses, so it has a believable spread rather than fifteen identical
-// swings, which would be a strange thing to hand a coach and would distort every
-// session-4 debrief that includes it.
-function standInSessionOne(random) {
-  return Array.from({ length: 15 }, () => {
-    const quality = random() - 0.5
-    const evNoise = random() - 0.5
-    const laNoise = random() - 0.5
-    const ev = Math.round(Math.max(65, Math.min(97, SESSION_1_AVG_EV + (0.6 * quality + 0.8 * evNoise) * 16)))
-    const la = Math.round(Math.max(-5, Math.min(35, SESSION_1_AVG_LA + (0.6 * quality + 0.8 * laNoise) * 22)))
-    const dir = Math.round((random() - 0.45) * 70)
-    const inZonePitch = random() < 0.7
-    const plateLocHeight = inZonePitch ? 1.5 + random() * 2.0 : random() < 0.5 ? 0.5 + random() * 0.9 : 3.6 + random() * 0.5
-    const plateLocSide = inZonePitch ? -0.7 + random() * 1.4 : random() < 0.5 ? -0.8 - random() * 0.3 : 0.8 + random() * 0.3
-    return {
-      plateLocHeight: Math.round(plateLocHeight * 100) / 100,
-      plateLocSide: Math.round(plateLocSide * 100) / 100,
-      hit: {
-        launch: { exitSpeed: ev, angle: la, direction: dir },
-        // The same curve every other swing in the app goes through, so a
-        // distance the coach quotes here is one the app would really show.
-        landing: { distance: carryDistance({ exitSpeed: ev, angle: la }) },
-      },
-    }
-  })
-}
+// Session 1 in this app is not generated: it is fifteen swings typed out by
+// hand. Until Slice 7b's Task 1 they lived inside src/App.jsx, which imports
+// React and JSX, so a plain Node script could not load them, and this bench
+// built a stand-in instead, pinned to the scripted session's two averages.
+// That gap closed on 17 August 2026: the fifteen swings now live in
+// src/sessionOneSwings.js, a plain module this bench can import directly, so
+// every one of its four cells reads the exact starting point a real visitor
+// sees rather than an approximation of it. This also means every cell's
+// downstream sessions (2 to 4, built off session 1 as their baseline) shift
+// from what earlier runs measured, since they now branch off real data
+// instead of a randomly-drawn stand-in with the same averages; Slice 7b's own
+// before-run is the reference going forward, not Slice 7's recorded figures.
+const SESSION_1_BASELINE = SESSION_ONE_SWINGS
 
 // The app rebuilds every later session off session 1, not off the session before
 // it (see the single generateSwings call in src/App.jsx), so this does the same.
 function buildSessions({ goalId, upTo, seed }) {
   const random = mulberry32(seed)
-  const baseline = standInSessionOne(random)
+  const baseline = SESSION_1_BASELINE
   const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
   for (let n = 2; n <= upTo; n++) {
     const swings = generateSwings({ sessionNum: n, goalId, baselineSwings: baseline, random })
@@ -192,11 +180,29 @@ function buildSessions({ goalId, upTo, seed }) {
 // anywhere else, so these two fields are the whole dependency. If a label is
 // ever renamed in App.jsx it must be renamed here too, which is the price of
 // not being able to import a JSX file.
+// `weight` is how each cell's share of --runs is expressed; see cellRuns()
+// below for the arithmetic and the reasoning for doing it this way rather
+// than a fixed absolute count on power-s1.
 const CELLS = [
-  { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2, why: 'the goal most visitors pick, early session' },
-  { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4, why: 'largest session, three priors to compare against' },
-  { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, why: 'no target, so the coach has the most latitude' },
+  { key: 'power-s1', goal: { id: 'power', label: 'Power & Distance' }, session: 1, weight: 1.5, why: 'session 1 is where every visitor lands and where the coach was caught stating something false; no prior session to compare against, which is part of why it earns its own cell' },
+  { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2, weight: 1, why: 'the goal most visitors pick, early session' },
+  { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4, weight: 1, why: 'largest session, three priors to compare against' },
+  { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, weight: 1, why: 'no target, so the coach has the most latitude' },
 ]
+
+// --runs sets the volume for a weight-1 cell (default 8, matching power-s2,
+// contact-s4 and open-s4). power-s1 carries a 1.5x weight baked into its own
+// definition rather than a second flag, so a single --runs value scales
+// every cell together and keeps the extra session-1 volume proportional: the
+// default --runs 8 reproduces the 12/8/8/8 split named in the slice plan
+// (36 calls per condition), --runs 4 gives 6/4/4/4, --runs 16 gives
+// 24/16/16/16, and so on. Chosen over a fixed absolute count on power-s1 so a
+// cheap smoke-test run (a small --runs) still exercises every cell without
+// the caller having to reason about two independent numbers, and so a single
+// flag keeps meaning "how many runs, roughly" the way it always has.
+function cellRuns(cell, baseRuns) {
+  return Math.max(1, Math.round(baseRuns * cell.weight))
+}
 
 // A condition is a complete system prompt: the real base prompt, plus whatever
 // budget wording (if any) that condition is testing. Every condition below is
@@ -425,7 +431,15 @@ function grade(parsed, values, targets) {
     (t) => classifyNumbers(firstSentence(t), values, targets).grounded > 0,
   )
 
-  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing }
+  // Content-word overlap between whatThisMeans and coachingSummary; see
+  // scripts/contentWordOverlap.js for the definition. A three-sentence floor
+  // on whatThisMeans was scoped for this slice but deferred when it pivoted;
+  // this measure exists ahead of that floor so, whenever it ships, a coach
+  // that hits it by restating the summary shows up HIGH here rather than
+  // reading as a clean pass in the word-count numbers above.
+  const overlap = contentWordOverlap(fields.whatThisMeans, fields.coachingSummary)
+
+  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing, overlap }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -458,12 +472,23 @@ async function callCoach({ system, userMessage, apiKey }) {
 
   const data = await res.json()
   const text = data?.content?.[0]?.text
-  if (!text) throw new Error('No text content in the response')
+  const stopReason = data?.stop_reason ?? null
+  const outputTokens = data?.usage?.output_tokens ?? null
 
-  return {
-    parsed: parseCoachResponse(text),
-    elapsedMs,
-    usage: data.usage ?? {},
+  if (!text) {
+    throw new CoachCallError('No text content in the response', { stopReason, outputTokens })
+  }
+
+  // The evidence Task 10 (Slice 7b's pivot) exists to keep. Before this, a
+  // parse failure here produced only a message: not the raw reply, not why
+  // the model stopped, not how much it wrote. Diagnosing the session-1
+  // MAX_TOKENS bug needed all three, and none were on disk, which is why that
+  // diagnosis needed a separate scratch script and a second round of spend.
+  try {
+    const parsed = parseCoachResponse(text)
+    return { parsed, elapsedMs, usage: data.usage ?? {} }
+  } catch (err) {
+    throw new CoachCallError(err.message, { rawText: text, stopReason, outputTokens })
   }
 }
 
@@ -479,6 +504,7 @@ const percentile = (xs, p) => {
   return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]
 }
 const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10)
+const round2 = (n) => (n == null ? null : Math.round(n * 100) / 100)
 
 function parseArgs(argv) {
   const args = { condition: 'baseline', runs: 8, seed: 20260814, out: null, dryRun: false }
@@ -506,8 +532,12 @@ function parseArgs(argv) {
 // first line. That one cost nothing, because it happened to throw before the
 // first call rather than after the fortieth. Run this before any run that
 // matters.
-function dryRun(conditionKeys, seed) {
+function dryRun(conditionKeys, seed, runs) {
   console.log('DRY RUN. No API calls, no spend. Exercising every path but the network.')
+  console.log('')
+  console.log(
+    `Run allocation at --runs ${runs}: ${CELLS.map((c) => `${c.key} ${cellRuns(c, runs)}`).join(', ')}`,
+  )
   console.log('')
   const canned = {
     coachingSummary: 'You hit 92 mph and got it out to 305 feet on swing 4.',
@@ -552,7 +582,7 @@ function dryRun(conditionKeys, seed) {
         `  ${conditionKey.padEnd(9)} ${cell.key.padEnd(12)} ` +
         `system ${String(system.length).padStart(5)} chars, prompt ${String(userMessage.length).padStart(5)} chars, ` +
         `grader ok (box ${graded.wordCounts.box}w, ${graded.numbers.grounded} grounded, ` +
-        `${graded.numbers.unmatched} unmatched, ${graded.missing.length} missing)`,
+        `${graded.numbers.unmatched} unmatched, ${graded.missing.length} missing, overlap ${round2(graded.overlap)})`,
       )
     }
   }
@@ -571,6 +601,24 @@ function dryRun(conditionKeys, seed) {
     throw new Error('Missing-field self-check failed: see the two counts printed above.')
   }
 
+  // Overlap self-check, independent of the canned dry-run reply above (whose
+  // two fields happen to share zero content words, which is a valid grade
+  // but not a useful thing to assert against): identical text must score
+  // exactly 1, and a pair that shares some but not all content words
+  // ("hard", "mph") while differing on the rest must land strictly between
+  // 0 and 1.
+  const identicalOverlap = contentWordOverlap(canned.coachingSummary, canned.coachingSummary)
+  const partialA = 'You hit the ball hard at 92 mph and drove it 320 feet.'
+  const partialB = 'That was hard contact at 92 mph, a strong swing.'
+  const partialOverlap = contentWordOverlap(partialA, partialB)
+  console.log(
+    `Overlap self-check: identical text -> ${round2(identicalOverlap)} (expect 1), ` +
+    `partially-shared text -> ${round2(partialOverlap)} (expect strictly between 0 and 1)`,
+  )
+  if (identicalOverlap !== 1 || !(partialOverlap > 0 && partialOverlap < 1)) {
+    throw new Error('Overlap self-check failed: see the two values printed above.')
+  }
+
   console.log('')
   console.log('Every path exercised. Drop --dry-run to spend money.')
 }
@@ -583,7 +631,7 @@ async function main() {
     if (!CONDITIONS[key]) throw new Error(`Unknown condition: ${key}. Known: ${Object.keys(CONDITIONS).join(', ')}`)
   }
   if (args.dryRun) {
-    dryRun(conditionKeysForDryRun, args.seed)
+    dryRun(conditionKeysForDryRun, args.seed, args.runs)
     return
   }
 
@@ -599,9 +647,31 @@ async function main() {
     if (!CONDITIONS[key]) throw new Error(`Unknown condition: ${key}. Known: ${Object.keys(CONDITIONS).join(', ')}`)
   }
 
-  const planned = conditionKeys.length * CELLS.length * args.runs
+  const runsPerCell = CELLS.map((c) => cellRuns(c, args.runs))
+  const runsPerCondition = runsPerCell.reduce((sum, n) => sum + n, 0)
+  const planned = conditionKeys.length * runsPerCondition
   if (planned > MAX_PLANNED_CALLS) {
-    console.error(`Refusing to plan ${planned} calls; the cap is ${MAX_PLANNED_CALLS}.`)
+    console.error(
+      `Refusing to plan ${planned} calls; the cap is ${MAX_PLANNED_CALLS} ` +
+      `(${conditionKeys.length} condition(s) x ${runsPerCondition} calls/condition).`,
+    )
+    // The power-s1 cell (Slice 7b) raised every condition's own cost from 24
+    // to 36 calls, so --condition all now needs 180 at the default --runs 8,
+    // above the cap on its own. That is not a bug to route around by raising
+    // the cap: --condition all was already discouraged before this slice,
+    // since B and shipped send byte-identical system prompts and running
+    // both spends calls measuring the same string twice. This message exists
+    // so a future caller who hits the refusal understands why, rather than
+    // reading it as an arbitrary number to push past.
+    if (args.condition === 'all') {
+      console.error(
+        '"all" runs every condition, including both B and shipped, which build ' +
+        'byte-identical system prompts — that duplication was already wasteful ' +
+        'before this slice and is now what pushes the plan over the cap. Use ' +
+        '--condition shipped (what the app sends today) unless you specifically ' +
+        'need the historical A/B/C comparison, or name only the conditions you need.',
+      )
+    }
     console.error('Lower --runs or narrow --condition.')
     process.exit(1)
   }
@@ -610,8 +680,8 @@ async function main() {
   console.log('='.repeat(70))
   console.log(`Model            ${MODEL} (imported from src/coachApi.js, not copied)`)
   console.log(`Conditions       ${conditionKeys.join(', ')}`)
-  console.log(`Cells            ${CELLS.map((c) => c.key).join(', ')}`)
-  console.log(`Runs per cell    ${args.runs}`)
+  console.log(`Cells            ${CELLS.map((c, i) => `${c.key}(${runsPerCell[i]})`).join(', ')}`)
+  console.log(`Runs             --runs ${args.runs} (per-cell counts above; ${runsPerCondition} calls/condition)`)
   console.log(`Live API calls   ${planned}`)
   console.log(`Rough cost       $${(planned * 0.018).toFixed(2)} at ~1.8 cents a debrief`)
   console.log(`Seed             ${args.seed} (every condition sees identical sessions)`)
@@ -639,7 +709,7 @@ async function main() {
         viewingSessionNumber: cell.session,
       })
 
-      for (let run = 1; run <= args.runs; run++) {
+      for (let run = 1; run <= cellRuns(cell, args.runs); run++) {
         process.stdout.write(`  ${conditionKey} / ${cell.key} / run ${run}... `)
         try {
           const { parsed, elapsedMs, usage } = await callCoach({ system, userMessage, apiKey })
@@ -649,8 +719,9 @@ async function main() {
           records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded })
           console.log(`${graded.wordCounts.box} words in the box, ${Math.round(elapsedMs / 100) / 10}s`)
         } catch (err) {
-          console.log(`FAILED: ${err.message}`)
-          records.push({ conditionKey, cell: cell.key, run, failed: err.message })
+          const ceilingNote = err instanceof CoachCallError && err.stopReason === 'max_tokens' ? ' (hit MAX_TOKENS)' : ''
+          console.log(`FAILED: ${err.message}${ceilingNote}`)
+          records.push(buildFailureRecord({ conditionKey, cell: cell.key, run }, err))
         }
       }
     }
@@ -718,6 +789,34 @@ function report(records, conditionKeys) {
         `${conditionKey.padEnd(20)} ${cell.key.padEnd(12)} ${String(rows.length).padStart(2)}   ` +
         `${String(median(box)).padStart(10)}   ${String(percentile(box, 90)).padStart(7)}   ` +
         `${String(Math.max(...box)).padStart(7)}   ${String(median(tips)).padStart(11)}`,
+      )
+    }
+  }
+
+  console.log('')
+  console.log('='.repeat(70))
+  console.log('DOES WHAT THIS MEANS JUST RESTATE THE SUMMARY?')
+  console.log('='.repeat(70))
+  console.log('')
+  console.log('Content-word overlap (Jaccard, see scripts/contentWordOverlap.js) between')
+  console.log('whatThisMeans and coachingSummary. 0 = no shared content words, 1 = the')
+  console.log('same set on both sides. A word-count floor on whatThisMeans was scoped for')
+  console.log('this slice but deferred when it pivoted, so it has not shipped; this measure')
+  console.log('is instrumentation built ahead of that floor, because a floor invites padding')
+  console.log('by restating the summary rather than adding to it, and a rising median here,')
+  console.log('not a rising word count, is what that padding actually looks like.')
+  console.log('')
+  console.log('condition            cell         n   overlap median   p90    max')
+  console.log('-'.repeat(84))
+  for (const conditionKey of conditionKeys) {
+    for (const cell of CELLS) {
+      const rows = ok.filter((r) => r.conditionKey === conditionKey && r.cell === cell.key)
+      if (!rows.length) continue
+      const overlap = rows.map((r) => r.overlap)
+      console.log(
+        `${conditionKey.padEnd(20)} ${cell.key.padEnd(12)} ${String(rows.length).padStart(2)}   ` +
+        `${String(round2(median(overlap))).padStart(13)}   ${String(round2(percentile(overlap, 90))).padStart(4)}   ` +
+        `${String(round2(Math.max(...overlap))).padStart(4)}`,
       )
     }
   }
@@ -810,6 +909,22 @@ function report(records, conditionKeys) {
     console.log('')
     console.log(`${failures.length} of ${records.length} calls failed. Those runs are excluded from every`)
     console.log('number above, so treat the sample size as smaller than it was planned to be.')
+
+    // Task 10, Slice 7b's pivot: the reason this bench now keeps stop_reason
+    // and output_tokens on a failed call. A count here separates "the model
+    // ran out of room and got cut off mid-JSON" from every other way a call
+    // can fail, without anyone having to re-run a scratch script to find out.
+    const ceilingHits = failures.filter((r) => r.stopReason === 'max_tokens')
+    if (ceilingHits.length) {
+      console.log(
+        `${ceilingHits.length} of those ${failures.length} failures hit the MAX_TOKENS ceiling ` +
+        '(stop_reason "max_tokens"): the model was still writing when its output ran out, not' +
+        ' answering with something malformed. See each record\'s rawText and outputTokens for the cut-off reply.',
+      )
+      const byCell = {}
+      for (const r of ceilingHits) byCell[r.cell] = (byCell[r.cell] ?? 0) + 1
+      console.log(`By cell: ${Object.entries(byCell).map(([k, v]) => `${k} ${v}`).join(', ')}`)
+    }
   }
 }
 

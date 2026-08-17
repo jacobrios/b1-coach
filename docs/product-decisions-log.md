@@ -6,6 +6,113 @@
 
 ---
 
+## Slice 7b: the session-1 bug that outweighed the polish (August 17)
+
+*What this slice was supposed to be.* Two small clarity fixes, both scoped and
+worded before any code ran: give "What This Means" a floor so it reads as a
+finished thought rather than a stub, and bump the chat panel's type one notch.
+
+*What it found instead.* Before touching the prompt, we ran a before-measurement
+of the coach exactly as it ships, so any later change would have something
+honest to compare against. That run failed 14 of 36 calls outright with a JSON
+parse error, and every failure was on session 1, the first debrief every
+visitor gets. Ten repeated calls isolated why: on session 1 with the Power goal
+the coach ran past its 4096-token output ceiling seven times out of ten, more
+than ten times a normal debrief's length, versus never on session 2 with the
+same goal. Two of those seven got cut off mid-JSON, which is what a parse
+failure actually was. The standard fix, forcing the model's own answer to
+start with "{", is refused outright by this model. Production does not retry
+this failure either: the retry check only recognizes a connection problem, and
+a truncated response looks to it like a call that already succeeded. A real
+visitor hitting this on their first click gets the plain failure screen, no
+second try, after waiting as long as 57 seconds to get there.
+
+*The decision, and why.* We chose to make this the slice, and deferred the two
+clarity items, wording already approved, kept on file in
+`docs/slice-7b-plan.md` for whenever they're picked back up. The reasoning: a
+first-click failure on the one screen every visitor is guaranteed to see
+outranks a polish item, and shipping the "What This Means" floor on top of an
+already-overrunning prompt would have made the ceiling problem worse, not
+stayed independent of it. What we could not answer, and are recording rather
+than guessing at, is whether this bug is new or has been failing real visitors
+since the app launched. Session 1 was never measurable by any tool until this
+slice's own extraction work made it importable, so there is no history to
+check it against.
+
+*The fix and what it proved.* ~~Two prompt changes: telling the coach plainly
+that a first session has nothing to compare against, and tightening the
+instruction that the whole reply must be the JSON object and nothing else.~~
+Shipped that day as two prompt changes together; see the postscript below
+(17 August 2026, later the same day) for why the first of the two was removed
+and only the second remains. Verified against 36 fresh calls across four
+cells covering three goals (power session 2, power session 1, contact session
+4, open session 4): zero parse failures, down from fourteen, and the slowest
+call fell from 57 seconds to under 12. A separate run of 16 calls covered the
+other four goals on session 1: zero ceiling hits and zero parse failures
+there too.
+
+*What this did not settle.* Whether the fix changed how well the coach's
+citations hold up is unresolved, not confirmed clean. The before-run's
+survivors are a biased sample, since only calls that didn't overrun the
+ceiling lived to be graded, and the two cells with a clean sample in both runs
+moved in opposite directions at eight runs each, which is noise, not a
+verdict. One result was, at the time, an inference rather than a proven cause: the
+Contact/session-4 cell went from 2 clean runs out of 8 to 8 out of 8 even
+though it cannot be affected by the "nothing to compare" instruction, since it
+has three prior sessions. ~~The likely explanation is the second prompt
+change, the stricter JSON instruction, but the two changes were never
+isolated to confirm that.~~ Confirmed by the isolation experiment recorded in
+the postscript below, 17 August 2026: this is no longer an inference.
+
+*Also built, and still useful for what comes next.* Session 1's fifteen swings
+now live in their own file a script can read, closing the gap that kept the
+eval bench from grading the first screen a visitor sees. A grader that checks
+the coach's claims against the real numbers is built but was not validated
+against the known-wrong fixture before the slice changed direction; that is
+the next open item, not a finished result. The bench was also taught to keep
+a failing call's raw reply, stop reason, and output token count instead of
+just a message, but the after run had zero failures and the before run
+predates the change, so that capture code has never actually fired on a real
+call; its only evidence is unit tests and a reading of the code. Test suite
+grew from 337 to 392 across four new files. Total spend across the slice:
+about $1.95.
+
+*One more thing, confirmed but not caused by this slice.* The browser pass
+reproduced, on demand, the exact miscount the product manager caught by eye
+two days earlier: the coach said four of six swings were under 80 mph when the
+real number was six of six.
+
+*Postscript, 17 August 2026, later the same day: the two-part fix was cut back
+to one part.* The product manager questioned the first change on a specific
+ground: this app uses the word "trend" for two different things, a session
+being better or worse than a *prior* session, and a session's own swings
+trending better or worse from swing 1 to swing 15 within that one session.
+The instruction removed here forbade both, but only the first kind is
+meaningless on session 1; a within-session trend across the fifteen swings is
+legitimate first-session coaching content, and it is exactly what the Exit
+Velocity Trend chart already shows on that same screen. That ambiguity was
+reason enough to test whether the instruction was doing anything at all.
+
+An isolation experiment removed the first change and kept only the second
+(the stricter JSON-first instruction), then ran 12 fresh live calls on
+session 1 with the Power goal, the same cell that had failed worst before any
+fix. Result: 0 of 12 hit the ceiling, 0 of 12 failed to parse, output tokens
+338 to 394, a healthy range. That matches the 0-of-many results the slice
+already measured with both changes in place, so removing the first change
+cost nothing. Combined with the Contact/session-4 result above, which could
+never have been touched by the first change and still went clean, the
+conclusion is now a measured result rather than an inference: **the
+single-session "nothing to compare" instruction was dead weight, and the
+JSON-first instruction did all the work.**
+
+The dead-weight instruction was deleted from `src/coachApi.js` the same day.
+The sentence that remains, telling the coach to compare across sessions when
+more than one is provided, is unchanged and was never in question; the
+product manager confirmed that cross-session comparison on sessions 2 through
+4 is desired behaviour and "exactly what a real coach would do."
+
+---
+
 ## Slice 7: the coach says less, and the screen gets bigger (August 14)
 
 *What we changed:* The coach wrote a full page into a box built for a

@@ -239,12 +239,17 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 14 August 2026, at the close of Slice 7.
+Line counts current as of 17 August 2026, at the close of Slice 7b.
 
-    src/App.jsx             1046 lines. Screen routing, player and session state,
-                             debrief orchestration, and the fifteen hand-written
-                             session-1 swings. Swing generation moved out in
-                             Slice 6.
+    src/App.jsx             1029 lines. Screen routing, player and session state,
+                             and debrief orchestration. The fifteen hand-written
+                             session-1 swings moved out to src/sessionOneSwings.js
+                             in Slice 7b; swing generation moved out in Slice 6.
+    src/sessionOneSwings.js   52 lines. The fifteen hand-written swings of the
+                             scripted first session every visitor sees, extracted
+                             from App.jsx in Slice 7b so a plain Node script can
+                             finally read them. See the bench section below for
+                             why that mattered.
     src/DebriefScreen.jsx   1534 lines. The results screen, all six chart
                              components, the chat panel, the session summary's
                              scroll fade, and the shared axis-text style
@@ -257,7 +262,9 @@ Line counts current as of 14 August 2026, at the close of Slice 7.
                              two calls. Slice 7 exported `DEBRIEF_SYSTEM_BASE`,
                              `lengthBudget`, `DEBRIEF_BUDGET`, `DEBRIEF_SYSTEM`,
                              `MODEL` and `MAX_TOKENS` so the bench can send the
-                             real prompt rather than a copy of it.
+                             real prompt rather than a copy of it. Slice 7b
+                             changed two sentences inside it; see the decision
+                             log entry for 17 August 2026.
     src/ballFlight.js        228 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
@@ -278,14 +285,38 @@ Line counts current as of 14 August 2026, at the close of Slice 7.
                              whether a single key from a chat reply is usable.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           1794 lines across nine files, beside what they test.
+    src/*.test.js           1843 lines across ten files, beside what they test.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
-                             counted in the rows above; together the twelve test
-                             files vitest collects are 2605 lines.
-    scripts/*.mjs           1540 lines across three hand-run scripts,
-                             deliberately outside the test runner. See below and
-                             the bench section further down.
+                             counted in the rows above.
+    scripts/*.mjs           2554 lines across four hand-run scripts, deliberately
+                             outside the test runner: the two Slice 6 measurement
+                             scripts, the Slice 7 bench, and the claim-accuracy
+                             grader (`scripts/grade-coach-accuracy.mjs`) added in
+                             Slice 7b. See below and the bench section further down.
+    scripts/*.js (tested)    333 lines across three small modules pulled out of
+                             those hand-run scripts, in Slice 7b, so their pure
+                             logic can be checked without spending money:
+                             `factSheet.js` (the grader's deterministic count
+                             table), `contentWordOverlap.js` (the bench's
+                             restatement check), and `coachFailureRecord.js`
+                             (what the bench now keeps when a call fails to
+                             parse; see the pivot in the 17 August 2026 decision
+                             log entry).
+    scripts/*.test.js        359 lines across three files, testing those three
+                             modules. Not counted in the rows above; together the
+                             sixteen test files vitest collects are 3013 lines.
+    docs/eval-fixtures/      Committed ground truth, not code. Two directories:
+                               `slice7-debriefs/` (360 KB) holds the 96 real
+                               debriefs from Slice 7's measurement round, 8 of
+                               them known wrong by hand verification, plus the
+                               scripts that rebuild the session data they were
+                               written about. `slice7b-parse-failure/` (112 KB)
+                               holds the before/after records behind Slice 7b's
+                               parse-failure fix, 36 calls each. Neither is
+                               collected by vitest; both have their own READMEs
+                               covering what is and is not safe to conclude
+                               from them.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -301,8 +332,12 @@ guess. `ballFlight.js` and `swingGenerator.js` were added in Slice 6, the second
 because the generator's re-roll cannot be tested while it is a closure inside a
 React component. `scrollFade.js` was added in Slice 7 for the same reason: the
 show-or-hide decision needed to be a pure function so `scrollFade.test.js`
-could pin its tolerance without a browser. Do not move anything else out on the
-same excuse without a test that needs it.
+could pin its tolerance without a browser. `sessionOneSwings.js` was added in
+Slice 7b for a related but distinct reason: the fifteen swings were not
+untestable logic, they were unreadable data, sitting inside `App.jsx`'s JSX
+where no plain Node script could import them, which is what kept the eval
+bench from grading the first debrief a real visitor sees. Do not move anything
+else out on the same excuse without a test or a script that needs it.
 
 **One thing was exported rather than extracted, deliberately.** Slice 6 changed
 `GOALS` in `App.jsx` from a file-local `const` to an `export const` so a test
@@ -434,13 +469,30 @@ itself. `--condition all` still exists but now duplicates work: `B` and
 `DEBRIEF_SYSTEM`, so running both spends 24 extra calls measuring the same
 string twice.
 
-**Its session-1 blind spot.** The bench cannot grade the very first debrief a
+~~**Its session-1 blind spot.** The bench cannot grade the very first debrief a
 real visitor sees. Session 1 is not generated: it is fifteen swings
 hand-written inside `src/App.jsx`, and a plain Node script cannot load a file
 with JSX in it. The bench's three cells use a stand-in pinned to session 1's
 real averages (81.6 mph, 17.33 degrees) rather than the actual fifteen
 swings. Closing that gap needs those swings extracted into their own module
-first, which is the first task of the next slice.
+first, which is the first task of the next slice.~~
+
+**Closed in Slice 7b, 17 August 2026, and closing it is what found the
+slice's real subject.** Session 1's swings now live in `src/sessionOneSwings.js`
+and the bench has a fourth cell, `power-s1`, 12 runs against the other three
+cells' 8 each. The first thing that cell measured was not citation quality: it
+was 14 of 36 before-run calls failing to parse at all, because session 1 was
+pushing the coach past its 4096-token output ceiling. See the decision log
+entry for 17 August 2026 for the failure and the fix. The other three cells
+(`power-s2`, `contact-s4`, `open-s4`) also switched from the pinned average to
+the real session-1-derived swings underneath them, since every later session
+is generated off session 1's actual numbers, not its average. The same slice
+also taught the bench to keep a failing call's raw reply, stop reason, and
+output token count (`coachFailureRecord.js`) instead of just a message, but
+the after-fix run that would have exercised it had zero failures and the
+before run predates the change, so that capture code has never been observed
+firing on a real call. It rests on unit tests and a reading of the code, not
+a forced failure.
 
 ## The data is synthetic
 
@@ -521,18 +573,25 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 7 on 14 August 2026 it is 337 tests across 12 files.
-   It covers the serverless proxy's method routing, validation, and size
-   cap; `callApi`'s one retry and its unwrapping of a fenced model response; the
-   chart-slot fallback and dedupe; the chat reply's chart key; the goal targets
-   and the coach prompt built from them; the summary box's scroll-fade
-   tolerance; and `computeStats`. It covers **no screens and no rendering at
-   all**, so a green suite says nothing about what a visitor sees, and it
-   still never calls the model: the length budget's four numbers are pinned,
-   but whether the coach actually obeys them is the bench's job, not the
-   suite's. Never imply broader coverage than that. New behavior gets a test
-   shown failing first; a test written over existing behavior is worthless until
-   the thing it covers has been broken on purpose and seen to go red.
+   vitest, and as of Slice 7b on 17 August 2026 it is 392 tests across 16
+   files, up from 337 across 12 at the close of Slice 7. It covers the
+   serverless proxy's method routing, validation, and size cap; `callApi`'s
+   one retry and its unwrapping of a fenced model response; the chart-slot
+   fallback and dedupe; the chat reply's chart key; the goal targets and the
+   coach prompt built from them; the summary box's scroll-fade tolerance;
+   `computeStats`; a pin that recomputes each of session 1's fifteen swings
+   against its own exit speed and angle so a wrong distance turns the suite
+   red; and the deterministic fact-sheet and word-overlap modules the
+   claim-accuracy grader and the bench each lean on. It covers **no screens
+   and no rendering at all**, so a green suite says nothing about what a
+   visitor sees, and it still never calls the model: the length budget's four
+   numbers are pinned, but whether the coach actually obeys them is the
+   bench's job, not the suite's. Never imply broader coverage than that. New
+   behavior gets a test shown failing first; a test written over existing
+   behavior is worthless until the thing it covers has been broken on purpose
+   and seen to go red. **The claim-accuracy grader itself is not part of this
+   suite and, as of Slice 7b, has not been validated against the fixture it
+   was built for**; see the What's Next list.
 2. ~~**Some tests deliberately pin behavior that is wrong.**~~ Resolved in
    Slice 4 on 3 August 2026. All four "recorded, not endorsed" tests were flipped
    to assert the correct behavior, each seen failing against the unfixed code
@@ -770,6 +829,13 @@ owner's own use explains. Do not build rate limiting without that signal.
   of tips leading with a real cited number fell from 96% to 88%. Shipped
   anyway, because the audience is a high school hitter's attention span, not a
   data-completeness score. Revisit only with bench evidence, not a hunch.
+  **Annotation, 17 August 2026: the 50-word tip half of this budget is not
+  holding, and the bench evidence to say so is now in hand.** Mean `tip1`
+  length measured 67 to 82 words, not 50, across three independent
+  measurements: Slice 7b's own before run (72.4), its after run (68.4), and
+  Slice 7's own committed condition-B fixture (71.0), the exact data this
+  budget was chosen from. So "shipped, holds" is not accurate for the tip
+  number as written; see the What's Next item below.
 - **Session summary body text is 18px, not 16 or 20.** 16 was the size before
   Slice 7; 20 was tried and rejected because it closed the visual gap to the
   chat panel's own type (14px to 16px), so the two panels started reading as
@@ -1110,22 +1176,34 @@ rewritten, per the append-only rule.
   reach. Whether that is worth closing on a proof of concept is a judgment call:
   the realistic risk here is an accident rather than an attacker, and the key is
   spendable rather than readable either way.
-- **Pin the fifteen hand-written session-1 distances, or decide they do not need
-  pinning.** Added 14 August 2026, found by the review of Slice 6. Session 1 is
-  not generated: it is fifteen swings typed out by hand in `src/App.jsx`, and
-  their distances are the ones every visitor reads in their very first debrief.
-  Nothing checks them. A reviewer changed one from 170 feet to a physically
-  impossible 999 and all 326 tests stayed green. All fifteen are correct today,
-  recomputed against the honest carry curve in Slice 6, so this is a missing
-  safety net rather than a live defect. What makes it worth a line is that a
-  wrong distance there is precisely the defect Slice 6 existed to remove, on the
-  one screen a stranger is guaranteed to see. It got harder rather than easier
-  in Slice 6, too: those fifteen swings now exist in five hand-maintained copies
-  that must agree, in `src/App.jsx` and both scripts under `scripts/` in full,
-  and in `src/coachApi.test.js` and `src/ballFlight.test.js` as the distances
-  alone. Each copy is deliberate and explained where it sits, but a copy is also
-  why the tests could not notice the 999. Deliberately left as a
-  decision for the product manager rather than fixed on the way past.
+- ~~**Pin the fifteen hand-written session-1 distances, or decide they do not
+  need pinning.** Added 14 August 2026, found by the review of Slice 6. Session
+  1 is not generated: it is fifteen swings typed out by hand in `src/App.jsx`,
+  and their distances are the ones every visitor reads in their very first
+  debrief. Nothing checks them. A reviewer changed one from 170 feet to a
+  physically impossible 999 and all 326 tests stayed green. All fifteen are
+  correct today, recomputed against the honest carry curve in Slice 6, so this
+  is a missing safety net rather than a live defect. What makes it worth a
+  line is that a wrong distance there is precisely the defect Slice 6 existed
+  to remove, on the one screen a stranger is guaranteed to see. It got harder
+  rather than easier in Slice 6, too: those fifteen swings now exist in five
+  hand-maintained copies that must agree, in `src/App.jsx` and both scripts
+  under `scripts/` in full, and in `src/coachApi.test.js` and
+  `src/ballFlight.test.js` as the distances alone. Each copy is deliberate and
+  explained where it sits, but a copy is also why the tests could not notice
+  the 999. Deliberately left as a decision for the product manager rather than
+  fixed on the way past.~~
+
+  **Closed in Slice 7b, 17 August 2026.** The fifteen swings now live in
+  `src/sessionOneSwings.js`, and a new test recomputes each one's stored
+  distance from its own exit speed and angle via `carryDistance`, seen failing
+  first against a reintroduced 999-foot mutation before being trusted. The
+  five hand-maintained copies this bullet described are down to three:
+  `src/App.jsx` and both scripts under `scripts/` now import the module
+  instead of each carrying their own array. The two remaining copies, in
+  `src/ballFlight.test.js` and `src/coachApi.test.js`, are deliberately
+  unchanged, since they are expected values inside an assertion, not
+  duplication left to collapse.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.
@@ -1187,11 +1265,15 @@ rewritten, per the append-only rule.
 
 *Added at the close of Slice 7, 14 August 2026:*
 
-- **Extract session 1's fifteen hand-written swings into their own module.**
+- ~~**Extract session 1's fifteen hand-written swings into their own module.**
   Needed so the bench can grade the first debrief a real visitor sees, rather
   than the pinned-average stand-in it uses today. First task of the next
   slice; the session-1 rewrite itself and the coach-fidelity check it needs
-  both wait on this.
+  both wait on this.~~ **Done in Slice 7b, 17 August 2026.** See
+  `src/sessionOneSwings.js` above and the bench section's closed blind-spot
+  note. Extracting it did not just enable measurement, it surfaced a live
+  parse-failure bug; see the decision log. The session-1 rewrite itself is
+  still open.
 - **The coach rounds numbers loosely.** The bench's own transcripts show it
   saying "320 feet or more" against a session whose real bucket was "305
   plus." Not invention, the number is in the right neighborhood, but not
@@ -1249,6 +1331,81 @@ rewritten, per the append-only rule.
   Both were found mid-task while consolidating the chart label styles,
   disclosed after the fact, and verified in a browser, but neither was
   approved before it shipped. See the decision log entry for 14 August 2026.
+
+*Added at the close of Slice 7b, 17 August 2026:*
+
+- **The word "trend" means two different things in this app's prompts, and
+  that ambiguity already cost one wrong instruction.** One meaning is a
+  session being better or worse than a *prior* session, which is meaningless
+  on session 1. The other is a session's own swings trending better or worse
+  from swing 1 to swing 15 *within* one session, which is legitimate
+  first-session coaching content and is exactly what the Exit Velocity Trend
+  chart already shows. The single-session instruction this slice shipped and
+  then deleted forbade both, because it never distinguished them. Nothing
+  broke as a result this time, an isolation experiment showed the instruction
+  was not doing anything anyway, but a future prompt change could easily lean
+  on the wrong meaning without anyone noticing. Any future prompt wording
+  about trends should say plainly which kind it means. Cheap to keep in mind,
+  costs nothing to action now; recorded so the next prompt edit does not
+  repeat the mistake.
+- **The "What This Means" floor and the chat panel's 17px bump, deferred, not
+  dropped.** Both were scoped and worded before this slice pivoted to the
+  session-1 parse-failure bug instead. The approved wording is kept on file in
+  `docs/slice-7b-plan.md`, under "Settled before work started." Whoever picks
+  this up next should ship from that wording rather than re-deriving it, and
+  should re-verify it against the fixed prompt, since the ceiling problem that
+  caused the pivot is exactly why the floor could not ship alongside it.
+- **Validate the claim-accuracy grader against the committed fixture.**
+  `scripts/grade-coach-accuracy.mjs` and `scripts/factSheet.js` are built, and
+  the fact sheet has unit tests, but the grader itself was never run in its
+  validation mode against the 8 known-wrong debriefs in
+  `docs/eval-fixtures/slice7-debriefs/` before the slice changed direction.
+  Until that runs, the grader's verdicts should not be trusted for anything.
+  Note what `--validate` itself does and does not produce: it deliberately
+  never names the 8 known-wrong records and reports only what it flagged, so
+  it does not compute a recall number on its own. Comparing that output
+  against the 8 by name is a separate, blind, manual step done once by
+  whoever runs it, so the resulting score is an honest test rather than a
+  number the grader was fitted to produce. See the methodological note at the
+  top of `scripts/grade-coach-accuracy.mjs` for why that split is deliberate.
+- **The coach's "four of those" miscount is still live on the first screen,
+  and is now reproducible on demand.** The product manager caught this by eye
+  on 15 August; this slice's browser pass reproduced it verbatim on a fresh
+  session-1 Power debrief. Belongs to the coach-fidelity work scoped in
+  `docs/queued-slices.md`, not to this slice, which fixed a different failure
+  mode (the coach not answering at all, not the coach answering wrong).
+- **Whether the session-1 parse failure has always been happening to real
+  visitors is unknown, and may not be answerable in hindsight.** Session 1 was
+  not measurable by any tool before this slice's own extraction work, so there
+  is no earlier data to check it against. Recorded rather than guessed at.
+- **Both `scripts/measure-swing-generation.mjs` and
+  `scripts/compare-distance-bucket-schemes.mjs` are unseeded, and no number
+  either has ever printed is a fixed measurement rather than one draw.**
+  Confirmed by running the same untouched code twice in a row: the Power
+  goal's empty-band figure read 56.6% on one run and 57.3% on the next. This
+  is the mechanism behind the Slice 6 entry above quoting a "9.7% to 16.8%"
+  nobody could reproduce: nothing printed by either script has ever been
+  reproducible, and any number quoted from them going forward should be read
+  as one sample from a moving target, not a fixed fact, unless a seed is
+  added.
+- ~~**A stale comment in `scripts/bench-coach-brevity.mjs`, around lines 41 to
+  42, claims `npm test` "reported 11 files and 326 tests before this file
+  existed and must report 11 and 326 after."** Both numbers have been stale
+  since Slice 7; the suite is now 392 tests across 16 files. The file-count
+  proof technique the comment describes is still sound. Only the two numbers
+  inside it need updating.~~ **Fixed by whole-branch review, 17 August 2026.**
+  Numbers corrected to 16 files and 392 tests and the claim dated, so it reads
+  as a measurement from a day rather than a permanent count.
+- **The shipped tip budget is not being obeyed, and never was.** The 50-word
+  ceiling on `tip1` reads 67 to 82 words in every measurement taken of it:
+  Slice 7b's own before run (mean 72.4), its after run (mean 68.4), and
+  Slice 7's own committed condition-B fixture (mean 71.0), which is the exact
+  data the 45/30/12/50 budget was chosen from. Pre-existing, not introduced by
+  this slice, and not something the length-budget prompt text can be edited to
+  fix without product sign-off (see the deliberate-decisions annotation
+  above). Needs a decision: raise the number to match what the coach actually
+  writes, or decide the prompt wording needs to change to hold it down, which
+  is the one prompt change this review is not authorized to make on its own.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

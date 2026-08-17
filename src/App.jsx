@@ -6,6 +6,7 @@ import { computeStats, topExitVelocity } from './sessionStats'
 import { launchAngleRangeLabel } from './goalTargets'
 import { failureCopy, MID_WAIT_MESSAGE, RETRYING_MESSAGE } from './failureCopy'
 import { generateSwings } from './swingGenerator'
+import { SESSION_ONE_SWINGS as mockSwings } from './sessionOneSwings'
 
 // ── Goal definitions ───────────────────────────────────────────────────────
 // These are the app's predefined coaching focus options.
@@ -647,24 +648,6 @@ const NICKNAMES = [
 ]
 
 export default function App() {
-  const mockSwings = [
-    { plateLocHeight: 2.8, plateLocSide:  0.2, hit: { launch: { exitSpeed: 78, angle: 12, direction:   2 }, landing: { distance: 170 } } },
-    { plateLocHeight: 1.2, plateLocSide: -0.3, hit: { launch: { exitSpeed: 72, angle:  8, direction: -18 }, landing: { distance: 122 } } },
-    { plateLocHeight: 3.1, plateLocSide: -0.5, hit: { launch: { exitSpeed: 88, angle: 26, direction:   1 }, landing: { distance: 310 } } },
-    { plateLocHeight: 2.3, plateLocSide:  0.9, hit: { launch: { exitSpeed: 75, angle:  6, direction: -10 }, landing: { distance: 126 } } },
-    { plateLocHeight: 2.6, plateLocSide:  0.4, hit: { launch: { exitSpeed: 91, angle: 28, direction:   3 }, landing: { distance: 345 } } },
-    { plateLocHeight: 3.8, plateLocSide:  0.1, hit: { launch: { exitSpeed: 82, angle: 18, direction: -15 }, landing: { distance: 224 } } },
-    { plateLocHeight: 2.1, plateLocSide: -0.6, hit: { launch: { exitSpeed: 76, angle: 10, direction:   6 }, landing: { distance: 150 } } },
-    { plateLocHeight: 2.9, plateLocSide:  0.3, hit: { launch: { exitSpeed: 85, angle: 24, direction:  -1 }, landing: { distance: 277 } } },
-    { plateLocHeight: 1.4, plateLocSide:  0.5, hit: { launch: { exitSpeed: 79, angle: 14, direction:  22 }, landing: { distance: 185 } } },
-    { plateLocHeight: 3.3, plateLocSide: -0.4, hit: { launch: { exitSpeed: 83, angle: 20, direction:   5 }, landing: { distance: 241 } } },
-    { plateLocHeight: 2.7, plateLocSide:  0.6, hit: { launch: { exitSpeed: 87, angle: 22, direction:  -3 }, landing: { distance: 279 } } },
-    { plateLocHeight: 0.8, plateLocSide: -0.2, hit: { launch: { exitSpeed: 70, angle:  4, direction:  12 }, landing: { distance:  97 } } },
-    { plateLocHeight: 2.4, plateLocSide: -0.3, hit: { launch: { exitSpeed: 86, angle: 25, direction: -24 }, landing: { distance: 290 } } },
-    { plateLocHeight: 3.6, plateLocSide:  0.8, hit: { launch: { exitSpeed: 80, angle: 16, direction:  18 }, landing: { distance: 201 } } },
-    { plateLocHeight: 2.5, plateLocSide:  0.1, hit: { launch: { exitSpeed: 92, angle: 27, direction:   1 }, landing: { distance: 346 } } },
-  ]
-
   const [screen, setScreen] = useState('goal')
   const [selectedGoal, setSelectedGoal] = useState(null)
   const [dashboardMessage, setDashboardMessage] = useState(false)

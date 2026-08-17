@@ -692,3 +692,33 @@ describe('the length budget the coach was shipped with', () => {
     expect(DEBRIEF_BUDGET).toContain('each tip in nextSessionTips: 50 words maximum.')
   })
 })
+
+// Slice 7b's pivot, Task 9: session 1 has no prior session to compare
+// against, and the prompt used to give the model no instruction at all for
+// that case, only what to do "if multiple sessions are provided." The
+// diagnosed failure (7 of 10 session-1 debriefs writing a long analysis and
+// running into the hard 4096-token ceiling) is model behaviour, which is the
+// bench's job to measure, not the suite's. Slice 7b shipped two candidate
+// fixes for that failure: a single-session instruction telling the model not
+// to look for trends, and a strengthened instruction that the reply must
+// start with the JSON object. An isolation experiment on 17 August 2026 (12
+// live session-1 calls with only the JSON-first instruction in place) found
+// the single-session instruction was dead weight: 0 of 12 hit the ceiling
+// with it removed. It was deleted from the shipped prompt the same day. What
+// the suite pins now is only the instruction the experiment showed actually
+// does the work, plus the cross-session comparison instruction, which the
+// product manager has confirmed is desired behaviour and was never in
+// question.
+describe('the JSON-first instruction that fixed the session-1 MAX_TOKENS bug', () => {
+  it('still tells the model to compare when multiple sessions are provided', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('If multiple sessions are provided, compare the current session to prior sessions')
+  })
+
+  it('does not carry the single-session instruction the isolation experiment showed was unnecessary', () => {
+    expect(DEBRIEF_SYSTEM_BASE).not.toContain('If this is the only session provided')
+  })
+
+  it('tells the model its reply must start with the JSON object, not analysis first', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('Do not write any analysis, reasoning, or commentary before it')
+  })
+})

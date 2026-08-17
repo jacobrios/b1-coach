@@ -86,7 +86,7 @@ For nextSessionTips: Write each tip the way a coach would say it out loud walkin
 
 If multiple sessions are provided, compare the current session to prior sessions and call out specific improvements or regressions by number.
 
-Respond ONLY with valid JSON matching this exact shape, no preamble, no markdown fences:
+Respond ONLY with valid JSON matching this exact shape. Do not write any analysis, reasoning, or commentary before it. Your entire reply must be the JSON object itself, starting with { and ending with }, no preamble, no markdown fences:
 {
   "coachingSummary": "2-3 sentences max",
   "whatThisMeans": "1-2 sentences translating the numbers into real baseball terms",

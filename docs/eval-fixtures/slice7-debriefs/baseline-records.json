@@ -1,0 +1,806 @@
+[
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 1,
+    "elapsedMs": 13294.412625,
+    "wordCounts": {
+      "coachingSummary": 57,
+      "whatThisMeans": 46,
+      "tipsIntro": 14,
+      "tip1": 87,
+      "tip2": 100,
+      "box": 103
+    },
+    "numbers": {
+      "grounded": 12,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 9,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped this round — you went from averaging 81 mph to 85 mph, and your top swings hit 91 and 92 mph. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1. That is real progress in a short amount of time.",
+      "whatThisMeans": "You are starting to get on top of the ball less and drive it with more lift. When you put those two things together — exit velo and launch angle — you hit 4 balls over 305 feet this round after hitting zero in Session 1.",
+      "tipsIntro": "Good round out there — two things to sharpen before you step back in.",
+      "tip1": "You hit 4 balls over 305 feet this round, and three of those came on swings where your launch angle was between 28 and 34 degrees with exit velo at 88 mph or better. That tells me when you commit to your swing and stay through the ball, you have the power to do real damage. Keep your back shoulder working down and through the ball at contact — that feeling of driving through the bottom half of the ball is what is producing those 300-foot results.",
+      "tip2": "Six of your 15 pitches were outside the strike zone this round, and some of your weaker swings came on those pitches — like swing 3 at a pitch 0.6 feet off the ground and swing 8 at a pitch barely in play at 0.51 feet high. Chasing those low and outside pitches is costing you exit velocity and making it harder to get the launch angle you need. Before you swing, lock in on pitches from the belt down to the knees and let the junk go — if it is not thigh-to-chest and over the plate, take it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 2,
+    "elapsedMs": 11626.031208,
+    "wordCounts": {
+      "coachingSummary": 45,
+      "whatThisMeans": 33,
+      "tipsIntro": 14,
+      "tip1": 87,
+      "tip2": 80,
+      "box": 78
+    },
+    "numbers": {
+      "grounded": 5,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 13,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your exit velocity jumped from 81 to 85 mph average, and you went from zero swings in the power zone in Session 1 to two in Session 2. Your top three swings hit 91, 92, and 92 mph — that bat speed is real.",
+      "whatThisMeans": "You are squaring the ball up with more authority and getting the barrel to the right spot more often. The power is in there — now it's about making that happen more consistently.",
+      "tipsIntro": "Good jump this round — two things to lock in before the next one.",
+      "tip1": "Your three best swings — 15, 8, and 11 — all came in at 91, 88, and 86 mph with launch angles of 30, 28, and 28 degrees, right in your power zone. That tells me when you stay through the ball and drive it up the middle or pull side with a good swing path, you get exactly the flight we're looking for. Keep your back shoulder feeling like it's driving under the ball through the zone, not leveling out — that's what's producing those angles.",
+      "tip2": "Six of your 15 swings this round came in at 16 degrees or under, and those averaged well below your target window. That tells me you are still flattening out your swing path on certain pitches and rolling over instead of driving through. Feel like you are hitting the bottom half of the ball and finishing with your hands high — if your finish feels like a line drive swing, your launch angle will land right where we want it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 3,
+    "elapsedMs": 12561.089708000003,
+    "wordCounts": {
+      "coachingSummary": 59,
+      "whatThisMeans": 36,
+      "tipsIntro": 14,
+      "tip1": 91,
+      "tip2": 81,
+      "box": 95
+    },
+    "numbers": {
+      "grounded": 4,
+      "target": 0,
+      "unmatched": 1,
+      "ungradeable": 19,
+      "unmatchedExamples": [
+        "3.5 feet high and"
+      ]
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2 — avg exit velo went from 81 to 85 mph, and your top swings hit 91 and 92. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1. That is real progress in one round.",
+      "whatThisMeans": "You are starting to get on top of the ball less and drive it with more loft. When you stay through the ball and let it travel, you have the bat speed to do serious damage.",
+      "tipsIntro": "Good round out there — two things to lock in before your next cuts.",
+      "tip1": "Four of your longest balls in Session 2 — swings 1, 8, 11, and 15 — went 305 feet or more, but three of those four came on pitches outside the strike zone. You got away with it this time, but chasing those will hurt you when the velocity goes up. Focus on finding that same swing on pitches between 1.5 and 3.5 feet high and within the width of the plate — load the same way, same hip turn, and let it rip on a pitch you can actually handle.",
+      "tip2": "Your launch angle averaged 22 degrees in Session 2, up from 17 in Session 1, but you are still just outside the 25-to-35-degree power window on most swings. You only hit that window twice out of 15 swings. Feel like you are swinging slightly up through the zone — keep your back shoulder from dropping too early, stay connected, and drive through the ball on an upward path like you are trying to hit the top half of the outfield wall."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 4,
+    "elapsedMs": 11829.089916999998,
+    "wordCounts": {
+      "coachingSummary": 60,
+      "whatThisMeans": 34,
+      "tipsIntro": 15,
+      "tip1": 89,
+      "tip2": 69,
+      "box": 94
+    },
+    "numbers": {
+      "grounded": 6,
+      "target": 0,
+      "unmatched": 1,
+      "ungradeable": 7,
+      "unmatchedExamples": [
+        "250 feet. That te"
+      ]
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2. Your average exit velocity went from 81 mph to 85 mph, and your top swings hit 91 and 92 mph. You also went from zero swings in the power zone to two, and you put four balls over 305 feet. That is real progress in a short time.",
+      "whatThisMeans": "Your swing is starting to match up with what we are looking for — hard contact with enough loft to do damage. The power is in there, and you are starting to unlock it.",
+      "tipsIntro": "Good round out there — here are two things to sharpen before the next one.",
+      "tip1": "Your two power zone swings in Session 2 both came on pitches in the middle of the zone, and both went 323 and 331 feet. That tells me when you get a pitch you can handle, your swing is locked in and your launch angle is right where we want it. Stay aggressive on pitches in the heart of the zone and trust that swing — get your foot down early, load your hands back, and let your hips fire first so you get full extension through the ball.",
+      "tip2": "Six of your 15 swings in Session 2 came in at 19 degrees launch angle or lower, and those averaged well under 250 feet. That tells me you are still getting a little flat on certain pitches and leaving distance on the table. Focus on feeling your back shoulder stay level through the swing and drive the ball up through the hitting zone instead of chopping down at it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 5,
+    "elapsedMs": 13448.536332999996,
+    "wordCounts": {
+      "coachingSummary": 76,
+      "whatThisMeans": 36,
+      "tipsIntro": 16,
+      "tip1": 88,
+      "tip2": 94,
+      "box": 112
+    },
+    "numbers": {
+      "grounded": 9,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 16,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2 — you went from an 81 mph average up to 85 mph, and your top swings hit 91 and 92 mph. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1. The power zone contact is showing up now too, with 2 swings hitting both the exit velocity and launch angle targets.",
+      "whatThisMeans": "You are squaring the ball up harder and getting it in the air more consistently. The gap between your best swings and your average swings is closing, which means the good swing is becoming more repeatable.",
+      "tipsIntro": "Big jump from Session 1 — here are two things to carry into the next round.",
+      "tip1": "Your best swings in Session 2 — swings 1, 8, 11, and 15 — all came in at 88 mph or better with launch angles between 24 and 34 degrees, right in your power window. That tells me when you commit through the ball and stay on plane, you are capable of doing real damage. Next round, focus on feeling your back hip fire through the zone and staying on that swing plane all the way to extension — that is what is producing those 300-plus foot swings.",
+      "tip2": "Four of your 15 swings in Session 2 came on pitches outside the strike zone, and a couple of those were way out — like swing 3 at 0.6 feet high and a foot outside. Those pitches are going to limit your exit velocity no matter how good your swing is. Before your next round, lock in on letting anything that low or that far off the plate go, and when you do get a strike, attack it — your 92 mph swings prove the power is there when you get the right pitch."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 6,
+    "elapsedMs": 16903.988042000004,
+    "wordCounts": {
+      "coachingSummary": 58,
+      "whatThisMeans": 42,
+      "tipsIntro": 15,
+      "tip1": 97,
+      "tip2": 84,
+      "box": 100
+    },
+    "numbers": {
+      "grounded": 12,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 13,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2. You went from an 81 mph average up to 85 mph, and your top swings hit 91 and 92 mph. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way down to just 1. That is real progress.",
+      "whatThisMeans": "You are starting to find that upward path through the ball more consistently. The power zone swings are showing up now, and your distances reflect it with 4 balls at 305 feet or more this round compared to zero in Session 1.",
+      "tipsIntro": "Good round out there, Jake — two things to lock in before the next one.",
+      "tip1": "Your three best swings this round went 92, 92, and 91 mph, and all three came on pitches out of the strike zone, including swing 1 at 3.74 feet high and swing 8 at only 0.51 feet off the ground. That tells me you are doing a great job of not letting a ball's location take you off your swing, but you want to make sure that aggression is channeled toward strikes first. Next round, track the pitch a half second longer before you commit, so you are saving your best swing for pitches in the zone.",
+      "tip2": "You hit 2 swings in the power zone this round after hitting 0 in Session 1, and both of them were between 25 and 31 degrees of launch angle with exit velocities at 88 mph or better. That tells me your swing path is starting to match your bat speed, which is exactly what produces carry. Keep feeling that upward push through the ball at contact, like you are driving the ball up into the outfield gap, and trust that the power will follow."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 7,
+    "elapsedMs": 12882.574416999996,
+    "wordCounts": {
+      "coachingSummary": 66,
+      "whatThisMeans": 39,
+      "tipsIntro": 13,
+      "tip1": 97,
+      "tip2": 87,
+      "box": 105
+    },
+    "numbers": {
+      "grounded": 12,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 12,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2 — average exit velocity went from 81 up to 85, and your top three swings were 92, 92, and 91 mph. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1. The ball is jumping off your bat when you get it right.",
+      "whatThisMeans": "You hit 4 balls over 305 feet this session after hitting zero in Session 1 — that is real power showing up. You are starting to match the bat speed you have with the launch angle to do damage.",
+      "tipsIntro": "Good round, Jake — two things to lock in before your next one.",
+      "tip1": "Your two power zone swings — the ones that checked both boxes at 88 mph and 25-plus degrees — both came on pitches you handled cleanly in the zone, and swing 15 at 91 mph and 30 degrees went 331 feet. That tells me when you stay disciplined and attack strikes, your swing is built to do serious damage. Next time you get into your rhythm, trust that feeling and stay aggressive on pitches you can drive — keep your hands back, let the ball get to you, and fire through contact when it is your pitch.",
+      "tip2": "You swung at 6 pitches outside the strike zone this session, and some of your weaker swings came on those — swing 3 was off the plate and down at 0.6 feet high, swing 8 was way outside at 0.99 feet off the plate. When you chase pitches like that, you end up fighting the ball instead of driving it. Next time, narrow your focus to the middle of the zone early in the count — set your feet, find your pitch, and let everything else go."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "power-s2",
+    "run": 8,
+    "elapsedMs": 12705.19750000001,
+    "wordCounts": {
+      "coachingSummary": 68,
+      "whatThisMeans": 37,
+      "tipsIntro": 15,
+      "tip1": 106,
+      "tip2": 63,
+      "box": 105
+    },
+    "numbers": {
+      "grounded": 5,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 14,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      false
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed jumped big from Session 1 to Session 2 — your average exit velocity went from 81 to 85 mph, and your top swings hit 91 and 92. You also cut your ground balls way down, going from 5 swings below 15 degrees all the way to just 1. You found the power zone twice this round, which is two more times than last round.",
+      "whatThisMeans": "You are squaring the ball up more and getting it in the air more consistently. When you do both at the same time, the ball is going 300-plus feet, and that tells me the power is real.",
+      "tipsIntro": "Good jump from Session 1 — two things to tighten up before your next round.",
+      "tip1": "Your three best swings this round — 92, 91, and 88 mph — all came on pitches at 2.6 feet high or lower, while several of your weaker swings were on pitches at 3.6 feet and above. That tells me you are doing damage in the lower half of the zone but getting a little passive or late on the high stuff. Next round, if you get a pitch up in the zone, think about attacking it early and driving through the top half of the ball to keep the launch angle in that 25-to-35 window instead of letting it pop off the bat straight up.",
+      "tip2": "You still had 6 pitches come in outside the strike zone this round, and some of your lower exit velocities came on those swings. That means you are spending energy on balls instead of saving your best swings for strikes. Be more selective — if it does not look like a strike early, let it go and get ready for the next one."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 1,
+    "elapsedMs": 13301.496499999994,
+    "wordCounts": {
+      "coachingSummary": 88,
+      "whatThisMeans": 41,
+      "tipsIntro": 25,
+      "tip1": 69,
+      "tip2": 92,
+      "box": 129
+    },
+    "numbers": {
+      "grounded": 7,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 8,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your exit velocity climbed to 86 mph this session and you put four balls 305 feet or farther — that's the best distance output you've had all day. You also cut your weak-contact swings way down, finishing with just two swings below 15 degrees compared to five in Session 1. The one thing to keep working on is your launch angle sitting at 21 degrees on average, which is creeping into fly ball territory and pulling you away from the true line drive window you're aiming for.",
+      "whatThisMeans": "You're hitting the ball harder than ever, but a few too many swings are going up instead of through. Getting that average angle down a couple degrees will turn some of those fly balls into hard line drives that find gaps.",
+      "tipsIntro": "Good round out there — your bat speed is the best it's been all session, so let's sharpen two things before you step back in.",
+      "tip1": "Your top three exit velocities were all 92 mph this session, up from 89, 88, 87 in Session 1 — your bat speed is legitimately there right now. That kind of consistent hard contact at the top end tells me your timing and your load are clicking together. Keep that same feel in your hands going into your next round, because that's the engine behind everything else you're building.",
+      "tip2": "Your average launch angle was 21 degrees this session, and swings like 5 and 6 hit 31 and 28 degrees — those are fly balls, not the line drives you're hunting. When your angle creeps up that high, it usually means you're getting under the ball and rolling your barrel up through the zone instead of staying level through contact. Focus on keeping your back shoulder from dipping too early and try to feel like you're hitting the top half of the ball, driving it on a rope rather than lifting it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 2,
+    "elapsedMs": 14004.627250000005,
+    "wordCounts": {
+      "coachingSummary": 109,
+      "whatThisMeans": 52,
+      "tipsIntro": 13,
+      "tip1": 79,
+      "tip2": 74,
+      "box": 161
+    },
+    "numbers": {
+      "grounded": 10,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 17,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed is really coming through — you hit three swings at 92 mph in Session 4, and you had zero swings under 175 feet for the first time all day. You went from 2 swings below 15 degrees in Session 3 down to just 2 again in Session 4, and you're putting the ball in play more consistently inside the zone, 12 out of 15 pitches. The one thing to keep working on is that average launch angle sitting at 21 degrees — you're right on the edge between line drives and fly balls, and locking that in will make your hard contact even more dangerous.",
+      "whatThisMeans": "When you're squaring the ball up at 92 mph, you want that ball coming out at 8 to 18 degrees — that's a laser, not a pop-up. Right now a few of your best swings are leaking just above that window, which turns potential line drives into fly balls that get caught.",
+      "tipsIntro": "Good round out there — two things to sharpen before the next one.",
+      "tip1": "Swings 4, 5, 6, and 7 were your four hardest swings, all between 88 and 92 mph, and three of those went 323 to 331 feet. That tells me when you stay through the ball with a full finish, your bat speed shows up and the ball jumps. Next time you get into your stance, feel your back shoulder staying level through the zone and finish high and full — that's the mechanical reason those swings were your best.",
+      "tip2": "Swings 12 and 14 were your two flat swings at 14 and 11 degrees, and both came in under 191 feet despite decent contact. Those two angles tell me you're getting on top of the ball slightly and rolling over instead of driving through it. Focus on feeling the knob of the bat point down toward the ball early, then extend through contact and let the barrel work up through the hitting zone naturally."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 3,
+    "elapsedMs": 14134.66966700001,
+    "wordCounts": {
+      "coachingSummary": 101,
+      "whatThisMeans": 47,
+      "tipsIntro": 15,
+      "tip1": 77,
+      "tip2": 102,
+      "box": 148
+    },
+    "numbers": {
+      "grounded": 7,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 13,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed is climbing in a big way — you went from averaging 81 mph in Session 1 to 86 mph here in Session 4, and your top three exit velocities were all 92 mph, which is consistent power. You also cut your under-15-degree swings from 5 down to just 2 this round, so your barrel is staying in a better path more often. The one thing to keep working on is that average launch angle of 21 degrees — you're just above the line drive window, and a handful of swings are still going fly ball on you.",
+      "whatThisMeans": "You're making harder contact and doing it more consistently, but the ball is carrying just a tick too high on average to be true line drives. Getting that angle back down into the 8-18 degree range without losing the exit velocity you've built is the next step.",
+      "tipsIntro": "Good round, Jake — your power is real now, so let's dial in the angle.",
+      "tip1": "Your top three exit velocities were all 92 mph in Session 4, up from 89, 88, 87 in Session 1 — that's not luck, that's your hands getting through the zone faster and more consistently. When you stay connected through your hip turn instead of spinning off early, the bat naturally squares up at the right moment. Keep feeling that hip-to-hands sequence where your lower half leads and your hands stay tight to your body through contact.",
+      "tip2": "Nine of your 15 swings in Session 4 came in above 20 degrees, which puts them in fly ball territory instead of the line drive window you're going for. That tells me your barrel is still getting slightly under the ball on too many pitches, especially when you're out front. Focus on feeling your hands drive through the top half of the ball — think about hitting the back of the ball at the letters, not scooping up through it — and try to feel the ball jump off the bat on a flat or slightly upward path, not a looping one."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 4,
+    "elapsedMs": 13949.900416999997,
+    "wordCounts": {
+      "coachingSummary": 89,
+      "whatThisMeans": 49,
+      "tipsIntro": 14,
+      "tip1": 93,
+      "tip2": 100,
+      "box": 138
+    },
+    "numbers": {
+      "grounded": 12,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 15,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, you put together your best round of the day in Session 4. Your average exit velocity climbed to 86 mph, you had zero swings under 175 feet, and you matched your top exit velocity from Session 2 with three swings at 92 mph. The bat speed is clearly there. The one thing to keep working on is launch angle — your average of 21 degrees is just a tick above the line drive window, and a few swings crept into fly ball territory when they didn't need to.",
+      "whatThisMeans": "You're squaring the ball up more consistently now, but when your launch angle pushes past 20 degrees, those are fly balls, not line drives. Tighten that angle down into the 8-18 degree range and that exit velocity turns into a lot more hard hits that stay in the field.",
+      "tipsIntro": "Good round out there — two things to lock in before the next one.",
+      "tip1": "Five of your swings in Session 4 came in at 22 degrees or higher, including swings 2, 5, and 6 which were 30, 31, and 28 degrees — those are fly balls, not line drives. That tells me your barrel is sneaking under the ball at contact, especially when the pitch is down in the zone. Feel like you're driving the ball into the back of the net at chest height — keep your hands level through the zone and stay on top of the ball just enough to flatten that angle out.",
+      "tip2": "Your top exit velocity jumped from 89 mph in Session 1 all the way to 92 mph three times in Session 4, and swings 1, 4, and 7 all came in at 88 mph or better with angles between 18 and 24 degrees — that is exactly the contact you are hunting. That means when you stay through the ball and keep your swing path direct, you are already generating the kind of hard contact that does damage. Keep trusting that compact path to the ball and let your hands work through the hitting zone instead of casting out early."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 5,
+    "elapsedMs": 13438.062375000009,
+    "wordCounts": {
+      "coachingSummary": 94,
+      "whatThisMeans": 54,
+      "tipsIntro": 16,
+      "tip1": 71,
+      "tip2": 85,
+      "box": 148
+    },
+    "numbers": {
+      "grounded": 7,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 13,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed is at its best all session — three swings at 92 mph and four balls over 305 feet is a big jump from where you started in Session 1. You cut your weak-contact swings nearly in half, going from five swings below 15 degrees in Sessions 1 and 3 down to just two this round. The one thing to keep working is your launch angle — your average is sitting at 21 degrees, and to hit true line drives you need to get that closer to the 8-18 range consistently.",
+      "whatThisMeans": "Your exit velocity is trending in the right direction, but a 21-degree average means a lot of your hard contact is turning into fly balls instead of line drives. You are hitting the ball hard enough to do real damage — you just need to keep the ball on a flatter path more often.",
+      "tipsIntro": "Good round out there — bat speed is clicking, now let's clean up the launch angle.",
+      "tip1": "Your top three exit velocities were all 92 mph this round, up from 89 in Session 1 and matching your best from Session 2. That tells me your hands are getting through the zone faster and you are making better contact at the right moment. To keep that going, focus on feeling your back elbow drive down and through — that's what's creating the whip, so trust it and stay aggressive.",
+      "tip2": "Your average launch angle was 21 degrees this round, and swings 4 and 5 came in at 24 and 31 degrees — those are fly balls, not line drives. When you get over that 20-degree mark, you are usually getting under the ball a little at contact and letting the barrel drift up. Try this cue: feel like you are driving the top half of the ball, keeping your barrel on the same level as the pitch just a split second longer before you extend."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 6,
+    "elapsedMs": 12180.861417000007,
+    "wordCounts": {
+      "coachingSummary": 96,
+      "whatThisMeans": 42,
+      "tipsIntro": 12,
+      "tip1": 85,
+      "tip2": 66,
+      "box": 138
+    },
+    "numbers": {
+      "grounded": 10,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 12,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your exit velocity is climbing the right way — you went from 81 mph average in Session 1 to 86 mph here in Session 4, and your top three swings were all 92 mph. You also dropped your weak swings way down, going from 5 swings below 15 degrees in Session 1 to just 2 here. The one thing to keep working on is your average launch angle sitting at 21 degrees — you're right on the edge of fly ball territory, and your goal is to keep that number in the 8-18 degree window.",
+      "whatThisMeans": "You're hitting the ball harder than ever, but a few swings are climbing a little too high and turning into fly balls instead of line drives. The good news is your worst swings are getting better and your best swings are elite.",
+      "tipsIntro": "Good round, Jake — two things to sharpen before the next one.",
+      "tip1": "Your average launch angle was 21 degrees this session, and swings 5 and 6 came in at 31 and 28 degrees — those are fly balls, not line drives. That tells me your bat is getting slightly under the ball at contact on your hardest swings, which is where your power is pulling your angle up. Focus on feeling your barrel stay level through the hitting zone longer — think about driving the ball into the gap at waist height, not up into the outfield.",
+      "tip2": "You only had 2 swings below 15 degrees this session compared to 5 in Session 1, and that is a real improvement worth recognizing. That means you are consistently getting your barrel to the ball with a better path instead of chopping down through the zone. Keep trusting that swing — the flatter, more direct path to contact is what's producing your 92 mph exit velocities."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 7,
+    "elapsedMs": 13930.981291999982,
+    "wordCounts": {
+      "coachingSummary": 91,
+      "whatThisMeans": 51,
+      "tipsIntro": 13,
+      "tip1": 77,
+      "tip2": 76,
+      "box": 142
+    },
+    "numbers": {
+      "grounded": 11,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 11,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed took a real step forward this round — you went from averaging 81 mph in Session 1 to 86 mph now, and your top three swings were all 92 mph. You also cut your weak-contact swings way down, going from 5 swings below 15 degrees in Sessions 1 and 3 all the way to just 2 this round. The one thing to keep working on is keeping that launch angle in the line drive window, because your average of 21 degrees is creeping just above the target.",
+      "whatThisMeans": "Your power is showing up more consistently, but a few swings are tipping into fly ball territory instead of staying in that 8-18 degree line drive zone. When you keep the angle down and the speed up, you're doing real damage — four balls went 305 feet or more this round.",
+      "tipsIntro": "Good round out there — two things to take into the next one.",
+      "tip1": "Your launch angle averaged 21 degrees this round, and swings like 5 and 6 came in at 31 and 28 degrees — those are fly balls, not line drives. That tells me your swing is getting a little steep under the ball on certain pitches, especially when you're not driving through contact cleanly. Focus on feeling your barrel stay level through the hitting zone and finish your extension out toward the pitcher, not up toward the sky.",
+      "tip2": "You had zero swings under 175 feet this whole round — nothing weak, nothing soft, nothing that dies in the infield. That comes from keeping your hands inside the ball and letting your hips lead the swing, which is exactly what you did on swings like 4 and 7 where you hit 92 mph. Keep trusting that hip-to-hand sequence and let the barrel follow — when you do that, the exit velocity takes care of itself."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "contact-s4",
+    "run": 8,
+    "elapsedMs": 11783.548584000004,
+    "wordCounts": {
+      "coachingSummary": 54,
+      "whatThisMeans": 54,
+      "tipsIntro": 12,
+      "tip1": 82,
+      "tip2": 77,
+      "box": 108
+    },
+    "numbers": {
+      "grounded": 10,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 9,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed took a real jump this round — you hit 92 mph three times, and you had zero swings under 175 feet, which tells me you're squaring the ball up consistently. The contact is cleaner, and the ball is jumping off your bat in a way it wasn't in Session 1.",
+      "whatThisMeans": "Your average exit velocity climbed from 81 mph in Session 1 to 86 mph now, and your weak contact is almost gone. The issue right now is your average launch angle is sitting at 21 degrees, which is creeping above the line drive window — more fly balls than you want for this goal.",
+      "tipsIntro": "Solid round, Jake — two things to sharpen before the next one.",
+      "tip1": "Your average launch angle this session was 21 degrees, and swings 5 and 6 both came in at 31 and 28 degrees — those are fly balls, not line drives. That tells me you're getting a little under the ball when you really load up, which is costing you the hard line drives you're capable of. Keep your hands on a flatter path through the hitting zone and feel like you're driving through the middle of the ball, not up through it.",
+      "tip2": "Your top exit velocity was 92 mph three times this round — that is up from 89 mph in Session 1, and it happened on swings 4, 5, and 7 where you were on time and through the ball. That kind of bat speed shows up when your hips are clearing early and giving your hands a lane to work through. Keep feeling that hip turn lead the way, because that's what's unlocking those 92 mph swings."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 1,
+    "elapsedMs": 13192.031167000008,
+    "wordCounts": {
+      "coachingSummary": 92,
+      "whatThisMeans": 53,
+      "tipsIntro": 14,
+      "tip1": 65,
+      "tip2": 83,
+      "box": 145
+    },
+    "numbers": {
+      "grounded": 8,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 16,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed is legit right now — three swings at 92 mph in Session 4 and zero balls under 175 feet is the best distribution you've had all day. You've gone from 0 power-zone swings in Session 1 to 3 in Session 4, and that's not a coincidence. The one thing left to clean up is a couple of flat swings late in the round — swings 12 and 14 came in at 14 and 11 degrees, and those are the only ones holding you back from a complete session.",
+      "whatThisMeans": "Your top end is as consistent as it's been all practice — three swings all hitting 92 — but when you go flat, you're leaving distance on the table even when you hit it hard. Getting those two low-angle swings up into the 18-to-25 degree range would make this a nearly perfect round.",
+      "tipsIntro": "Best round of the day — here's what to take into your next one.",
+      "tip1": "You had three swings at 92 mph in Session 4, and swings 4, 5, and 7 all went 298 feet or farther. When you're on time and through the ball, that's what it looks like. Keep your back shoulder working up through contact instead of letting it dip — that's what's keeping your barrel in the zone long enough to do that kind of damage.",
+      "tip2": "Swings 12 and 14 both came in under 15 degrees at 80 mph, and both were on pitches in the middle of the zone where you should be doing damage. That tells me you're getting on top of those a little and rolling over instead of staying through them. Focus on keeping your chest back a half-second longer and letting the barrel work up through the ball — feel like you're hitting a line drive up the middle, not pulling down on it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 2,
+    "elapsedMs": 14176.86825,
+    "wordCounts": {
+      "coachingSummary": 118,
+      "whatThisMeans": 63,
+      "tipsIntro": 15,
+      "tip1": 76,
+      "tip2": 76,
+      "box": 181
+    },
+    "numbers": {
+      "grounded": 8,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 8,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed is the best it's been all session — three swings in the power zone and four balls at 305 feet or better tells me you're squaring things up with real authority now. You went from zero power-zone swings in Session 1 to three here, and your top exit velo locked in at 92 mph three times in a row, which means that's not a fluke, that's who you are right now. The one thing left to clean up is keeping that launch angle up on your weaker swings — you still had two balls under 15 degrees, but that's down from five in Session 1, so the trend is clearly moving the right way.",
+      "whatThisMeans": "You're hitting the ball harder and lifting it more consistently than you were at the start of this session, and the results are showing up in distance — zero balls under 175 feet this round for the first time all day. The two flat swings on 12 and 14 are keeping a handful of balls in the ground that should be line drives.",
+      "tipsIntro": "Good round to finish on — two things to sharpen before you step back in.",
+      "tip1": "You hit 92 mph three times in Session 4, and all three of those swings were on pitches you handled cleanly in the zone — that's not luck, that's your ceiling showing up. When you stay through the ball and let your hips lead, the barrel gets to the right spot and you're doing real damage. Keep that feeling locked in: hips fire first, hands follow, and you drive through the ball instead of at it.",
+      "tip2": "Swings 12 and 14 both came in under 15 degrees, and those were 80 mph with 191 and 175 feet — a big drop from what you were doing the rest of the round. That tells me you're getting on top of the ball a little on those swings, probably drifting forward before you fire. Feel like you're staying back a half-beat longer and driving the barrel up through the hitting zone, not down into it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 3,
+    "elapsedMs": 13031.544875000021,
+    "wordCounts": {
+      "coachingSummary": 61,
+      "whatThisMeans": 42,
+      "tipsIntro": 12,
+      "tip1": 95,
+      "tip2": 77,
+      "box": 103
+    },
+    "numbers": {
+      "grounded": 8,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 11,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your bat speed took a real step forward this session — you hit three swings at 92 mph, and that's not a fluke, that's you squaring the ball up. You only had 2 swings under 15 degrees, which is the cleanest number you've posted all four sessions. The ball is jumping off your bat and staying in the air longer.",
+      "whatThisMeans": "You're getting to the ball on time and keeping your launch angle in a good window more consistently than you were in Session 1. Four balls in the 305-plus-foot range tells you the power is real when you stay through the pitch.",
+      "tipsIntro": "Good round today — two things worth locking in before next time.",
+      "tip1": "Your three power zone swings — where you hit 88 mph or better with launch angle between 25 and 35 degrees — all came on pitches you attacked in the middle of the zone, like swings 5 and 6 where you went 92 and 88 mph and drove the ball 331 and 323 feet. That tells me when you trust your swing and fire through the ball, you've got real pop. Next time you're in BP, picture your back hip driving through the ball and let your hands follow — don't steer it, just unload.",
+      "tip2": "Swings 12 and 14 were your two flat ones at 14 and 11 degrees, and both came in at 80 mph, which is below what you showed everywhere else this session. On those swings you got a little steep and chopped down instead of driving through the hitting zone. Feel like you're swinging slightly up through the ball at contact — not a big loop, just a slight upward push with your hands as you extend through."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 4,
+    "elapsedMs": 13507.64845800001,
+    "wordCounts": {
+      "coachingSummary": 73,
+      "whatThisMeans": 41,
+      "tipsIntro": 14,
+      "tip1": 81,
+      "tip2": 97,
+      "box": 114
+    },
+    "numbers": {
+      "grounded": 10,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 13,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, this was your best round of the day. Your exit velocity climbed from 81 mph in Session 1 all the way to 86 mph here, your ground ball rate dropped to just 2 swings below 15 degrees, and you put 4 balls over 305 feet for the first time all session. You also hit the power zone 3 times this round after going 0-for-it in Session 1, so the progress is real.",
+      "whatThisMeans": "You are squaring the ball up more consistently and your launch angle is in a good place at 21 degrees on average. The bat speed is showing up when it matters, and you are starting to do damage in all directions.",
+      "tipsIntro": "Good round to finish on — two things to sharpen before the next one.",
+      "tip1": "You hit 3 swings in the power zone this round at 88 mph or better with launch angles between 24 and 31 degrees, and those were your three longest balls at 323, 324, and 331 feet. That tells me when you stay through the ball and let your hips clear, you are finding the right path at the right time. Feel your back hip driving through first, then let your hands follow — that sequence is what produced those three swings.",
+      "tip2": "Swings 12 and 14 were your two flat ones this round, both sitting at 11 and 14 degrees with exit velocities of 80 mph, and both pitches were in the middle of the zone where you should be doing damage. That tells me you are getting a little passive through the hitting zone on certain pitches and not committing your barrel through the ball. Try feeling like you are driving the ball into the back of the batting cage, staying on top of your launch and extending your arms fully through contact instead of pulling off early."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 5,
+    "elapsedMs": 12349.810500000021,
+    "wordCounts": {
+      "coachingSummary": 70,
+      "whatThisMeans": 32,
+      "tipsIntro": 15,
+      "tip1": 83,
+      "tip2": 77,
+      "box": 102
+    },
+    "numbers": {
+      "grounded": 8,
+      "target": 0,
+      "unmatched": 2,
+      "ungradeable": 14,
+      "unmatchedExamples": [
+        "200 feet. On thos",
+        "320 feet or more"
+      ]
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, your exit velocity climbed from 81 mph in Session 1 all the way to 86 mph average in Session 4, and your top three swings were all 92 mph — that's a locked-in top end. You also went from zero swings in the power zone in Session 1 to three in Session 4, and you had zero balls under 175 feet this round for the first time all session.",
+      "whatThisMeans": "You're not just hitting the ball harder — you're squaring it up more consistently, which is the whole game. The bat speed was always there; now the contact quality is catching up.",
+      "tipsIntro": "Really good round to finish on — two things to take into your next one.",
+      "tip1": "Swings 12 and 14 were your only two flat swings this round, both coming in at 14 and 11 degrees launch angle, and both went under 200 feet. On those two pitches, the pitch location was in the zone at 2.68 and 1.78 feet — nothing crazy — so it's not the pitch, it's the swing path flattening out. Feel like you're staying through the ball longer at contact and finishing with your hands above the ball slightly, not chopping down through it.",
+      "tip2": "You hit three balls 320 feet or more in Session 4 — swings 2, 4, and 5 — and all three had launch angles between 24 and 31 degrees with exit velocities at 90 to 92 mph. That's your power zone right there, and you found it three times in one round. Keep that feel by thinking about driving the ball up through the middle, staying back, and letting your hips clear before your hands come through."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 6,
+    "elapsedMs": 12020.024207999988,
+    "wordCounts": {
+      "coachingSummary": 61,
+      "whatThisMeans": 49,
+      "tipsIntro": 13,
+      "tip1": 80,
+      "tip2": 81,
+      "box": 110
+    },
+    "numbers": {
+      "grounded": 6,
+      "target": 0,
+      "unmatched": 0,
+      "ungradeable": 8,
+      "unmatchedExamples": []
+    },
+    "tipLeadsCite": [
+      false,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, this was your best round of the day — your average exit velocity climbed to 86 mph, you put four balls 305 feet or more, and you only had two swings below 15 degrees launch angle all session. Your top three exit velocities were all 92 mph, which tells me you found a real consistent gear late in this round.",
+      "whatThisMeans": "You are squaring the ball up more often and keeping your launch angle in a good range, which is why the ball is carrying further. The consistency at the top of your exit velocity range is the best sign — it means your best swing is becoming more repeatable.",
+      "tipsIntro": "Solid round to finish — two things worth carrying into your next session.",
+      "tip1": "You hit three swings in the power zone this session — swings 2, 5, and 6 — compared to zero in Session 1 and just one in Session 3. That jump tells me your bat path is getting through the zone at a better angle more consistently. Next session, keep that feeling going by focusing on staying through the ball a little longer at contact — think about your hands finishing toward the outfield gap rather than pulling up early.",
+      "tip2": "Swings 12 and 14 were your two flat swings at 14 and 11 degrees, and both came in at 80 mph — your lowest exit velocities of the session. Those two swings look like you may be getting a little long or steep when the pitch is middle-away, which causes you to roll over or chop down. Try keeping your back shoulder up just a tick longer and feel like you are driving through the ball rather than down at it."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 7,
+    "elapsedMs": 12584.218416999967,
+    "wordCounts": {
+      "coachingSummary": 70,
+      "whatThisMeans": 33,
+      "tipsIntro": 13,
+      "tip1": 83,
+      "tip2": 79,
+      "box": 103
+    },
+    "numbers": {
+      "grounded": 8,
+      "target": 0,
+      "unmatched": 1,
+      "ungradeable": 18,
+      "unmatchedExamples": [
+        "200 feet at"
+      ]
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, this was your best round of the day — 86 mph average exit velocity, 3 swings in the power zone, and 4 balls hit 305 feet or more. You went from zero balls over 305 feet in Session 1 to four of them here, and you did it with a more consistent swing, only 2 launch angles below 15 degrees compared to 5 in Session 1 and Session 3.",
+      "whatThisMeans": "You are squaring the ball up more often and keeping your swing on a better plane through contact. When you do make good contact, you have the bat speed to do real damage.",
+      "tipsIntro": "Solid round to finish — two things to sharpen before you come back.",
+      "tip1": "Your top 3 exit velocities were all 92 mph in Session 4, compared to 89, 88, and 87 in Session 1 — that ceiling went up and it stayed consistent at the top. That tells me your bat speed is genuine and you are not just catching one lucky pitch. Keep that feel alive by focusing on staying short to the ball — hands inside, barrel through the zone — so that 92 mph swing shows up more than 3 times a round.",
+      "tip2": "Swings 12 and 14 were your two flat swings at 14 and 11 degrees, and both came in under 200 feet at 191 and 175 feet. Those are the swings where you are rolling over or getting on top instead of staying through the ball. Next time you feel your front shoulder pull out early, try keeping your back elbow slotted down and drive through the ball toward center field to let the barrel stay in the zone longer."
+    }
+  },
+  {
+    "conditionKey": "baseline",
+    "cell": "open-s4",
+    "run": 8,
+    "elapsedMs": 14525.730750000046,
+    "wordCounts": {
+      "coachingSummary": 65,
+      "whatThisMeans": 67,
+      "tipsIntro": 16,
+      "tip1": 102,
+      "tip2": 85,
+      "box": 132
+    },
+    "numbers": {
+      "grounded": 7,
+      "target": 0,
+      "unmatched": 2,
+      "ungradeable": 18,
+      "unmatchedExamples": [
+        "200 feet.\nBest ro",
+        "200 feet all roun"
+      ]
+    },
+    "tipLeadsCite": [
+      true,
+      true
+    ],
+    "tipCount": 2,
+    "fields": {
+      "coachingSummary": "Jake, this was your best round of the day — 86 mph average exit velocity, 3 swings in the power zone, and 4 balls out past 305 feet. You went from zero balls hit 305-plus in Session 1 to four of them here, and your top exit velocities locked in at three straight 92s, which tells me you found something consistent late in this session.",
+      "whatThisMeans": "Your bat speed is clearly there, and when you get the launch angle into that 24-31 degree range, the ball is jumping — three of your four 305-plus foot balls came on swings with launch angles between 24 and 31 degrees. The two swings that hurt you most were 12 and 14, both under 15 degrees, and those were the only two you hit under 200 feet.",
+      "tipsIntro": "Best round you've had all session — two things to lock in before the next one.",
+      "tip1": "Your flat swings on 12 and 14 — both came in at 14 and 11 degrees — were the only two balls you hit under 200 feet all round. That tells me when you get a little under-rotated or drop your hands early, you're cutting the ball off and killing the flight. Next time you feel your hands getting low at the start of your swing, think about keeping your back elbow slotted to your hip and driving through the ball on an upward path — not a big uppercut, just let the barrel stay on plane through the hitting zone longer.",
+      "tip2": "Swings 4, 5, and 6 were three of your four longest balls — 325, 331, and 323 feet — and all three were hit to different parts of the field, from oppo to pull side. That means you were staying through the ball and using the whole field with authority, not just yanking it. The reason it worked is your hands stayed inside the ball and you let your hips clear first — keep that feel, because that is what turns gap shots into no-doubters."
+    }
+  }
+]
