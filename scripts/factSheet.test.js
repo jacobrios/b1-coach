@@ -2,7 +2,7 @@
 // model. No model calls here: every value asserted below is computed by
 // plain arithmetic over a small fixture, so a broken threshold count or a
 // wrong stat shows up as a red test rather than a wrong grading verdict
-// later. See scripts/factSheet.mjs for what each function is for.
+// later. See scripts/factSheet.js for what each function is for.
 
 import { describe, it, expect } from 'vitest'
 import {

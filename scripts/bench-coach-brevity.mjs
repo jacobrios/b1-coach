@@ -38,8 +38,13 @@
 // It lives under scripts/ beside the two measurement scripts, outside the test
 // runner's collection. Vitest has no config in this project, so its default
 // glob takes only *.test.* / *.spec.* files; nothing here matches. That claim
-// is checked by file count rather than asserted: `npm test` reported 11 files
-// and 326 tests before this file existed and must report 11 and 326 after.
+// is checked by file count rather than asserted: as measured 17 August 2026,
+// `npm test` reports 16 files and 392 tests with this file present in the
+// repo. (The same check read 11 files and 326 tests when this file was first
+// added in Slice 7, 14 August 2026; the counts move as the suite grows, the
+// point, that this file adds none of them, does not.) Re-measure before
+// trusting this comment if it has been a while; a dated number is a claim
+// about the day it was checked, not a promise it still holds.
 // The test suite must never call the model, and a bench that could be collected
 // by the runner would break that rule the first time someone ran it in CI.
 //
@@ -427,10 +432,11 @@ function grade(parsed, values, targets) {
   )
 
   // Content-word overlap between whatThisMeans and coachingSummary; see
-  // scripts/contentWordOverlap.js for the definition. This is the padding check
-  // Slice 7b's floor on whatThisMeans needs: a coach that hits the floor by
-  // restating the summary should score HIGH here, not read as a clean pass
-  // in the word-count numbers above.
+  // scripts/contentWordOverlap.js for the definition. A three-sentence floor
+  // on whatThisMeans was scoped for this slice but deferred when it pivoted;
+  // this measure exists ahead of that floor so, whenever it ships, a coach
+  // that hits it by restating the summary shows up HIGH here rather than
+  // reading as a clean pass in the word-count numbers above.
   const overlap = contentWordOverlap(fields.whatThisMeans, fields.coachingSummary)
 
   return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing, overlap }
@@ -794,9 +800,11 @@ function report(records, conditionKeys) {
   console.log('')
   console.log('Content-word overlap (Jaccard, see scripts/contentWordOverlap.js) between')
   console.log('whatThisMeans and coachingSummary. 0 = no shared content words, 1 = the')
-  console.log('same set on both sides. Exists because a word-count floor on whatThisMeans')
-  console.log('invites padding by restating the summary rather than adding to it; a rising')
-  console.log('median here, not a rising word count, is what padding actually looks like.')
+  console.log('same set on both sides. A word-count floor on whatThisMeans was scoped for')
+  console.log('this slice but deferred when it pivoted, so it has not shipped; this measure')
+  console.log('is instrumentation built ahead of that floor, because a floor invites padding')
+  console.log('by restating the summary rather than adding to it, and a rising median here,')
+  console.log('not a rising word count, is what that padding actually looks like.')
   console.log('')
   console.log('condition            cell         n   overlap median   p90    max')
   console.log('-'.repeat(84))

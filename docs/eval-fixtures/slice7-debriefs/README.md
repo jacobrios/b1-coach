@@ -13,7 +13,7 @@ app's real prompt, not hand-written and not simulated.
     baseline-records.json    24 debriefs written with NO length budget
     budget-records.json      72 debriefs, 24 each of conditions A, B and C
 
-Each record carries the four debrief fields as written (`coachingSummary`,
+Each record carries the five debrief fields as written (`coachingSummary`,
 `whatThisMeans`, `tipsIntro`, `tip1`, `tip2`), plus the word counts and
 citation grades the bench scored at the time, plus wall-clock elapsed time.
 A record is addressed by the triple `conditionKey` / `cell` / `run`, for

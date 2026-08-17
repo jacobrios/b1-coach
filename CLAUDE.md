@@ -306,6 +306,17 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
     scripts/*.test.js        359 lines across three files, testing those three
                              modules. Not counted in the rows above; together the
                              sixteen test files vitest collects are 3013 lines.
+    docs/eval-fixtures/      Committed ground truth, not code. Two directories:
+                               `slice7-debriefs/` (360 KB) holds the 96 real
+                               debriefs from Slice 7's measurement round, 8 of
+                               them known wrong by hand verification, plus the
+                               scripts that rebuild the session data they were
+                               written about. `slice7b-parse-failure/` (112 KB)
+                               holds the before/after records behind Slice 7b's
+                               parse-failure fix, 36 calls each. Neither is
+                               collected by vitest; both have their own READMEs
+                               covering what is and is not safe to conclude
+                               from them.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -475,7 +486,13 @@ pushing the coach past its 4096-token output ceiling. See the decision log
 entry for 17 August 2026 for the failure and the fix. The other three cells
 (`power-s2`, `contact-s4`, `open-s4`) also switched from the pinned average to
 the real session-1-derived swings underneath them, since every later session
-is generated off session 1's actual numbers, not its average.
+is generated off session 1's actual numbers, not its average. The same slice
+also taught the bench to keep a failing call's raw reply, stop reason, and
+output token count (`coachFailureRecord.js`) instead of just a message, but
+the after-fix run that would have exercised it had zero failures and the
+before run predates the change, so that capture code has never been observed
+firing on a real call. It rests on unit tests and a reading of the code, not
+a forced failure.
 
 ## The data is synthetic
 
@@ -812,6 +829,13 @@ owner's own use explains. Do not build rate limiting without that signal.
   of tips leading with a real cited number fell from 96% to 88%. Shipped
   anyway, because the audience is a high school hitter's attention span, not a
   data-completeness score. Revisit only with bench evidence, not a hunch.
+  **Annotation, 17 August 2026: the 50-word tip half of this budget is not
+  holding, and the bench evidence to say so is now in hand.** Mean `tip1`
+  length measured 67 to 82 words, not 50, across three independent
+  measurements: Slice 7b's own before run (72.4), its after run (68.4), and
+  Slice 7's own committed condition-B fixture (71.0), the exact data this
+  budget was chosen from. So "shipped, holds" is not accurate for the tip
+  number as written; see the What's Next item below.
 - **Session summary body text is 18px, not 16 or 20.** 16 was the size before
   Slice 7; 20 was tried and rejected because it closed the visual gap to the
   chat panel's own type (14px to 16px), so the two panels started reading as
@@ -1323,6 +1347,13 @@ rewritten, per the append-only rule.
   validation mode against the 8 known-wrong debriefs in
   `docs/eval-fixtures/slice7-debriefs/` before the slice changed direction.
   Until that runs, the grader's verdicts should not be trusted for anything.
+  Note what `--validate` itself does and does not produce: it deliberately
+  never names the 8 known-wrong records and reports only what it flagged, so
+  it does not compute a recall number on its own. Comparing that output
+  against the 8 by name is a separate, blind, manual step done once by
+  whoever runs it, so the resulting score is an honest test rather than a
+  number the grader was fitted to produce. See the methodological note at the
+  top of `scripts/grade-coach-accuracy.mjs` for why that split is deliberate.
 - **The coach's "four of those" miscount is still live on the first screen,
   and is now reproducible on demand.** The product manager caught this by eye
   on 15 August; this slice's browser pass reproduced it verbatim on a fresh
@@ -1343,12 +1374,24 @@ rewritten, per the append-only rule.
   reproducible, and any number quoted from them going forward should be read
   as one sample from a moving target, not a fixed fact, unless a seed is
   added.
-- **A stale comment in `scripts/bench-coach-brevity.mjs`, around lines 41 to
+- ~~**A stale comment in `scripts/bench-coach-brevity.mjs`, around lines 41 to
   42, claims `npm test` "reported 11 files and 326 tests before this file
   existed and must report 11 and 326 after."** Both numbers have been stale
   since Slice 7; the suite is now 392 tests across 16 files. The file-count
   proof technique the comment describes is still sound. Only the two numbers
-  inside it need updating.
+  inside it need updating.~~ **Fixed by whole-branch review, 17 August 2026.**
+  Numbers corrected to 16 files and 392 tests and the claim dated, so it reads
+  as a measurement from a day rather than a permanent count.
+- **The shipped tip budget is not being obeyed, and never was.** The 50-word
+  ceiling on `tip1` reads 67 to 82 words in every measurement taken of it:
+  Slice 7b's own before run (mean 72.4), its after run (mean 68.4), and
+  Slice 7's own committed condition-B fixture (mean 71.0), which is the exact
+  data the 45/30/12/50 budget was chosen from. Pre-existing, not introduced by
+  this slice, and not something the length-budget prompt text can be edited to
+  fix without product sign-off (see the deliberate-decisions annotation
+  above). Needs a decision: raise the number to match what the coach actually
+  writes, or decide the prompt wording needs to change to hold it down, which
+  is the one prompt change this review is not authorized to make on its own.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

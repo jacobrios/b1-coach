@@ -42,9 +42,11 @@ check it against.
 *The fix and what it proved.* Two prompt changes: telling the coach plainly
 that a first session has nothing to compare against, and tightening the
 instruction that the whole reply must be the JSON object and nothing else.
-Verified against 36 fresh calls across every goal session 1 supports: zero
-parse failures, down from fourteen, and the slowest call fell from 57 seconds
-to under 12.
+Verified against 36 fresh calls across four cells covering three goals (power
+session 2, power session 1, contact session 4, open session 4): zero parse
+failures, down from fourteen, and the slowest call fell from 57 seconds to
+under 12. A separate run of 16 calls covered the other four goals on session
+1: zero ceiling hits and zero parse failures there too.
 
 *What this did not settle.* Whether the fix changed how well the coach's
 citations hold up is unresolved, not confirmed clean. The before-run's
@@ -63,8 +65,13 @@ now live in their own file a script can read, closing the gap that kept the
 eval bench from grading the first screen a visitor sees. A grader that checks
 the coach's claims against the real numbers is built but was not validated
 against the known-wrong fixture before the slice changed direction; that is
-the next open item, not a finished result. Test suite grew from 337 to 392
-across four new files. Total spend across the slice: about $1.95.
+the next open item, not a finished result. The bench was also taught to keep
+a failing call's raw reply, stop reason, and output token count instead of
+just a message, but the after run had zero failures and the before run
+predates the change, so that capture code has never actually fired on a real
+call; its only evidence is unit tests and a reading of the code. Test suite
+grew from 337 to 392 across four new files. Total spend across the slice:
+about $1.95.
 
 *One more thing, confirmed but not caused by this slice.* The browser pass
 reproduced, on demand, the exact miscount the product manager caught by eye

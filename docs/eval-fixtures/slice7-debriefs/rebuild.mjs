@@ -1,10 +1,18 @@
 // Rebuild the exact session data each debrief was written about.
-// Copied verbatim from scripts/bench-coach-brevity.mjs (mulberry32,
-// standInSessionOne, buildSessions, CELLS, the extensionless-import hook)
-// rather than reimplemented, because that file is not structured to be
-// imported (it calls main() unconditionally at module scope, which would try
-// to make a live API call or exit the process). This is a read-only copy for
-// analysis, not a second implementation of the algorithm.
+// Copied, as of 14 August 2026, from scripts/bench-coach-brevity.mjs
+// (mulberry32, standInSessionOne, buildSessions, CELLS, the
+// extensionless-import hook) rather than reimplemented, because that file is
+// not structured to be imported (it calls main() unconditionally at module
+// scope, which would try to make a live API call or exit the process). This
+// is a read-only copy for analysis, not a second implementation of the
+// algorithm.
+//
+// That copy is now deliberately frozen and out of step with the live bench.
+// Slice 7b (17 August 2026) extracted session 1's real swings out of
+// src/App.jsx and pointed the live bench at them, which removed
+// standInSessionOne from scripts/bench-coach-brevity.mjs, changed its
+// buildSessions, and grew CELLS from three entries to four. None of that
+// belongs here. See the warning directly above standInSessionOne below.
 
 import { register } from 'node:module'
 
@@ -44,6 +52,13 @@ export function mulberry32(seed) {
 const SESSION_1_AVG_EV = 81.6
 const SESSION_1_AVG_LA = 17.3333
 
+// DO NOT RECONCILE THIS WITH THE LIVE BENCH. All 96 committed debriefs in
+// this directory were written against this stand-in, not against the real
+// session-1 swings the live bench now uses. Syncing this function (or
+// buildSessions/CELLS below) to match scripts/bench-coach-brevity.mjs would
+// silently invalidate all 8 known-wrong findings in regrade-report.md,
+// because the rebuilt session data would no longer be what those debriefs
+// were actually written about.
 export function standInSessionOne(random) {
   return Array.from({ length: 15 }, () => {
     const quality = random() - 0.5

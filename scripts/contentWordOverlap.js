@@ -2,10 +2,13 @@
 // deterministically so a word-count floor cannot be satisfied by padding.
 //
 // Built for scripts/bench-coach-brevity.mjs to check whatThisMeans against
-// coachingSummary: Slice 7b raised whatThisMeans's floor to three sentences,
-// and the failure mode that invites is a coach that hits the floor by saying
-// the summary again in different words rather than adding anything. This is
-// the check for that, no model call needed.
+// coachingSummary: a three-sentence floor for whatThisMeans was scoped for
+// Slice 7b but was deferred when the slice pivoted to a live parse-failure
+// bug instead, so it has not shipped. This measure exists ahead of that
+// floor landing, because the failure mode a floor invites is a coach that
+// hits it by saying the summary again in different words rather than adding
+// anything. Built now so the check is ready no matter when the floor ships,
+// no model call needed.
 //
 // It lives here in scripts/, beside its only consumer, rather than in src/.
 // An earlier version of this comment claimed src/ was "the only place vitest
