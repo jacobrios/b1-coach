@@ -46,12 +46,12 @@
 // number, is built off the averages of the same fifteen hand-written
 // session-1 swings — not off the previous session — because that is what
 // `onNewSession` in src/App.jsx actually calls: `baselineSwings: mockSwings`
-// every time, regardless of `sessionNumber`. The array below is copied
-// byte-for-byte from the `mockSwings` array inside the `App()` component in
-// src/App.jsx (around line 650). It is NOT exported from App.jsx and this
-// script does not import it — copying it here is a deliberate duplication.
-// IF THAT ARRAY EVER CHANGES IN App.jsx, THIS COPY MUST CHANGE WITH IT, or
-// this script quietly measures a session that no longer exists.
+// every time, regardless of `sessionNumber`. Slice 7b extracted that array
+// into src/sessionOneSwings.js, specifically so this script (and its sibling
+// scripts/compare-distance-bucket-schemes.mjs) could import it instead of
+// hand-copying it — this was one of two copies that existed only because
+// App.jsx contains JSX and could not be loaded by plain Node. Imported below
+// as `mockSwings` to keep every reference site in this file unchanged.
 //
 // WHAT COUNTS AS "THE TARGET BAND WAS EMPTY". A session's target band is
 // empty when none of its fifteen swings satisfy that goal's launch-angle and
@@ -115,6 +115,7 @@ register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { hasTarget, meetsTarget } = await import('../src/goalTargets.js')
 const { distanceBucketCounts } = await import('../src/ballFlight.js')
+const { SESSION_ONE_SWINGS: mockSwings } = await import('../src/sessionOneSwings.js')
 
 const REPLAYS_PER_CELL = 20000
 const SESSIONS = [2, 3, 4]
@@ -122,27 +123,6 @@ const TARGET_GOALS = [
   { id: 'power', label: 'Power & Distance' },
   { id: 'contact', label: 'Line Drives & Contact' },
   { id: 'popup', label: 'Reduce Pop-Ups' },
-]
-
-// Copied from the `mockSwings` array inside App() in src/App.jsx, around
-// line 650. See the header comment above: this is a deliberate duplication,
-// not a refactor, and it must be kept in step by hand.
-const mockSwings = [
-  { plateLocHeight: 2.8, plateLocSide: 0.2, hit: { launch: { exitSpeed: 78, angle: 12, direction: 2 }, landing: { distance: 170 } } },
-  { plateLocHeight: 1.2, plateLocSide: -0.3, hit: { launch: { exitSpeed: 72, angle: 8, direction: -18 }, landing: { distance: 122 } } },
-  { plateLocHeight: 3.1, plateLocSide: -0.5, hit: { launch: { exitSpeed: 88, angle: 26, direction: 1 }, landing: { distance: 310 } } },
-  { plateLocHeight: 2.3, plateLocSide: 0.9, hit: { launch: { exitSpeed: 75, angle: 6, direction: -10 }, landing: { distance: 126 } } },
-  { plateLocHeight: 2.6, plateLocSide: 0.4, hit: { launch: { exitSpeed: 91, angle: 28, direction: 3 }, landing: { distance: 345 } } },
-  { plateLocHeight: 3.8, plateLocSide: 0.1, hit: { launch: { exitSpeed: 82, angle: 18, direction: -15 }, landing: { distance: 224 } } },
-  { plateLocHeight: 2.1, plateLocSide: -0.6, hit: { launch: { exitSpeed: 76, angle: 10, direction: 6 }, landing: { distance: 150 } } },
-  { plateLocHeight: 2.9, plateLocSide: 0.3, hit: { launch: { exitSpeed: 85, angle: 24, direction: -1 }, landing: { distance: 277 } } },
-  { plateLocHeight: 1.4, plateLocSide: 0.5, hit: { launch: { exitSpeed: 79, angle: 14, direction: 22 }, landing: { distance: 185 } } },
-  { plateLocHeight: 3.3, plateLocSide: -0.4, hit: { launch: { exitSpeed: 83, angle: 20, direction: 5 }, landing: { distance: 241 } } },
-  { plateLocHeight: 2.7, plateLocSide: 0.6, hit: { launch: { exitSpeed: 87, angle: 22, direction: -3 }, landing: { distance: 279 } } },
-  { plateLocHeight: 0.8, plateLocSide: -0.2, hit: { launch: { exitSpeed: 70, angle: 4, direction: 12 }, landing: { distance: 97 } } },
-  { plateLocHeight: 2.4, plateLocSide: -0.3, hit: { launch: { exitSpeed: 86, angle: 25, direction: -24 }, landing: { distance: 290 } } },
-  { plateLocHeight: 3.6, plateLocSide: 0.8, hit: { launch: { exitSpeed: 80, angle: 16, direction: 18 }, landing: { distance: 201 } } },
-  { plateLocHeight: 2.5, plateLocSide: 0.1, hit: { launch: { exitSpeed: 92, angle: 27, direction: 1 }, landing: { distance: 346 } } },
 ]
 
 // ---------------------------------------------------------------------------
