@@ -97,6 +97,7 @@ const { DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
 const { contentWordOverlap } = await import('./contentWordOverlap.js')
+const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecord.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
@@ -465,12 +466,23 @@ async function callCoach({ system, userMessage, apiKey }) {
 
   const data = await res.json()
   const text = data?.content?.[0]?.text
-  if (!text) throw new Error('No text content in the response')
+  const stopReason = data?.stop_reason ?? null
+  const outputTokens = data?.usage?.output_tokens ?? null
 
-  return {
-    parsed: parseCoachResponse(text),
-    elapsedMs,
-    usage: data.usage ?? {},
+  if (!text) {
+    throw new CoachCallError('No text content in the response', { stopReason, outputTokens })
+  }
+
+  // The evidence Task 10 (Slice 7b's pivot) exists to keep. Before this, a
+  // parse failure here produced only a message: not the raw reply, not why
+  // the model stopped, not how much it wrote. Diagnosing the session-1
+  // MAX_TOKENS bug needed all three, and none were on disk, which is why that
+  // diagnosis needed a separate scratch script and a second round of spend.
+  try {
+    const parsed = parseCoachResponse(text)
+    return { parsed, elapsedMs, usage: data.usage ?? {} }
+  } catch (err) {
+    throw new CoachCallError(err.message, { rawText: text, stopReason, outputTokens })
   }
 }
 
@@ -701,8 +713,9 @@ async function main() {
           records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded })
           console.log(`${graded.wordCounts.box} words in the box, ${Math.round(elapsedMs / 100) / 10}s`)
         } catch (err) {
-          console.log(`FAILED: ${err.message}`)
-          records.push({ conditionKey, cell: cell.key, run, failed: err.message })
+          const ceilingNote = err instanceof CoachCallError && err.stopReason === 'max_tokens' ? ' (hit MAX_TOKENS)' : ''
+          console.log(`FAILED: ${err.message}${ceilingNote}`)
+          records.push(buildFailureRecord({ conditionKey, cell: cell.key, run }, err))
         }
       }
     }
@@ -888,6 +901,22 @@ function report(records, conditionKeys) {
     console.log('')
     console.log(`${failures.length} of ${records.length} calls failed. Those runs are excluded from every`)
     console.log('number above, so treat the sample size as smaller than it was planned to be.')
+
+    // Task 10, Slice 7b's pivot: the reason this bench now keeps stop_reason
+    // and output_tokens on a failed call. A count here separates "the model
+    // ran out of room and got cut off mid-JSON" from every other way a call
+    // can fail, without anyone having to re-run a scratch script to find out.
+    const ceilingHits = failures.filter((r) => r.stopReason === 'max_tokens')
+    if (ceilingHits.length) {
+      console.log(
+        `${ceilingHits.length} of those ${failures.length} failures hit the MAX_TOKENS ceiling ` +
+        '(stop_reason "max_tokens"): the model was still writing when its output ran out, not' +
+        ' answering with something malformed. See each record\'s rawText and outputTokens for the cut-off reply.',
+      )
+      const byCell = {}
+      for (const r of ceilingHits) byCell[r.cell] = (byCell[r.cell] ?? 0) + 1
+      console.log(`By cell: ${Object.entries(byCell).map(([k, v]) => `${k} ${v}`).join(', ')}`)
+    }
   }
 }
 

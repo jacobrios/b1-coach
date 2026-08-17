@@ -692,3 +692,26 @@ describe('the length budget the coach was shipped with', () => {
     expect(DEBRIEF_BUDGET).toContain('each tip in nextSessionTips: 50 words maximum.')
   })
 })
+
+// Slice 7b's pivot, Task 9: session 1 has no prior session to compare
+// against, and the prompt used to give the model no instruction at all for
+// that case — only what to do "if multiple sessions are provided." The
+// diagnosed failure (7 of 10 session-1 debriefs writing a long analysis and
+// running into the hard 4096-token ceiling) is model behaviour, which is the
+// bench's job to measure, not the suite's. What the suite CAN pin
+// deterministically is that the instruction closing that gap actually exists
+// in the shipped prompt, the same way every other prompt-content test in
+// this file works.
+describe('the single-session instruction added for the session-1 MAX_TOKENS fix', () => {
+  it('tells the model what to do when there is no prior session to compare against', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('If this is the only session provided')
+  })
+
+  it('still tells the model to compare when multiple sessions are provided', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('If multiple sessions are provided, compare the current session to prior sessions')
+  })
+
+  it('tells the model its reply must start with the JSON object, not analysis first', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('Do not write any analysis, reasoning, or commentary before it')
+  })
+})
