@@ -62,7 +62,7 @@ describe('buildFailureRecord', () => {
     })
   })
 
-  it('leaves stopReason and outputTokens null when a CoachCallError was thrown before Anthropic answered with usable text', () => {
+  it('keeps stopReason and outputTokens but leaves rawText null when there was no reply text to keep', () => {
     const err = new CoachCallError('No text content in the response', {
       stopReason: 'end_turn',
       outputTokens: 0,
