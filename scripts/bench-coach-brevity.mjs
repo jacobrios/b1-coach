@@ -93,8 +93,10 @@ const {
 } = await import('../src/coachApi.js')
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { computeStats, topExitVelocity } = await import('../src/sessionStats.js')
-const { carryDistance, DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
+const { DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
+const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
+const { contentWordOverlap } = await import('../src/contentWordOverlap.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
@@ -125,56 +127,25 @@ function mulberry32(seed) {
   }
 }
 
-// Session 1 in this app is not generated: it is fifteen swings typed out by hand
-// in src/App.jsx. That file imports React and JSX, so a plain Node script cannot
-// load it, and the two scripts beside this one solve that by keeping their own
-// full copies. This bench deliberately does NOT add a sixth copy. It builds a
-// stand-in instead, pinned to the two numbers that matter for everything
-// downstream: the scripted session 1 averages 81.6 mph and 17.33 degrees, and
-// those averages are all `generateSwings` reads off a baseline.
-//
-// What this costs, stated plainly rather than buried: the bench cannot grade the
-// debrief a visitor sees on their FIRST click, because that debrief is built on
-// the real hand-written swings and these are not them. Sessions 2 to 4 are the
-// app's own generator output and are exact. Closing that gap means extracting
-// those fifteen swings into a module of their own, which belongs to the slice
-// that rewrites them, not to this one.
-const SESSION_1_AVG_EV = 81.6
-const SESSION_1_AVG_LA = 17.3333
-
-// The stand-in is drawn with the same shared-contact-quality model the real
-// generator uses, so it has a believable spread rather than fifteen identical
-// swings, which would be a strange thing to hand a coach and would distort every
-// session-4 debrief that includes it.
-function standInSessionOne(random) {
-  return Array.from({ length: 15 }, () => {
-    const quality = random() - 0.5
-    const evNoise = random() - 0.5
-    const laNoise = random() - 0.5
-    const ev = Math.round(Math.max(65, Math.min(97, SESSION_1_AVG_EV + (0.6 * quality + 0.8 * evNoise) * 16)))
-    const la = Math.round(Math.max(-5, Math.min(35, SESSION_1_AVG_LA + (0.6 * quality + 0.8 * laNoise) * 22)))
-    const dir = Math.round((random() - 0.45) * 70)
-    const inZonePitch = random() < 0.7
-    const plateLocHeight = inZonePitch ? 1.5 + random() * 2.0 : random() < 0.5 ? 0.5 + random() * 0.9 : 3.6 + random() * 0.5
-    const plateLocSide = inZonePitch ? -0.7 + random() * 1.4 : random() < 0.5 ? -0.8 - random() * 0.3 : 0.8 + random() * 0.3
-    return {
-      plateLocHeight: Math.round(plateLocHeight * 100) / 100,
-      plateLocSide: Math.round(plateLocSide * 100) / 100,
-      hit: {
-        launch: { exitSpeed: ev, angle: la, direction: dir },
-        // The same curve every other swing in the app goes through, so a
-        // distance the coach quotes here is one the app would really show.
-        landing: { distance: carryDistance({ exitSpeed: ev, angle: la }) },
-      },
-    }
-  })
-}
+// Session 1 in this app is not generated: it is fifteen swings typed out by
+// hand. Until Slice 7b's Task 1 they lived inside src/App.jsx, which imports
+// React and JSX, so a plain Node script could not load them, and this bench
+// built a stand-in instead, pinned to the scripted session's two averages.
+// That gap closed on 17 August 2026: the fifteen swings now live in
+// src/sessionOneSwings.js, a plain module this bench can import directly, so
+// every one of its four cells reads the exact starting point a real visitor
+// sees rather than an approximation of it. This also means every cell's
+// downstream sessions (2 to 4, built off session 1 as their baseline) shift
+// from what earlier runs measured, since they now branch off real data
+// instead of a randomly-drawn stand-in with the same averages; Slice 7b's own
+// before-run is the reference going forward, not Slice 7's recorded figures.
+const SESSION_1_BASELINE = SESSION_ONE_SWINGS
 
 // The app rebuilds every later session off session 1, not off the session before
 // it (see the single generateSwings call in src/App.jsx), so this does the same.
 function buildSessions({ goalId, upTo, seed }) {
   const random = mulberry32(seed)
-  const baseline = standInSessionOne(random)
+  const baseline = SESSION_1_BASELINE
   const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
   for (let n = 2; n <= upTo; n++) {
     const swings = generateSwings({ sessionNum: n, goalId, baselineSwings: baseline, random })
@@ -192,11 +163,29 @@ function buildSessions({ goalId, upTo, seed }) {
 // anywhere else, so these two fields are the whole dependency. If a label is
 // ever renamed in App.jsx it must be renamed here too, which is the price of
 // not being able to import a JSX file.
+// `weight` is how each cell's share of --runs is expressed; see cellRuns()
+// below for the arithmetic and the reasoning for doing it this way rather
+// than a fixed absolute count on power-s1.
 const CELLS = [
-  { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2, why: 'the goal most visitors pick, early session' },
-  { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4, why: 'largest session, three priors to compare against' },
-  { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, why: 'no target, so the coach has the most latitude' },
+  { key: 'power-s1', goal: { id: 'power', label: 'Power & Distance' }, session: 1, weight: 1.5, why: 'session 1 is where every visitor lands and where the coach was caught stating something false; no prior session to compare against, which is part of why it earns its own cell' },
+  { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2, weight: 1, why: 'the goal most visitors pick, early session' },
+  { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4, weight: 1, why: 'largest session, three priors to compare against' },
+  { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, weight: 1, why: 'no target, so the coach has the most latitude' },
 ]
+
+// --runs sets the volume for a weight-1 cell (default 8, matching power-s2,
+// contact-s4 and open-s4). power-s1 carries a 1.5x weight baked into its own
+// definition rather than a second flag, so a single --runs value scales
+// every cell together and keeps the extra session-1 volume proportional: the
+// default --runs 8 reproduces the 12/8/8/8 split named in the slice plan
+// (36 calls per condition), --runs 4 gives 6/4/4/4, --runs 16 gives
+// 24/16/16/16, and so on. Chosen over a fixed absolute count on power-s1 so a
+// cheap smoke-test run (a small --runs) still exercises every cell without
+// the caller having to reason about two independent numbers, and so a single
+// flag keeps meaning "how many runs, roughly" the way it always has.
+function cellRuns(cell, baseRuns) {
+  return Math.max(1, Math.round(baseRuns * cell.weight))
+}
 
 // A condition is a complete system prompt: the real base prompt, plus whatever
 // budget wording (if any) that condition is testing. Every condition below is
@@ -425,7 +414,14 @@ function grade(parsed, values, targets) {
     (t) => classifyNumbers(firstSentence(t), values, targets).grounded > 0,
   )
 
-  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing }
+  // Content-word overlap between whatThisMeans and coachingSummary; see
+  // src/contentWordOverlap.js for the definition. This is the padding check
+  // Slice 7b's floor on whatThisMeans needs: a coach that hits the floor by
+  // restating the summary should score HIGH here, not read as a clean pass
+  // in the word-count numbers above.
+  const overlap = contentWordOverlap(fields.whatThisMeans, fields.coachingSummary)
+
+  return { wordCounts, numbers, tipLeadsCite, tipCount: tips.length, fields, missing, overlap }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -479,6 +475,7 @@ const percentile = (xs, p) => {
   return s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]
 }
 const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10)
+const round2 = (n) => (n == null ? null : Math.round(n * 100) / 100)
 
 function parseArgs(argv) {
   const args = { condition: 'baseline', runs: 8, seed: 20260814, out: null, dryRun: false }
@@ -506,8 +503,12 @@ function parseArgs(argv) {
 // first line. That one cost nothing, because it happened to throw before the
 // first call rather than after the fortieth. Run this before any run that
 // matters.
-function dryRun(conditionKeys, seed) {
+function dryRun(conditionKeys, seed, runs) {
   console.log('DRY RUN. No API calls, no spend. Exercising every path but the network.')
+  console.log('')
+  console.log(
+    `Run allocation at --runs ${runs}: ${CELLS.map((c) => `${c.key} ${cellRuns(c, runs)}`).join(', ')}`,
+  )
   console.log('')
   const canned = {
     coachingSummary: 'You hit 92 mph and got it out to 305 feet on swing 4.',
@@ -552,7 +553,7 @@ function dryRun(conditionKeys, seed) {
         `  ${conditionKey.padEnd(9)} ${cell.key.padEnd(12)} ` +
         `system ${String(system.length).padStart(5)} chars, prompt ${String(userMessage.length).padStart(5)} chars, ` +
         `grader ok (box ${graded.wordCounts.box}w, ${graded.numbers.grounded} grounded, ` +
-        `${graded.numbers.unmatched} unmatched, ${graded.missing.length} missing)`,
+        `${graded.numbers.unmatched} unmatched, ${graded.missing.length} missing, overlap ${round2(graded.overlap)})`,
       )
     }
   }
@@ -571,6 +572,24 @@ function dryRun(conditionKeys, seed) {
     throw new Error('Missing-field self-check failed: see the two counts printed above.')
   }
 
+  // Overlap self-check, independent of the canned dry-run reply above (whose
+  // two fields happen to share zero content words, which is a valid grade
+  // but not a useful thing to assert against): identical text must score
+  // exactly 1, and a pair that shares some but not all content words
+  // ("hard", "mph") while differing on the rest must land strictly between
+  // 0 and 1.
+  const identicalOverlap = contentWordOverlap(canned.coachingSummary, canned.coachingSummary)
+  const partialA = 'You hit the ball hard at 92 mph and drove it 320 feet.'
+  const partialB = 'That was hard contact at 92 mph, a strong swing.'
+  const partialOverlap = contentWordOverlap(partialA, partialB)
+  console.log(
+    `Overlap self-check: identical text -> ${round2(identicalOverlap)} (expect 1), ` +
+    `partially-shared text -> ${round2(partialOverlap)} (expect strictly between 0 and 1)`,
+  )
+  if (identicalOverlap !== 1 || !(partialOverlap > 0 && partialOverlap < 1)) {
+    throw new Error('Overlap self-check failed: see the two values printed above.')
+  }
+
   console.log('')
   console.log('Every path exercised. Drop --dry-run to spend money.')
 }
@@ -583,7 +602,7 @@ async function main() {
     if (!CONDITIONS[key]) throw new Error(`Unknown condition: ${key}. Known: ${Object.keys(CONDITIONS).join(', ')}`)
   }
   if (args.dryRun) {
-    dryRun(conditionKeysForDryRun, args.seed)
+    dryRun(conditionKeysForDryRun, args.seed, args.runs)
     return
   }
 
@@ -599,7 +618,9 @@ async function main() {
     if (!CONDITIONS[key]) throw new Error(`Unknown condition: ${key}. Known: ${Object.keys(CONDITIONS).join(', ')}`)
   }
 
-  const planned = conditionKeys.length * CELLS.length * args.runs
+  const runsPerCell = CELLS.map((c) => cellRuns(c, args.runs))
+  const runsPerCondition = runsPerCell.reduce((sum, n) => sum + n, 0)
+  const planned = conditionKeys.length * runsPerCondition
   if (planned > MAX_PLANNED_CALLS) {
     console.error(`Refusing to plan ${planned} calls; the cap is ${MAX_PLANNED_CALLS}.`)
     console.error('Lower --runs or narrow --condition.')
@@ -610,8 +631,8 @@ async function main() {
   console.log('='.repeat(70))
   console.log(`Model            ${MODEL} (imported from src/coachApi.js, not copied)`)
   console.log(`Conditions       ${conditionKeys.join(', ')}`)
-  console.log(`Cells            ${CELLS.map((c) => c.key).join(', ')}`)
-  console.log(`Runs per cell    ${args.runs}`)
+  console.log(`Cells            ${CELLS.map((c, i) => `${c.key}(${runsPerCell[i]})`).join(', ')}`)
+  console.log(`Runs             --runs ${args.runs} (per-cell counts above; ${runsPerCondition} calls/condition)`)
   console.log(`Live API calls   ${planned}`)
   console.log(`Rough cost       $${(planned * 0.018).toFixed(2)} at ~1.8 cents a debrief`)
   console.log(`Seed             ${args.seed} (every condition sees identical sessions)`)
@@ -639,7 +660,7 @@ async function main() {
         viewingSessionNumber: cell.session,
       })
 
-      for (let run = 1; run <= args.runs; run++) {
+      for (let run = 1; run <= cellRuns(cell, args.runs); run++) {
         process.stdout.write(`  ${conditionKey} / ${cell.key} / run ${run}... `)
         try {
           const { parsed, elapsedMs, usage } = await callCoach({ system, userMessage, apiKey })
@@ -718,6 +739,32 @@ function report(records, conditionKeys) {
         `${conditionKey.padEnd(20)} ${cell.key.padEnd(12)} ${String(rows.length).padStart(2)}   ` +
         `${String(median(box)).padStart(10)}   ${String(percentile(box, 90)).padStart(7)}   ` +
         `${String(Math.max(...box)).padStart(7)}   ${String(median(tips)).padStart(11)}`,
+      )
+    }
+  }
+
+  console.log('')
+  console.log('='.repeat(70))
+  console.log('DOES WHAT THIS MEANS JUST RESTATE THE SUMMARY?')
+  console.log('='.repeat(70))
+  console.log('')
+  console.log('Content-word overlap (Jaccard, see src/contentWordOverlap.js) between')
+  console.log('whatThisMeans and coachingSummary. 0 = no shared content words, 1 = the')
+  console.log('same set on both sides. Exists because a word-count floor on whatThisMeans')
+  console.log('invites padding by restating the summary rather than adding to it; a rising')
+  console.log('median here, not a rising word count, is what padding actually looks like.')
+  console.log('')
+  console.log('condition            cell         n   overlap median   p90    max')
+  console.log('-'.repeat(84))
+  for (const conditionKey of conditionKeys) {
+    for (const cell of CELLS) {
+      const rows = ok.filter((r) => r.conditionKey === conditionKey && r.cell === cell.key)
+      if (!rows.length) continue
+      const overlap = rows.map((r) => r.overlap)
+      console.log(
+        `${conditionKey.padEnd(20)} ${cell.key.padEnd(12)} ${String(rows.length).padStart(2)}   ` +
+        `${String(round2(median(overlap))).padStart(13)}   ${String(round2(percentile(overlap, 90))).padStart(4)}   ` +
+        `${String(round2(Math.max(...overlap))).padStart(4)}`,
       )
     }
   }
