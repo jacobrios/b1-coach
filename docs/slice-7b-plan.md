@@ -346,3 +346,27 @@ just Power, since a fix proven on one goal is not proven.
 
 **Task 12: close the slice** with the decision record, the CLAUDE.md current-state
 update, the What's Next changes, the PR and the QA script.
+
+---
+
+**Annotation, 17 August 2026, later the same day: Task 9's fix was two prompt
+changes, and one of them was deleted.** Task 9 shipped with two changes to
+`DEBRIEF_SYSTEM_BASE`: a single-session instruction telling the coach there was
+nothing yet to compare and not to look for trends, and the strengthened
+JSON-first instruction. The product manager questioned the first one on a
+specific ground: this app uses the word "trend" for two different things,
+session-over-session trends (meaningless on session 1, which is what the
+instruction was aimed at) and within-session trends across a session's own
+fifteen swings (legitimate first-session coaching content, and exactly what the
+Exit Velocity Trend chart already shows on that screen). The removed sentence
+forbade both.
+
+An isolation experiment ran 12 fresh live calls on session 1 with the Power
+goal, with the single-session instruction removed and only the JSON-first
+instruction in place: 0 of 12 hit the ceiling, 0 of 12 failed to parse, output
+tokens 338 to 394. That matches the clean results Task 9 already measured with
+both changes present, so the single-session instruction was contributing
+nothing. The sentence was deleted from `src/coachApi.js` the same day. The
+preceding sentence, telling the coach to compare across sessions when more than
+one is provided, was never in question and is unchanged. See the decision log
+entry for 17 August 2026 for the full experiment and reasoning.

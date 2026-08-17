@@ -1,5 +1,15 @@
 # Eval fixture: the before/after runs behind Slice 7b's parse-failure fix
 
+**Note, 17 August 2026, later the same day: the "after" run below tested two
+prompt changes together, and one of them was removed from the shipped prompt
+the same day, after being isolated and shown to contribute nothing.** This
+file is left describing the run exactly as it was recorded, since that is
+what the fixture actually contains. What ships in `src/coachApi.js` today is
+only the JSON-first instruction; see the decision log entry for 17 August
+2026 for the isolation experiment (12 calls, 0 ceiling hits, 0 parse
+failures) that found the single-session "nothing to compare" instruction was
+dead weight.
+
 Copied into the repo on 17 August 2026 from `.superpowers/sdd/slice-7b-plan/`,
 which is gitignored scratch space. Every number in the Slice 7b decision log
 entry rests on these two files, so leaving them scratch-only was the exact

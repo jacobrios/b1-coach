@@ -39,26 +39,30 @@ since the app launched. Session 1 was never measurable by any tool until this
 slice's own extraction work made it importable, so there is no history to
 check it against.
 
-*The fix and what it proved.* Two prompt changes: telling the coach plainly
+*The fix and what it proved.* ~~Two prompt changes: telling the coach plainly
 that a first session has nothing to compare against, and tightening the
-instruction that the whole reply must be the JSON object and nothing else.
-Verified against 36 fresh calls across four cells covering three goals (power
-session 2, power session 1, contact session 4, open session 4): zero parse
-failures, down from fourteen, and the slowest call fell from 57 seconds to
-under 12. A separate run of 16 calls covered the other four goals on session
-1: zero ceiling hits and zero parse failures there too.
+instruction that the whole reply must be the JSON object and nothing else.~~
+Shipped that day as two prompt changes together; see the postscript below
+(17 August 2026, later the same day) for why the first of the two was removed
+and only the second remains. Verified against 36 fresh calls across four
+cells covering three goals (power session 2, power session 1, contact session
+4, open session 4): zero parse failures, down from fourteen, and the slowest
+call fell from 57 seconds to under 12. A separate run of 16 calls covered the
+other four goals on session 1: zero ceiling hits and zero parse failures
+there too.
 
 *What this did not settle.* Whether the fix changed how well the coach's
 citations hold up is unresolved, not confirmed clean. The before-run's
 survivors are a biased sample, since only calls that didn't overrun the
 ceiling lived to be graded, and the two cells with a clean sample in both runs
 moved in opposite directions at eight runs each, which is noise, not a
-verdict. One result is an inference rather than a proven cause: the
+verdict. One result was, at the time, an inference rather than a proven cause: the
 Contact/session-4 cell went from 2 clean runs out of 8 to 8 out of 8 even
 though it cannot be affected by the "nothing to compare" instruction, since it
-has three prior sessions. The likely explanation is the second prompt change,
-the stricter JSON instruction, but the two changes were never isolated to
-confirm that.
+has three prior sessions. ~~The likely explanation is the second prompt
+change, the stricter JSON instruction, but the two changes were never
+isolated to confirm that.~~ Confirmed by the isolation experiment recorded in
+the postscript below, 17 August 2026: this is no longer an inference.
 
 *Also built, and still useful for what comes next.* Session 1's fifteen swings
 now live in their own file a script can read, closing the gap that kept the
@@ -77,6 +81,35 @@ about $1.95.
 reproduced, on demand, the exact miscount the product manager caught by eye
 two days earlier: the coach said four of six swings were under 80 mph when the
 real number was six of six.
+
+*Postscript, 17 August 2026, later the same day: the two-part fix was cut back
+to one part.* The product manager questioned the first change on a specific
+ground: this app uses the word "trend" for two different things, a session
+being better or worse than a *prior* session, and a session's own swings
+trending better or worse from swing 1 to swing 15 within that one session.
+The instruction removed here forbade both, but only the first kind is
+meaningless on session 1; a within-session trend across the fifteen swings is
+legitimate first-session coaching content, and it is exactly what the Exit
+Velocity Trend chart already shows on that same screen. That ambiguity was
+reason enough to test whether the instruction was doing anything at all.
+
+An isolation experiment removed the first change and kept only the second
+(the stricter JSON-first instruction), then ran 12 fresh live calls on
+session 1 with the Power goal, the same cell that had failed worst before any
+fix. Result: 0 of 12 hit the ceiling, 0 of 12 failed to parse, output tokens
+338 to 394, a healthy range. That matches the 0-of-many results the slice
+already measured with both changes in place, so removing the first change
+cost nothing. Combined with the Contact/session-4 result above, which could
+never have been touched by the first change and still went clean, the
+conclusion is now a measured result rather than an inference: **the
+single-session "nothing to compare" instruction was dead weight, and the
+JSON-first instruction did all the work.**
+
+The dead-weight instruction was deleted from `src/coachApi.js` the same day.
+The sentence that remains, telling the coach to compare across sessions when
+more than one is provided, is unchanged and was never in question; the
+product manager confirmed that cross-session comparison on sessions 2 through
+4 is desired behaviour and "exactly what a real coach would do."
 
 ---
 

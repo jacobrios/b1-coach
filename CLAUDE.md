@@ -1334,6 +1334,20 @@ rewritten, per the append-only rule.
 
 *Added at the close of Slice 7b, 17 August 2026:*
 
+- **The word "trend" means two different things in this app's prompts, and
+  that ambiguity already cost one wrong instruction.** One meaning is a
+  session being better or worse than a *prior* session, which is meaningless
+  on session 1. The other is a session's own swings trending better or worse
+  from swing 1 to swing 15 *within* one session, which is legitimate
+  first-session coaching content and is exactly what the Exit Velocity Trend
+  chart already shows. The single-session instruction this slice shipped and
+  then deleted forbade both, because it never distinguished them. Nothing
+  broke as a result this time, an isolation experiment showed the instruction
+  was not doing anything anyway, but a future prompt change could easily lean
+  on the wrong meaning without anyone noticing. Any future prompt wording
+  about trends should say plainly which kind it means. Cheap to keep in mind,
+  costs nothing to action now; recorded so the next prompt edit does not
+  repeat the mistake.
 - **The "What This Means" floor and the chat panel's 17px bump, deferred, not
   dropped.** Both were scoped and worded before this slice pivoted to the
   session-1 parse-failure bug instead. The approved wording is kept on file in
