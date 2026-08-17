@@ -96,11 +96,22 @@ const { computeStats, topExitVelocity } = await import('../src/sessionStats.js')
 const { DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
-const { contentWordOverlap } = await import('../src/contentWordOverlap.js')
+const { contentWordOverlap } = await import('./contentWordOverlap.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
 // keeps the deployed demo alive.
+//
+// Left at its Slice 7 value on purpose. Slice 7b's power-s1 cell raised the
+// cost of a single condition from 24 calls (3 cells x 8 runs) to 36 (36 at
+// the default --runs 8: 12+8+8+8), so --condition all (5 conditions) now
+// needs 180, above this cap where it used to need 120. That is intentional,
+// not an oversight: --condition all was already a wasteful invocation before
+// this slice (B and shipped build byte-identical prompts) and this project's
+// owner has said it should never be run. Raising the cap to fit it would
+// remove the one thing stopping that command from working by default; the
+// refusal message at the call site explains this rather than reading as an
+// arbitrary number.
 const MAX_PLANNED_CALLS = 150
 
 // Sonnet 4.6 list pricing, dollars per million tokens, for the cost line only.
@@ -415,7 +426,7 @@ function grade(parsed, values, targets) {
   )
 
   // Content-word overlap between whatThisMeans and coachingSummary; see
-  // src/contentWordOverlap.js for the definition. This is the padding check
+  // scripts/contentWordOverlap.js for the definition. This is the padding check
   // Slice 7b's floor on whatThisMeans needs: a coach that hits the floor by
   // restating the summary should score HIGH here, not read as a clean pass
   // in the word-count numbers above.
@@ -622,7 +633,27 @@ async function main() {
   const runsPerCondition = runsPerCell.reduce((sum, n) => sum + n, 0)
   const planned = conditionKeys.length * runsPerCondition
   if (planned > MAX_PLANNED_CALLS) {
-    console.error(`Refusing to plan ${planned} calls; the cap is ${MAX_PLANNED_CALLS}.`)
+    console.error(
+      `Refusing to plan ${planned} calls; the cap is ${MAX_PLANNED_CALLS} ` +
+      `(${conditionKeys.length} condition(s) x ${runsPerCondition} calls/condition).`,
+    )
+    // The power-s1 cell (Slice 7b) raised every condition's own cost from 24
+    // to 36 calls, so --condition all now needs 180 at the default --runs 8,
+    // above the cap on its own. That is not a bug to route around by raising
+    // the cap: --condition all was already discouraged before this slice,
+    // since B and shipped send byte-identical system prompts and running
+    // both spends calls measuring the same string twice. This message exists
+    // so a future caller who hits the refusal understands why, rather than
+    // reading it as an arbitrary number to push past.
+    if (args.condition === 'all') {
+      console.error(
+        '"all" runs every condition, including both B and shipped, which build ' +
+        'byte-identical system prompts — that duplication was already wasteful ' +
+        'before this slice and is now what pushes the plan over the cap. Use ' +
+        '--condition shipped (what the app sends today) unless you specifically ' +
+        'need the historical A/B/C comparison, or name only the conditions you need.',
+      )
+    }
     console.error('Lower --runs or narrow --condition.')
     process.exit(1)
   }
@@ -748,7 +779,7 @@ function report(records, conditionKeys) {
   console.log('DOES WHAT THIS MEANS JUST RESTATE THE SUMMARY?')
   console.log('='.repeat(70))
   console.log('')
-  console.log('Content-word overlap (Jaccard, see src/contentWordOverlap.js) between')
+  console.log('Content-word overlap (Jaccard, see scripts/contentWordOverlap.js) between')
   console.log('whatThisMeans and coachingSummary. 0 = no shared content words, 1 = the')
   console.log('same set on both sides. Exists because a word-count floor on whatThisMeans')
   console.log('invites padding by restating the summary rather than adding to it; a rising')

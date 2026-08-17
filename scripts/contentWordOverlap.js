@@ -7,16 +7,21 @@
 // the summary again in different words rather than adding anything. This is
 // the check for that, no model call needed.
 //
-// It lives in src/ rather than inside the bench script itself so it can be
-// reached by the test suite, on the same "pull pure logic out so a test can
-// reach it" pattern this project already uses for chartSlots.js,
-// ballFlight.js and scrollFade.js. One thing is different about this one and
-// is worth naming rather than leaving implicit: those modules are consumed by
-// the running app AND by scripts; this one is consumed only by the bench.
-// That is a deliberate, disclosed departure from the usual shape, made
-// because the alternative (a function that only ever lives inside a
-// scripts/*.mjs file) can never be reached by vitest, and the whole point of
-// writing this as a pure function was to make it testable.
+// It lives here in scripts/, beside its only consumer, rather than in src/.
+// An earlier version of this comment claimed src/ was "the only place vitest
+// can reach it" — that was wrong. Vitest has no config in this project, so
+// its default glob collects `*.test.*` from anywhere in the repo, not just
+// src/; `.claude/hooks/run-tests-unless-docs.test.js` and
+// `.claude/hooks/protect-paths.test.js` already prove a test outside src/
+// gets collected and run just the same. The real reason this is not in src/
+// is the pattern every other extracted module there follows: chartSlots.js,
+// ballFlight.js, scrollFade.js and sessionOneSwings.js are all consumed by
+// the running app AND by one or more scripts. This one has no app consumer
+// at all, only the bench, so src/ would have been the odd one out, not this
+// file living beside the script that uses it. Its test,
+// scripts/contentWordOverlap.test.js, is still a real vitest test and is
+// still collected and run on every `npm test` — moving here changes where
+// the file sits, not whether it is tested.
 //
 // DEFINITION. Jaccard similarity over lowercased content words: split on
 // anything that is not a letter, digit or apostrophe, drop tokens under
