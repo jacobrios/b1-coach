@@ -281,3 +281,68 @@ the verification norms' test count, and the deliberate-decisions entry for the
 budget. Take this slice's items off the What's Next list and add what it
 surfaced. Then the PR body, near 300 words, and the QA script in the chat
 message.
+
+---
+
+# PIVOT, 17 August 2026: this slice changed subject mid-flight
+
+**What happened.** Task 3's before-run failed 14 of 36 calls with "Failed to
+parse coach response as JSON," concentrated in the two cells built on the real
+hand-written session 1. Slice 7's equivalent 96 calls had zero such failures,
+because the bench could not reach session 1 at all until Task 1 of this slice
+made it reachable.
+
+**What the diagnosis found**, from 10 faithful replications of the bench's own
+call on session 1 with the Power goal:
+
+- 7 of 10 hit the hard 4096-token ceiling. A normal debrief is about 350 tokens.
+- Both parse failures were among those 7. The answer is cut mid-JSON.
+- Session 2 on the same goal ran 375 to 399 tokens every time and never failed.
+- Assistant prefill, the standard cure, is refused by this model: "This model
+  does not support assistant message prefill."
+- Production does NOT retry this failure. `isRetryable` returns false when
+  `respondedOk` is set, and the parse failure sets it. The visitor goes straight
+  to the failure screen.
+
+**Three consequences, not one.** A first-click failure; roughly 3x the output
+cost on that screen; and a much slower first debrief, which is what the
+before-run's 57 second outlier actually was.
+
+**The product manager's decision, 17 August 2026:** this becomes the slice. The
+"What This Means" floor and the 17px chat bump are deferred to a follow-up, with
+the approved wording kept on file in this document above. The reason the floor
+cannot simply ship alongside: it lengthens a required section on the exact screen
+that is already overrunning its ceiling, so the two are not independent changes.
+
+**What carries forward from the original plan, already built and reviewed:**
+Task 1 (the extraction and the distance pin), Task 2 (the bench on the real
+session 1, the session-1 cell, the overlap measure), Task 4 (the claim-accuracy
+grader), and Task 0 (the committed eval fixture). None of that is wasted: the fix
+below has to be measured, and these are the instruments that measure it.
+
+**What is NOT yet established, and must not be claimed:**
+- Whether this behaviour is new or has always been true. Session 1 was never
+  measurable before this slice, so it may have been failing for real visitors
+  since the app was built. Unknown, and it should be recorded as unknown.
+- Only the Power goal was tested on session 1. The other four goals are untested.
+- No production failure rate has been measured, only that 2 of 10 bench-path
+  calls failed and that production does not retry them.
+
+## Revised remaining tasks
+
+**Task 9: stop the coach overrunning its ceiling on session 1.**
+The before-numbers are already measured and are the ones above (7/10 ceiling,
+2/10 parse failure, session 1 + Power). A fix must be shown against those, not
+argued for. Prefer a prompt-level fix; raising MAX_TOKENS treats the symptom and
+locks in the 3x cost and the slow first click. The coach's substance must not
+degrade: grounded citations are the check.
+
+**Task 10: make the bench keep the raw reply when parsing fails.**
+The instrument threw away its own evidence. Fourteen failures produced nothing to
+look at, which is why diagnosis needed separate scratch scripts and real money.
+
+**Task 11: verify across the goals session 1 can actually be seen under**, not
+just Power, since a fix proven on one goal is not proven.
+
+**Task 12: close the slice** with the decision record, the CLAUDE.md current-state
+update, the What's Next changes, the PR and the QA script.
