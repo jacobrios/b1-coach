@@ -277,9 +277,30 @@ extraction") instead of announcing the gap between two unrelated numbers. The
 same smoke confirmed the blind extractor catches the transposition it used to
 repair, on the exact swapped pair, both directions.
 
-### Final validation run
+### Final validation run, 18 August 2026: the gate passed
 
-*(numbers recorded when the run lands)*
+$0.63, all 96 records, zero hard failures.
+
+| Measure | Failed grader | Final |
+|---|---|---|
+| Known-wrong flagged for the right reason | 1 of 7 graded | **8 of 8** |
+| Debriefs flagged | 72 of 93 | 20 of 96 |
+
+Both transposition errors the peeking extractor used to repair are now caught,
+on the exact swapped pair, in both directions.
+
+All twelve flags outside the known 8 were adjudicated by hand: five solid new
+coach errors (each verified directly against the rebuilt session data), three
+boundary errors ("under 14 degrees" about a swing at exactly 14), and four
+false positives recorded as known limits rather than patched, because a fourth
+round of hardening against the same fixture would shade from fixing the
+instrument into fitting it. The four: an only-X exclusivity claim mis-extracted
+as a value claim, a pitch-side sign convention ("0.86ft outside" against a
+stored -0.86), and two scope ambiguities where the coach described the
+two-metric power zone loosely.
+
+So the instrument's measured state: 100% right-reason recall on the 8, roughly
+80% precision across everything it flags, at about $0.63 per 96 debriefs.
 
 **The honest framing, which goes in the decision log too:** the first run was
 the blind test and it failed. Everything after is a retest against a fixture

@@ -76,8 +76,39 @@ has to be honest: this run was the blind test and it failed, so any rerun is a
 retest against a fixture whose failure modes are now known, and its number is
 weaker evidence than this one's would have been.
 
+## The after, added later on 18 August 2026
+
+    validate-96-after.json          raw graded claims from the rebuilt grader
+    validate-96-after-report.txt    the full console report from the same run
+
+Same 96 records, same frozen builder, same model, run after the rebuild
+described above plus three rounds of hardening (a range claim kind, a blinded
+extractor, subset-scoped ranges, and a units-contradiction guard; the story is
+in the Slice 8 plan and the product decisions log).
+
+| Measure | Before | After |
+|---|---|---|
+| Known-wrong flagged for the right reason | 1 of 7 graded | **8 of 8** |
+| Debriefs flagged | 72 of 93 | 20 of 96 |
+| Hard failures | 3 | 0 |
+| Cost | $2.56 | $0.63 |
+
+**Every flag outside the known 8 was adjudicated by hand.** Of the twelve: five
+are solid coach errors the original hand analysis missed (for example "6 of
+your 15 swings landed between 20 and 31 degrees" against a true 8, verified
+directly against the rebuilt session data); three are boundary errors ("under
+14 degrees" about a swing at exactly 14); four are false positives, recorded
+as known limits (an only-X exclusivity claim mis-extracted as a value claim, a
+pitch-side sign convention, and two scope ambiguities where the coach described
+a two-metric zone loosely).
+
+**The honest caveat that goes with the after numbers:** the before run was the
+blind test, and it failed. The after run is the third pass against a fixture
+whose failure modes were studied in between, so its recall is weaker evidence
+than a first pass would have been. The verdict module's unit tests are the
+instrument's warranty going forward; this run is the demonstration.
+
 ## What is deliberately not here
 
-No re-run, no comparison table, and no "fixed" version of these numbers. This
-directory is the before. Adding an after to it later is expected; editing these
-two files is not.
+Nothing further. The before and the after are both present, and editing either
+is not expected; a future grader change earns a new pair, not a rewrite.

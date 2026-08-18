@@ -549,6 +549,14 @@ failure this whole file exists to stop.
 **Blocked on Slice 8.** Do not start this until the rebuilt grader has passed
 its gate. That is the entire reason the split happened.
 
+*Annotation, 18 August 2026: the gate passed.* The rebuilt grader caught all 8
+known-wrong debriefs for the right reason at a 20-of-96 flag rate; both runs
+are committed under `docs/eval-fixtures/slice8-grader-validation/`. This slice
+is unblocked once Slice 8's PR merges. Budget note: a full accuracy run now
+costs about $0.63, so this slice's before-and-after measurement is cheaper than
+originally scoped, but the bench rounds are unchanged and still need their own
+figure put to the product manager first.
+
 ## What it is, in one line
 
 Every threshold the coach's prompt names in prose gets counted for the coach in

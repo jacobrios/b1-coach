@@ -6,6 +6,61 @@
 
 ---
 
+## Slice 8: the grader failed its own exam, and was rebuilt to pass it (August 17-18)
+
+*What this slice was supposed to be.* Coach fidelity: stop the coach
+contradicting the screen beside it. Its first task was validating the
+claim-accuracy grader built in Slice 7b against the committed 96-debrief
+fixture, because until that ran, the grader's verdicts could not be trusted.
+
+*The validation failed, and the slice split at that seam.* The grader flagged
+72 of 93 debriefs and caught the fixture's known errors for the right reason
+once in seven; a fifth of its "false" verdicts carried reasoning arguing the
+opposite, one saying outright "the claim is TRUE, not FALSE." The cause was
+structural: the model was asked to find a claim and rule on it in one breath,
+with the verdict emitted before the evidence. The product manager split the
+work rather than build a coach fix that could not be measured: Slice 8 became
+the instrument, and the coach fix is Slice 8b, scoped in the queued-slices
+file. The failed run is committed as a fixture, because a future session
+reading only "the grader was fixed" should be able to see what it was fixed
+from.
+
+*The rebuild, in one sentence:* the model now only writes down what the coach
+claimed, in a structured shape, and plain code decides whether each claim is
+true against the same precomputed table, so a verdict can no longer disagree
+with its own reasoning or read the same row three different ways.
+
+*What live smoke tests caught that unit tests did not.* Three rounds of small
+paid runs, adjudicated by hand, found four defects in the rebuilt instrument
+before the final run: windows read as one-sided cutoffs; the two-part power
+window (angle plus speed) graded by its angle half alone, calling a correct
+coach sentence false; claims about named swings counted against the whole
+session; and distance claims graded against unrelated statistics. The deepest
+find: the extractor could see the session data "for context" and used it to
+quietly repair the coach's transposition errors before grading, so two known
+errors graded as true. No prompt rule held against that; removing the data
+did. The extractor is now blind, which also shrank each request twenty-fold.
+
+*The result.* All 8 known-wrong debriefs caught, every one for the right
+reason, against 1 of 7 before. 20 of 96 flagged, and hand adjudication of the
+twelve outside the known 8 found five solid new coach errors, three boundary
+errors, and four false positives, recorded as known limits rather than patched,
+because a fourth round of hardening against the same fixture would shade into
+fitting it. A full accuracy run now costs about $0.63. The honest caveat,
+recorded wherever the numbers are: the failed run was the blind test, and every
+later pass is weaker evidence than a first pass would have been. The verdict
+module's 37 unit tests are the warranty; the fixture run is the demonstration.
+
+*Also decided.* Slice 8b was reframed from four separate defects to one rule:
+every threshold the coach's prompt names in prose gets counted for the coach,
+because the fixture shows handed counts are reliably repeated and self-derived
+counts are reliably wrong. The two errors this instrument just confirmed at
+session scale ("6 of 15 between 20 and 31 degrees", truly 8) are that mechanism
+again. Spend across the slice: about $4.99 against the roughly $5 envelope
+agreed midway.
+
+---
+
 ## Slice 7b: the session-1 bug that outweighed the polish (August 17)
 
 *What this slice was supposed to be.* Two small clarity fixes, both scoped and

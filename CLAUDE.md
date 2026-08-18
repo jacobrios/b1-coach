@@ -289,34 +289,41 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           2554 lines across four hand-run scripts, deliberately
+    scripts/*.mjs           2724 lines across four hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
                              scripts, the Slice 7 bench, and the claim-accuracy
-                             grader (`scripts/grade-coach-accuracy.mjs`) added in
-                             Slice 7b. See below and the bench section further down.
-    scripts/*.js (tested)    333 lines across three small modules pulled out of
-                             those hand-run scripts, in Slice 7b, so their pure
-                             logic can be checked without spending money:
-                             `factSheet.js` (the grader's deterministic count
-                             table), `contentWordOverlap.js` (the bench's
-                             restatement check), and `coachFailureRecord.js`
-                             (what the bench now keeps when a call fails to
-                             parse; see the pivot in the 17 August 2026 decision
-                             log entry).
-    scripts/*.test.js        359 lines across three files, testing those three
-                             modules. Not counted in the rows above; together the
-                             sixteen test files vitest collects are 3013 lines.
-    docs/eval-fixtures/      Committed ground truth, not code. Two directories:
+                             grader (`scripts/grade-coach-accuracy.mjs`), added
+                             in Slice 7b and rebuilt in Slice 8 so the model only
+                             extracts claims and never issues a verdict. See
+                             below and the bench section further down.
+    scripts/*.js (tested)    643 lines across four small modules pulled out of
+                             those hand-run scripts so their pure logic can be
+                             checked without spending money: `factSheet.js` (the
+                             grader's deterministic count table),
+                             `contentWordOverlap.js` (the bench's restatement
+                             check), `coachFailureRecord.js` (what the bench
+                             keeps when a call fails to parse), and
+                             `claimVerdict.js` (Slice 8: every verdict the
+                             grader issues, decided in plain code against the
+                             fact sheet; the grading model extracts claims and
+                             rules on nothing).
+    scripts/*.test.js        867 lines across four files, testing those four
+                             modules. Not counted in the rows above.
+    docs/eval-fixtures/      Committed ground truth, not code. Three directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
                                scripts that rebuild the session data they were
                                written about. `slice7b-parse-failure/` (112 KB)
                                holds the before/after records behind Slice 7b's
-                               parse-failure fix, 36 calls each. Neither is
-                               collected by vitest; both have their own READMEs
-                               covering what is and is not safe to conclude
-                               from them.
+                               parse-failure fix, 36 calls each.
+                               `slice8-grader-validation/` (1.2 MB) holds the
+                               grader's failed first validation run and the
+                               passing run after the Slice 8 rebuild, so "the
+                               grader was fixed" is checkable against what it
+                               was fixed from. None is collected by vitest; all
+                               three have their own READMEs covering what is and
+                               is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -573,8 +580,8 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 7b on 17 August 2026 it is 392 tests across 16
-   files, up from 337 across 12 at the close of Slice 7. It covers the
+   vitest, and as of Slice 8 on 18 August 2026 it is 429 tests across 17
+   files, up from 392 across 16 at the close of Slice 7b. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
    one retry and its unwrapping of a fenced model response; the chart-slot
    fallback and dedupe; the chat reply's chart key; the goal targets and the
@@ -589,9 +596,15 @@ specific to this repo:
    bench's job, not the suite's. Never imply broader coverage than that. New
    behavior gets a test shown failing first; a test written over existing
    behavior is worthless until the thing it covers has been broken on purpose
-   and seen to go red. **The claim-accuracy grader itself is not part of this
+   and seen to go red. ~~**The claim-accuracy grader itself is not part of this
    suite and, as of Slice 7b, has not been validated against the fixture it
-   was built for**; see the What's Next list.
+   was built for**; see the What's Next list.~~ **Validated in Slice 8, 17-18
+   August 2026, the hard way: the first validation failed outright, the
+   grader's judgment was rebuilt into plain code (`scripts/claimVerdict.js`,
+   in the suite), and the rerun caught all 8 known-wrong debriefs for the
+   right reason.** The grading model now only extracts claims; every verdict is
+   computed. Both runs are committed under
+   `docs/eval-fixtures/slice8-grader-validation/`.
 2. ~~**Some tests deliberately pin behavior that is wrong.**~~ Resolved in
    Slice 4 on 3 August 2026. All four "recorded, not endorsed" tests were flipped
    to assert the correct behavior, each seen failing against the unfixed code
@@ -1035,6 +1048,17 @@ on purpose: this file loads at the start of every session, so it is an index.
   reach it yet. One in twelve on measurable sessions is the number this work
   should improve against.
 
+  **Annotation, 18 August 2026, at the close of Slice 8's build: the slice
+  split at its first task, and the coach fix is now Slice 8b.** Validating the
+  grader failed outright (right-reason catches 1 of 7), so Slice 8 became the
+  instrument rebuild and the coach change moved to **Slice 8b**, scoped in
+  full in `docs/queued-slices.md` under its own heading, reframed from four
+  defects to one rule: count every threshold the prompt names. The instrument
+  now passes its gate (8 of 8 right-reason, 20 of 96 flagged, about $0.63 a
+  run), so Slice 8b is unblocked the moment Slice 8's PR merges. The
+  "$1.50 to $3" budget above was consumed and exceeded by the validation
+  itself; Slice 8b needs a fresh budget conversation before anything is spent.
+
 Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and the
 formerly-numbered-7 coach fidelity work above. Slice 5 shipped on 14 August
 2026 but delivered only the second half of what Slice A covered;
@@ -1374,6 +1398,13 @@ rewritten, per the append-only rule.
   this up next should ship from that wording rather than re-deriving it, and
   should re-verify it against the fixed prompt, since the ceiling problem that
   caused the pivot is exactly why the floor could not ship alongside it.
+- ~~**Validate the claim-accuracy grader against the committed fixture.**~~
+  **Done in Slice 8, 17-18 August 2026, and the validation failed before it
+  passed**: the original grader caught the known errors for the right reason
+  once in seven, its judgment was rebuilt into code, and the rerun caught 8 of
+  8 right-reason at a 20-of-96 flag rate. See the Slice 8 entries in the
+  decision log and `docs/eval-fixtures/slice8-grader-validation/`. The
+  original bullet follows as written:
 - **Validate the claim-accuracy grader against the committed fixture.**
   `scripts/grade-coach-accuracy.mjs` and `scripts/factSheet.js` are built, and
   the fact sheet has unit tests, but the grader itself was never run in its
