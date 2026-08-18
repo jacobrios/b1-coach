@@ -47,6 +47,10 @@
 // HOW TO RUN
 //   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --dry-run
 //   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate --sample 40
+//   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate --input <dir> --builder current
+// The third form (Slice 8b) grades a directory of fresh bench --out files
+// instead of the committed fixture; pair it with --dry-run first to see the
+// planned call count for that directory before spending.
 // THIS SPENDS REAL MONEY in --validate mode without --dry-run. It prints the
 // planned call count and model before spending a cent, and refuses outright
 // to plan more than MAX_PLANNED_CALLS.
@@ -61,7 +65,7 @@
 // collected.
 
 import { register } from 'node:module'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -92,6 +96,7 @@ register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK
 
 import { buildFactSheet, goalExtraThresholds } from './factSheet.js'
 import { verdictForClaim } from './claimVerdict.js'
+import { mergeInputRecords } from './inputRecords.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
@@ -184,6 +189,11 @@ const CURRENT_CELLS = [
   { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2 },
   { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4 },
   { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4 },
+  // The two cells Slice 8b added to the bench, kept in step by hand like the
+  // rest of this list. Without them a bench round containing either goal
+  // would fail to resolve here and the round could not be graded at all.
+  { key: 'allfields-s4', goal: { id: 'allfields', label: 'Hit to All Fields' }, session: 4 },
+  { key: 'popup-s4', goal: { id: 'popup', label: 'Reduce Pop-Ups' }, session: 4 },
 ]
 
 let _currentBuilderDeps = null
@@ -259,7 +269,43 @@ function loadFixtureRecords() {
   return [...baseline, ...budget]
 }
 
+// The Slice 8b --input flag: a whole directory of bench --out files, merged
+// in filename order. The filesystem half lives here; every decision made
+// after parsing (concatenation order, refusing a non-array file, setting
+// aside failed bench records instead of grading their empty fields) lives in
+// scripts/inputRecords.js, where the test suite reaches it.
+function loadInputDirectory(dir) {
+  const names = readdirSync(dir).filter((n) => n.endsWith('.json')).sort()
+  if (names.length === 0) {
+    throw new Error(`${dir} contains no .json files to grade.`)
+  }
+  const files = names.map((name) => ({
+    name,
+    records: JSON.parse(readFileSync(path.join(dir, name), 'utf8')),
+  }))
+  return mergeInputRecords(files)
+}
+
 function resolveRecordsAndBuilder(args) {
+  if (args.records && args.input) {
+    throw new Error('Pass --records (one file) or --input (a directory), not both.')
+  }
+  if (args.input) {
+    // Same rule as --records, for the same reason: there is no default
+    // builder on purpose, because both builders produce a plausible-looking
+    // fact sheet, just for the wrong swings, and a silent default is the one
+    // mistake with no error message to catch it. A bench round produced
+    // today wants --builder current.
+    if (!args.builder) {
+      throw new Error(
+        '--input was given without --builder. There is no default: pass --builder current for anything ' +
+        'produced by the bench as it runs today, or --builder frozen only if the directory holds records ' +
+        'generated against the old stand-in session 1 (rare, and you should know why).',
+      )
+    }
+    const { records, skippedFailed } = loadInputDirectory(args.input)
+    return { records, skippedFailed, builder: args.builder, source: `${args.input} (directory)` }
+  }
   if (!args.records) {
     if (args.builder && args.builder !== 'frozen') {
       throw new Error(
@@ -720,6 +766,23 @@ async function dryRun(args) {
   console.log('DRY RUN. No API calls, no spend. Exercising every path but the network.')
   console.log('')
 
+  // 0. When --input names a real directory, show exactly what a live run
+  // would grade and what it would cost in calls, before a cent is spent.
+  // This is the plan for THIS invocation's flags; the numbered sections
+  // after it are the standing self-checks and run regardless.
+  if (args.input) {
+    const { records, skippedFailed, builder, source } = resolveRecordsAndBuilder(args)
+    const subset = selectSubset(records, args)
+    console.log('Planned --input run')
+    console.log('-'.repeat(70))
+    console.log(`  records source   ${source} (builder: ${builder})`)
+    if (skippedFailed.length) {
+      console.log(`  set aside        ${skippedFailed.length} failed bench record(s), never graded`)
+    }
+    console.log(`  planned calls    ${subset.length} of ${records.length} gradeable records`)
+    console.log('')
+  }
+
   // 1. Both session builders, against real project data.
   console.log('Session builders')
   console.log('-'.repeat(70))
@@ -737,6 +800,21 @@ async function dryRun(args) {
   )
   if (current.sessions[0].swings.length !== 15 || frozen.sessions[0].swings.length !== 15) {
     throw new Error('Session builder self-check failed: expected 15 swings in session 1 for both builders.')
+  }
+  // The two cells Slice 8b added. Resolved here so a typo in their
+  // CURRENT_CELLS entries fails a free dry run rather than a paid grading
+  // run. Only the current builder knows them: the frozen fixture predates
+  // both goals, so they are deliberately absent from its CELLS.
+  for (const newCellKey of ['allfields-s4', 'popup-s4']) {
+    const cell = await resolveSessions({ builder: 'current', cellKey: newCellKey, seed: 20260814 })
+    console.log(
+      `  current / ${newCellKey.padEnd(12)} ${cell.sessions.length} sessions, ` +
+      `${cell.sessions.reduce((s, ss) => s + ss.swings.length, 0)} total swings, ` +
+      `goal ${cell.goal.id}, viewing session ${cell.viewingSessionNumber}`,
+    )
+    if (cell.sessions.length !== 4) {
+      throw new Error(`Session builder self-check failed: expected 4 sessions for ${newCellKey}.`)
+    }
   }
 
   // 2. Builder-selection guardrails, exercised without ever making a real call.
@@ -758,7 +836,21 @@ async function dryRun(args) {
     guardOk++
     console.log(`  ok: --records with no --builder refused ("${err.message.slice(0, 60)}...")`)
   }
-  if (guardOk !== 2) throw new Error('Builder-selection guardrail self-check failed.')
+  try {
+    resolveRecordsAndBuilder({ input: 'somedir', builder: null })
+    console.log('  FAILED: expected an error for --input with no --builder')
+  } catch (err) {
+    guardOk++
+    console.log(`  ok: --input with no --builder refused ("${err.message.slice(0, 60)}...")`)
+  }
+  try {
+    resolveRecordsAndBuilder({ records: 'somefile.json', input: 'somedir', builder: 'current' })
+    console.log('  FAILED: expected an error for --records and --input together')
+  } catch (err) {
+    guardOk++
+    console.log(`  ok: --records and --input together refused ("${err.message.slice(0, 60)}...")`)
+  }
+  if (guardOk !== 4) throw new Error('Builder-selection guardrail self-check failed.')
 
   // 3. Build the real fact sheet and the real prompt for one record, report sizes.
   console.log('')
@@ -932,7 +1024,7 @@ async function validate(args) {
     process.exit(1)
   }
 
-  const { records, builder, source } = resolveRecordsAndBuilder(args)
+  const { records, skippedFailed, builder, source } = resolveRecordsAndBuilder(args)
   const subset = selectSubset(records, args)
 
   if (subset.length > MAX_PLANNED_CALLS) {
@@ -945,6 +1037,9 @@ async function validate(args) {
   console.log('='.repeat(70))
   console.log(`Model            ${args.model}`)
   console.log(`Records source   ${source} (builder: ${builder})`)
+  if (skippedFailed?.length) {
+    console.log(`Set aside        ${skippedFailed.length} failed bench record(s) with no debrief to grade`)
+  }
   console.log(`Records to grade ${subset.length} of ${records.length} available`)
   console.log(`Rough cost       $${(subset.length * 0.01).toFixed(2)} at a rough ~1 cent/debrief guess; the real total prints at the end`)
   console.log('')
@@ -1007,6 +1102,7 @@ function parseArgs(argv) {
     dryRun: false,
     validate: false,
     records: null,
+    input: null,
     builder: null,
     limit: null,
     sample: null,
@@ -1027,6 +1123,7 @@ function parseArgs(argv) {
     const value = argv[i + 1]
     i += 1
     if (flag === '--records') args.records = value
+    else if (flag === '--input') args.input = value
     else if (flag === '--builder') args.builder = value
     else if (flag === '--limit') args.limit = Number(value)
     else if (flag === '--sample') args.sample = Number(value)
