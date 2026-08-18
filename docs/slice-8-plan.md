@@ -231,21 +231,62 @@ uncached. The report prints the cached and uncached figures side by side, and
 says so explicitly when a run reports no cached tokens at all, because that
 silence is a finding rather than a formatting choice.
 
-## Task 5. Re-validate the rebuilt grader
+## Task 5. Re-validate the rebuilt grader. RAN TWICE; see below.
 
-One run, all 96. Budget it from measured token counts this time, not from a
-single-cell extrapolation, and put the figure to the product manager before
-spending.
+**The gate:** the known-wrong records are flagged for the right reason, and the
+flag rate is low enough that catching them means something.
 
-**The gate to call this slice done:** the known-wrong records are flagged for
-the right reason, and the flag rate is low enough that catching them means
-something. A grader that flags three quarters of everything has not passed,
-whatever its recall looks like.
+### First re-validation, 17 August 2026: $0.74, real progress, two defects
 
-**The honest framing goes in the decision log**: the first run was the blind
-test and it failed. This one is a retest against a fixture whose failures are
-now known, so its number is weaker evidence than the first run's would have
-been. Do not report the two as equals.
+| Measure | Failed grader | First re-validation |
+|---|---|---|
+| Known-wrong flagged for the right reason | 1 of 7 | 6 of 8, all six right-reason |
+| Debriefs flagged | 72 of 96 | 28 of 96 |
+
+Every flag outside the known 8 was adjudicated by hand, per the fixture
+README's rule that the other 88 are "no verified error found", not proven
+clean. That adjudication found the two remaining defects and two genuine coach
+errors the original hand analysis had missed.
+
+**Defect: the extractor could peek.** The two misses were the transposition
+errors ("swings 12 and 14 at 11 and 14 degrees", true values reversed), and the
+extractor returned those pairs already corrected to the true values, so the
+verdict code graded the coach's mistake as TRUE. It could only have learned the
+true values from the fact sheet, included in the prompt "for context". **Fix:
+the extractor is blind.** It sees only the coach's words. A prompt rule could
+not have held; removing the data cannot not hold. Side effect: requests shrank
+about twenty-fold, which retired the fact-sheet cache built earlier the same
+day. The dry run now checks blindness the way it used to check the breakpoint.
+
+**Defect: named swings graded session-wide.** Fifteen of 21 range flags were
+"swings 4, 5, 6, and 7 ... all between 88 and 92 mph": a claim about four named
+swings, counted against the whole session. Ranges now carry `ofSwings` and are
+answered from those swings' own rows.
+
+**Two genuine finds, hand-verified against the rebuilt session data**: "6 of
+your 15 swings landed between 20 and 31 degrees" is truly 8, and "eight of 15
+between 15 and 24" is truly 9. Both are self-derived counts, the fixture's
+mechanism, found by the instrument and missed by the original hand analysis.
+
+**Blinding exposed one more mislabel class**, caught by a 24-record smoke: with
+no fact sheet to lean on, the extractor sometimes labels a distance claim as a
+session statistic, so "4 balls hit 305 feet or more" was graded against the
+in-zone count. No session stat measures feet, so a units-contradiction guard in
+the verdict code now answers UNVERIFIABLE ("this claim was mislabeled by
+extraction") instead of announcing the gap between two unrelated numbers. The
+same smoke confirmed the blind extractor catches the transposition it used to
+repair, on the exact swapped pair, both directions.
+
+### Final validation run
+
+*(numbers recorded when the run lands)*
+
+**The honest framing, which goes in the decision log too:** the first run was
+the blind test and it failed. Everything after is a retest against a fixture
+whose failure modes are known, and each pass is weaker evidence than the one
+before, because the instrument has now been corrected against this data three
+times. The unit tests (37 on the verdict module alone) are the instrument's
+primary warranty going forward; the fixture run is the demonstration.
 
 ## Task 6. Records
 
