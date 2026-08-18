@@ -109,15 +109,17 @@ const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecor
 // keeps the deployed demo alive.
 //
 // Left at its Slice 7 value on purpose. Slice 7b's power-s1 cell raised the
-// cost of a single condition from 24 calls (3 cells x 8 runs) to 36 (36 at
-// the default --runs 8: 12+8+8+8), so --condition all (5 conditions) now
-// needs 180, above this cap where it used to need 120. That is intentional,
+// cost of a single condition from 24 calls (3 cells x 8 runs) to 36, and
+// Slice 8b's two new cells (allfields-s4, popup-s4) raise it again to 52 at
+// the default --runs 8 (12+8+8+8+8+8), so --condition all (5 conditions) now
+// needs 260, above this cap where it once needed 120. That is intentional,
 // not an oversight: --condition all was already a wasteful invocation before
-// this slice (B and shipped build byte-identical prompts) and this project's
-// owner has said it should never be run. Raising the cap to fit it would
-// remove the one thing stopping that command from working by default; the
-// refusal message at the call site explains this rather than reading as an
-// arbitrary number.
+// those cells existed (B and shipped build byte-identical prompts) and this
+// project's owner has said it should never be run. Raising the cap to fit it
+// would remove the one thing stopping that command from working by default;
+// the refusal message at the call site explains this rather than reading as
+// an arbitrary number. A single condition at 52 calls still clears the cap
+// with room for a larger deliberate --runs.
 const MAX_PLANNED_CALLS = 150
 
 // Sonnet 4.6 list pricing, dollars per million tokens, for the cost line only.
@@ -179,7 +181,9 @@ function buildSessions({ goalId, upTo, seed }) {
 // script cannot import; only `label` is used in the prompt and only `id`
 // anywhere else, so these two fields are the whole dependency. If a label is
 // ever renamed in App.jsx it must be renamed here too, which is the price of
-// not being able to import a JSX file.
+// not being able to import a JSX file. Slice 8b grew this from four cells to
+// six, so the hand-copied labels that must be kept in step with App.jsx now
+// number six, one per cell, covering four distinct goals.
 // `weight` is how each cell's share of --runs is expressed; see cellRuns()
 // below for the arithmetic and the reasoning for doing it this way rather
 // than a fixed absolute count on power-s1.
@@ -188,6 +192,8 @@ const CELLS = [
   { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2, weight: 1, why: 'the goal most visitors pick, early session' },
   { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4, weight: 1, why: 'largest session, three priors to compare against' },
   { key: 'open-s4', goal: { id: 'open', label: 'Open Session' }, session: 4, weight: 1, why: 'no target, so the coach has the most latitude' },
+  { key: 'allfields-s4', goal: { id: 'allfields', label: 'Hit to All Fields' }, session: 4, weight: 1, why: 'never measured by anything; judged on spray direction, which no other cell exercises' },
+  { key: 'popup-s4', goal: { id: 'popup', label: 'Reduce Pop-Ups' }, session: 4, weight: 1, why: 'never measured by anything; the only goal judged on launch angle alone, with no exit velocity ask' },
 ]
 
 // --runs sets the volume for a weight-1 cell (default 8, matching power-s2,
@@ -656,9 +662,10 @@ async function main() {
       `(${conditionKeys.length} condition(s) x ${runsPerCondition} calls/condition).`,
     )
     // The power-s1 cell (Slice 7b) raised every condition's own cost from 24
-    // to 36 calls, so --condition all now needs 180 at the default --runs 8,
+    // to 36 calls, and Slice 8b's allfields-s4 and popup-s4 cells raised it
+    // to 52, so --condition all now needs 260 at the default --runs 8, far
     // above the cap on its own. That is not a bug to route around by raising
-    // the cap: --condition all was already discouraged before this slice,
+    // the cap: --condition all was already discouraged before those cells,
     // since B and shipped send byte-identical system prompts and running
     // both spends calls measuring the same string twice. This message exists
     // so a future caller who hits the refusal understands why, rather than
