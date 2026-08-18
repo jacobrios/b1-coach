@@ -999,7 +999,7 @@ on purpose: this file loads at the start of every session, so it is an index.
   Pop-Ups tag becomes `LA 10–25° · Level it out`, and the README's goal list must
   also pick up the Power goal's rename to "Power & Distance". Cheap, independent
   of each other, and all six are verifiable in one browser pass.
-- **Coach fidelity, formerly labelled Slice 7, not yet scheduled or numbered.**
+- **Coach fidelity. SCHEDULED AS THE NEXT SLICE, 17 August 2026, and it is Slice 8.**
   Four ways the coach can contradict the screen beside it, the largest being
   that it is never told the two tips it just gave. **Two of the four failed to
   reproduce in a live walkthrough**, so the slice starts by deciding whether
@@ -1008,6 +1008,25 @@ on purpose: this file loads at the start of every session, so it is an index.
   2026 as the coach's length budget and type-size bump**, an unrelated slice
   that took the number first. This item's scope is unchanged and still lives
   in `docs/queued-slices.md`; only its number is gone.
+  **Scheduled 17 August 2026, at the close of Slice 7b, and given the number 8.**
+  The product manager agreed it as the next slice in conversation, and this line
+  exists so no future session has to be told that in a paste. What changed the
+  case from theoretical to demonstrated: Slice 7b's browser passes produced two
+  false statements on the first screen, in two attempts. One said four of six
+  swings were under 80 mph when all six were, which is the error the product
+  manager first caught by eye on 15 August. The other called a pitch "below the
+  zone" that was actually wide, while quoting its correct height in the same
+  sentence. Both fit the mechanism the eval fixture pinned down: the coach
+  repeats numbers it is handed and gets wrong the ones it derives itself.
+  Two things make this the cheapest it will ever be to do. The 96-debrief
+  fixture is committed, the claim-accuracy grader exists, and the bench now
+  reaches session 1, so the instrument is built and paid for; validating the
+  grader is the one piece Slice 7b's pivot left undone. And the session-1
+  rewrite is blocked behind it, because this project already decided that
+  rewriting those swings needs the coach checked automatically rather than by
+  hand. It needs live API calls, so it carries a real budget: roughly $1.50 to
+  $3, to be scoped with the product manager before anything is spent.
+
   **Baseline measured 15 August 2026, ahead of scheduling this work:**
   re-grading 96 saved debrief transcripts for factual errors found 8, about
   one in twelve. See the Slice 7 postscript in the decision log for the

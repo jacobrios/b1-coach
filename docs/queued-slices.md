@@ -296,6 +296,16 @@ the same day and this scope is unscheduled and unnumbered until someone picks
 it up.** The heading and every reference below are kept as originally
 written, per this project's append-only convention.
 
+**Scheduled 17 August 2026 as Slice 8.** At the close of Slice 7b the product
+manager agreed this as the next slice. The scope below stands as written; what
+Slice 7b added is evidence and instruments. Evidence: two browser passes on the
+first screen produced two false coach statements, so this is now reproducible
+rather than anecdotal. Instruments: a committed 96-debrief fixture with 8 known
+errors (`docs/eval-fixtures/slice7-debriefs/`), a claim-accuracy grader
+(`scripts/grade-coach-accuracy.mjs`) that is BUILT BUT NOT VALIDATED, and an
+eval bench that now reaches session 1. Validating the grader against the fixture
+is the first task, because until that runs its verdicts should not be trusted.
+
 **What it is, in one line:** stop the coach from being able to contradict the
 screen it is sitting next to.
 
