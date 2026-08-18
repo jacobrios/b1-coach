@@ -84,6 +84,27 @@ What's Next list.
 $2.38 against the $6 ceiling approved ahead of time. No further spend is
 planned.
 
+*Postscript, 18 August 2026, from a browser QA pass.* Ran a real session-1
+Power debrief against the local dev server and checked every specific claim
+by hand against the actual swing data. Every claim this slice pre-counted
+came back correct: which six swings came in under 15 degrees (swings 1, 2,
+4, 7, 9, 12, the exact set that used to read "four of those"), the top three
+exit velocities (92, 91, 88 mph), which three swings hit the power zone (3,
+5, 15), and the average launch angle (17 degrees, against a real 17.3). The
+fix is holding on the screen a visitor actually sees, not just in the bench.
+
+One claim was still wrong, and it is the same mechanism this slice's own
+fixture already pointed at. The coach named three swings as being "below the
+strike zone," but one of the three, swing 4, was actually inside it. This is
+a self-derived claim over pitch location, the one kind of number this slice
+deliberately did not pre-count, the same gap behind the fixture's "11 wrong
+claims before and after" finding. The prompt already tells the coach the
+strike-zone boundaries and hands it a total count of pitches in the zone, but
+never says which specific swings were outside it, so the coach worked that
+out itself and got it wrong. By this slice's own rule, count every threshold
+the prompt names, the strike zone is a threshold this slice missed, not a new
+kind of problem. Added to CLAUDE.md's What's Next list as the next slice.
+
 ---
 
 ## Slice 8: the grader failed its own exam, and was rebuilt to pass it (August 17-18)

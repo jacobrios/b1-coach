@@ -1578,6 +1578,22 @@ rewritten, per the append-only rule.
   bucket when the coach's phrasing is inclusive, and re-grading both rounds
   (roughly $0.58) to get a clean comparison.
 
+*Added from the Slice 8b browser QA pass, 18 August 2026:*
+
+- **Count the strike-zone thresholds too, naming which swings were on
+  pitches outside the zone.** A live browser pass against a real session-1
+  Power debrief on the local dev server confirmed the item above is not just
+  a bench measurement. Every claim this slice pre-counted came back correct
+  on that screen, and the one claim the coach still worked out for itself was
+  wrong: it named three swings as being on pitches below the strike zone, and
+  one of the three was actually inside it. The prompt already hands the coach
+  the strike-zone bounds and a total count of pitches in the zone, but never
+  which specific swings were outside it, so this is a threshold the slice's
+  own rule, count every threshold the prompt names, did not yet reach. Live
+  on the first screen every visitor sees, which is what makes finishing it
+  the natural next slice: apply Slice 8b's own rule to the one dimension it
+  skipped.
+
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
 and `/api/coach`; the safety-net fixes went back to

@@ -186,3 +186,12 @@ calls began.
 Nothing further. Both rounds are complete as committed; a future change to the
 count lines or the prompt sentences earns a new pair of rounds, not an edit to
 these two files.
+
+**Note, 18 August 2026.** A live browser pass against a real session-1 Power
+debrief on the local dev server reproduced both halves of this fixture's
+finding by hand: every pre-counted claim came back correct, and the one
+self-derived claim over pitch location, which swings were below the strike
+zone, named a swing that was actually inside it. This fixture's numbers now
+have a hand-checked example behind them, not just the aggregate counts. See
+the postscript on the Slice 8b entry in `docs/product-decisions-log.md` and
+the new item on CLAUDE.md's What's Next list.
