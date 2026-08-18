@@ -35,6 +35,7 @@
 import { goalTarget, meetsTarget } from '../src/goalTargets.js'
 import { topExitVelocity } from '../src/sessionStats.js'
 import { DISTANCE_BUCKETS } from '../src/ballFlight.js'
+import { countSpecThresholds } from '../src/goalCountSpecs.js'
 
 export const METRICS = ['exitVelocity', 'launchAngle', 'direction', 'distance']
 
@@ -193,6 +194,15 @@ export function buildFactSheet({ sessions, viewingSessionNumber, extraThresholds
 // goal regardless of which one is active (see the POWER constant and comment
 // in src/coachApi.js). Returns the same {metric: [values]} shape
 // buildFactSheet's extraThresholds takes.
+//
+// Slice 8b added the second half: every threshold the goal's prompt prose
+// names, read from GOAL_COUNT_SPECS via countSpecThresholds rather than
+// re-typed here, so the grader and the prompt cannot disagree about what was
+// counted. That brings in contact's fly-ball 20, allfields' direction
+// cutoffs and 82 mph hard-contact line, and popup's 35 and 5. The Power
+// merging above it stays as-is for grading the baseline round; Task 7
+// revisits it once the prompt no longer shows Power's zone to every goal.
+// Duplicates across the two halves are fine: candidateThresholds dedupes.
 export function goalExtraThresholds(goalId) {
   const target = goalTarget(goalId)
   const power = goalTarget('power')
@@ -205,5 +215,9 @@ export function goalExtraThresholds(goalId) {
     }
     if (Number.isFinite(t.exitVelocity)) exitVelocity.push(t.exitVelocity)
   }
-  return { launchAngle, exitVelocity }
+  const merged = { launchAngle, exitVelocity }
+  for (const [metric, values] of Object.entries(countSpecThresholds(goalId))) {
+    merged[metric] = [...(merged[metric] ?? []), ...values]
+  }
+  return merged
 }

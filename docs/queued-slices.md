@@ -537,6 +537,22 @@ slice's own document is `docs/slice-6-plan.md`, which travelled on the branch.
 
 # Slice 8b: count every threshold the prompt names
 
+**Shipped 18 August 2026.** Result: the targeted miscount ("four of those were
+under 80 mph") went from 8 occurrences to 0 across 52 measured debriefs, but
+the coach's overall claim accuracy held flat (18 of 52 debriefs flagged both
+before and after), and a self-derived error class over pitch location data,
+deliberately left uncounted, held flat too, at 11 wrong claims each round.
+Full numbers in the decision log entry for 18 August 2026 and in
+`docs/eval-fixtures/slice8b-threshold-counts/README.md`.
+
+**Correction, 18 August 2026, from whole-branch review.** The "held flat"
+figure above is corrected in the decision log's 18 August entry: at least 5
+of the 18 after-round flags are grading-tool false positives this slice's
+own new count lines created, and the corrected comparison is roughly 17
+flagged before this fix against roughly 13 after, a modest real improvement
+rather than flat. The pitch-location figure (11 to 11) is unaffected, since
+this slice made no change there.
+
 **Added 17 August 2026, at the point Slice 8 split.** Coach fidelity was
 scheduled as Slice 8 on 17 August. Its first task, validating the claim-accuracy
 grader, failed outright: the grader flagged 72 of 93 debriefs and caught the
@@ -634,3 +650,90 @@ the 50-word tip budget, which is its own open question.
 - **The three disagreeing "hard contact" numbers**, 88 on the stat tiles, 85 on
   Contact, 82 on Hit to All Fields. Already its own queued item. This slice
   reads what each goal already says and changes none of them.
+
+---
+
+# Slice 8c: finish the counting rule, and fix the tool measuring it
+
+Written 18 August 2026, from the product manager's own browser QA pass on
+PR #26 across Line Drives & Contact, Reduce Pop-Ups, and Hit to All Fields.
+Full findings are in the postscript on the Slice 8b entry in
+`docs/product-decisions-log.md`; this heading is where the follow-on work
+gets scoped so it survives the end of a chat window, the same discipline
+Slice 8b itself was written under.
+
+**Blocked on nothing.** Slice 8b is merged. This can start whenever the
+product manager wants it scheduled.
+
+## What it is, in one line
+
+Finish applying Slice 8b's own rule, count every threshold the prompt names,
+to the one dimension it deliberately skipped, clean up one grammar bug the
+rule's own count lines introduced, close a small wording gap the rule made
+loud, and fix the measuring tool so the next comparison is trustworthy.
+
+## The four pieces
+
+1. **Align the fly-ball wording from 20 degrees to 18.** Line Drives &
+   Contact's target band is 8 to 18 degrees, the single source in
+   `src/goalTargets.js`. The coach's own instructions still say "angles above
+   20 degrees are fly balls, not line drives," which leaves 18 to 20 degrees
+   counted by neither number. Approved 18 August 2026. Deliberately not done
+   in Slice 8b, because that slice's measurement rounds were run against the
+   20-degree wording and changing it after the fact would leave the committed
+   evidence describing a prompt that no longer ships.
+2. **Count the strike-zone thresholds, so the coach stops inventing
+   pitch-location groupings.** The prompt already hands the coach the
+   strike-zone bounds and a total count of pitches in the zone, but never
+   which specific swings were outside it, so the coach works that out for
+   itself and gets it wrong at a measured 11-in-11 rate, unchanged by Slice
+   8b. This is the same mechanism Slice 8b fixed for launch angle and exit
+   velocity, applied to the one dimension that slice deliberately left
+   uncounted. Reproduced twice independently: once by the coordinator on a
+   Power debrief, once by the product manager on a Reduce Pop-Ups debrief,
+   both times naming the same swing (4) as wrongly grouped.
+3. **Fix the "1 swings" grammar.** Slice 8b's generated count lines read
+   "1 swings" whenever a count is exactly one, seen on the Reduce Pop-Ups
+   weak-grounder line. Invisible to a visitor, cheap to fix alongside the
+   other two prompt changes above.
+4. **Re-measure with the existing bench and grader, once the grader's own
+   Power-stat leak is fixed first.** `scripts/factSheet.js`'s
+   `sessionStatsExtras` still emits the old Power-only stats for every goal
+   and has no matching stat for any of the five new count lines Slice 8b
+   added to Contact, Hit to All Fields and Reduce Pop-Ups. That gap is what
+   produced Slice 8b's own false-positive flags when the grader checked a
+   correct new-format count against the wrong old stat. **This fix must land
+   before the re-measurement runs, not be discovered mid-comparison the way
+   it was in Slice 8b.** Doing it in the other order is exactly what forced
+   Slice 8b's after-the-fact correction pass; this slice should not repeat
+   that mistake. Once the fact sheet has one matching stat per count line the
+   prompt can now hand the coach, re-run the bench's six cells before and
+   after this slice's three prompt changes for a clean comparison.
+
+## Why these four travel together
+
+All three prompt changes (1 to 3) are small, but each invalidates a
+before/after comparison run before it landed, the same way Slice 8b's own
+count lines invalidated part of its own measurement. Shipping them one at a
+time means paying for a bench-and-grader round after each one; shipping them
+together means paying for one clean round that measures all three at once.
+The grader fix (4) has to be first regardless of when the prompt changes
+ship, because measuring against a broken fact sheet is what created the
+problem this slice exists partly to clean up.
+
+## What this does not claim
+
+Pre-counting the strike-zone thresholds is expected to cut the pitch-location
+miscount rate sharply, the same way it cut the launch-angle and exit-velocity
+miscount rate in Slice 8b. It should not be assumed to eliminate it. Slice
+8b's own postscript found a case, on Hit to All Fields, where the coach
+contradicted a count it had been handed directly rather than derived itself.
+This slice's success measure is a lower rate, not a zero.
+
+## Budget
+
+Needs a fresh spend conversation before any live API calls, the same
+discipline Slice 8b's budget followed. A full bench-and-grader round cost
+roughly $0.63 to $0.91 to generate and $0.28 to $0.30 to grade in Slice 8b;
+this slice needs at least two such rounds (before and after), plus the
+factSheet fix costs nothing to run since it changes no prompt.
