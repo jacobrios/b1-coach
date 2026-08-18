@@ -1,5 +1,14 @@
 import { goalTarget, meetsTarget } from './goalTargets'
 import { distanceDistributionLine } from './ballFlight'
+import { GOAL_COUNT_SPECS } from './goalCountSpecs'
+
+// Re-exported so everything that already reads this file's prompt exports
+// (the bench, tests, and Task 6's count lines) finds the threshold table
+// here too. It is defined in its own module, src/goalCountSpecs.js, because
+// the grader's fact sheet must import it from a plain Node script that
+// cannot resolve this file's extensionless imports; the comment there has
+// the full reasoning.
+export { GOAL_COUNT_SPECS } from './goalCountSpecs'
 
 // The debrief prompt reports a power-zone count for every goal, not just the
 // power goal, so it names Power's numbers directly rather than the current
@@ -21,12 +30,14 @@ export const MAX_TOKENS = 4096
 
 // The coaching context for one goal, in the coach's own words.
 //
-// The prose is hand-written and stays that way; only the target numbers inside
-// it are read from goalTargets.js, so the coach, the goal cards and the charts
-// can no longer promise the player three different things. Numbers that are not
-// a target zone stay written out here: the pull and opposite-field direction
-// cutoffs, the 82 mph that describes hard contact, and the pop-up and grounder
-// edges the goal is defined against.
+// The prose is hand-written and stays that way; every number inside it is
+// interpolated from a shared source. The target numbers come from
+// goalTargets.js, so the coach, the goal cards and the charts cannot promise
+// the player three different things. The rest (the pull and opposite-field
+// direction cutoffs, the 82 mph that describes hard contact, the fly-ball,
+// pop-up and grounder edges) moved to GOAL_COUNT_SPECS in Slice 8b, so a
+// sentence naming a threshold and the pre-computed count that will feed it
+// (Task 6) read the same number and cannot drift.
 //
 // One copy, used by both the debrief prompt and the chat prompt. This block used
 // to be written out twice, verbatim, which is half of how the numbers drifted.
@@ -41,11 +52,14 @@ export function goalContext(goal) {
       // which stays true regardless of how far the curve says the ball goes.
       return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees, target exit velocity ${target.exitVelocity}+ mph. These are the conditions for the player's best contact.`
     case 'contact':
-      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees for true line drives, target exit velocity ${target.exitVelocity}+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.`
+      return `Goal context: target launch angle ${target.launchAngle.min}-${target.launchAngle.max} degrees for true line drives, target exit velocity ${target.exitVelocity}+ mph for hard contact. Angles above ${GOAL_COUNT_SPECS.contact.flyBallAngle} degrees are fly balls, not line drives.`
     case 'allfields':
-      return 'Goal context: goal is meaningful contact to all three zones — at least 3 swings pull side (direction below -15 degrees), at least 3 swings opposite field (direction above +15 degrees), remainder center field. Exit velocity 82+ mph indicates hard contact that challenges fielders.'
+      // oppoDirection interpolates behind a literal "+" because the shipped
+      // prose writes the cutoff as "+15"; pullDirection is negative and
+      // prints its own sign.
+      return `Goal context: goal is meaningful contact to all three zones — at least 3 swings pull side (direction below ${GOAL_COUNT_SPECS.allfields.pullDirection} degrees), at least 3 swings opposite field (direction above +${GOAL_COUNT_SPECS.allfields.oppoDirection} degrees), remainder center field. Exit velocity ${GOAL_COUNT_SPECS.allfields.hardContactExitVelocity}+ mph indicates hard contact that challenges fielders.`
     case 'popup':
-      return `Goal context: goal is to eliminate pop-ups (launch angles above 35 degrees) while avoiding weak grounders (launch angles below 5 degrees). Target launch angle is ${target.launchAngle.min}-${target.launchAngle.max} degrees — enough loft to drive the ball into the outfield productively without ballooning. Staying consistently between ${target.launchAngle.min}-${target.launchAngle.max} degrees is success.`
+      return `Goal context: goal is to eliminate pop-ups (launch angles above ${GOAL_COUNT_SPECS.popup.popUpAngle} degrees) while avoiding weak grounders (launch angles below ${GOAL_COUNT_SPECS.popup.grounderAngle} degrees). Target launch angle is ${target.launchAngle.min}-${target.launchAngle.max} degrees — enough loft to drive the ball into the outfield productively without ballooning. Staying consistently between ${target.launchAngle.min}-${target.launchAngle.max} degrees is success.`
     case 'open':
       return 'Goal context: open session with no specific target metrics. Analyze the most interesting patterns in the data.'
     default:

@@ -9,7 +9,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
-  DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET,
+  DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 
@@ -116,6 +116,77 @@ describe('the targets the coach is told about', () => {
       expect(() => goalContext({ id })).not.toThrow()
     },
   )
+})
+
+// Slice 8b Task 3 moves the numbers that lived only inside goalContext's
+// prose (the direction cutoffs, the 82 mph hard-contact line, the fly-ball,
+// pop-up and grounder angles) into GOAL_COUNT_SPECS, with the prose
+// interpolating them back in. That refactor is only safe if it changes no
+// prompt output at all: the baseline measurement round runs against these
+// exact strings after the refactor lands. So every rendered string is pinned
+// here byte for byte, as literals captured from the shipped code on
+// 18 August 2026, before the refactor began. The em and en dashes inside
+// the pinned strings are the coach's shipped prose, preserved exactly.
+// If one of these fails after an INTENDED prompt change, that change is
+// Task 6's to make with sign-off; update the literal in the same commit that
+// changes the prose, never to make an unintended diff pass.
+describe('the rendered prompt strings, pinned byte for byte', () => {
+  it('renders every goalContext exactly as shipped', () => {
+    expect(goalContext({ id: 'power' })).toBe(
+      "Goal context: target launch angle 25-35 degrees, target exit velocity 88+ mph. These are the conditions for the player's best contact.",
+    )
+    expect(goalContext({ id: 'contact' })).toBe(
+      'Goal context: target launch angle 8-18 degrees for true line drives, target exit velocity 85+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.',
+    )
+    expect(goalContext({ id: 'allfields' })).toBe(
+      'Goal context: goal is meaningful contact to all three zones — at least 3 swings pull side (direction below -15 degrees), at least 3 swings opposite field (direction above +15 degrees), remainder center field. Exit velocity 82+ mph indicates hard contact that challenges fielders.',
+    )
+    expect(goalContext({ id: 'popup' })).toBe(
+      'Goal context: goal is to eliminate pop-ups (launch angles above 35 degrees) while avoiding weak grounders (launch angles below 5 degrees). Target launch angle is 10-25 degrees — enough loft to drive the ball into the outfield productively without ballooning. Staying consistently between 10-25 degrees is success.',
+    )
+    expect(goalContext({ id: 'open' })).toBe(
+      'Goal context: open session with no specific target metrics. Analyze the most interesting patterns in the data.',
+    )
+  })
+
+  // The whole user message, not just the goalContext inside it, so a slip
+  // anywhere in buildDebriefUserMessage during the refactor shows up too.
+  // Two swings and one session keep the literal small enough to read; the
+  // two goals cover a goal with a target and a goal without one.
+  const pinSwings = [
+    { plateLocHeight: 2.1, plateLocSide: 0.3, hit: { launch: { exitSpeed: 91, angle: 27, direction: -12 }, landing: { distance: 305 } } },
+    { plateLocHeight: 1.8, plateLocSide: -0.4, hit: { launch: { exitSpeed: 74, angle: 9, direction: 18 }, landing: { distance: 118 } } },
+  ]
+  const pinSessions = [{
+    sessionNumber: 1,
+    swings: pinSwings,
+    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 1, totalSwings: 2 },
+  }]
+  const pinBody = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings with launch angle strictly below 15 degrees (not including 15): 1 swings — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swings\n- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swings, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swings\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+
+  it('renders the full debrief user message for a power session exactly as shipped', () => {
+    const message = buildDebriefUserMessage({
+      goal: { id: 'power', label: 'Power & Distance' },
+      player: { firstName: 'Jake' },
+      sessions: pinSessions,
+      viewingSessionNumber: 1,
+    })
+    expect(message).toBe(
+      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinBody}`,
+    )
+  })
+
+  it('renders the full debrief user message for an allfields session exactly as shipped', () => {
+    const message = buildDebriefUserMessage({
+      goal: { id: 'allfields', label: 'Hit to All Fields' },
+      player: { firstName: 'Jake' },
+      sessions: pinSessions,
+      viewingSessionNumber: 1,
+    })
+    expect(message).toBe(
+      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinBody}`,
+    )
+  })
 })
 
 describe('reading the reason a failure carries', () => {
