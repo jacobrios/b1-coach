@@ -59,9 +59,14 @@ grading tool's fact sheet was never updated to match, so at least five of the
 eighteen after-round flags are the tool mismatching a coach statement it
 actually got right against the wrong number, not a coach error. Two examples:
 the coach said "8 swings in the target zone" for Contact, correctly, and the
-tool checked it against an unrelated count of 12; the coach said "3 swings
-cleared 82 mph or higher," correctly, and the tool checked the inclusive
-count against a strict above-82 row that reads 1. None of these five could
+tool checked it against an unrelated count of 12; the coach said "only 3
+swings cleared 82 mph," correctly, and the tool checked that against a
+strict above-82 row that reads 1, rather than an at-or-above-82 count, which
+is the higher, inclusive reading the coach's wording supports. **Correction,
+18 August 2026, from a scoped re-review:** the second quote previously read
+"3 swings cleared 82 mph or higher," which is not what the coach wrote; "or
+higher" was this document's own inclusive reading, stated as though the
+coach had said it. Corrected to the coach's actual words above. None of these five could
 have appeared in the baseline round, because those goals were not handed
 those count lines before this slice. Corrected for them, the comparison is
 roughly 17 flagged debriefs before this fix against roughly 13 after, a

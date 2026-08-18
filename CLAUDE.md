@@ -339,9 +339,11 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
                                passing run after the Slice 8 rebuild, so "the
                                grader was fixed" is checkable against what it
                                was fixed from. `slice8b-threshold-counts/`
-                               (180 KB) holds the before/after bench and grading
-                               records behind Slice 8b's count-line fix, 52
-                               debriefs each round. None is collected by vitest;
+                               (180 KB; corrected to 216 KB, 18 August 2026, after
+                               the two grading transcripts were committed) holds
+                               the before/after bench and grading records behind
+                               Slice 8b's count-line fix, 52 debriefs each round.
+                               None is collected by vitest;
                                all four have their own READMEs covering what is
                                and is not safe to conclude from them.
 
