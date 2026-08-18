@@ -314,11 +314,11 @@ function selectSubset(records, args) {
 // EXTRACTION ONLY. The model is not asked for a verdict and is given no way
 // to express one. See the header of scripts/claimVerdict.js for what the old
 // judge-and-rule prompt did on 17 August 2026 and why this half was split off.
-const GRADER_SYSTEM = `You are an extraction tool for an AI hitting coach's debrief. You will be given a FACT SHEET (the exact swing-by-swing data and precomputed counts the coach was shown) and the debrief the coach actually wrote, as five text fields.
+const GRADER_SYSTEM = `You are an extraction tool for an AI hitting coach's debrief. You will be given the debrief the coach wrote, as five text fields.
 
 Your only job is to find every COUNTABLE claim in the debrief and write it out in structured form. You do NOT decide whether any claim is true. You do NOT do arithmetic. Something else checks the claims; your job is only to state precisely what was claimed.
 
-The fact sheet is given to you so you can resolve which session and which metric a claim is about. Do not use it to check anything.
+You are NOT given the session data, on purpose, so you cannot be influenced by it. Extract exactly what the coach's sentences say, pairing swings with values in the order the sentence pairs them. "Swings 12 and 14 at 11 and 14 degrees" pairs swing 12 with 11 and swing 14 with 14, whatever the true values are. Whether the coach is right is not your problem.
 
 A countable claim is one of these four shapes. Use the matching "kind":
 
@@ -328,11 +328,14 @@ A countable claim is one of these four shapes. Use the matching "kind":
 "threshold" - a count of swings meeting a threshold across a whole session ("6 of your 15 swings came in above 20 degrees").
   Fields: sessionNumber, metric, threshold, comparison, statedCount, and statedSwings if the coach also lists the swing numbers.
 
-"subset" - a count restricted to swings the coach has just named ("two of swings 3, 8 and 12 were under 84 mph").
+"subset" - a count restricted to swings the coach has just named ("two of swings 3, 8 and 12 were under 84 mph", "swings 5, 6 and 2 all hit 88-plus mph").
   Fields: sessionNumber, metric, threshold, comparison, ofSwings (the named swings), statedCount.
+  "N-plus" and "N or better" on named swings are subset claims with comparison "atLeast", never swingValue claims: the coach is not saying each swing measured exactly N.
 
 "range" - a count of swings inside a two-sided window ("you only hit the 25-to-35-degree window twice", "three swings landed between 8 and 18 degrees").
-  Fields: sessionNumber, metric, min, max, statedCount.
+  Fields: sessionNumber, metric, min, max, statedCount, and ofSwings when the claim is about swings the coach has named.
+  SCOPE MATTERS MORE THAN ANYTHING ELSE HERE. "Swings 4, 5, 6, and 7 were all between 88 and 92 mph" is a claim about those four named swings, so it carries ofSwings [4, 5, 6, 7] and statedCount 4. Only a claim about the whole session ("6 of your 15 swings landed between 20 and 31 degrees") omits ofSwings. When the sentence follows a list of named swings and says "all three" or "both", the names are the scope: include them as ofSwings.
+  "Your launch angle ranged from 20 to 31 degrees" states a span, not a count. That is kind "other".
   Use this whenever the coach names BOTH edges of a window, even if the second edge appears earlier in the sentence or in the sentence before. A window is not a threshold: "the 25-to-35-degree window" is a range with min 25 and max 35, NOT "at least 25". Getting this wrong asks a different question than the coach answered.
   IMPORTANT EXCEPTION. Some goal "windows" are defined by TWO metrics at once, for example a launch-angle range AND a minimum exit velocity. If the coach calls something a power window, a power zone, or the goal's target zone, the count they were given may be the two-metric count rather than the launch-angle count, and the two differ. When a window claim could plausibly mean either, use kind "other". Do not pick one reading. An honest "cannot tell" is correct here; guessing produces a confident wrong answer about a sentence the coach got right.
 
@@ -365,14 +368,24 @@ Respond ONLY with valid JSON, no prose before or after, in exactly this shape:
 Include only the fields that apply to that claim's kind; omit the rest.
 If the debrief contains no countable claims at all, respond {"claims": []}.`
 
+// The extractor is deliberately BLIND: it never sees the session data.
+//
+// The first extraction prompt included the full fact sheet "for context", and
+// the 17 August 2026 re-validation showed what that enables: on two of the
+// fixture's transposition errors ("swings 12 and 14 at 11 and 14 degrees",
+// true values reversed), the extractor returned the pairs already corrected
+// to the true values, so the verdict code graded the coach's error as TRUE.
+// It could only have gotten those pairings from the fact sheet. An extractor
+// that can see the answers can repair the coach's mistakes on the way past,
+// and no prompt rule reliably stops it; not handing it the answers does.
+//
+// It also removes the reason the fact-sheet cache existed: the whole prompt
+// is now a few hundred tokens per record.
 function buildGraderUserPrompt({ record, factSheet, goal }) {
   const fields = record.fields ?? {}
   return `Player: ${PLAYER.firstName}
 Goal: ${goal.label}
 Session being debriefed: ${factSheet.viewingSessionNumber}
-
-FACT SHEET (JSON):
-${JSON.stringify(factSheet)}
 
 THE DEBRIEF THE COACH WROTE:
 coachingSummary: ${fields.coachingSummary ?? ''}
@@ -382,43 +395,13 @@ tip1: ${fields.tip1 ?? ''}
 tip2: ${fields.tip2 ?? ''}`
 }
 
-// PROMPT CACHING, and why the breakpoint sits where it does.
-//
-// Slice 8. The fact sheet is most of the input: the 17 August 2026 run spent
-// 2,048,116 input tokens across 96 records, about 21,000 each, and the five
-// debrief fields are a few hundred of them. Every record in a cell sends a
-// BYTE-IDENTICAL fact sheet, and the run walks records in file order, so a
-// cell's records arrive in contiguous groups well inside the 5 minute TTL.
-//
-// The breakpoint goes at the end of the fact-sheet block, not on the system
-// prompt, for a specific reason: on Haiku 4.5 the minimum cacheable prefix is
-// 4096 tokens, and GRADER_SYSTEM alone is around 900. A breakpoint there
-// would silently cache nothing (no error, just cache_creation_input_tokens of
-// zero). Caching is a prefix match and system renders before messages, so a
-// breakpoint on the first user block covers the system prompt too.
-//
-// The per-record debrief goes in a SECOND block after the breakpoint. Putting
-// it inside the cached block would make every record a distinct prefix, which
-// writes 96 cache entries and reads none: strictly worse than not caching.
-function splitUserPrompt(record, factSheet, goal) {
-  const full = buildGraderUserPrompt({ record, factSheet, goal })
-  const marker = '\nTHE DEBRIEF THE COACH WROTE:'
-  const at = full.indexOf(marker)
-  // If the layout above ever changes, fall back to one uncached block rather
-  // than guessing a split point. Costs money, never produces a wrong grade.
-  if (at === -1) return [{ type: 'text', text: full }]
-  return [
-    { type: 'text', text: full.slice(0, at), cache_control: { type: 'ephemeral' } },
-    { type: 'text', text: full.slice(at) },
-  ]
-}
-
+// No cache breakpoints. The first rebuild cached the fact sheet, which was
+// most of the input; blinding the extractor removed the fact sheet, and what
+// is left (about 1,200 tokens a record) sits under Haiku 4.5's 4096-token
+// minimum cacheable prefix, where a breakpoint caches nothing silently. The
+// report still prints cache tokens if the API ever reports any.
 function buildGraderPrompt(record, factSheet, goal) {
-  return {
-    system: GRADER_SYSTEM,
-    user: buildGraderUserPrompt({ record, factSheet, goal }),
-    content: splitUserPrompt(record, factSheet, goal),
-  }
+  return { system: GRADER_SYSTEM, user: buildGraderUserPrompt({ record, factSheet, goal }) }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -551,7 +534,7 @@ function gradeParsedResponse(text, factSheet, context) {
 // The live model call
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function callGraderModel({ system, user, content, apiKey, model }) {
+async function callGraderModel({ system, user, apiKey, model }) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -563,10 +546,7 @@ async function callGraderModel({ system, user, content, apiKey, model }) {
       model,
       max_tokens: GRADER_MAX_TOKENS,
       system,
-      // Content blocks when a cache breakpoint was placed, plain string
-      // otherwise. Both are valid; the blocks form is what carries
-      // cache_control. See splitUserPrompt for where the breakpoint goes.
-      messages: [{ role: 'user', content: content ?? user }],
+      messages: [{ role: 'user', content: user }],
     }),
   })
   if (!res.ok) {
@@ -600,8 +580,8 @@ async function callGraderModel({ system, user, content, apiKey, model }) {
 }
 
 async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
-  const { system, user, content } = buildGraderPrompt(record, factSheet, goal)
-  const { text, usage, diagnosis } = await callGraderModel({ system, user, content, apiKey, model })
+  const { system, user } = buildGraderPrompt(record, factSheet, goal)
+  const { text, usage, diagnosis } = await callGraderModel({ system, user, apiKey, model })
   try {
     const graded = gradeParsedResponse(text, factSheet, { goalId: goal?.id })
     return { ...graded, usage, diagnosis }
@@ -713,9 +693,7 @@ function printReport({ model, results, inputTokens, outputTokens, cacheWriteToke
     console.log(`  cache: ${cacheWriteTokens} written, ${cacheReadTokens} read`)
     console.log(`  without caching this run would have cost $${uncachedCost.toFixed(4)}`)
   } else {
-    // Silence here is a finding, not a formatting choice: a breakpoint below
-    // the model's minimum cacheable prefix caches nothing and says nothing.
-    console.log('  cache: no cached tokens reported. Check the breakpoint.')
+    console.log('  cache: none (expected; the blind extraction prompt is below the cacheable minimum)')
   }
 }
 
@@ -789,37 +767,21 @@ async function dryRun(args) {
       tip2: 'Your average exit velocity was 84 mph. Keep driving through the ball.',
     },
   }
-  const { system, user, content } = buildGraderPrompt(sampleRecord, factSheet, frozen.goal)
+  const { system, user } = buildGraderPrompt(sampleRecord, factSheet, frozen.goal)
   const thresholdRowCount = Object.values(factSheet.sessions[0].thresholds).reduce((s, arr) => s + arr.length, 0)
   console.log(`  sessions in fact sheet   ${factSheet.sessions.length}`)
   console.log(`  threshold rows/session   ${thresholdRowCount}`)
   console.log(`  system prompt            ${system.length} chars`)
-  console.log(`  user prompt              ${user.length} chars (fact sheet + debrief fields)`)
+  console.log(`  user prompt              ${user.length} chars (debrief fields only; the fact sheet goes to the verdict code, never the model)`)
 
-  // The cache breakpoint, checked rather than assumed. On Haiku 4.5 the
-  // minimum cacheable prefix is 4096 tokens; a shorter prefix caches nothing
-  // and reports no error, so this prints the estimate next to the floor.
-  const cached = content.find((b) => b.cache_control)
-  if (!cached) {
-    throw new Error('Self-check failed: no cache breakpoint was placed on the user content.')
+  // Blindness, checked rather than assumed: the whole point of the second
+  // rebuild is that the extractor never sees the session data, so a fact
+  // sheet reappearing in this prompt would silently reintroduce the peeking
+  // that let it repair the coach's transposition errors before grading.
+  if (user.includes('FACT SHEET') || user.includes('"thresholds"')) {
+    throw new Error('Self-check failed: the extraction prompt contains session data. The extractor must be blind.')
   }
-  const cachedChars = system.length + cached.text.length
-  const roughTokens = Math.round(cachedChars / 3.5)
-  const MIN_CACHEABLE_TOKENS = 4096
-  console.log(`  content blocks           ${content.length} (breakpoint after block 1)`)
-  console.log(`  cached prefix            ${cachedChars} chars, roughly ${roughTokens} tokens (system + fact sheet)`)
-  console.log(`  minimum to cache at all  ${MIN_CACHEABLE_TOKENS} tokens on Haiku 4.5`)
-  if (roughTokens < MIN_CACHEABLE_TOKENS) {
-    console.log('  WARNING: the prefix looks too short to cache. Expect zero cache reads.')
-  }
-  if (content[content.length - 1].cache_control) {
-    throw new Error('Self-check failed: the per-record debrief block must sit AFTER the breakpoint.')
-  }
-
-  // 4. Feed canned grader RESPONSES through the real parse/normalize/flag path.
-  console.log('')
-  console.log('Canned grader-response self-checks')
-  console.log('-'.repeat(70))
+  console.log(`  extractor is blind       true (no session data in the prompt)`)
 
   // Canned EXTRACTIONS now, not canned verdicts: the model no longer supplies
   // a verdict, so what these prove is that the code rules correctly on a

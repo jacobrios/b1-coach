@@ -168,6 +168,69 @@ record #5, which is that bias showing up on the very first run.
 Extraction-only output is smaller than verdict-plus-reasoning output, so Task 3
 may reduce this on its own. Capture the diagnosis rather than assuming it did.
 
+## Task 4b. What three live records found, before the full run
+
+Unplanned, and the best 13 cents this slice spent. A three-record smoke test
+ran before committing to the full set, and found three defects the rebuild had
+introduced or left open. None was predicted.
+
+1. **A window read as a cutoff.** The coach wrote about "the 25-to-35-degree
+   power window"; the extractor flattened it to "at least 25", a different
+   question, and marked a correct sentence false. Every goal in this app is
+   defined as a range, so this would have inflated the flag rate across the
+   whole run and undermined the gate. Fixed with a `range` claim kind counted
+   from two precomputed rows.
+2. **A window with two halves.** The Power window asks for 25-35 degrees AND
+   88+ mph, and the app's own prompt hands the coach that combined count. On
+   the session in question, five swings are in the angle range and two meet the
+   full zone. The coach said two, and was **right**. The grader called it
+   false. Such a claim is now UNVERIFIABLE by construction. **Written into the
+   extraction prompt first, where it did not hold; moved into code, where it
+   cannot be ignored.**
+3. **No vocabulary for pitch location.** The coach cites pitch height often.
+   The metric list held only what the swing did, so the extractor had no honest
+   label and graded "a pitch 0.6 feet off the ground" against that swing's
+   direction of 7 degrees. The values were in the per-swing table all along.
+
+**What survived all three is a genuine coach error**, hand-verified: one
+debrief claims six swings at 16 degrees or under where the true count is three.
+Sixteen is a number the prompt never hands over, which is the mechanism the
+fixture identified.
+
+Flagged on those three records went from 2, with three false positives, to 1
+with none.
+
+### Two near-misses worth recording, both about evidence rather than code
+
+- **A mutation test reported "no effect" because the mutation never applied**,
+  killed by shell escaping. A mutation that does not mutate looks exactly like
+  a test that does not bite. Re-run with the substitution verified, it failed
+  as it should.
+- **Three tests written for the pitch-location bug passed on their first run.**
+  The verdict layer was already correct; the bug was one layer up in the
+  extractor's metric whitelist. They were kept, because they pin behavior worth
+  pinning, but they were proven by mutation rather than counted as evidence of
+  the fix.
+
+## Task 4c. Cache the fact sheet
+
+Not in the original plan; added when the re-validation cost was put to the
+product manager. Every debrief in a cell sends a byte-identical fact sheet, and
+that is most of the input: 2.05M of the first run's 2.05M input tokens were
+prompt, a few hundred per record were the debrief itself.
+
+**The breakpoint sits after the fact sheet, not on the system prompt, and that
+is load-bearing.** On Haiku 4.5 the minimum cacheable prefix is 4096 tokens and
+the system prompt alone is about 900. A breakpoint there caches nothing and
+reports no error, only a `cache_creation_input_tokens` of zero. Caching is a
+prefix match and system renders before messages, so a breakpoint on the first
+user block covers both.
+
+Measured live on three records: 1 cache write, 2 reads, $0.0307 against $0.0520
+uncached. The report prints the cached and uncached figures side by side, and
+says so explicitly when a run reports no cached tokens at all, because that
+silence is a finding rather than a formatting choice.
+
 ## Task 5. Re-validate the rebuilt grader
 
 One run, all 96. Budget it from measured token counts this time, not from a

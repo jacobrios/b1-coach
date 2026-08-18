@@ -157,7 +157,43 @@ function subsetVerdict(claim, session) {
 // max. Both edges must exist as rows, so a range the fact sheet cannot answer
 // exactly comes back UNVERIFIABLE instead of approximately right.
 function rangeVerdict(claim, session, context) {
-  const { metric, min, max, statedCount } = claim
+  const { metric, min, max, statedCount, ofSwings } = claim
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return unverifiable('range needs both edges')
+  if (!Number.isFinite(statedCount)) return unverifiable('no stated count given')
+  // An inverted range is a bad extraction, not a range of zero swings. Saying
+  // so is better than confidently answering the question nobody asked.
+  if (min > max) return unverifiable(`inverted range ${min} to ${max}`)
+
+  // "Swings 4, 5, 6, and 7 ... all between 88 and 92 mph" is about the NAMED
+  // swings, not the session, and grading it session-wide called correct coach
+  // sentences false fifteen times in one run (17 August 2026): the dominant
+  // false-positive class of the re-validation. With names in hand the claim
+  // is concrete: read each named swing's own value from the per-swing table
+  // and count the ones inside the window. No threshold rows are needed, and
+  // the goal-window ambiguity below does not arise, because naming the swings
+  // pins down exactly what is being counted.
+  if (Array.isArray(ofSwings) && ofSwings.length > 0) {
+    const rows = session.swings ?? []
+    const values = []
+    for (const n of ofSwings) {
+      const row = rows.find((r) => r.n === n)
+      // A named swing that does not exist makes the claim false, not
+      // unanswerable, same as swingValueVerdict.
+      if (!row) {
+        return ruled('FALSE', `session ${session.sessionNumber} has ${rows.length} swings`,
+          `swing ${n} does not exist in this session`)
+      }
+      const v = row[metric]
+      if (!Number.isFinite(v)) return unverifiable(`swing ${n} carries no ${metric}`)
+      values.push({ n, v })
+    }
+    const inside = values.filter(({ v }) => v >= min && v <= max)
+    const actual = `${inside.length} of swings ${ofSwings.join(', ')} have ${metric} in ${min}-${max}` +
+      ` (values ${values.map(({ n, v }) => `${n}:${v}`).join(', ')})`
+    return inside.length === statedCount
+      ? ruled('TRUE', actual, 'named-swing values match the range count')
+      : ruled('FALSE', actual, `claimed ${statedCount}, the named swings give ${inside.length}`)
+  }
 
   // A goal window defined by TWO metrics cannot be checked as a one-metric
   // range. The Power goal asks for 25-35 degrees AND 88+ mph, and the app's
@@ -181,11 +217,6 @@ function rangeVerdict(claim, session, context) {
       'so a launch-angle-only count is not what the coach was necessarily claiming',
     )
   }
-  if (!Number.isFinite(min) || !Number.isFinite(max)) return unverifiable('range needs both edges')
-  if (!Number.isFinite(statedCount)) return unverifiable('no stated count given')
-  // An inverted range is a bad extraction, not a range of zero swings. Saying
-  // so is better than confidently answering the question nobody asked.
-  if (min > max) return unverifiable(`inverted range ${min} to ${max}`)
 
   const lowRow = findThresholdRow(session, metric, min)
   const highRow = findThresholdRow(session, metric, max)

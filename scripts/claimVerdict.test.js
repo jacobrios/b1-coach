@@ -281,6 +281,70 @@ describe('range claims', () => {
   })
 })
 
+describe('subset-scoped range claims', () => {
+  // The dominant false-positive class of the 17 August 2026 re-validation:
+  // "Swings 4, 5, 6, and 7 ... all between 88 and 92 mph" is a claim about
+  // four NAMED swings, and the grader counted the whole session (7) and
+  // called a correct sentence false. Fifteen of the run's 21 range flags took
+  // this shape. When a range claim carries ofSwings, the verdict comes from
+  // the named swings' own values in the per-swing table, not from the
+  // session-wide threshold rows.
+  it('checks named swings against the range, not the whole session', () => {
+    // Swings 2, 5, 6 have launch angles 30, 31, 28: all inside 28-31.
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 28, max: 31, ofSwings: [2, 5, 6], statedCount: 3 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is FALSE when a named swing falls outside the range', () => {
+    // Swing 1 is 18 degrees, outside 28-31, so only 2 of the 3 qualify.
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 28, max: 31, ofSwings: [1, 2, 5], statedCount: 3 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+    expect(result.actual).toContain('2')
+  })
+
+  // A subset range needs no precomputed threshold rows at all: the values are
+  // in the per-swing table. 88-92 mph has rows at neither edge in this
+  // fixture, and must still be answerable for named swings.
+  it('needs no threshold rows when the swings are named', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'exitVelocity', min: 88, max: 92, ofSwings: [2, 4, 5], statedCount: 3 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is FALSE for a named swing the session does not have', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 28, max: 31, ofSwings: [2, 15], statedCount: 2 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+  })
+
+  // The goal-window ambiguity guard is about SESSION-WIDE counts, where the
+  // launch-angle count and the two-metric count the coach was handed diverge.
+  // Named swings make the claim concrete, so the guard must not fire.
+  it('does not apply the goal-window ambiguity guard to named swings', () => {
+    const power = goalTarget('power')
+    const result = verdictForClaim(
+      {
+        kind: 'range', sessionNumber: 4, metric: 'launchAngle',
+        min: power.launchAngle.min, max: power.launchAngle.max,
+        ofSwings: [2, 5], statedCount: 2,
+      },
+      POWER_WINDOW_FACT_SHEET,
+      { goalId: 'power' },
+    )
+    expect(result.verdict).not.toBe('UNVERIFIABLE')
+  })
+})
+
 describe('two-metric goal windows are not launch-angle ranges', () => {
   // The smoke test's second false positive, 17 August 2026, and the more
   // interesting of the two. The coach wrote "the 25-to-35-degree power window
