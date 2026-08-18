@@ -11,6 +11,7 @@
 
 import { describe, it, expect } from 'vitest'
 import { verdictForClaim } from './claimVerdict.js'
+import { goalTarget } from '../src/goalTargets.js'
 
 // A small hand-built fact sheet in the exact shape buildFactSheet returns.
 // Hand-built rather than generated so a reader can check the expectations by
@@ -21,9 +22,9 @@ const FACT_SHEET = {
     {
       sessionNumber: 4,
       swings: [
-        { n: 1, exitVelocity: 88, launchAngle: 18, direction: -20, distance: 300 },
+        { n: 1, exitVelocity: 88, launchAngle: 18, direction: -20, distance: 300, pitchHeight: 2.4, pitchSide: -0.3 },
         { n: 2, exitVelocity: 90, launchAngle: 30, direction: 5, distance: 324 },
-        { n: 3, exitVelocity: 84, launchAngle: 22, direction: 20, distance: 280 },
+        { n: 3, exitVelocity: 84, launchAngle: 22, direction: 20, distance: 280, pitchHeight: 0.6, pitchSide: 0.2 },
         { n: 4, exitVelocity: 92, launchAngle: 24, direction: 0, distance: 325 },
         { n: 5, exitVelocity: 92, launchAngle: 31, direction: -18, distance: 331 },
         { n: 6, exitVelocity: 88, launchAngle: 28, direction: 16, distance: 323 },
@@ -38,6 +39,12 @@ const FACT_SHEET = {
       thresholds: {
         launchAngle: [
           { threshold: 20, above: { count: 4, swings: [2, 3, 4, 5] }, below: { count: 1, swings: [1] }, equal: { count: 0, swings: [] }, atLeast: { count: 5 }, atMost: { count: 2 } },
+          // A second row so a range claim can have BOTH edges precomputed.
+          // Without it the inverted-range test passed for the wrong reason:
+          // its far edge was simply missing, so the missing-row branch
+          // answered first and the inverted-range guard was never exercised.
+          // Proven by mutation on 17 August 2026.
+          { threshold: 30, above: { count: 1, swings: [5] }, below: { count: 4, swings: [1, 3, 4, 6] }, equal: { count: 1, swings: [2] }, atLeast: { count: 2 }, atMost: { count: 5 } },
         ],
         exitVelocity: [
           { threshold: 88, above: { count: 3, swings: [2, 4, 5] }, below: { count: 1, swings: [3] }, equal: { count: 2, swings: [1, 6] }, atLeast: { count: 5 }, atMost: { count: 3 } },
@@ -47,6 +54,29 @@ const FACT_SHEET = {
         ],
         distance: [
           { threshold: 305, above: { count: 4, swings: [2, 4, 5, 6] }, below: { count: 2, swings: [1, 3] }, equal: { count: 0, swings: [] }, atLeast: { count: 4 }, atMost: { count: 2 } },
+        ],
+      },
+    },
+  ],
+}
+
+// Rows at the Power goal's own window edges (25 and 35), so a range claim on
+// that window has both edges precomputed and the ambiguity check is the only
+// thing that can produce UNVERIFIABLE.
+const POWER_WINDOW_FACT_SHEET = {
+  viewingSessionNumber: 4,
+  sessions: [
+    {
+      sessionNumber: 4,
+      swings: [
+        { n: 1, exitVelocity: 92, launchAngle: 30 },
+        { n: 2, exitVelocity: 80, launchAngle: 40 },
+      ],
+      stats: { totalSwings: 2 },
+      thresholds: {
+        launchAngle: [
+          { threshold: 25, above: { count: 2, swings: [1, 2] }, below: { count: 0, swings: [] }, equal: { count: 0, swings: [] }, atLeast: { count: 2 }, atMost: { count: 0 } },
+          { threshold: 35, above: { count: 1, swings: [2] }, below: { count: 1, swings: [1] }, equal: { count: 0, swings: [] }, atLeast: { count: 1 }, atMost: { count: 1 } },
         ],
       },
     },
@@ -141,6 +171,40 @@ describe('per-swing value claims', () => {
   })
 })
 
+describe('pitch location claims', () => {
+  // Found by the smoke test, 17 August 2026. The coach wrote "swing 3 at a
+  // pitch 0.6 feet off the ground". Pitch height was not in the metric list,
+  // so the extractor was forced to label it as one of the four that were, and
+  // graded 0.6 against the swing's DIRECTION of 7 degrees. A false FALSE
+  // caused purely by the instrument not admitting the metric exists. The
+  // per-swing table has carried these values all along.
+  it('rules on a pitch height the coach cites', () => {
+    const result = verdictForClaim(
+      { kind: 'swingValue', sessionNumber: 4, swingNumber: 3, metric: 'pitchHeight', statedValue: 0.6 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is FALSE when the cited pitch height is wrong', () => {
+    const result = verdictForClaim(
+      { kind: 'swingValue', sessionNumber: 4, swingNumber: 3, metric: 'pitchHeight', statedValue: 2.4 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+  })
+
+  // No threshold rows are precomputed for pitch location, so a whole-session
+  // count about it is honestly unanswerable rather than quietly wrong.
+  it('is UNVERIFIABLE for a whole-session pitch-height count', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'pitchHeight', threshold: 2, comparison: 'below', statedCount: 3 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+})
+
 describe('subset claims', () => {
   // Fixture error #4: of swings 3, 8 and 12, "two of those came in under 84
   // mph" when only one was. The subset was derived mid-sentence by the coach.
@@ -159,6 +223,127 @@ describe('subset claims', () => {
       FACT_SHEET,
     )
     expect(result.verdict).toBe('TRUE')
+  })
+})
+
+describe('range claims', () => {
+  // Found by the 3-record smoke test on 17 August 2026, not predicted. The
+  // coach wrote "the 25-to-35-degree power window ... you only hit that window
+  // twice", and the extractor flattened the range to "atLeast 25", which is a
+  // different question and produced a false FALSE. Every goal in this app is
+  // defined as a range, so this would have inflated the flag rate across the
+  // whole run.
+  it('counts swings inside an inclusive range', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 20, max: 20, statedCount: 0 },
+      FACT_SHEET,
+    )
+    // above 20 = 4, atLeast 20 = 5, so exactly-20 membership is 5 - 4 = 1.
+    expect(result.verdict).toBe('FALSE')
+    expect(result.actual).toContain('1')
+  })
+
+  it('is TRUE when the stated count matches the range', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 20, max: 20, statedCount: 1 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is UNVERIFIABLE when either edge is not a precomputed row', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 20, max: 35, statedCount: 2 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  // Both edges exist as rows here on purpose, so the ONLY thing that can
+  // produce UNVERIFIABLE is the inverted-range guard itself.
+  it('is UNVERIFIABLE when the range is inverted rather than guessing intent', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 30, max: 20, statedCount: 1 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  // The real shape from the smoke test: a goal's own window, both edges
+  // precomputed. Swings at 22, 24, 28 and 30 degrees are inside 20 to 30.
+  it('counts a goal-window range across two precomputed rows', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 20, max: 30, statedCount: 4 },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+    expect(result.actual).toContain('4')
+  })
+})
+
+describe('two-metric goal windows are not launch-angle ranges', () => {
+  // The smoke test's second false positive, 17 August 2026, and the more
+  // interesting of the two. The coach wrote "the 25-to-35-degree power window
+  // ... you only hit that window twice". Five swings are in 25-35 degrees, but
+  // only two meet the FULL power zone (25-35 degrees AND 88+ mph), and two is
+  // the number the app's own prompt hands the coach. The coach was right and
+  // the grader called it false.
+  //
+  // A prompt instruction telling the extractor to notice this did not hold, so
+  // the check lives here instead: the Power goal's window is 25-35 degrees AND
+  // 88+ mph, so a bare launch-angle range on exactly those edges is ambiguous
+  // by construction and cannot be ruled on.
+  it('is UNVERIFIABLE when a range matches a goal window that also requires exit velocity', () => {
+    const power = goalTarget('power')
+    const result = verdictForClaim(
+      {
+        kind: 'range',
+        sessionNumber: 4,
+        metric: 'launchAngle',
+        min: power.launchAngle.min,
+        max: power.launchAngle.max,
+        statedCount: 2,
+      },
+      POWER_WINDOW_FACT_SHEET,
+      { goalId: 'power' },
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  // The same range, on a goal with no exit-velocity requirement, is a plain
+  // launch-angle question and must still be answered.
+  it('still rules on the same range when the goal has no exit velocity target', () => {
+    const power = goalTarget('power')
+    const result = verdictForClaim(
+      {
+        kind: 'range',
+        sessionNumber: 4,
+        metric: 'launchAngle',
+        min: power.launchAngle.min,
+        max: power.launchAngle.max,
+        statedCount: 1,
+      },
+      POWER_WINDOW_FACT_SHEET,
+      { goalId: 'popup' },
+    )
+    expect(result.verdict).not.toBe('UNVERIFIABLE')
+  })
+
+  // No goal given at all: the instrument cannot know, so it must not guess.
+  it('rules normally when no goal is supplied', () => {
+    const power = goalTarget('power')
+    const result = verdictForClaim(
+      {
+        kind: 'range',
+        sessionNumber: 4,
+        metric: 'launchAngle',
+        min: power.launchAngle.min,
+        max: power.launchAngle.max,
+        statedCount: 1,
+      },
+      POWER_WINDOW_FACT_SHEET,
+    )
+    expect(result.verdict).not.toBe('UNVERIFIABLE')
   })
 })
 

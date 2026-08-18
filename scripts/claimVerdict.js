@@ -33,6 +33,8 @@
 // the coach's prose this instrument simply does not reach, so it has to be
 // reported beside the verdicts rather than dropped from the summary.
 
+import { goalTarget } from '../src/goalTargets.js'
+
 const COMPARISONS = new Set(['above', 'below', 'equal', 'atLeast', 'atMost'])
 
 // Only above/below/equal carry a swing list in the fact sheet; atLeast and
@@ -145,6 +147,64 @@ function subsetVerdict(claim, session) {
     : ruled('FALSE', actual, `claimed ${statedCount}, the intersection is ${hits.length}`)
 }
 
+// "You only hit the 25-to-35-degree window twice." A range is not a threshold,
+// and treating it as one asks a different question: the smoke test on
+// 17 August 2026 flattened exactly this claim to "atLeast 25" and produced a
+// false FALSE against a real coach sentence.
+//
+// The count is derived from two precomputed rows rather than recounted:
+// members of [min, max] are those at-or-above min, less those strictly above
+// max. Both edges must exist as rows, so a range the fact sheet cannot answer
+// exactly comes back UNVERIFIABLE instead of approximately right.
+function rangeVerdict(claim, session, context) {
+  const { metric, min, max, statedCount } = claim
+
+  // A goal window defined by TWO metrics cannot be checked as a one-metric
+  // range. The Power goal asks for 25-35 degrees AND 88+ mph, and the app's
+  // own prompt hands the coach the two-metric count, so a coach sentence
+  // naming "the 25-to-35-degree power window" is genuinely ambiguous: the
+  // launch-angle count and the count the coach was given are different
+  // numbers. Answering either one confidently produces a wrong verdict on a
+  // sentence the coach got right, which is what the 17 August 2026 smoke test
+  // caught. This lives in code because the same rule written into the
+  // extraction prompt did not hold.
+  const target = goalTarget(context?.goalId)
+  if (
+    target &&
+    metric === 'launchAngle' &&
+    Number.isFinite(target.exitVelocity) &&
+    min === target.launchAngle?.min &&
+    max === target.launchAngle?.max
+  ) {
+    return unverifiable(
+      `the ${min}-${max} window for this goal also requires ${target.exitVelocity}+ mph, ` +
+      'so a launch-angle-only count is not what the coach was necessarily claiming',
+    )
+  }
+  if (!Number.isFinite(min) || !Number.isFinite(max)) return unverifiable('range needs both edges')
+  if (!Number.isFinite(statedCount)) return unverifiable('no stated count given')
+  // An inverted range is a bad extraction, not a range of zero swings. Saying
+  // so is better than confidently answering the question nobody asked.
+  if (min > max) return unverifiable(`inverted range ${min} to ${max}`)
+
+  const lowRow = findThresholdRow(session, metric, min)
+  const highRow = findThresholdRow(session, metric, max)
+  if (!lowRow || !highRow) {
+    return unverifiable(`no precomputed rows for ${metric} at both ${min} and ${max}`)
+  }
+  const atLeastMin = lowRow.atLeast?.count
+  const aboveMax = highRow.above?.count
+  if (!Number.isFinite(atLeastMin) || !Number.isFinite(aboveMax)) {
+    return unverifiable(`rows for ${metric} lack the counts a range needs`)
+  }
+
+  const inRange = atLeastMin - aboveMax
+  const actual = `${metric} between ${min} and ${max} inclusive: ${inRange}`
+  return inRange === statedCount
+    ? ruled('TRUE', actual, 'range count matches the precomputed rows')
+    : ruled('FALSE', actual, `claimed ${statedCount}, the rows give ${inRange}`)
+}
+
 // A whole-session number the debrief prompt already handed the coach.
 function sessionStatVerdict(claim, session) {
   const { statName, statedValue } = claim
@@ -166,13 +226,14 @@ const RULES = {
   threshold: thresholdVerdict,
   swingValue: swingValueVerdict,
   subset: subsetVerdict,
+  range: rangeVerdict,
   sessionStat: sessionStatVerdict,
 }
 
 // Rule on one extracted claim. Never throws: an unusable claim is
 // UNVERIFIABLE with a stated reason, because a grader that crashes on a
 // surprising extraction loses the whole record rather than one claim.
-export function verdictForClaim(claim, factSheet) {
+export function verdictForClaim(claim, factSheet, context) {
   if (!claim || typeof claim !== 'object') return unverifiable('claim was not an object')
 
   const rule = RULES[claim.kind]
@@ -182,5 +243,5 @@ export function verdictForClaim(claim, factSheet) {
   if (!session) {
     return unverifiable(`session ${claim.sessionNumber} is not in the fact sheet the coach was shown`)
   }
-  return rule(claim, session)
+  return rule(claim, session, context)
 }

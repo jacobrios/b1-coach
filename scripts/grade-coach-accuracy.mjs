@@ -331,13 +331,19 @@ A countable claim is one of these four shapes. Use the matching "kind":
 "subset" - a count restricted to swings the coach has just named ("two of swings 3, 8 and 12 were under 84 mph").
   Fields: sessionNumber, metric, threshold, comparison, ofSwings (the named swings), statedCount.
 
+"range" - a count of swings inside a two-sided window ("you only hit the 25-to-35-degree window twice", "three swings landed between 8 and 18 degrees").
+  Fields: sessionNumber, metric, min, max, statedCount.
+  Use this whenever the coach names BOTH edges of a window, even if the second edge appears earlier in the sentence or in the sentence before. A window is not a threshold: "the 25-to-35-degree window" is a range with min 25 and max 35, NOT "at least 25". Getting this wrong asks a different question than the coach answered.
+  IMPORTANT EXCEPTION. Some goal "windows" are defined by TWO metrics at once, for example a launch-angle range AND a minimum exit velocity. If the coach calls something a power window, a power zone, or the goal's target zone, the count they were given may be the two-metric count rather than the launch-angle count, and the two differ. When a window claim could plausibly mean either, use kind "other". Do not pick one reading. An honest "cannot tell" is correct here; guessing produces a confident wrong answer about a sentence the coach got right.
+
 "sessionStat" - a whole-session statistic ("you averaged 89 mph", "you put 4 of 15 in the zone").
   Fields: sessionNumber, statName, statedValue.
   statName must be one of: avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings, topExitVelocity, underFifteenCount, powerZoneCount.
 
 If a sentence carries a number but fits none of these shapes, use kind "other" and give the quote alone. Do not force it into a shape that does not fit; "other" is the correct and expected answer for anything you cannot structure cleanly.
 
-metric must be one of: exitVelocity, launchAngle, direction, distance.
+metric must be one of: exitVelocity, launchAngle, direction, distance, pitchHeight, pitchSide.
+pitchHeight and pitchSide describe where the PITCH was, not what the swing did. Use them for claims like "a pitch 0.6 feet off the ground" or "that pitch was well outside". Never label a pitch-location claim with exitVelocity, launchAngle, direction or distance.
 
 comparison maps from the coach's own words, and the distinction is strict:
 - "above", "over", "more than", "north of" -> "above"
@@ -354,7 +360,7 @@ Other rules:
 
 Respond ONLY with valid JSON, no prose before or after, in exactly this shape:
 {"claims": [
-  {"field": "coachingSummary|whatThisMeans|tipsIntro|tip1|tip2", "quote": "the exact clause", "kind": "swingValue|threshold|subset|sessionStat|other", "sessionNumber": 4, "swingNumber": 12, "metric": "launchAngle", "threshold": 20, "comparison": "above", "statedValue": 14, "statedCount": 6, "statedSwings": [2, 4, 5], "ofSwings": [3, 8, 12]}
+  {"field": "coachingSummary|whatThisMeans|tipsIntro|tip1|tip2", "quote": "the exact clause", "kind": "swingValue|threshold|subset|range|sessionStat|other", "sessionNumber": 4, "swingNumber": 12, "metric": "launchAngle", "threshold": 20, "comparison": "above", "min": 25, "max": 35, "statedValue": 14, "statedCount": 6, "statedSwings": [2, 4, 5], "ofSwings": [3, 8, 12]}
 ]}
 Include only the fields that apply to that claim's kind; omit the rest.
 If the debrief contains no countable claims at all, respond {"claims": []}.`
@@ -376,8 +382,43 @@ tip1: ${fields.tip1 ?? ''}
 tip2: ${fields.tip2 ?? ''}`
 }
 
+// PROMPT CACHING, and why the breakpoint sits where it does.
+//
+// Slice 8. The fact sheet is most of the input: the 17 August 2026 run spent
+// 2,048,116 input tokens across 96 records, about 21,000 each, and the five
+// debrief fields are a few hundred of them. Every record in a cell sends a
+// BYTE-IDENTICAL fact sheet, and the run walks records in file order, so a
+// cell's records arrive in contiguous groups well inside the 5 minute TTL.
+//
+// The breakpoint goes at the end of the fact-sheet block, not on the system
+// prompt, for a specific reason: on Haiku 4.5 the minimum cacheable prefix is
+// 4096 tokens, and GRADER_SYSTEM alone is around 900. A breakpoint there
+// would silently cache nothing (no error, just cache_creation_input_tokens of
+// zero). Caching is a prefix match and system renders before messages, so a
+// breakpoint on the first user block covers the system prompt too.
+//
+// The per-record debrief goes in a SECOND block after the breakpoint. Putting
+// it inside the cached block would make every record a distinct prefix, which
+// writes 96 cache entries and reads none: strictly worse than not caching.
+function splitUserPrompt(record, factSheet, goal) {
+  const full = buildGraderUserPrompt({ record, factSheet, goal })
+  const marker = '\nTHE DEBRIEF THE COACH WROTE:'
+  const at = full.indexOf(marker)
+  // If the layout above ever changes, fall back to one uncached block rather
+  // than guessing a split point. Costs money, never produces a wrong grade.
+  if (at === -1) return [{ type: 'text', text: full }]
+  return [
+    { type: 'text', text: full.slice(0, at), cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: full.slice(at) },
+  ]
+}
+
 function buildGraderPrompt(record, factSheet, goal) {
-  return { system: GRADER_SYSTEM, user: buildGraderUserPrompt({ record, factSheet, goal }) }
+  return {
+    system: GRADER_SYSTEM,
+    user: buildGraderUserPrompt({ record, factSheet, goal }),
+    content: splitUserPrompt(record, factSheet, goal),
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -421,8 +462,13 @@ function parseGraderJson(text) {
 }
 
 const KNOWN_FIELDS = new Set(['coachingSummary', 'whatThisMeans', 'tipsIntro', 'tip1', 'tip2'])
-const KNOWN_KINDS = new Set(['swingValue', 'threshold', 'subset', 'sessionStat', 'other'])
-const KNOWN_METRICS = new Set(['exitVelocity', 'launchAngle', 'direction', 'distance'])
+const KNOWN_KINDS = new Set(['swingValue', 'threshold', 'subset', 'range', 'sessionStat', 'other'])
+// pitchHeight and pitchSide are readable per swing but have no precomputed
+// threshold rows, so a whole-session count about them comes back
+// UNVERIFIABLE while a single-swing citation can be checked. Added
+// 17 August 2026: without them the extractor had no honest label for "a pitch
+// 0.6 feet off the ground" and graded it against the swing's direction.
+const KNOWN_METRICS = new Set(['exitVelocity', 'launchAngle', 'direction', 'distance', 'pitchHeight', 'pitchSide'])
 
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
 const swingList = (v) => (Array.isArray(v) ? v.map(num).filter((n) => n !== undefined) : undefined)
@@ -464,6 +510,8 @@ function normalizeClaims(rawClaims) {
       sessionNumber: num(raw.sessionNumber),
       swingNumber: num(raw.swingNumber),
       threshold: num(raw.threshold),
+      min: num(raw.min),
+      max: num(raw.max),
       comparison: typeof raw.comparison === 'string' ? raw.comparison : undefined,
       statedValue: num(raw.statedValue),
       statedCount: num(raw.statedCount),
@@ -485,14 +533,14 @@ function normalizeClaims(rawClaims) {
 // matching the extraction prompt's own instruction. Done here rather than in
 // claimVerdict.js so the verdict module stays a pure function of the claim it
 // is handed.
-function gradeParsedResponse(text, factSheet) {
+function gradeParsedResponse(text, factSheet, context) {
   const parsed = parseGraderJson(text)
   const { claims, malformedCount } = normalizeClaims(parsed?.claims)
   const graded = claims.map((claim) => {
     const withSession = claim.sessionNumber === undefined
       ? { ...claim, sessionNumber: factSheet?.viewingSessionNumber }
       : claim
-    const { verdict, actual, why } = verdictForClaim(withSession, factSheet)
+    const { verdict, actual, why } = verdictForClaim(withSession, factSheet, context)
     return { ...withSession, verdict, actual, reasoning: why }
   })
   const flagged = graded.some((c) => c.verdict === 'FALSE')
@@ -503,7 +551,7 @@ function gradeParsedResponse(text, factSheet) {
 // The live model call
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function callGraderModel({ system, user, apiKey, model }) {
+async function callGraderModel({ system, user, content, apiKey, model }) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -515,7 +563,10 @@ async function callGraderModel({ system, user, apiKey, model }) {
       model,
       max_tokens: GRADER_MAX_TOKENS,
       system,
-      messages: [{ role: 'user', content: user }],
+      // Content blocks when a cache breakpoint was placed, plain string
+      // otherwise. Both are valid; the blocks form is what carries
+      // cache_control. See splitUserPrompt for where the breakpoint goes.
+      messages: [{ role: 'user', content: content ?? user }],
     }),
   })
   if (!res.ok) {
@@ -549,10 +600,10 @@ async function callGraderModel({ system, user, apiKey, model }) {
 }
 
 async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
-  const { system, user } = buildGraderPrompt(record, factSheet, goal)
-  const { text, usage, diagnosis } = await callGraderModel({ system, user, apiKey, model })
+  const { system, user, content } = buildGraderPrompt(record, factSheet, goal)
+  const { text, usage, diagnosis } = await callGraderModel({ system, user, content, apiKey, model })
   try {
-    const graded = gradeParsedResponse(text, factSheet)
+    const graded = gradeParsedResponse(text, factSheet, { goalId: goal?.id })
     return { ...graded, usage, diagnosis }
   } catch (err) {
     // Attach what the response looked like, so a hard failure is diagnosable
@@ -569,12 +620,23 @@ async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
 
 const recordId = (r) => `${r.conditionKey}/${r.cell}/run${r.run}`
 
-function costOf(model, inputTokens, outputTokens) {
+// Cache writes bill at 1.25x the input rate on the 5 minute TTL and reads at
+// 0.1x, so a run that caches has to price three buckets rather than one.
+// Numbers from the Anthropic pricing documentation, read 17 August 2026.
+const CACHE_WRITE_MULTIPLIER = 1.25
+const CACHE_READ_MULTIPLIER = 0.1
+
+function costOf(model, inputTokens, outputTokens, cacheWriteTokens = 0, cacheReadTokens = 0) {
   const rates = PRICING[model] ?? FALLBACK_PRICING
-  return (inputTokens / 1e6) * rates.input + (outputTokens / 1e6) * rates.output
+  return (
+    (inputTokens / 1e6) * rates.input +
+    (cacheWriteTokens / 1e6) * rates.input * CACHE_WRITE_MULTIPLIER +
+    (cacheReadTokens / 1e6) * rates.input * CACHE_READ_MULTIPLIER +
+    (outputTokens / 1e6) * rates.output
+  )
 }
 
-function printReport({ model, results, inputTokens, outputTokens, source, builder }) {
+function printReport({ model, results, inputTokens, outputTokens, cacheWriteTokens = 0, cacheReadTokens = 0, source, builder }) {
   console.log('')
   console.log('='.repeat(70))
   console.log('GRADING REPORT')
@@ -644,8 +706,17 @@ function printReport({ model, results, inputTokens, outputTokens, source, builde
   console.log('='.repeat(70))
   console.log('COST')
   console.log('='.repeat(70))
-  const cost = costOf(model, inputTokens, outputTokens)
+  const cost = costOf(model, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens)
   console.log(`${inputTokens} input + ${outputTokens} output tokens = $${cost.toFixed(4)}`)
+  if (cacheWriteTokens || cacheReadTokens) {
+    const uncachedCost = costOf(model, inputTokens + cacheWriteTokens + cacheReadTokens, outputTokens)
+    console.log(`  cache: ${cacheWriteTokens} written, ${cacheReadTokens} read`)
+    console.log(`  without caching this run would have cost $${uncachedCost.toFixed(4)}`)
+  } else {
+    // Silence here is a finding, not a formatting choice: a breakpoint below
+    // the model's minimum cacheable prefix caches nothing and says nothing.
+    console.log('  cache: no cached tokens reported. Check the breakpoint.')
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -718,12 +789,32 @@ async function dryRun(args) {
       tip2: 'Your average exit velocity was 84 mph. Keep driving through the ball.',
     },
   }
-  const { system, user } = buildGraderPrompt(sampleRecord, factSheet, frozen.goal)
+  const { system, user, content } = buildGraderPrompt(sampleRecord, factSheet, frozen.goal)
   const thresholdRowCount = Object.values(factSheet.sessions[0].thresholds).reduce((s, arr) => s + arr.length, 0)
   console.log(`  sessions in fact sheet   ${factSheet.sessions.length}`)
   console.log(`  threshold rows/session   ${thresholdRowCount}`)
   console.log(`  system prompt            ${system.length} chars`)
   console.log(`  user prompt              ${user.length} chars (fact sheet + debrief fields)`)
+
+  // The cache breakpoint, checked rather than assumed. On Haiku 4.5 the
+  // minimum cacheable prefix is 4096 tokens; a shorter prefix caches nothing
+  // and reports no error, so this prints the estimate next to the floor.
+  const cached = content.find((b) => b.cache_control)
+  if (!cached) {
+    throw new Error('Self-check failed: no cache breakpoint was placed on the user content.')
+  }
+  const cachedChars = system.length + cached.text.length
+  const roughTokens = Math.round(cachedChars / 3.5)
+  const MIN_CACHEABLE_TOKENS = 4096
+  console.log(`  content blocks           ${content.length} (breakpoint after block 1)`)
+  console.log(`  cached prefix            ${cachedChars} chars, roughly ${roughTokens} tokens (system + fact sheet)`)
+  console.log(`  minimum to cache at all  ${MIN_CACHEABLE_TOKENS} tokens on Haiku 4.5`)
+  if (roughTokens < MIN_CACHEABLE_TOKENS) {
+    console.log('  WARNING: the prefix looks too short to cache. Expect zero cache reads.')
+  }
+  if (content[content.length - 1].cache_control) {
+    throw new Error('Self-check failed: the per-record debrief block must sit AFTER the breakpoint.')
+  }
 
   // 4. Feed canned grader RESPONSES through the real parse/normalize/flag path.
   console.log('')
@@ -871,6 +962,8 @@ async function validate(args) {
   const results = []
   let inputTokens = 0
   let outputTokens = 0
+  let cacheWriteTokens = 0
+  let cacheReadTokens = 0
 
   for (const record of subset) {
     const id = recordId(record)
@@ -889,6 +982,8 @@ async function validate(args) {
       const graded = await gradeDebrief(record, { factSheet, goal, apiKey, model: args.model })
       inputTokens += graded.usage.input_tokens ?? 0
       outputTokens += graded.usage.output_tokens ?? 0
+      cacheWriteTokens += graded.usage.cache_creation_input_tokens ?? 0
+      cacheReadTokens += graded.usage.cache_read_input_tokens ?? 0
       results.push({ record, ...graded })
       console.log(`${graded.claims.length} claims, flagged=${graded.flagged}`)
     } catch (err) {
@@ -903,7 +998,7 @@ async function validate(args) {
     }
   }
 
-  printReport({ model: args.model, results, inputTokens, outputTokens, source, builder })
+  printReport({ model: args.model, results, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens, source, builder })
 
   if (args.out) {
     writeFileSync(args.out, JSON.stringify(results, null, 2))
