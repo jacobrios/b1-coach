@@ -102,6 +102,14 @@ as known limits (an only-X exclusivity claim mis-extracted as a value claim, a
 pitch-side sign convention, and two scope ambiguities where the coach described
 a two-metric zone loosely).
 
+**Known limits recorded by the whole-branch review, beyond the four false
+positives above:** a coach sentence giving a correct count with a
+non-exhaustive example list ("three above 30, like swings 2 and 5") would be
+flagged by the exact-set swing comparison; and the goal-window ambiguity guard
+fires only on the window's exact edges, so a paraphrased window ("25 to 34
+degrees") slips past it. Neither occurred in either committed run; both are
+shapes an adjudicator should recognize.
+
 **The honest caveat that goes with the after numbers:** the before run was the
 blind test, and it failed. The after run is the third pass against a fixture
 whose failure modes were studied in between, so its recall is weaker evidence

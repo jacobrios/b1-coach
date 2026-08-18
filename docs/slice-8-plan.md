@@ -139,9 +139,16 @@ verdict, no reasoning.
 
 **A new tested module does every verdict in plain JavaScript**, beside
 `scripts/factSheet.js`, reading the same deterministic fact sheet. It owns the
-comparison-direction mapping, the distance rounding tolerance, and the
+comparison-direction mapping, ~~the distance rounding tolerance,~~ and the
 "N of those [swings X, Y, Z]" set intersection, all of which the system prompt
-currently asks a model to apply by hand. A claim shape the verdict code does not
+currently asks a model to apply by hand. *(Corrected by the whole-branch
+review, 18 August 2026: the rounding tolerance was written here as intended
+scope and never implemented. Left out deliberately on reflection rather than
+added: the old tolerance was a judgment rule for the model, exact comparison
+biases toward flagging, and every flag is hand-adjudicated, which is where a
+loose-rounding case belongs. No rounding false positive appeared in the final
+96-record run. If one shows up later, the tolerance gets designed as code with
+a test, not restored from the old prompt's wording.)* A claim shape the verdict code does not
 understand becomes UNVERIFIABLE by construction rather than by instruction.
 
 This removes Faults 1 and 3 outright: there is no model verdict to contradict

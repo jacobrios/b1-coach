@@ -166,7 +166,7 @@ function rangeVerdict(claim, session, context) {
 
   // "Swings 4, 5, 6, and 7 ... all between 88 and 92 mph" is about the NAMED
   // swings, not the session, and grading it session-wide called correct coach
-  // sentences false fifteen times in one run (17 August 2026): the dominant
+  // sentences false fifteen times in one run (18 August 2026): the dominant
   // false-positive class of the re-validation. With names in hand the claim
   // is concrete: read each named swing's own value from the per-swing table
   // and count the ones inside the window. No threshold rows are needed, and
@@ -201,7 +201,7 @@ function rangeVerdict(claim, session, context) {
   // naming "the 25-to-35-degree power window" is genuinely ambiguous: the
   // launch-angle count and the count the coach was given are different
   // numbers. Answering either one confidently produces a wrong verdict on a
-  // sentence the coach got right, which is what the 17 August 2026 smoke test
+  // sentence the coach got right, which is what the 18 August 2026 smoke test
   // caught. This lives in code because the same rule written into the
   // extraction prompt did not hold.
   const target = goalTarget(context?.goalId)

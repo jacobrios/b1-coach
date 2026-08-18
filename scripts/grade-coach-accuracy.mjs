@@ -372,7 +372,7 @@ If the debrief contains no countable claims at all, respond {"claims": []}.`
 // The extractor is deliberately BLIND: it never sees the session data.
 //
 // The first extraction prompt included the full fact sheet "for context", and
-// the 17 August 2026 re-validation showed what that enables: on two of the
+// the 18 August 2026 re-validation showed what that enables: on two of the
 // fixture's transposition errors ("swings 12 and 14 at 11 and 14 degrees",
 // true values reversed), the extractor returned the pairs already corrected
 // to the true values, so the verdict code graded the coach's error as TRUE.
@@ -450,11 +450,21 @@ const KNOWN_KINDS = new Set(['swingValue', 'threshold', 'subset', 'range', 'sess
 // pitchHeight and pitchSide are readable per swing but have no precomputed
 // threshold rows, so a whole-session count about them comes back
 // UNVERIFIABLE while a single-swing citation can be checked. Added
-// 17 August 2026: without them the extractor had no honest label for "a pitch
+// 18 August 2026: without them the extractor had no honest label for "a pitch
 // 0.6 feet off the ground" and graded it against the swing's direction.
 const KNOWN_METRICS = new Set(['exitVelocity', 'launchAngle', 'direction', 'distance', 'pitchHeight', 'pitchSide'])
 
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : undefined)
+// Accepts a numeric string as well as a number, because the extraction model
+// intermittently emits numbers as strings, and silently dropping "1" is worse
+// than reading it: a claim about session "1" that loses its session number
+// gets re-defaulted to the viewing session and graded against the wrong data,
+// which review demonstrated turns a true claim FALSE. Anything non-numeric
+// still becomes undefined rather than a guess.
+const num = (v) => {
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v)
+  return undefined
+}
 const swingList = (v) => (Array.isArray(v) ? v.map(num).filter((n) => n !== undefined) : undefined)
 
 // Raw model output is a claim, not a fact about its own shape. Every extracted
@@ -589,8 +599,12 @@ async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
   } catch (err) {
     // Attach what the response looked like, so a hard failure is diagnosable
     // rather than just counted. Kept short: the point is the stop reason and
-    // the size, not an archive of the reply.
-    err.diagnosis = { ...diagnosis, replyChars: text.length, replyTail: text.slice(-200) }
+    // the size, not an archive of the reply. Only for genuine parse failures;
+    // an error from the verdict layer keeping its own message stops a local
+    // bug masquerading as a bad model reply.
+    if (err.message === 'Failed to parse grader response as JSON') {
+      err.diagnosis = { ...diagnosis, replyChars: text.length, replyTail: text.slice(-200) }
+    }
     throw err
   }
 }
@@ -832,6 +846,20 @@ async function dryRun(args) {
       'not even an object',
     ],
   })
+
+  // Numeric strings survive normalization instead of being dropped; review
+  // showed a dropped session number silently re-targets the viewing session.
+  const stringyNums = JSON.stringify({
+    claims: [
+      { field: 'tip1', quote: 'one swing below 15 in session 1', kind: 'threshold', sessionNumber: '1', metric: 'launchAngle', threshold: '15', comparison: 'below', statedCount: '1' },
+    ],
+  })
+  const stringyResult = gradeParsedResponse(stringyNums, factSheet)
+  const sc = stringyResult.claims[0]
+  console.log(`  stringy numbers     -> sessionNumber=${sc.sessionNumber}, threshold=${sc.threshold}, statedCount=${sc.statedCount} (expect 1, 15, 1)`)
+  if (sc.sessionNumber !== 1 || sc.threshold !== 15 || sc.statedCount !== 1) {
+    throw new Error('Self-check failed: numeric strings were not coerced during normalization.')
+  }
   const malformedResult = gradeParsedResponse(malformed, factSheet)
   console.log(
     `  malformed response  -> ${malformedResult.claims.length} claims, ` +

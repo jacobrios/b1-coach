@@ -43,7 +43,7 @@ const FACT_SHEET = {
           // Without it the inverted-range test passed for the wrong reason:
           // its far edge was simply missing, so the missing-row branch
           // answered first and the inverted-range guard was never exercised.
-          // Proven by mutation on 17 August 2026.
+          // Proven by mutation on 18 August 2026.
           { threshold: 30, above: { count: 1, swings: [5] }, below: { count: 4, swings: [1, 3, 4, 6] }, equal: { count: 1, swings: [2] }, atLeast: { count: 2 }, atMost: { count: 5 } },
         ],
         exitVelocity: [
@@ -227,7 +227,7 @@ describe('subset claims', () => {
 })
 
 describe('range claims', () => {
-  // Found by the 3-record smoke test on 17 August 2026, not predicted. The
+  // Found by the 3-record smoke test on 18 August 2026, not predicted. The
   // coach wrote "the 25-to-35-degree power window ... you only hit that window
   // twice", and the extractor flattened the range to "atLeast 25", which is a
   // different question and produced a false FALSE. Every goal in this app is
@@ -282,7 +282,7 @@ describe('range claims', () => {
 })
 
 describe('subset-scoped range claims', () => {
-  // The dominant false-positive class of the 17 August 2026 re-validation:
+  // The dominant false-positive class of the 18 August 2026 re-validation:
   // "Swings 4, 5, 6, and 7 ... all between 88 and 92 mph" is a claim about
   // four NAMED swings, and the grader counted the whole session (7) and
   // called a correct sentence false. Fifteen of the run's 21 range flags took
@@ -346,7 +346,7 @@ describe('subset-scoped range claims', () => {
 })
 
 describe('two-metric goal windows are not launch-angle ranges', () => {
-  // The smoke test's second false positive, 17 August 2026, and the more
+  // The smoke test's second false positive, 18 August 2026, and the more
   // interesting of the two. The coach wrote "the 25-to-35-degree power window
   // ... you only hit that window twice". Five swings are in 25-35 degrees, but
   // only two meet the FULL power zone (25-35 degrees AND 88+ mph), and two is
@@ -428,7 +428,7 @@ describe('session stat claims', () => {
     expect(result.verdict).toBe('FALSE')
   })
 
-  // The 24-record smoke of 17 August 2026, after the extractor was blinded:
+  // The 24-record smoke of 18 August 2026, after the extractor was blinded:
   // "4 balls hit 305 feet or more" came back as a sessionStat claim against
   // inZoneCount, and "zero balls under 175 feet" against underFifteenCount
   // (under fifteen DEGREES). No session stat measures feet, so a quote in
