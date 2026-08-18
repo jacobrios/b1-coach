@@ -11,6 +11,7 @@ import {
   thresholdCounts,
   buildSessionFactSheet,
   buildFactSheet,
+  goalExtraThresholds,
 } from './factSheet.js'
 
 // Five swings, hand-picked so every threshold case (strictly above, strictly
@@ -164,6 +165,56 @@ describe('buildSessionFactSheet', () => {
     const sheet = buildSessionFactSheet(session, { extraThresholds: { exitVelocity: [77] } })
     const thresholdValues = sheet.thresholds.exitVelocity.map((r) => r.threshold)
     expect(thresholdValues).toContain(77)
+  })
+})
+
+describe('goalExtraThresholds', () => {
+  // Slice 8b: every threshold a goal's prompt prose names must produce a
+  // fact-sheet row, or the grader cannot rule on a claim at it. The
+  // prose-only numbers (fly-ball 20, direction -15/+15, hard-contact 82,
+  // pop-up 35, grounder 5) come from GOAL_COUNT_SPECS in
+  // src/goalCountSpecs.js, the same table the prose itself interpolates, so
+  // the grader and the prompt cannot disagree about what was counted.
+
+  it('contact gains the above-20-degrees fly-ball line its prose names', () => {
+    expect(goalExtraThresholds('contact').launchAngle).toContain(20)
+  })
+
+  it('allfields gains both direction cutoffs, a metric it never carried before', () => {
+    const extras = goalExtraThresholds('allfields')
+    expect(extras.direction).toContain(-15)
+    expect(extras.direction).toContain(15)
+  })
+
+  it('allfields gains its own 82 mph hard-contact line, not just Power\'s 88', () => {
+    expect(goalExtraThresholds('allfields').exitVelocity).toContain(82)
+  })
+
+  it('popup gains its above-35 and below-5 lines', () => {
+    const extras = goalExtraThresholds('popup')
+    expect(extras.launchAngle).toContain(35)
+    expect(extras.launchAngle).toContain(5)
+  })
+
+  // Not new behavior: pinned here so the Slice 8b additions cannot quietly
+  // remove it. The shipped prompt reports a power-zone count to every goal
+  // (the POWER constant in src/coachApi.js), so every goal's fact sheet
+  // must keep rows at Power's numbers for the baseline round. Task 7
+  // revisits this once the prompt stops doing that.
+  it('still merges Power\'s targets into every goal, as the shipped prompt requires', () => {
+    for (const goalId of ['contact', 'allfields', 'popup', 'open']) {
+      const extras = goalExtraThresholds(goalId)
+      expect(extras.launchAngle).toContain(25)
+      expect(extras.launchAngle).toContain(35)
+      expect(extras.exitVelocity).toContain(88)
+    }
+  })
+
+  it('a goal with no specs and no target still gets Power\'s rows and nothing invented', () => {
+    const extras = goalExtraThresholds('open')
+    expect(extras.launchAngle).toEqual([25, 35])
+    expect(extras.exitVelocity).toEqual([88])
+    expect(extras.direction).toBeUndefined()
   })
 })
 
