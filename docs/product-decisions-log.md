@@ -40,6 +40,14 @@ unreliable as they were. Pitch location is the next place carrying that same
 problem, and it is now the clear next candidate if the product wants to keep
 closing this gap.
 
+*Annotation, 18 August 2026, from the product manager's own QA pass on
+PR #26.* "Numbers the coach is handed stop being wrong" is not quite true and
+should not be read as a guarantee. On a Hit to All Fields debrief the coach
+was handed the correct pull-side count directly and still contradicted it two
+sentences later. See the postscript below for the full finding. Pre-counting
+sharply reduces how often the coach gets a number wrong; it does not
+eliminate the possibility.
+
 *What the accuracy checker can and cannot prove.* The tool used to grade both
 rounds was built and proven in Slice 8 to reliably catch known coach errors.
 It was never checked for the opposite: how often it flags something the coach
@@ -104,6 +112,70 @@ never says which specific swings were outside it, so the coach worked that
 out itself and got it wrong. By this slice's own rule, count every threshold
 the prompt names, the strike zone is a threshold this slice missed, not a new
 kind of problem. Added to CLAUDE.md's What's Next list as the next slice.
+
+*Postscript, 18 August 2026, from the product manager's own QA pass on
+PR #26.* Browsed three goals the pass above did not reach: Line Drives &
+Contact, Reduce Pop-Ups, and Hit to All Fields. Found three problems and made
+two decisions.
+
+*A design gap this slice made loud rather than caused.* Line Drives &
+Contact's target band is 8 to 18 degrees, read from `src/goalTargets.js`, the
+single source. But the coach's own instructions still say "angles above 20
+degrees are fly balls, not line drives." Nothing defines 18 to 20 degrees, so
+a swing that lands there is counted on neither side. This showed up live:
+swing 10 of session 1 sits at exactly 20 degrees and appeared in neither the
+six swings the coach called "above 20" nor the six it called line drives. The
+gap predates this slice. What changed is that pre-counting the above-20
+threshold gave the coach a reliable number to say out loud, so a quiet
+inconsistency in the two limits became a loud one. **Decided:** align the
+coach's wording from 20 degrees down to 18, so one number governs the goal,
+the same number the target band already uses. **Not done in this slice**, on
+purpose: the measurement rounds behind this slice's numbers were run against
+the 20-degree wording, and changing the prompt now would leave that evidence
+describing a prompt that no longer ships. It goes in the next slice, where it
+can be measured properly.
+
+*The known unfixed class, confirmed independently.* On a Reduce Pop-Ups
+debrief the coach said swings 2, 4, and 12 "all came on pitches below the
+zone, heights of 1.2, 2.3, and 0.8 feet." The real below-zone set is swings
+2, 9, and 12. Swing 4 sat at 2.3 feet, which is mid-zone vertically, and 0.9
+feet to the side, meaning it was off the plate to the right, not below the
+zone. The coach quoted the exact number that disproves its own claim inside
+the same sentence. This is the self-derived pitch-location error this slice
+deliberately left unfixed, and it held unchanged: 11 occurrences before this
+slice and 11 after. It also matches, swing for swing, the error the earlier
+pass above already caught on a Power debrief; the coach makes this mistake
+regardless of which goal is on screen, because the underlying session-1
+pitch data is the same no matter which goal a player picks.
+
+*A miscount that counts against the fix, not for it.* On a Hit to All Fields
+debrief the coach wrote "you pulled it once" and "you only got one pull-side
+swing all session." The prompt had handed it the correct line directly:
+"Swings pull side (direction strictly below -15 degrees, not including -15):
+2 swings." The true count is 2, swings 2 and 13, and the coach even named
+both correctly in the very next clause. So this was not a number the coach
+worked out and got wrong; it contradicted a number it was handed, which is
+exactly what pre-counting was supposed to make impossible. How common:
+across the eight Hit to All Fields debriefs measured in the after round,
+every other pull and oppo count was stated correctly, so this looks rare
+rather than systematic. Recorded plainly because the record has to be
+honest about it: pre-counting sharply reduces how often the coach miscounts,
+but this slice's own evidence shows it does not guarantee a correct count,
+and nothing in this record should be read as though it does.
+
+*A small grammar bug.* The generated count line reads "1 swings" whenever a
+count is exactly one, seen on the Reduce Pop-Ups weak-grounder line.
+Invisible to a visitor, since it lives inside the prompt rather than on
+screen, but it is sloppy. Deferred to the next slice for the same reason as
+the fly-ball wording: it is a prompt change, and the measurement rounds
+behind this slice's numbers were run against the unfixed wording.
+
+*Decided: the "What This Means" floor work is dropped, not deferred again.*
+The product manager reviewed three live debriefs during this pass and judged
+the boxes comfortably filled, with no dead space that reads as blank or
+broken. The approved wording from Slice 7b stays on file in
+`docs/slice-7b-plan.md` if it is ever wanted later, but it comes off the
+What's Next list.
 
 ---
 

@@ -73,6 +73,14 @@ before/after comparison of the prompt, not a diff of paired debriefs.
   grader flag) in both rounds. Where a count is handed to the coach, it stops
   getting it wrong. Where a
   count is not handed to it, the error rate is exactly what it was before.
+
+  **Annotation, 18 August 2026, from the product manager's QA pass on PR
+  #26.** "It stops getting it wrong" overstates what pre-counting guarantees.
+  On a Hit to All Fields debrief the coach was handed the correct pull-side
+  count directly and still contradicted it two sentences later; see the
+  postscript on the Slice 8b entry in `docs/product-decisions-log.md`.
+  Pre-counting sharply reduces miscounts on a handed-over number. It does not
+  make them impossible.
 - **Citation density held.** Grounded citations per debrief went from 5.37 to
   5.27, unmatched leads from 0.56 to 0.50, and every tip in both rounds opened
   with a real cited number. The new "never count, total, or tally swings

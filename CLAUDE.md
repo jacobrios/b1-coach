@@ -1459,13 +1459,18 @@ rewritten, per the append-only rule.
   about trends should say plainly which kind it means. Cheap to keep in mind,
   costs nothing to action now; recorded so the next prompt edit does not
   repeat the mistake.
-- **The "What This Means" floor and the chat panel's 17px bump, deferred, not
-  dropped.** Both were scoped and worded before this slice pivoted to the
-  session-1 parse-failure bug instead. The approved wording is kept on file in
-  `docs/slice-7b-plan.md`, under "Settled before work started." Whoever picks
-  this up next should ship from that wording rather than re-deriving it, and
-  should re-verify it against the fixed prompt, since the ceiling problem that
-  caused the pivot is exactly why the floor could not ship alongside it.
+- ~~**The "What This Means" floor, deferred, not dropped.**~~ **Dropped
+  18 August 2026, from the product manager's QA pass on PR #26.** He reviewed
+  three live debriefs and judged the boxes comfortably filled, with no dead
+  space that reads as blank or broken, so the floor work is off this list for
+  good rather than deferred again. The approved wording stays on file in
+  `docs/slice-7b-plan.md`, under "Settled before work started," if it is ever
+  wanted later.
+- **The chat panel's 17px bump, still deferred, not dropped.** Scoped and
+  worded before Slice 7b pivoted to the session-1 parse-failure bug instead.
+  The approved wording is kept on file in `docs/slice-7b-plan.md`, under
+  "Settled before work started." Whoever picks this up next should ship from
+  that wording rather than re-deriving it.
 - ~~**Validate the claim-accuracy grader against the committed fixture.**~~
   **Done in Slice 8, 17-18 August 2026, and the validation failed before it
   passed**: the original grader caught the known errors for the right reason
@@ -1540,6 +1545,14 @@ rewritten, per the append-only rule.
   stopped. Not started; needs its own scoping pass to find where pitch
   location gets described in prose without a matching count, the same way
   `docs/queued-slices.md` did for launch angle and exit velocity.
+
+  **Annotation, 18 August 2026, from the product manager's QA pass on PR
+  #26.** "The coach should stop getting it wrong" is too strong a promise for
+  what pre-counting delivers. The same QA pass caught a case on Hit to All
+  Fields where the coach was handed a correct count directly and still
+  contradicted it in the very next sentence. Pre-counting sharply cuts the
+  miscount rate; it is not a guarantee. See the two new What's Next items
+  below for the specifics.
 - **The claim-accuracy grader's false-positive rate has never been measured.**
   The grader was validated in Slice 8 for recall, whether it catches known
   coach errors, and it does. It has never been checked the other way: how
@@ -1592,7 +1605,26 @@ rewritten, per the append-only rule.
   own rule, count every threshold the prompt names, did not yet reach. Live
   on the first screen every visitor sees, which is what makes finishing it
   the natural next slice: apply Slice 8b's own rule to the one dimension it
-  skipped.
+  skipped. **The two items below were found the same day, by the product
+  manager's own QA pass on PR #26, and all three belong to the same next
+  slice**, since all three are prompt wording changes that need to ship and
+  be measured together rather than piecemeal.
+- **Align the fly-ball wording from 20 degrees to 18.** Line Drives &
+  Contact's target band is 8 to 18 degrees, the single source in
+  `src/goalTargets.js`, but the coach's own instructions still say "angles
+  above 20 degrees are fly balls, not line drives." The 18-to-20 gap is
+  counted by neither number: swing 10 of session 1 sits at exactly 20
+  degrees and the product manager's QA pass caught it falling into neither
+  the "above 20" set nor the line-drive window. Pre-existing, but pre-
+  counting the above-20 threshold in Slice 8b is what made the coach state
+  it out loud often enough to be noticed. Approved 18 August 2026: change
+  the 20 to an 18 so one number governs the goal. See the postscript on the
+  Slice 8b entry in `docs/product-decisions-log.md`.
+- **Fix the "1 swings" grammar in the generated count lines.** Slice 8b's
+  count lines read "1 swings" whenever a count is exactly one, seen on the
+  Reduce Pop-Ups weak-grounder line. Invisible to a visitor since it lives
+  inside the prompt, but sloppy, and cheap to fix alongside the other two
+  prompt changes in this slice.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
