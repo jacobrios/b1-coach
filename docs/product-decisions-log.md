@@ -6,6 +6,57 @@
 
 ---
 
+## Slice 8b: the fix worked exactly where it was aimed, and nowhere else (August 18)
+
+*What this slice was.* Slice 8's fixture had already shown the pattern: the
+coach reliably repeats a number the app hands it, and reliably gets a number
+wrong when it has to work that number out itself. This slice pre-counted
+every threshold each coaching goal's instructions actually name, so the coach
+never has to do that arithmetic on its own. Two prompt sentences were changed,
+approved word for word before anything was built: the tips example that used
+to ask the coach to compare two swings' speeds now hands it one swing's number
+directly, and a new rule tells the coach plainly not to count, total, or tally
+swings itself. Everything else about the coach's writing was left alone.
+
+*The result, reported straight.* This is a split result and both halves
+matter. The specific error the product manager caught by eye on 15 August,
+the coach claiming "four of those were under 80 mph" when the real count was
+different, is gone: 8 occurrences across 52 test debriefs before the fix, 0
+after. That is the class this slice was built to remove, and it was removed
+cleanly. But the coach's overall error rate did not improve. The same
+independent check flagged 18 of 52 debriefs both before and after the fix,
+and the share of individual claims that were wrong actually ticked up
+slightly, from 5.6% to 6.5%. The honest way to say this: the fix worked
+exactly where it was aimed, and did nothing for every other way the coach can
+get a number wrong.
+
+*Why the rest didn't move, and what that points to next.* The same test
+measured claims where the coach works out a subset over pitch location data,
+the one kind of number this slice deliberately did not pre-count. That error
+rate held dead flat, 11 wrong claims before and 11 after. That is useful news
+in a strange way: it confirms the mechanism exactly. Numbers the coach is
+handed stop being wrong. Numbers it still has to derive itself stay just as
+unreliable as they were. Pitch location is the next place carrying that same
+problem, and it is now the clear next candidate if the product wants to keep
+closing this gap.
+
+*What the accuracy checker can and cannot prove.* The tool used to grade both
+rounds was built and proven in Slice 8 to reliably catch known coach errors.
+It was never checked for the opposite: how often it flags something the coach
+actually got right. Looking through this slice's flagged claims by hand
+turned up a few of exactly that, cases where the checker read a fact-sheet row
+correctly and still called a true statement wrong. That does not undo the
+flat headline number, both rounds were graded by the same tool the same way,
+so the before-and-after comparison is fair, but it means any single flagged
+claim should be read as "worth a look," not as proof of a coach mistake on
+its own.
+
+*Cost.* Two rounds of 52 real coaching debriefs each, plus grading both, spent
+$2.38 against the $6 ceiling approved ahead of time. No further spend is
+planned.
+
+---
+
 ## Slice 8: the grader failed its own exam, and was rebuilt to pass it (August 17-18)
 
 *What this slice was supposed to be.* Coach fidelity: stop the coach

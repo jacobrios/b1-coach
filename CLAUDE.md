@@ -239,7 +239,7 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 17 August 2026, at the close of Slice 7b.
+Line counts current as of 18 August 2026, at the close of Slice 8b.
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
@@ -255,7 +255,7 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
                              scroll fade, and the shared axis-text style
                              constants, both added in Slice 7.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
-    src/coachApi.js          510 lines. System prompts, the length budget
+    src/coachApi.js          572 lines. System prompts, the length budget
                              appended to the debrief prompt, the goal-context
                              block both prompts share, response parsing,
                              failure classification, the retry policy, and the
@@ -264,7 +264,16 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
                              `MODEL` and `MAX_TOKENS` so the bench can send the
                              real prompt rather than a copy of it. Slice 7b
                              changed two sentences inside it; see the decision
-                             log entry for 17 August 2026.
+                             log entry for 17 August 2026. Slice 8b added the
+                             per-goal count lines and two more approved
+                             sentences; see the decision log entry for 18
+                             August 2026.
+    src/goalCountSpecs.js     90 lines. One table, per goal, of every threshold
+                             that goal's coaching prose names in words, so the
+                             sentence and the count that feeds it cannot drift
+                             apart. Added in Slice 8b, re-exported from
+                             `coachApi.js` so the prompt-building code and any
+                             future script read the same source.
     src/ballFlight.js        228 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
@@ -285,31 +294,39 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
                              whether a single key from a chat reply is usable.
     src/sessionStats.js       31 lines. The numbers a session is summarized by.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           1843 lines across ten files, beside what they test.
+    src/*.test.js           2118 lines across eleven files, beside what they test.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           2724 lines across four hand-run scripts, deliberately
+    scripts/*.mjs           3018 lines across five hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
-                             scripts, the Slice 7 bench, and the claim-accuracy
-                             grader (`scripts/grade-coach-accuracy.mjs`), added
-                             in Slice 7b and rebuilt in Slice 8 so the model only
-                             extracts claims and never issues a verdict. See
-                             below and the bench section further down.
-    scripts/*.js (tested)    643 lines across four small modules pulled out of
+                             scripts, the Slice 7 bench, the Slice 7b before/after
+                             comparison script, and the claim-accuracy grader
+                             (`scripts/grade-coach-accuracy.mjs`), added in
+                             Slice 7b and rebuilt in Slice 8 so the model only
+                             extracts claims and never issues a verdict; Slice 8b
+                             gave it an `--input <dir>` flag so it can grade a
+                             fresh directory of bench records instead of only the
+                             committed fixture. See below and the bench section
+                             further down. (Corrected here: this line undercounted
+                             at four scripts through Slice 8; the fifth,
+                             `show-parse-failure-before-after.mjs`, existed since
+                             Slice 7b and was missed.)
+    scripts/*.js (tested)    698 lines across five small modules pulled out of
                              those hand-run scripts so their pure logic can be
                              checked without spending money: `factSheet.js` (the
                              grader's deterministic count table),
                              `contentWordOverlap.js` (the bench's restatement
                              check), `coachFailureRecord.js` (what the bench
-                             keeps when a call fails to parse), and
-                             `claimVerdict.js` (Slice 8: every verdict the
-                             grader issues, decided in plain code against the
-                             fact sheet; the grading model extracts claims and
-                             rules on nothing).
-    scripts/*.test.js        867 lines across four files, testing those four
+                             keeps when a call fails to parse), `claimVerdict.js`
+                             (Slice 8: every verdict the grader issues, decided
+                             in plain code against the fact sheet; the grading
+                             model extracts claims and rules on nothing), and
+                             `inputRecords.js` (Slice 8b: reads a directory of
+                             bench records for the grader's new `--input` flag).
+    scripts/*.test.js        976 lines across five files, testing those five
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Three directories:
+    docs/eval-fixtures/      Committed ground truth, not code. Four directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -321,9 +338,12 @@ Line counts current as of 17 August 2026, at the close of Slice 7b.
                                grader's failed first validation run and the
                                passing run after the Slice 8 rebuild, so "the
                                grader was fixed" is checkable against what it
-                               was fixed from. None is collected by vitest; all
-                               three have their own READMEs covering what is and
-                               is not safe to conclude from them.
+                               was fixed from. `slice8b-threshold-counts/`
+                               (180 KB) holds the before/after bench and grading
+                               records behind Slice 8b's count-line fix, 52
+                               debriefs each round. None is collected by vitest;
+                               all four have their own READMEs covering what is
+                               and is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
 them whole; reading either in full costs a large share of a context window for
@@ -343,8 +363,12 @@ could pin its tolerance without a browser. `sessionOneSwings.js` was added in
 Slice 7b for a related but distinct reason: the fifteen swings were not
 untestable logic, they were unreadable data, sitting inside `App.jsx`'s JSX
 where no plain Node script could import them, which is what kept the eval
-bench from grading the first debrief a real visitor sees. Do not move anything
-else out on the same excuse without a test or a script that needs it.
+bench from grading the first debrief a real visitor sees. `goalCountSpecs.js`
+was added in Slice 8b so the per-goal thresholds named in the coach's prose and
+the count lines that feed the coach the real answer read from one table, the
+same drift-prevention `goalTargets.js` already does for the numeric targets
+themselves. Do not move anything else out on the same excuse without a test or
+a script that needs it.
 
 **One thing was exported rather than extracted, deliberately.** Slice 6 changed
 `GOALS` in `App.jsx` from a file-local `const` to an `export const` so a test
@@ -501,6 +525,20 @@ before run predates the change, so that capture code has never been observed
 firing on a real call. It rests on unit tests and a reading of the code, not
 a forced failure.
 
+**Grew to six cells in Slice 8b, 18 August 2026.** `allfields-s4` and
+`popup-s4` were added, both session 4, both goals nothing had graded before:
+Hit to All Fields is judged on spray direction, which no other cell exercises,
+and Reduce Pop-Ups is the only goal judged on launch angle alone, with no exit
+velocity ask. The bench's hand-copied goal-label comment (see above) now
+carries six entries instead of four, kept in step by hand for the same
+already-disclosed reason. The bench and the rebuilt grader together produced
+this slice's headline finding, recorded in the decision log for 18 August
+2026: the coach's targeted miscount is gone, but the same live comparison
+shows no improvement in the coach's overall claim accuracy, and a distinct,
+still-open error class (self-derived subsets over pitch location data) held
+completely flat across both rounds. The raw records for both rounds are
+committed under `docs/eval-fixtures/slice8b-threshold-counts/`.
+
 ## The data is synthetic
 
 There is no real TrackMan feed. All swing data comes from `generateSwings` in
@@ -580,8 +618,8 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 8 on 18 August 2026 it is 429 tests across 17
-   files, up from 392 across 16 at the close of Slice 7b. It covers the
+   vitest, and as of Slice 8b on 18 August 2026 it is 461 tests across 19
+   files, up from 429 across 17 at the close of Slice 8. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
    one retry and its unwrapping of a fenced model response; the chart-slot
    fallback and dedupe; the chat reply's chart key; the goal targets and the
@@ -1059,6 +1097,22 @@ on purpose: this file loads at the start of every session, so it is an index.
   "$1.50 to $3" budget above was consumed and exceeded by the validation
   itself; Slice 8b needs a fresh budget conversation before anything is spent.
 
+  **Shipped 18 August 2026, and the result is a split, not a clean win.**
+  Slice 8b pre-counted every threshold each goal's coaching instructions name
+  and swapped in the two approved prompt sentences. Measured against 52 live
+  debriefs before and after: the specific error that started this work, the
+  coach inventing a subset count like "four of those were under 80 mph," is
+  gone (8 occurrences before, 0 after). But the coach's overall accuracy did
+  not improve. The same before/after check flagged 18 of 52 debriefs in both
+  rounds, and the individual claim error rate ticked up slightly (5.6% to
+  6.5%). A distinct error class the fix deliberately did not touch, the coach
+  working out its own subset over pitch location data, sat completely flat at
+  11 wrong claims in both rounds, which confirms the mechanism and names the
+  next candidate. Spend: $2.38 of the $6 ceiling approved for this slice. Full
+  numbers, the honest caveats on the grading tool, and the reasoning are in
+  the decision log entry for 18 August 2026 and in
+  `docs/eval-fixtures/slice8b-threshold-counts/README.md`.
+
 Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and the
 formerly-numbered-7 coach fidelity work above. Slice 5 shipped on 14 August
 2026 but delivered only the second half of what Slice A covered;
@@ -1418,12 +1472,13 @@ rewritten, per the append-only rule.
   whoever runs it, so the resulting score is an honest test rather than a
   number the grader was fitted to produce. See the methodological note at the
   top of `scripts/grade-coach-accuracy.mjs` for why that split is deliberate.
-- **The coach's "four of those" miscount is still live on the first screen,
-  and is now reproducible on demand.** The product manager caught this by eye
-  on 15 August; this slice's browser pass reproduced it verbatim on a fresh
-  session-1 Power debrief. Belongs to the coach-fidelity work scoped in
-  `docs/queued-slices.md`, not to this slice, which fixed a different failure
-  mode (the coach not answering at all, not the coach answering wrong).
+- ~~**The coach's "four of those" miscount is still live on the first screen,
+  and is now reproducible on demand.**~~ **Fixed 18 August 2026 in Slice 8b.**
+  Pre-counting every threshold the goal's own prose names, plus one new rule
+  telling the coach never to count or tally swings itself, took this exact
+  error class from 8 occurrences to 0 across 52 measured debriefs. See the
+  decision log entry for 18 August 2026. The coach's overall accuracy did not
+  otherwise improve; see the two new items below for what is still open.
 - **Whether the session-1 parse failure has always been happening to real
   visitors is unknown, and may not be answerable in hindsight.** Session 1 was
   not measurable by any tool before this slice's own extraction work, so there
@@ -1456,6 +1511,32 @@ rewritten, per the append-only rule.
   above). Needs a decision: raise the number to match what the coach actually
   writes, or decide the prompt wording needs to change to hold it down, which
   is the one prompt change this review is not authorized to make on its own.
+
+*Added at the close of Slice 8b, 18 August 2026:*
+
+- **The coach still self-derives over pitch location data, and that is the
+  natural next target.** Slice 8b pre-counted every threshold named in a
+  goal's own coaching prose and fixed the exact miscount class it targeted.
+  The same before/after measurement shows a distinct error class, the coach
+  working out its own subset of swings against pitch location numbers (for
+  example which named swings landed outside the strike zone), held completely
+  flat at 11 wrong claims in both the before and after rounds. That is the
+  same mechanism this slice just proved works: pre-count it, and the coach
+  should stop getting it wrong the same way "four of those were under 80 mph"
+  stopped. Not started; needs its own scoping pass to find where pitch
+  location gets described in prose without a matching count, the same way
+  `docs/queued-slices.md` did for launch angle and exit velocity.
+- **The claim-accuracy grader's false-positive rate has never been measured.**
+  The grader was validated in Slice 8 for recall, whether it catches known
+  coach errors, and it does. It has never been checked the other way: how
+  often it flags a debrief that was actually correct. Slice 8b's after-round
+  grading turned up at least one clear case by hand, a debrief saying "nothing
+  cleared 265 feet" that the grader flagged against a fact-sheet row that
+  actually agrees with the sentence. This does not undo any comparison the
+  grader has been used for so far, since both sides of a before/after
+  comparison get graded by the same tool the same way, but a single flagged
+  claim should not be read as proof of a coach error without a by-hand check,
+  and nothing currently measures how often that check would be needed.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

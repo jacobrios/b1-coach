@@ -537,6 +537,14 @@ slice's own document is `docs/slice-6-plan.md`, which travelled on the branch.
 
 # Slice 8b: count every threshold the prompt names
 
+**Shipped 18 August 2026.** Result: the targeted miscount ("four of those were
+under 80 mph") went from 8 occurrences to 0 across 52 measured debriefs, but
+the coach's overall claim accuracy held flat (18 of 52 debriefs flagged both
+before and after), and a self-derived error class over pitch location data,
+deliberately left uncounted, held flat too, at 11 wrong claims each round.
+Full numbers in the decision log entry for 18 August 2026 and in
+`docs/eval-fixtures/slice8b-threshold-counts/README.md`.
+
 **Added 17 August 2026, at the point Slice 8 split.** Coach fidelity was
 scheduled as Slice 8 on 17 August. Its first task, validating the claim-accuracy
 grader, failed outright: the grader flagged 72 of 93 debriefs and caught the
