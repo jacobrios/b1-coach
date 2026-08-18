@@ -130,6 +130,12 @@ describe('the targets the coach is told about', () => {
 // If one of these fails after an INTENDED prompt change, that change is
 // Task 6's to make with sign-off; update the literal in the same commit that
 // changes the prose, never to make an unintended diff pass.
+//
+// Task 6 landed later on 18 August 2026 and made exactly that intended
+// change: the count lines are per-goal now, so the allfields pin below
+// carries allfields' own three count lines instead of Power's two. The
+// power pin is untouched, deliberately: Power's lines were already correct
+// and its rendered prompt is byte-identical before and after Task 6.
 describe('the rendered prompt strings, pinned byte for byte', () => {
   it('renders every goalContext exactly as shipped', () => {
     expect(goalContext({ id: 'power' })).toBe(
@@ -162,7 +168,8 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     swings: pinSwings,
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 1, totalSwings: 2 },
   }]
-  const pinBody = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings with launch angle strictly below 15 degrees (not including 15): 1 swings — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swings\n- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swings, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swings\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n`
+  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swings, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swings\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -172,11 +179,11 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinBody}`,
+      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swings — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swings\n${pinTail}`,
     )
   })
 
-  it('renders the full debrief user message for an allfields session exactly as shipped', () => {
+  it('renders the full debrief user message for an allfields session with its own count lines', () => {
     const message = buildDebriefUserMessage({
       goal: { id: 'allfields', label: 'Hit to All Fields' },
       player: { firstName: 'Jake' },
@@ -184,8 +191,112 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinBody}`,
+      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swings\n- Swings with exit velocity 82 mph or higher: 1 swings\n${pinTail}`,
     )
+  })
+})
+
+// Slice 8b Task 6: the coach reliably repeats a count it is handed and
+// miscounts anything it derives itself, so every threshold a goal's prompt
+// prose names arrives pre-counted in the data block. Seven hand-checkable
+// swings cover every boundary where an off-by-one would hide: 85 and 82 mph
+// sit exactly on the two exit-velocity thresholds (counted, "or higher" is
+// inclusive), 18 sits on contact's range edge (counted, the range includes
+// both ends), 20 sits on the fly-ball cutoff and -15/+15 on the direction
+// cutoffs (all excluded, matching the spray chart's own strict
+// inequalities), and 35 sits on the pop-up cutoff (excluded there, but
+// counted by Power's zone, whose range includes 35).
+//
+// The expected counts are literals, hand-derived from the fixture, for the
+// same reason the target tests above use literals: a count computed by the
+// test the same way the code computes it would pass no matter what.
+describe('the count lines each goal is handed', () => {
+  const countSwings = [
+    { exitSpeed: 91, angle: 27, direction: -20 },
+    { exitSpeed: 74, angle: 9, direction: 18 },
+    { exitSpeed: 85, angle: 18, direction: -15 },
+    { exitSpeed: 82, angle: 20, direction: 15 },
+    { exitSpeed: 68, angle: 4, direction: -30 },
+    { exitSpeed: 88, angle: 36, direction: 25 },
+    { exitSpeed: 89, angle: 35, direction: 0 },
+  ].map((launch, i) => ({
+    plateLocHeight: 2.0,
+    plateLocSide: 0.1,
+    hit: { launch, landing: { distance: 150 + i } },
+  }))
+  const countSessions = [{
+    sessionNumber: 1,
+    swings: countSwings,
+    stats: { avgExitVelocity: 82.4, avgLaunchAngle: 21.3, inZoneCount: 4, totalSwings: 7 },
+  }]
+  const messageFor = (goal) => buildDebriefUserMessage({
+    goal,
+    player: { firstName: 'Jake' },
+    sessions: countSessions,
+    viewingSessionNumber: 1,
+  })
+
+  it('power: keeps the shipped below-15 and power-zone lines, with swing numbers on below-15', () => {
+    const message = messageFor({ id: 'power', label: 'Power & Distance' })
+    expect(message).toContain('- Swings with launch angle strictly below 15 degrees (not including 15): 2 swings — numbers: 2, 5')
+    expect(message).toContain('- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 2 swings')
+    expect(message).not.toContain('or higher')
+    expect(message).not.toContain('including both')
+  })
+
+  it('contact: counts the target range, hard contact, and fly balls', () => {
+    const message = messageFor({ id: 'contact', label: 'Line Drives & Contact' })
+    expect(message).toContain('- Swings with launch angle in the target 8-18 degrees (including both 8 and 18): 2 swings')
+    expect(message).toContain('- Swings with exit velocity 85 mph or higher: 4 swings')
+    expect(message).toContain('- Swings with launch angle strictly above 20 degrees (not including 20): 3 swings')
+    expect(message).not.toContain('power zone')
+    expect(message).not.toContain('below 15 degrees')
+  })
+
+  it('allfields: counts pull side, opposite field, and hard contact', () => {
+    const message = messageFor({ id: 'allfields', label: 'Hit to All Fields' })
+    expect(message).toContain('- Swings pull side (direction strictly below -15 degrees, not including -15): 2 swings')
+    expect(message).toContain('- Swings opposite field (direction strictly above +15 degrees, not including +15): 2 swings')
+    expect(message).toContain('- Swings with exit velocity 82 mph or higher: 5 swings')
+    expect(message).not.toContain('power zone')
+    expect(message).not.toContain('below 15 degrees')
+  })
+
+  it('popup: counts pop-ups, weak grounders, and the target range', () => {
+    const message = messageFor({ id: 'popup', label: 'Reduce Pop-Ups' })
+    expect(message).toContain('- Swings popped up (launch angle strictly above 35 degrees, not including 35): 1 swings')
+    expect(message).toContain('- Swings hit as weak grounders (launch angle strictly below 5 degrees, not including 5): 1 swings')
+    expect(message).toContain('- Swings with launch angle in the target 10-25 degrees (including both 10 and 25): 2 swings')
+    expect(message).not.toContain('power zone')
+    expect(message).not.toContain('below 15 degrees')
+  })
+
+  it('open: hands the coach no counts at all, and leaves no gap where they were', () => {
+    const message = messageFor({ id: 'open', label: 'Open Session' })
+    expect(message).not.toContain('power zone')
+    expect(message).not.toContain('below 15 degrees')
+    expect(message).not.toContain('or higher')
+    expect(message).not.toContain('including both')
+    expect(message).not.toContain('strictly above')
+    // The strike-zone line runs straight into the top-3 line, no blank line
+    // left behind where the two shipped count lines used to sit.
+    expect(message).toContain('full per-swing pitch coordinates included above)\n- Top 3 exit velocities:')
+  })
+})
+
+// Slice 8b Task 6's other half: the two changes to DEBRIEF_SYSTEM_BASE the
+// product manager approved verbatim on 18 August 2026, pinned character for
+// character. The old worked example modeled exactly the failure the slice
+// exists to remove: "two of those were your weakest swings" is the model
+// counting for itself.
+describe('the never-count rule and the recount-free worked example', () => {
+  it('the tips example no longer models deriving a count', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('(ex: You only hit to the opposite field on swings 9, 12, and 14, and swing 12 left the bat at just 83 mph.)')
+    expect(DEBRIEF_SYSTEM_BASE).not.toContain('two of those were your weakest swings')
+  })
+
+  it('the Rules list forbids the coach counting for itself', () => {
+    expect(DEBRIEF_SYSTEM_BASE).toContain('- Never count, total, or tally swings yourself. Use a count only if it appears in the session data. If no count is provided, describe the pattern without a number.')
   })
 })
 

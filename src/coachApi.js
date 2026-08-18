@@ -10,11 +10,6 @@ import { GOAL_COUNT_SPECS } from './goalCountSpecs'
 // the full reasoning.
 export { GOAL_COUNT_SPECS } from './goalCountSpecs'
 
-// The debrief prompt reports a power-zone count for every goal, not just the
-// power goal, so it names Power's numbers directly rather than the current
-// goal's. Same definition the chart colours swings against.
-const POWER = goalTarget('power')
-
 // These two are ALSO pinned at the top of api/coach.js, deliberately, and must be
 // kept in step. Production ignores whatever is sent here and uses its own copy.
 // These values are what local development actually runs on, because npm run dev
@@ -91,12 +86,13 @@ Rules:
 - Never make the player feel bad or use harsh criticism
 - Be honest but always constructive
 - Only reference specific numbers that appear in the session data. Never invent or estimate metrics that were not provided.
+- Never count, total, or tally swings yourself. Use a count only if it appears in the session data. If no count is provided, describe the pattern without a number.
 - Write all content at an eighth-grade reading level. Short sentences, plain words, no jargon.
 - Never use em-dashes.
 
 For tipsIntro: Write one short sentence the way a coach would open after practice — warm but direct. Reference how the session went if it was notable. Example: "Good work out there — two things to focus on before next time." or "Tough day, but here's what we build on." One sentence only.
 
-For nextSessionTips: Write each tip the way a coach would say it out loud walking off the field, not as a written recommendation. Reference one specific number, then give one concrete thing to try. Three sentences per tip, no exceptions. When the session data shows a clear positive pattern worth reinforcing, one of the two tips may celebrate what the player did well and explain the mechanical reason it worked, rather than always focusing on improvement. Only do this when the data genuinely supports it. First sentence is an observation referencing specific numbers from the data. (ex: You only hit to the opposite field on swings 9, 12, and 14, and two of those were your weakest swings at 83 and 86 mph.) Second sentence translates what that means in baseball terms. (ex: That tells me you are reaching for those instead of staying through the ball.) Third sentence is one specific physical cue — something the player can feel in their body or visualize mechanically. Bad: 'Focus on driving the ball the other way.' Good: 'Let the ball travel deeper, keep your hands inside, and extend through contact toward the opposite field gap.' A cue tells the player what to do with their body, not just what outcome to chase. (ex: Try letting the ball travel a little deeper and driving it the other way with some authority.) No fourth sentence under any circumstances.
+For nextSessionTips: Write each tip the way a coach would say it out loud walking off the field, not as a written recommendation. Reference one specific number, then give one concrete thing to try. Three sentences per tip, no exceptions. When the session data shows a clear positive pattern worth reinforcing, one of the two tips may celebrate what the player did well and explain the mechanical reason it worked, rather than always focusing on improvement. Only do this when the data genuinely supports it. First sentence is an observation referencing specific numbers from the data. (ex: You only hit to the opposite field on swings 9, 12, and 14, and swing 12 left the bat at just 83 mph.) Second sentence translates what that means in baseball terms. (ex: That tells me you are reaching for those instead of staying through the ball.) Third sentence is one specific physical cue — something the player can feel in their body or visualize mechanically. Bad: 'Focus on driving the ball the other way.' Good: 'Let the ball travel deeper, keep your hands inside, and extend through contact toward the opposite field gap.' A cue tells the player what to do with their body, not just what outcome to chase. (ex: Try letting the ball travel a little deeper and driving it the other way with some authority.) No fourth sentence under any circumstances.
 
 If multiple sessions are provided, compare the current session to prior sessions and call out specific improvements or regressions by number.
 
@@ -439,6 +435,60 @@ export async function callApi(body, { onRetry } = {}) {
   }
 }
 
+// The pre-computed counts for the thresholds the selected goal's prose names,
+// as prompt lines. Slice 8b: the coach reliably repeats a count it is handed
+// and miscounts anything it derives itself, so every threshold in the goal's
+// prompt prose arrives pre-counted, from the same GOAL_COUNT_SPECS the prose
+// interpolates, so a sentence and the count feeding it cannot disagree.
+// Before this, the below-15 and power-zone lines went to every goal, naming
+// Power's numbers no matter what the player was working on, and every other
+// goal's own thresholds arrived uncounted.
+//
+// Only the below-15 line prints swing numbers, exactly as the shipped line
+// always did; it was written for Power and stays Power's. A goal whose prose
+// names no thresholds (open) gets no count lines at all, matching
+// goalTargets' absence-not-zeroes convention. The strict/inclusive edges
+// below match the charts: pull and oppo are the spray chart's own strict
+// cutoffs, and the target ranges include both ends, same as meetsTarget.
+function goalCountLines(goalId, swings) {
+  const spec = GOAL_COUNT_SPECS[goalId]
+  if (!spec) return []
+  const count = (pred) => swings.filter((sw) => pred(sw.hit.launch)).length
+
+  switch (goalId) {
+    case 'power':
+      // Both lines predate Slice 8b and are kept verbatim. The 15-degree
+      // threshold is the one number here that lives in neither
+      // GOAL_COUNT_SPECS nor goalTargets: it is the shipped line's own
+      // literal, named nowhere in the prompt prose, kept as found.
+      return [
+        `- Swings with launch angle strictly below 15 degrees (not including 15): ${count((l) => l.angle < 15)} swings — numbers: ${swings.map((sw, i) => sw.hit.launch.angle < 15 ? i + 1 : null).filter(Boolean).join(', ')}`,
+        `- Swings in power zone (EV >= ${spec.exitVelocity} mph AND launch angle ${spec.launchAngle.min}-${spec.launchAngle.max} degrees): ${count((l) => meetsTarget('power', l))} swings`,
+      ]
+    case 'contact':
+      return [
+        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${count((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max)} swings`,
+        `- Swings with exit velocity ${spec.exitVelocity} mph or higher: ${count((l) => l.exitSpeed >= spec.exitVelocity)} swings`,
+        `- Swings with launch angle strictly above ${spec.flyBallAngle} degrees (not including ${spec.flyBallAngle}): ${count((l) => l.angle > spec.flyBallAngle)} swings`,
+      ]
+    case 'allfields':
+      // The "+" before oppoDirection matches the prose's own "+15".
+      return [
+        `- Swings pull side (direction strictly below ${spec.pullDirection} degrees, not including ${spec.pullDirection}): ${count((l) => l.direction < spec.pullDirection)} swings`,
+        `- Swings opposite field (direction strictly above +${spec.oppoDirection} degrees, not including +${spec.oppoDirection}): ${count((l) => l.direction > spec.oppoDirection)} swings`,
+        `- Swings with exit velocity ${spec.hardContactExitVelocity} mph or higher: ${count((l) => l.exitSpeed >= spec.hardContactExitVelocity)} swings`,
+      ]
+    case 'popup':
+      return [
+        `- Swings popped up (launch angle strictly above ${spec.popUpAngle} degrees, not including ${spec.popUpAngle}): ${count((l) => l.angle > spec.popUpAngle)} swings`,
+        `- Swings hit as weak grounders (launch angle strictly below ${spec.grounderAngle} degrees, not including ${spec.grounderAngle}): ${count((l) => l.angle < spec.grounderAngle)} swings`,
+        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${count((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max)} swings`,
+      ]
+    default:
+      return []
+  }
+}
+
 // The user half of the debrief prompt: every session the player has seen so far,
 // with the current one named at the end. Split out of generateDebrief and
 // exported for the bench, for the reason given on DEBRIEF_SYSTEM above.
@@ -456,9 +506,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph
 - Avg Launch Angle: ${s.stats.avgLaunchAngle} degrees
 - Pitches in strike zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)
-- Swings with launch angle strictly below 15 degrees (not including 15): ${s.swings.filter(sw => sw.hit.launch.angle < 15).length} swings — numbers: ${s.swings.map((sw, i) => sw.hit.launch.angle < 15 ? i + 1 : null).filter(Boolean).join(', ')}
-- Swings in power zone (EV >= ${POWER.exitVelocity} mph AND launch angle ${POWER.launchAngle.min}-${POWER.launchAngle.max} degrees): ${s.swings.filter(sw => meetsTarget('power', sw.hit.launch)).length} swings
-- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
+${goalCountLines(goal.id, s.swings).map((line) => `${line}\n`).join('')}- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
 - Distance distribution: ${distanceDistributionLine(s.swings)}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
