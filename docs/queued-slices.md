@@ -532,3 +532,97 @@ a widened target band and over a guaranteed floor. Empty Power bands went from
 
 Full reasoning is in `docs/product-decisions-log.md` for 14 August 2026, and the
 slice's own document is `docs/slice-6-plan.md`, which travelled on the branch.
+
+---
+
+# Slice 8b: count every threshold the prompt names
+
+**Added 17 August 2026, at the point Slice 8 split.** Coach fidelity was
+scheduled as Slice 8 on 17 August. Its first task, validating the claim-accuracy
+grader, failed outright: the grader flagged 72 of 93 debriefs and caught the
+fixture's known errors for the right reason once in seven. The product manager
+split the work at that seam rather than build a coach fix that could not be
+measured. Slice 8 is the instrument (`docs/slice-8-plan.md`). **Slice 8b is the
+coach fix, scoped here so it survives the end of a chat window**, which is the
+failure this whole file exists to stop.
+
+**Blocked on Slice 8.** Do not start this until the rebuilt grader has passed
+its gate. That is the entire reason the split happened.
+
+## What it is, in one line
+
+Every threshold the coach's prompt names in prose gets counted for the coach in
+the data block, so it stops deriving counts it gets wrong.
+
+## The finding this rests on, which is worth reading before planning
+
+The 96-debrief fixture established that the coach reliably repeats a count it is
+handed and is unreliable at any count it derives itself. Reading the prompt maps
+that onto something exact: **the prompt names thresholds in prose that it never
+pre-counts, and those are precisely the counts that come out wrong.**
+
+- "Below 15 degrees" is pre-counted in the data block. Never wrong once in 96.
+- "Angles above 20 degrees are fly balls" is stated in the Contact goal context
+  and never counted. Every debrief that attempted it got it wrong.
+- The same shape sits unexploded in two more goals that nothing has ever
+  measured.
+
+So queued items 2 and 3 of the original coach-fidelity scope are not two
+defects. They are two symptoms of one rule.
+
+## The change
+
+`buildDebriefUserMessage` in `src/coachApi.js` hands every goal two count lines
+written for Power: `Swings with launch angle strictly below 15 degrees`, and
+`Swings in power zone`, the latter reading `POWER` directly whatever goal is
+selected. Both are replaced by counts derived from the selected goal, covering
+every threshold that goal's `goalContext` names:
+
+| Goal | Thresholds to count |
+|---|---|
+| Power | LA 25-35, EV 88+ (what the existing line already does correctly) |
+| Line Drives & Contact | LA 8-18, EV 85+, **above 20 degrees** |
+| Hit to All Fields | direction below -15, direction above +15, EV 82+ |
+| Reduce Pop-Ups | above 35, below 5, LA 10-25 |
+| Open Session | names none, gets none |
+
+Every number read from `src/goalTargets.js` where one exists. No threshold
+written out fresh in that file.
+
+## The prose half, approved in principle 17 August 2026, wording still to come
+
+Counting cannot reach every error, and this is the part that must not be
+dropped when the mechanical half looks done. **"Four of those swings were under
+80 mph" when all six were is a derived subset, not a named threshold.** No
+pre-counting reaches it, because the coach invents the subset as it writes. The
+only lever is the prompt's own tips instruction, whose worked example is:
+
+> "You only hit to the opposite field on swings 9, 12, and 14, and two of those
+> were your weakest swings at 83 and 86 mph."
+
+That is the exact shape of fixture error #4, sitting in the prompt as the
+pattern to imitate. The product manager approved changing it and adding one
+sentence forbidding self-derived counts, **subject to approving the exact
+wording before it lands.** Touching this instruction is not licence to retune
+the 50-word tip budget, which is its own open question.
+
+## How it has to be verified
+
+- Two new bench cells, `allfields-s4` and `popup-s4`. Those two goals have never
+  been measured by anything, which is exactly why their thresholds could sit
+  uncounted this long. Shipping the fix without them measures four goals and
+  guesses at the two it most affects.
+- Baseline round and after round, scored as **accuracy per attempt at a named
+  threshold**, not as an overall debrief error rate. The prediction is specific
+  and therefore testable at this sample size; a 1-in-12 global rate is not.
+- Live API spend, to be scoped with the product manager before anything runs.
+
+## Still not in scope, and where each belongs
+
+- **The coach never receiving the tips it just gave** (original item 1). A
+  chat-prompt problem; belongs with a chat-context slice.
+- **The two model fields that can blank the screen** (original item 4). Crash
+  safety, not accuracy; belongs beside Slice 5's failure vocabulary.
+- **The three disagreeing "hard contact" numbers**, 88 on the stat tiles, 85 on
+  Contact, 82 on Hit to All Fields. Already its own queued item. This slice
+  reads what each goal already says and changes none of them.
