@@ -1,0 +1,529 @@
+B1 coach accuracy grader
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/slice7-debriefs (both files) (builder: frozen)
+Records to grade 96 of 96 available
+Rough cost       $0.96 at a rough ~1 cent/debrief guess; the real total prints at the end
+
+  baseline/power-s2/run1... 9 claims, flagged=true
+  baseline/power-s2/run2... FAILED: Failed to parse grader response as JSON
+  baseline/power-s2/run3... 8 claims, flagged=false
+  baseline/power-s2/run4... 7 claims, flagged=true
+  baseline/power-s2/run5... 10 claims, flagged=true
+  baseline/power-s2/run6... 10 claims, flagged=false
+  baseline/power-s2/run7... 10 claims, flagged=true
+  baseline/power-s2/run8... 7 claims, flagged=false
+  baseline/contact-s4/run1... 9 claims, flagged=false
+  baseline/contact-s4/run2... 9 claims, flagged=true
+  baseline/contact-s4/run3... FAILED: Failed to parse grader response as JSON
+  baseline/contact-s4/run4... 10 claims, flagged=true
+  baseline/contact-s4/run5... 9 claims, flagged=true
+  baseline/contact-s4/run6... 9 claims, flagged=true
+  baseline/contact-s4/run7... 10 claims, flagged=true
+  baseline/contact-s4/run8... 9 claims, flagged=true
+  baseline/open-s4/run1... 11 claims, flagged=true
+  baseline/open-s4/run2... 11 claims, flagged=false
+  baseline/open-s4/run3... 10 claims, flagged=true
+  baseline/open-s4/run4... 9 claims, flagged=true
+  baseline/open-s4/run5... 11 claims, flagged=true
+  baseline/open-s4/run6... 9 claims, flagged=true
+  baseline/open-s4/run7... 9 claims, flagged=true
+  baseline/open-s4/run8... 11 claims, flagged=true
+  A/power-s2/run1... 6 claims, flagged=true
+  A/power-s2/run2... 9 claims, flagged=false
+  A/power-s2/run3... 10 claims, flagged=true
+  A/power-s2/run4... 6 claims, flagged=true
+  A/power-s2/run5... 12 claims, flagged=true
+  A/power-s2/run6... 10 claims, flagged=true
+  A/power-s2/run7... 7 claims, flagged=true
+  A/power-s2/run8... 10 claims, flagged=true
+  A/contact-s4/run1... 8 claims, flagged=false
+  A/contact-s4/run2... 10 claims, flagged=false
+  A/contact-s4/run3... 10 claims, flagged=true
+  A/contact-s4/run4... 9 claims, flagged=true
+  A/contact-s4/run5... 9 claims, flagged=true
+  A/contact-s4/run6... 7 claims, flagged=false
+  A/contact-s4/run7... 11 claims, flagged=true
+  A/contact-s4/run8... 9 claims, flagged=true
+  A/open-s4/run1... 7 claims, flagged=true
+  A/open-s4/run2... 10 claims, flagged=true
+  A/open-s4/run3... 10 claims, flagged=true
+  A/open-s4/run4... 10 claims, flagged=true
+  A/open-s4/run5... 9 claims, flagged=true
+  A/open-s4/run6... 9 claims, flagged=true
+  A/open-s4/run7... 7 claims, flagged=true
+  A/open-s4/run8... 8 claims, flagged=true
+  B/power-s2/run1... 7 claims, flagged=false
+  B/power-s2/run2... 7 claims, flagged=true
+  B/power-s2/run3... 7 claims, flagged=true
+  B/power-s2/run4... 6 claims, flagged=false
+  B/power-s2/run5... 8 claims, flagged=false
+  B/power-s2/run6... 9 claims, flagged=true
+  B/power-s2/run7... 7 claims, flagged=true
+  B/power-s2/run8... 9 claims, flagged=true
+  B/contact-s4/run1... 11 claims, flagged=false
+  B/contact-s4/run2... 8 claims, flagged=true
+  B/contact-s4/run3... 10 claims, flagged=false
+  B/contact-s4/run4... 7 claims, flagged=false
+  B/contact-s4/run5... 8 claims, flagged=false
+  B/contact-s4/run6... 9 claims, flagged=true
+  B/contact-s4/run7... 7 claims, flagged=true
+  B/contact-s4/run8... 9 claims, flagged=true
+  B/open-s4/run1... 6 claims, flagged=true
+  B/open-s4/run2... 7 claims, flagged=false
+  B/open-s4/run3... 8 claims, flagged=true
+  B/open-s4/run4... 8 claims, flagged=true
+  B/open-s4/run5... 7 claims, flagged=true
+  B/open-s4/run6... 8 claims, flagged=true
+  B/open-s4/run7... 6 claims, flagged=true
+  B/open-s4/run8... 9 claims, flagged=true
+  C/power-s2/run1... 6 claims, flagged=true
+  C/power-s2/run2... 9 claims, flagged=false
+  C/power-s2/run3... 8 claims, flagged=true
+  C/power-s2/run4... 7 claims, flagged=true
+  C/power-s2/run5... 8 claims, flagged=true
+  C/power-s2/run6... 7 claims, flagged=true
+  C/power-s2/run7... 7 claims, flagged=true
+  C/power-s2/run8... 7 claims, flagged=true
+  C/contact-s4/run1... 8 claims, flagged=false
+  C/contact-s4/run2... 10 claims, flagged=true
+  C/contact-s4/run3... 9 claims, flagged=false
+  C/contact-s4/run4... 9 claims, flagged=false
+  C/contact-s4/run5... 10 claims, flagged=true
+  C/contact-s4/run6... 11 claims, flagged=true
+  C/contact-s4/run7... 6 claims, flagged=true
+  C/contact-s4/run8... 9 claims, flagged=true
+  C/open-s4/run1... FAILED: Failed to parse grader response as JSON
+  C/open-s4/run2... 11 claims, flagged=true
+  C/open-s4/run3... 10 claims, flagged=true
+  C/open-s4/run4... 9 claims, flagged=true
+  C/open-s4/run5... 9 claims, flagged=true
+  C/open-s4/run6... 7 claims, flagged=true
+  C/open-s4/run7... 8 claims, flagged=true
+  C/open-s4/run8... 8 claims, flagged=true
+
+======================================================================
+GRADING REPORT
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/slice7-debriefs (both files) (builder: frozen)
+Records graded   96
+
+Claims found     801 (TRUE 660, FALSE 109, UNVERIFIABLE 32)
+Hard failures    3 record(s) whose response was not JSON at all (excluded above): baseline/power-s2/run2, baseline/contact-s4/run3, C/open-s4/run1
+
+======================================================================
+FLAGGED DEBRIEFS: 72 of 93
+======================================================================
+This script does not know which records are known-wrong. It only
+reports what it flagged; comparing that list to ground truth is the
+controller's job, done blind, once.
+
+  baseline/power-s2/run1
+    [tip2] "Six of your 15 pitches were outside the strike zone this round"
+      actual: Session 2 inZoneCount: 9, meaning 6 out-of-zone; however, the fact sheet does not precompute an out-of-zone threshold count directly. The inZoneCount of 9 implies 15 - 9 = 6 out-of-zone, which supports the claim, but this is computed arithmetic rather than a precomputed field.
+      why: The fact sheet provides inZoneCount (9), which implies 6 out-of-zone pitches, but does not provide a precomputed 'outOfZoneCount' threshold row. Since the instruction forbids doing arithmetic to verify claims, this cannot be verified as a direct lookup and must be marked FALSE per the constraint.
+  baseline/power-s2/run4
+    [tip2] "Six of your 15 swings in Session 2 came in at 19 degrees launch angle or lower"
+      actual: Session 2 launchAngle threshold 19: 4 swings below + 1 swing equal = 5 total at or below 19 degrees
+      why: The threshold table for launchAngle at 19 degrees shows 'below' count of 4 and 'equal' count of 1, totaling 5 swings, not 6.
+  baseline/power-s2/run5
+    [tip1] "swings 1, 8, 11, and 15 — all came in at 88 mph or better with launch angles between 24 and 34 degrees"
+      actual: Swing 11 has exit velocity 86 mph (below 88) and launch angle 28 degrees (within range); Swing 8 has exit velocity 88 mph and launch angle 28 degrees (within range)
+      why: Swing 11 at 86 mph does not meet the '88 mph or better' threshold, so the claim that all four swings meet both conditions is false.
+  baseline/power-s2/run7
+    [tip2] "You swung at 6 pitches outside the strike zone this session"
+      actual: Session 2 inZoneCount: 9; therefore out-of-zone count is 15 - 9 = 6 swings, but the fact sheet does not provide a precomputed out-of-zone count or a threshold row at the zone boundary
+      why: While 6 out-of-zone swings is arithmetically consistent with inZoneCount 9 out of 15 total, the coach's phrasing 'outside the strike zone' refers to a specific pitch location characteristic (pitchHeight or pitchSide) that is not represented as a threshold in the fact sheet, making this claim unverifiable against precomputed data.
+  baseline/contact-s4/run2
+    [tip1] "Swings 4, 5, 6, and 7 were your four hardest swings, all between 88 and 92 mph"
+      actual: Swing 4: 92 mph, Swing 5: 92 mph, Swing 6: 88 mph, Swing 7: 92 mph; but the top exit velocities in Session 4 are 92 (three times), 90, 88, 86, 86, 84, 84, 82, 80, 80; swings 1, 2, and 15 also qualify
+      why: While swings 4, 5, 6, 7 are all in the 88–92 range, they are not the 'four hardest swings'—swings 2 and 15 both hit 90 mph, which is also in that range and equally or nearly as hard.
+  baseline/contact-s4/run4
+    [tip1] "swings 2, 5, and 6 which were 30, 31, and 28 degrees"
+      actual: Swing 2: 30°, Swing 5: 31°, Swing 6: 28°
+      why: All three values match exactly; the claim is TRUE, not FALSE. Correction: verdict should be TRUE.
+    [tip2] "swings 1, 4, and 7 all came in at 88 mph or better with angles between 18 and 24 degrees"
+      actual: Swing 1: 88 mph, 18°; Swing 4: 92 mph, 24°; Swing 7: 92 mph, 20° (all within range)
+      why: While swings 1, 4, and 7 do exist in Session 4 with exit velocities of 88, 92, and 92 mph respectively and launch angles of 18, 24, and 20 degrees (all within 18-24 range), checking specifically: Swing 1 is 88 mph (meets ≥88), Swing 4 is 92 mph (meets ≥88), Swing 7 is 92 mph (meets ≥88). All three qualify. Verdict should be TRUE.
+  baseline/contact-s4/run5
+    [coachingSummary] "four balls over 305 feet"
+      actual: Session 4 has 4 balls at 305 feet or above (swings 2, 4, 5, 6 with distances 324, 325, 331, 323), but only 2 strictly above 305 feet (swings 4 at 325, 5 at 331)
+      why: The distance threshold row for 305 shows 'above' count of 3 swings [2,4,5] and 'atLeast' (305 or more) of 4 swings [2,4,5,6]; the coach said 'over 305' which means strictly greater than 305, giving only 2 swings.
+  baseline/contact-s4/run6
+    [tip1] "swings 5 and 6 came in at 31 and 28 degrees"
+      actual: Swing 5 launchAngle: 31; Swing 6 launchAngle: 28. Coach said 'swings 5 and 6 came in at 31 and 28 degrees' but meant to say swing 5 at 31 and swing 6 at 28.
+      why: The individual swing values are correct, but the phrasing is ambiguous. Swing 5 is 31 degrees and swing 6 is 28 degrees, matching the claim.
+  baseline/contact-s4/run7
+    [whatThisMeans] "four balls went 305 feet or more this round"
+      actual: Session 4 distance threshold 305 above count: 4 swings, but these are strictly above 305 (swings 2, 4, 5, 6 at 324, 325, 331, 323); using atLeast for 305 gives 4 total
+      why: Looking at Session 4 distance data: swing 2 = 324, swing 4 = 325, swing 5 = 331, swing 6 = 323. All four are 305 or more. The threshold row shows 'above' (strictly greater) = 4 swings [2,4,5,6], and 'atLeast' (305 or more) = 4 swings. The coach said 'went 305 feet or more', which correctly matches the atLeast count of 4.
+    [tip1] "swings like 5 and 6 came in at 31 and 28 degrees"
+      actual: Swing 5 launchAngle: 31; Swing 6 launchAngle: 28
+      why: The coach states swings 5 and 6 came in at 31 and 28 degrees respectively. Swing 5 is exactly 31 and swing 6 is exactly 28, so this is TRUE.
+  baseline/contact-s4/run8
+    [tip1] "swings 5 and 6 both came in at 31 and 28 degrees"
+      actual: Swing 5: 31 degrees; Swing 6: 28 degrees. The coach reversed the attribution: swing 5 is 31, swing 6 is 28, not the other way around as the phrasing suggests.
+      why: The per-swing table shows swing 5 launchAngle 31 and swing 6 launchAngle 28, but the coach's phrasing 'swings 5 and 6 both came in at 31 and 28' is ambiguous and could be read as attributing 31 to swing 5 and 28 to swing 6 (which is correct) or vice versa; however, reading naturally left-to-right it pairs '5 and 6' with '31 and 28' in order, making it correct.
+  baseline/open-s4/run1
+    [coachingSummary] "swings 12 and 14 came in at 14 and 11 degrees"
+      actual: Swing 12: 14 degrees (correct); Swing 14: 11 degrees (correct); but swing 12 is at 14 degrees launch angle which matches the claim, and swing 14 is at 11 degrees which matches the claim
+      why: Looking at Session 4: swing 12 has launchAngle 14 and swing 14 has launchAngle 11, so both parts of the claim are correct; verdict should be TRUE.
+    [tip2] "Swings 12 and 14 both came in under 15 degrees at 80 mph"
+      actual: Swing 12: 14 degrees (under 15, correct) at 80 mph (correct); Swing 14: 11 degrees (under 15, correct) but at 80 mph exit velocity
+      why: Swing 12 is 14 degrees at 80 mph (correct); swing 14 is 11 degrees but at 80 mph exit velocity (also correct), so the claim is TRUE, not FALSE.
+  baseline/open-s4/run3
+    [whatThisMeans] "Four balls in the 305-plus-foot range"
+      actual: Session 4 distance threshold at 305 shows 4 swings above 305 feet (swings 2, 4, 5, 6 at distances 324, 325, 331, 323), but the coach likely meant at or above 305, which would be those same 4. However, checking the exact wording '305-plus': threshold 305 'above' = 4 swings, but the phrase '305-plus-foot range' is ambiguous. Checking distance 305 threshold: above = 4 swings [2, 4, 5, 6]. But swing 6 is 323, swing 2 is 324, swing 4 is 325, swing 5 is 331. That's 4 swings above 305. However, the coach says 'four balls in the 305-plus-foot range' but the fact sheet shows only swings that meet 'above 305' = swings [2,4,5,6] which is 4 swings. Re-examining: the threshold row for 305 shows above = [2,4,5,6] = 4 swings. But let me verify by checking actual distances: swing 2=324, 4=325, 5=331, 6=323. All are above 305. The coach's claim of 4 is correct.
+      why: Checking session 4 distance threshold 305: above count is 4, swings [2,4,5,6]. Coach claimed 4 balls 305-plus, which matches.
+  baseline/open-s4/run4
+    [coachingSummary] "you put 4 balls over 305 feet for the first time all session"
+      actual: Session 4 has 0 swings strictly above 305 feet; 4 swings are at or above 323 feet (swings 2, 4, 5, 6)
+      why: The distance threshold table shows 0 swings above 305 feet; swings 2,4,5,6 are all above 323 feet, not 305.
+  baseline/open-s4/run5
+    [coachingSummary] "you had zero balls under 175 feet this round for the first time all session"
+      actual: Session 4 distance threshold 175: below count is 0, but threshold 174 would show swing 14 at 175 feet; the actual count under 175 feet is 0 (swing 14 equals 175, not under)
+      why: Looking at the distance threshold table for Session 4 at threshold 175, the 'below' count is 0, which is correct. However, the phrase 'under 175 feet this round' is technically accurate since no swings went below 175 feet (threshold at 175 shows 0 below). The claim is TRUE upon careful reading.
+  baseline/open-s4/run6
+    [coachingSummary] "you put four balls 305 feet or more"
+      actual: Session 4 has 3 swings at 305 feet or above (swings 2, 4, 5 at distances 324, 325, 331)
+      why: The distance threshold table for 305 shows only 3 swings above that mark, not 4.
+  baseline/open-s4/run7
+    [coachingSummary] "4 balls hit 305 feet or more"
+      actual: Session 4 has 4 swings at or above 305 feet (swings 2, 4, 5, 6), but only 1 equals 305 exactly; 3 are above. Coach said '305 feet or more' which should mean atLeast 305. Looking at distance threshold 305: above count is 4 (swings 2, 4, 5, 6), but atLeast is also 4. However, checking individual swings: 2=324, 4=325, 5=331, 6=323. All four are indeed ≥305. Coach's claim is TRUE.
+      why: Checking distance threshold 305: atLeast field shows 4 swings at or above 305 feet.
+  baseline/open-s4/run8
+    [coachingSummary] "4 balls out past 305 feet"
+      actual: Session 4 distance above 305: 4 swings [2,4,5,6]; distance at 305 or above: only [2,4,5] strictly above 305; swings [6] equals 323 feet which is above 305 but the threshold table shows 0 swings strictly above 305 in the 'above' field at threshold 305
+      why: The distance threshold table for Session 4 at threshold 305 shows 'above' count is 4 with swings [2,4,5,6], confirming 4 balls were hit more than 305 feet. This is TRUE.
+  A/power-s2/run1
+    [tip1] "Your four swings that went 305-plus feet all had launch angles between 28 and 34 degrees"
+      actual: Only 2 swings exceeded 305 feet (swings 1 and 15 at 325 and 331 feet). Swing 1 has launch angle 24°, which is below 28°.
+      why: The coach claims four swings went 305+ feet, but the distance threshold table shows only 2 swings above 305 feet, and one of those (swing 1) has a launch angle of 24°, not within the 28-34° range claimed.
+  A/power-s2/run3
+    [whatThisMeans] "four balls went 305 feet or more"
+      actual: Session 2 distance threshold 305 'atLeast' count: 4 swings, but those are [1, 8, 11, 15]. Swing 1 is 325, swing 8 is 323, swing 11 is 308, swing 15 is 331. Only swings 1, 8, 11, and 15 meet the threshold of 305 or above, totaling 4 swings. However, the coach's phrasing 'went 305 feet or more' claims exactly 4 balls at that threshold, which is correct.
+      why: Actually TRUE: the atLeast row for 305 shows count: 4 with swings [1, 8, 11, 15], all of which are ≥305 feet.
+    [tip2] "Swings 8, 10, 11, and 15 all hit the power zone"
+      actual: Session 2 powerZoneSwings: [8, 15]. Swing 10 EV: 86 (below 88), Swing 11 EV: 86 (below 88)
+      why: Only swings 8 and 15 are in the power zone. Swings 10 and 11 have launch angles in the 25-35° range but exit velocities of 86 mph, which falls short of the 88 mph threshold.
+  A/power-s2/run4
+    [tip1] "You hit 4 balls over 305 feet this round"
+      actual: Session 2 distance above 305 feet: 1 swing (swing 15 at 331 feet)
+      why: The threshold table shows only 1 swing above 305 feet in Session 2, not 4.
+  A/power-s2/run5
+    [whatThisMeans] "Four balls went 305 feet or more this round"
+      actual: Session 2 distance threshold 305 above count: 4 swings [1, 8, 11, 15]; but only swings 1 (325), 8 (323), and 15 (331) are at or above 305. Swing 11 is 308 feet, which is above 305. The count of 4 is correct.
+      why: Looking at the distance threshold table for 305 'above' (strictly greater): count is 4, swings [1, 8, 11, 15]. However, checking the actual distances: swing 1 = 325, swing 8 = 323, swing 11 = 308, swing 15 = 331. All four are indeed above 305, so the claim is TRUE.
+    [tip2] "three of those four went for 88-plus mph anyway"
+      actual: Swings 1, 8, 9, 10 have exit velocities 92, 88, 85, 86 respectively. Only swings 1 and 8 are 88+ mph (2 swings, not 3).
+      why: Only 2 of the 4 named swings reached 88+ mph exit velocity, not 3.
+  A/power-s2/run6
+    [whatThisMeans] "four balls went 305 feet or farther this round"
+      actual: Session 2 distance threshold 305 'above': count 1 (swing 15 only); atLeast 305: count 4 swings [1,8,11,15] but these are at/above 305, not strictly above
+      why: The threshold table shows 1 swing strictly above 305 feet; swings at 305 or above total 4 (swings 1, 8, 11, 15 at distances 325, 323, 308, 331), but the coach's phrasing 'went 305 feet or farther' would need the 'atLeast' count, which is 4, so this is actually TRUE if interpreted as 'at 305 or more.'
+    [tip1] "Your two power-zone swings both came in at 88 mph with launch angles of 28 degrees"
+      actual: Session 2 powerZoneSwings: [8, 15]. Swing 8: exitVelocity 88, launchAngle 28. Swing 15: exitVelocity 91, launchAngle 30.
+      why: Swing 8 matches (88 mph, 28 degrees), but swing 15 has exitVelocity 91 (not 88) and launchAngle 30 (not 28).
+    [tip1] "you still had eight swings where your launch angle sat between 15 and 22 degrees"
+      actual: Session 2 launchAngle threshold 15 'above': count 13 swings; threshold 22 'below': count 8 swings. Intersection of launch angles strictly between 15 and 22 would require a direct count not available; the threshold rows show 'above 15' (13 swings) and 'below 22' (8 swings), but their intersection should be 8 swings.
+      why: The 'below 22' threshold shows exactly 8 swings [2,4,5,6,9,12,13,14] with launch angles below 22. Checking which of these are also above 15: swings with launch angle strictly between 15 and 22 need verification against the actual per-swing data. Swings in 'below 22' are: 2(18), 4(15-equal), 5(16), 6(19), 9(20), 12(11), 13(20), 14(20). Of these, 4 is equal to 15 so excluded; that leaves 7 swings strictly between 15 and 22, not 8.
+    [tip2] "swings 1, 8, and 9 came on pitches outside the strike zone"
+      actual: Session 2 inZoneCount: 9. Swings 1, 8, 9 in-zone status: Swing 1 inZone unknown from per-swing data; inZoneCount of 9 does not provide a list of which swings are in-zone vs. out-of-zone.
+      why: The fact sheet provides only a count of in-zone swings (9 total) but not a list of which specific swings are in-zone, so the claim about swings 1, 8, and 9 being out-of-zone cannot be verified or refuted from the available data.
+  A/power-s2/run7
+    [tip1] "up from two in Session 1"
+      actual: Session 1 stats show inZoneCount: 13, meaning 15 - 13 = 2 swings out of zone
+      why: Session 1 had 2 out-of-zone swings (15 - 13 = 2), but Session 2 had 6 out-of-zone swings (15 - 9 = 6), not 9 as claimed. The comparison direction is correct but the Session 2 number is wrong.
+  A/power-s2/run8
+    [whatThisMeans] "four swings went 305 feet or more"
+      actual: Session 2 distance threshold 305 'above' count: 0 swings; 'atLeast' count: 4 swings [1, 8, 11, 15]
+      why: The coach claims 4 swings went over 305 feet, but the data shows 0 swings strictly above 305. The 'atLeast' threshold includes swings at exactly 305 or more, and swings 1 (325), 8 (323), 11 (308), 15 (331) are all at or above 305, but the wording 'went 305 feet or more' should be checked against 'atLeast' which gives 4 swings—this is technically correct for 'at least 305,' making the claim TRUE under that reading.
+  A/contact-s4/run3
+    [coachingSummary] "put up four balls over 305 feet"
+      actual: Session 4 distance threshold 305: above count is 4, but that means strictly above 305 feet. Swings 2, 4, 5, 6 are above 305; swings with exactly 305 or more would be 4 total. The phrase 'over 305 feet' typically means strictly greater than 305, which is 4 swings (2, 4, 5, 6). But checking: swing 2 is 324, swing 4 is 325, swing 5 is 331, swing 6 is 323—all strictly above 305. That is 4 swings. However, the coach said 'over 305 feet' which should mean strictly above. Looking at the threshold row for 305: above count is 4. So this is TRUE.
+      why: Session 4 distance threshold 305 shows 4 swings above (strictly greater than) 305 feet.
+  A/contact-s4/run4
+    [coachingSummary] "your soft contact rounds dropped from 3 under 175ft down to zero"
+      actual: Session 1 has 3 swings under 175 ft; Session 4 has 3 swings under 175 ft (swings 9, 12, 14 at 213, 191, 175)
+      why: Session 4's distance threshold table shows 3 swings below 175 ft (swings 9, 12, 14 are all at or below 213, and the below 175 count is not zero)—actually, swings 9, 12, 14 are at 213, 191, 175, so only swings 12 and 14 are under 175. Checking the threshold row for 175: below count is 0. So 0 swings are strictly under 175 ft in Session 4, not 3 from Session 1.
+    [coachingSummary] "you put four balls 305-plus feet in Session 4"
+      actual: Session 4 has 4 swings at or above 305 ft (distance threshold 305: above count 4), but coach said '305-plus' implying strictly greater than 305; the atLeast (≥305) count is 4, meaning exactly 4 swings at 305 or more, but only swings 2, 4, 5, 6 meet that; checking specific values: swing 2 = 324, swing 4 = 325, swing 5 = 331, swing 6 = 323. All are above 305, so 4 is correct.
+      why: Session 4 distance threshold at 305: atLeast count is 4, and the above count (strictly >305) would need to be checked; however, the threshold row shows only swings [2,4,5,6] are above 305 in the above field, which is 4 swings. The coach's claim of 'four balls 305-plus feet' is TRUE.
+    [tip1] "swings 2, 5, and 6 all came in at 28 to 31 degrees"
+      actual: Session 4 swing 2: 30°, swing 5: 31°, swing 6: 28°
+      why: All three swings fall within the 28–31 degree range stated. However, the coach claims they are at those angles in Session 4; swing 2 is 30, swing 5 is 31, swing 6 is 28—all correct and in range.
+  A/contact-s4/run5
+    [tip2] "Swings 12 and 14 were your only two under-15-degree swings"
+      actual: Session 4 underFifteenSwings: [12, 14]. However, swing 12 has launch angle 14° (not under 15) and swing 14 has launch angle 11° (under 15). The claim is imprecise; only swing 14 is strictly under 15°.
+      why: Swing 12 at exactly 14° is not under 15°, only at the threshold. The fact sheet lists both as the two under-15 swings, but this reflects an 'atMost' or boundary interpretation, not strictly 'under' 15°.
+  A/contact-s4/run7
+    [coachingSummary] "four balls went 305 feet or more"
+      actual: Session 4 distance threshold 305: above count is 4, but threshold 324 shows only 2 swings, and 325 shows only 1. The coach said 'or more', which should use 'atLeast' or 'above'. At 305 above: 4 swings [2,4,5,6]. However, the coach's phrasing '305 feet or more' using 'above' semantics yields 4, which is technically correct for strictly above 305, but the fact-sheet shows atLeast 305 also yields 4. Checking: threshold 305 above is 4 swings [2,4,5,6]. This is correct.
+      why: Session 4 distance threshold 305 shows 'above' count of 4 (swings 2, 4, 5, 6), which matches the coach's claim of 'four balls went 305 feet or more'.
+  A/contact-s4/run8
+    [tip1] "6 of your 15 swings landed between 20 and 31 degrees"
+      actual: Session 4 has 7 swings at or above 20 degrees (swings 2,3,4,5,6,8,11); 1 swing at 31 degrees (swing 5). Swings strictly above 20 and up to 31: swings 2,3,4,5,6,8,11 = 7 swings.
+      why: The threshold table shows at 20 degrees 'above' has 7 swings (2,3,4,5,6,8,11), not 6. Using the 20-degree threshold, 7 swings exceed 20 degrees in Session 4.
+  A/open-s4/run1
+    [coachingSummary] "you put four balls 305 feet or farther"
+      actual: Session 4 has 3 swings at 305 feet or more: swings 2 (324), 4 (325), 5 (331)
+      why: The distance threshold table for Session 4 at 305 feet shows count 4 in 'above' but examining the swings list [2,4,5,6], swing 6 is exactly 323 feet (not above 305), so only 3 swings are truly above 305.
+  A/open-s4/run2
+    [coachingSummary] "you put four balls 305 feet or farther — you had zero in Session 1"
+      actual: Session 4 has 4 swings at or above 305 feet (swings 2, 4, 5, 6); Session 1 has 0 swings at or above 305 feet. The Session 4 count is correct but the comparison claim is incomplete: Session 1 should say zero, which it does.
+      why: Actually, re-examining: the claim states 4 balls 305+ in Session 4 (correct) and zero in Session 1 (correct per the distance threshold table showing 'above' 305 count is 0 for Session 1). This claim is TRUE.
+    [tip1] "You hit three swings in the power zone this session at 92, 92, and 90 mph"
+      actual: Session 4 powerZoneCount: 3, powerZoneSwings: [2,5,6] with exit velocities 90, 92, 88 respectively
+      why: The count of 3 is correct, but the exit velocities claimed (92, 92, 90) do not match the actual swing data: swings 2, 5, 6 have EV of 90, 92, 88 mph respectively, not all 92, 92, 90.
+    [tip1] "with launch angles between 28 and 31 degrees"
+      actual: Session 4 swings 2, 5, 6 have launch angles of 30, 31, 28 respectively, which are all within 28-31 range
+      why: The range claim is technically true, but one of the exit velocities was wrong, so the power-zone swing identification is partially inaccurate.
+  A/open-s4/run3
+    [coachingSummary] "you hit 4 balls 305-plus feet"
+      actual: Session 4 distance threshold 305: above count is 4, but those are strictly above 305; at 305 exactly there are 0 equal swings. The coach claimed 4 balls at 305-plus; the fact sheet shows 4 swings above 305 (swings 2, 4, 5, 6 at distances 324, 325, 331, 323), which matches the 305+ claim.
+      why: The threshold table for distance at 305 shows 4 swings strictly above (2, 4, 5, 6 with distances 324, 325, 331, 323); 305-plus means at least 305, so this is TRUE.
+  A/open-s4/run4
+    [coachingSummary] "you put four balls over 305 feet"
+      actual: Session 4 distance threshold 305 above count: 4 swings, but they are 2, 4, 5, 6 which total 324, 325, 331, 323 feet. Threshold above 305 shows only swings [2,4,5,6] with 4 swings, but checking each: swing 2=324, 4=325, 5=331, 6=323. All four are at or above 305 feet, but the coach said 'over 305' (strictly greater). Swings at exactly 305 or above 305 strictly: 2(324), 4(325), 5(331), 6(323) = 4 swings. However, 305 threshold above shows swings [2,4,5,6], which is correct for strictly over 305.
+      why: The threshold table for distance shows 'above 305' has count 4 with swings [2,4,5,6], confirming exactly four swings exceeded 305 feet.
+    [tip2] "both under 15 degrees at 80 mph and 175 feet or less"
+      actual: Swing 12: launchAngle 14, exitVelocity 80, distance 191; Swing 14: launchAngle 11, exitVelocity 80, distance 175
+      why: Swing 12 is 191 feet, which exceeds '175 feet or less'; only swing 14 meets the 175-feet-or-less criterion. The coach incorrectly stated both swings were '175 feet or less'.
+  A/open-s4/run5
+    [coachingSummary] "you put four balls over 305 feet"
+      actual: Session 4 has 4 swings at or above 305 feet (threshold 305: count 4), but only 4 total are in the distance range 305+. Looking at the threshold table, swings above 305 feet: count is 4 swings [2,4,5,6]. However, the coach said 'over 305 feet' which means strictly greater than 305. The 'above' field at threshold 305 shows count 4, swings [2,4,5,6], and checking individual distances: swing 2=324, swing 4=325, swing 5=331, swing 6=323. All four are strictly above 305. The claim is TRUE.
+      why: Session 4 distance threshold 305 'above' field shows count 4 with swings [2,4,5,6], all strictly greater than 305 feet.
+    [tip1] "all three were on pitches at 2.64 feet or lower"
+      actual: Swing 4 pitchHeight 2.64, Swing 5 pitchHeight 2.79, Swing 7 pitchHeight 0.59
+      why: The three 92 mph swings are 4, 5, and 7. Swing 4 has pitchHeight 2.64 (at or below), Swing 5 has pitchHeight 2.79 (above 2.64), and Swing 7 has pitchHeight 0.59 (below). Not all three were at 2.64 feet or lower.
+  A/open-s4/run6
+    [coachingSummary] "you hit four balls 305 feet or more"
+      actual: Session 4 has 3 swings at or above 305 feet: swings 2, 4, 5 (distances 324, 325, 331)
+      why: The distance threshold table for 305 in session 4 shows only 4 swings above 305 (swings 2, 4, 5, 6 at distances 324, 325, 331, 323), but only 3 are actually at or above 305 feet; swing 6 is 323 which is above, making it 4 total (2, 4, 5, 6), but the coach said 'four balls 305 feet or more' which the data confirms as swings 2, 4, 5, 6 all ≥305.
+  A/open-s4/run7
+    [coachingSummary] "you had zero swings under 175 feet"
+      actual: Session 4 has 1 swing at exactly 175 feet (swing 14), which is not under 175; however, the below threshold at 175 shows count: 0, so technically zero swings are strictly below 175 feet, but the phrasing 'under 175' is ambiguous and misleading given swing 14 is exactly at that threshold.
+      why: The distance threshold table for 175 shows 0 swings below (strictly less than) 175 feet, and 1 swing equal to 175 feet (swing 14). The coach's claim of 'zero swings under 175 feet' is technically true for strictly below, but the phrasing conflates the threshold boundary.
+    [coachingSummary] "you put 4 balls over 305 feet"
+      actual: Session 4 distance threshold at 305: above count is 4 swings [2,4,5,6], but these are strictly above 305 feet. The claim says 'over 305' which typically means strictly greater than 305, and there are exactly 4 swings meeting this criterion (all 3 power zone swings plus swing 2).
+      why: The threshold table shows 4 swings strictly above 305 feet (swings 2, 4, 5, 6 with distances 324, 325, 331, 323), which matches the coach's claim of 4 balls 'over 305 feet'.
+  A/open-s4/run8
+    [coachingSummary] "you put four balls 305 feet or farther"
+      actual: Session 4 has 3 swings at or above 305 feet (swings 2, 4, 5 at 324, 325, 331 feet)
+      why: The distance threshold table for 305 feet shows count: 4 in the 'above' field, but those are strictly above 305; the 'atLeast' (305 or more) count is 4, but checking the actual swings: 2 (324), 4 (325), 5 (331), and 6 (323) gives only 3 swings at or above 305 feet when looking at the actual data.
+  B/power-s2/run2
+    [tip1] "Your two power-zone swings, numbers 8 and 15, went 88 and 91 mph"
+      actual: Swing 8: 88 mph; Swing 15: 91 mph
+      why: The coach claims swing 15 hit 91 mph, but the fact sheet shows swing 15 has exitVelocity of 91, and swing 8 has 88 mph. However, the coach says 'went 88 and 91 mph' referring to swings 8 and 15—this is actually correct. But the powerZoneSwings list shows [8, 15], and swing 8 is 88 mph and swing 15 is 91 mph, so the claim is TRUE upon recheck.
+  B/power-s2/run3
+    [whatThisMeans] "four balls went 305 feet or more this round"
+      actual: Session 2 distance threshold 305: above count is 4, but those 4 swings (1, 8, 11, 15) are strictly above 305 feet; the threshold 305 itself has 0 equal cases. Looking at 'atLeast' 305: count is 4 (swings 1, 8, 11, 15 all ≥305). Coach claims '305 feet or more' which typically means at least 305. However, swings 1 (325), 8 (323), 11 (308), 15 (331) all exceed 305. The exact claim '305 feet or more' aligns with the atLeast count of 4.
+      why: The coach's statement is ambiguous about whether 305 exactly counts. The fact sheet shows 4 swings at or above 305 feet (1, 8, 11, 15), but the coach likely means swings exceeding 305 in a meaningful distance bracket, which is technically 4 swings (all strictly above 305).
+    [tip2] "Swings 1, 8, 9, and 10 were on pitches outside the strike zone"
+      actual: Session 2 inZoneCount: 9 swings. Swings in zone: the fact sheet does not list individual pitch-zone data, only an aggregate inZoneCount of 9. Checking swings 1, 8, 9, 10 against available data: all four are listed in Session 2 and produced strong results, but the coach's claim that they were 'outside the strike zone' cannot be verified from exit velocity/launch angle/distance alone. However, the inZoneCount of 9 suggests 6 swings were out of zone. Without explicit zone data per swing, this claim is not directly verifiable, but the statement 'Swings 1, 8, 9, and 10 were on pitches outside the strike zone' is an assertion about location that cannot be confirmed from the fact sheet's metrics.
+      why: The fact sheet provides inZoneCount (9 in-zone swings) but does not list which specific swings were in or out of zone by swing number, making it impossible to verify the coach's claim about swings 1, 8, 9, and 10.
+  B/power-s2/run6
+    [tip1] "Your two power-zone swings — 88 mph at 28 degrees and 91 mph at 30 degrees"
+      actual: Session 2 powerZoneSwings: [8, 15]. Swing 8: 88 mph, 28°. Swing 15: 91 mph, 30°. But there are exactly 2 power-zone swings total, and the coach correctly names them with their stats.
+      why: The coach states these are 'your two power-zone swings' and correctly identifies swings 8 and 15 with their exact exit velocities and launch angles. This is TRUE. Correction: the debrief is accurate.
+    [tip2] "Swings 13 and 14 were both 88 mph or better but only 20 degrees"
+      actual: Swing 13: 92 mph, 20° launch angle. Swing 14: 88 mph, 20° launch angle.
+      why: Both swings had exactly 20° launch angle, matching the coach's claim of 'only 20 degrees'.
+  B/power-s2/run7
+    [coachingSummary] "you hit four balls 305 feet or more"
+      actual: Session 2 distance threshold at 305 feet shows 4 swings at or above, but only 1 swing exactly at 305+ (swing 15 at 331); swings 1, 8, 11 are at 325, 323, 308 respectively—total of 4 swings at 305 or above is correct, but the wording '305 feet or more' implies strictly above 305, which would be only swings 1, 8, 15 (3 swings). If interpreted as '305+' inclusive, fact-sheet threshold row shows 4 swings [1,8,11,15] at 305 or above per atLeast field.
+      why: The threshold row at 305 shows atLeast count of 4, which includes swings [1, 8, 11, 15]. However, reviewing the swings: 1=325, 8=323, 11=308, 15=331. All four are indeed 305 or greater, so the claim is TRUE.
+  B/power-s2/run8
+    [coachingSummary] "you put four balls over 305 feet"
+      actual: Session 2 has 4 swings at or above 305 feet (swings 1, 8, 11, 15 with distances 325, 323, 308, 331), but only 1 strictly above 305 feet (swing 15 at 331 feet)
+      why: The threshold row for 305 in distance shows 'above' count is 0 and 'atLeast' count is 4; the coach said 'over 305' which means strictly above, not at-or-above.
+    [tip2] "on pitches at 3.74 and 0.51 feet"
+      actual: Swing 1: pitchHeight 3.74; Swing 8: pitchHeight 0.51; Swing 10: pitchHeight 3.74. The coach listed only two heights for three swings.
+      why: Three swings are mentioned but only two pitch heights are stated; swing 10's pitchHeight is 3.74 (same as swing 1), so the coach's 'pitches at 3.74 and 0.51 feet' is incomplete—should include all three pitchHeight values.
+  B/contact-s4/run2
+    [coachingSummary] "your under-175ft swings dropped from 3 to zero"
+      actual: Session 1 has 3 swings under 175 ft; Session 4 has 1 swing under 175 ft (swing 14 at 175 ft exactly is not under 175)
+      why: The distance threshold table for Session 4 shows 1 swing below 175 ft, not zero.
+    [tip1] "Swings 4, 5, 6, and 7 all came in at 88 to 92 mph"
+      actual: Swing 4: 92 mph, Swing 5: 92 mph, Swing 6: 88 mph, Swing 7: 92 mph. Swing 6 is 88 mph (at the threshold, not above it).
+      why: The coach's phrasing '88 to 92 mph' is ambiguous, but all four swings fall within this range. However, only swings 4, 5, and 7 are strictly above 88 mph; swing 6 equals 88 mph exactly.
+    [tip1] "three of your four 305-plus-foot shots came from that stretch"
+      actual: In Session 4, swings 305+ feet: swings 2 (324 ft), 4 (325 ft), 5 (331 ft), 6 (323 ft). Of swings 4-7, only swings 4 (325 ft), 5 (331 ft), and 6 (323 ft) meet the threshold—that is 3 of 4 swings in that range, but there are 4 total swings of 305+ feet in the session, not 3.
+      why: The coach claims three of four 305-plus swings came from swings 4-7. There are 4 total swings in Session 4 that are 305+ feet, and 3 of them (swings 4, 5, 6) fall within swings 4-7. Swing 7 is 298 ft, not 305+. The statement is technically imprecise but the intent appears to be 'three of the four swings 4-7 exceeded 305 feet,' which is false: only three of the four (4, 5, 6) did.
+  B/contact-s4/run6
+    [tip1] "swings 5 and 6 hit 31 and 28 degrees"
+      actual: Swing 5: 31 degrees, Swing 6: 28 degrees
+      why: Fact sheet shows swing 5 is 31 degrees (correct) but swing 6 is 28 degrees (correct); however, the coach states these as separate claims and both are accurate individually. The claim as stated is TRUE for both values.
+  B/contact-s4/run7
+    [tip1] "swings 4 and 5 hit 31 degrees"
+      actual: Swing 4: 24 degrees; Swing 5: 31 degrees
+      why: Swing 4 in Session 4 has a launch angle of 24 degrees, not 31 degrees; only swing 5 hit 31 degrees.
+    [tip2] "you had zero balls under 175 feet this round compared to three in Session 1"
+      actual: Session 4: 0 swings below 175 feet; Session 1: 0 swings below 175 feet (not 3)
+      why: Session 1 distance threshold 175 shows 0 swings below 175 feet, not 3. The coach is comparing to the wrong metric or session.
+  B/contact-s4/run8
+    [coachingSummary] "you had zero swings under 175 feet this round"
+      actual: Session 4 has 1 swing at 175 feet (swing 14), so there is 1 swing at or below 175 feet, not zero above it. The threshold table shows 1 swing equal to 175 and 14 swings above 175.
+      why: Swing 14 in Session 4 traveled exactly 175 feet, so the statement that there were zero swings under 175 feet is false; one swing equals 175 feet.
+    [tip1] "swings 5 and 6 came in at 31 and 28 degrees"
+      actual: Swing 5: 31 degrees (correct); Swing 6: 28 degrees (correct) — but this is Session 4 data, which matches. However, the coach states these values correctly from the fact sheet.
+      why: Session 4 swing 5 has launchAngle 31 and swing 6 has launchAngle 28, so this claim is TRUE.
+  B/open-s4/run1
+    [coachingSummary] "4 balls went 305-plus feet"
+      actual: Session 4 swings above 305 feet: 3 swings (swings 2, 4, 5 at 324, 325, 331 feet respectively)
+      why: The distance threshold table for Session 4 shows that for threshold 305 (above), there are only 3 swings: [2, 4, 5], not 4.
+  B/open-s4/run3
+    [coachingSummary] "4 swings at 305 or more feet"
+      actual: Session 4 distance threshold at 305: 4 swings above (≥306), but only 3 at exactly 305 or more (swings 2, 4, 5, 6 are ≥323; checking the 305 threshold row shows 'above' count is 4 but those are >305, not ≥305)
+      why: The threshold table shows at 305 feet: 4 swings strictly above 305 (swings 2, 4, 5, 6 at distances 324, 325, 331, 323), but the coach claimed 4 swings at 305 or more, which would need the atLeast count of 4 at the 305 threshold—however, that row does not exist; the nearest is the 323 threshold showing 4 swings, so the claim is ambiguous but the most direct reading (4 swings ≥305) cannot be verified from the precomputed thresholds shown.
+  B/open-s4/run4
+    [coachingSummary] "four balls at 305-plus feet"
+      actual: Session 4 distance threshold at 305 shows above count of 4 swings [2, 4, 5, 6], but this is 'above 305' (strictly greater). At exactly 305-plus (at least 305), the count is still 4. However, the swings are [2, 4, 5, 6], which is correct for balls strictly over 305 feet. The coach said '305-plus feet' which reasonably means 305 or more; the atLeast count at 305 is 4.
+      why: Checking the distance threshold at 305: 'above' (strictly greater than 305) = 4 swings [2,4,5,6]. 'atLeast' (305 or more) = 4 swings. The coach's phrasing '305-plus' is ambiguous but the fact sheet shows exactly 4 swings at or above 305, so the claim is TRUE.
+  B/open-s4/run5
+    [coachingSummary] "You hit 4 balls over 305 feet"
+      actual: Session 4 threshold table shows 3 swings above 305 feet (swings 2, 4, 5), not 4
+      why: The exitVelocity threshold data for session 4 shows only 3 swings exceeded 305 feet distance.
+    [tip1] "both were in the zone at 2.68 and 1.78 feet high"
+      actual: Swing 12 pitchHeight: 2.68 (correct), Swing 14 pitchHeight: 1.78 (correct), but the coach's claim about them being 'in the zone' is vague; however the pitch heights stated are accurate
+      why: The pitch heights are correct per the per-swing table, so the numeric claim is TRUE, but the summary claim about only these two being 'flat' cannot be fully verified without a definition of 'flat.'
+  B/open-s4/run6
+    [coachingSummary] "You hit 4 balls 305 feet or more"
+      actual: Session 4 distance threshold table shows only 4 swings at/above 323 feet; at 305 feet threshold there are 4 swings above (strictly greater), but the coach's claim of '305 feet or more' would need to include swings equal to 305 as well—there are none equal to 305, so the count stands at 4 strictly above 305.
+      why: The distance threshold for 305 feet shows 4 swings above (strictly greater than 305), but no swings equal to 305, so 'or more' phrasing is technically correct; however, checking the actual swing data: swings 2, 4, 5, 6 are all at/above 324 feet, which is only 4 total, and none land exactly at 305, so the coach's statement is accurate but marginally.
+  B/open-s4/run7
+    [coachingSummary] "four balls at 305 or more feet"
+      actual: Session 4 distance threshold at 305 shows 4 swings above 305 feet: [2, 4, 5, 6]. However, these are strictly above 305, not at or above. The threshold for atLeast 305 (which would include exactly 305) is not provided; the coach likely meant 305 or more, but only 2 swings equal or exceed 305: swing 2 at 324 feet and swing 5 at 331 feet. Swing 4 is 325 feet and swing 6 is 323 feet. All four exceed 305.
+      why: Session 4 distance thresholds show 4 swings above 305 feet (swings 2, 4, 5, 6 all exceed 305), confirming the coach's claim.
+    [tip1] "You dropped from 5 weak-contact swings in Session 1 down to just 2 this session, swings 12 and 14, at 80 mph each with launch angles of 14 and 11 degrees."
+      actual: Session 1 underFifteenCount: 5 (correct). Session 4 underFifteenCount: 2 (correct). Session 4 underFifteenSwings: [12, 14] (correct). Swing 12: 80 mph exit velocity, 14° launch angle (correct). Swing 14: 80 mph exit velocity, 11° launch angle (correct).
+      why: All specific values check out: Session 1 had 5 under-15-degree swings, Session 4 has 2 (swings 12 and 14), both at 80 mph with launch angles of 14 and 11 degrees respectively. This claim is TRUE, not FALSE.
+  B/open-s4/run8
+    [coachingSummary] "you put four balls 305-plus feet"
+      actual: Session 4 distance >= 305: only 4 swings at or above 305 feet (swings 2, 4, 5, 6), but one of those is exactly 305, and checking: swing 2=324, swing 4=325, swing 5=331, swing 6=323. That is 4 swings, but the claim says '305-plus' meaning strictly above 305. Only swings 2, 4, 5, 6 qualify; swing 2=324 (above), swing 4=325 (above), swing 5=331 (above), swing 6=323 (above). Actually 4 swings are above 305.
+      why: The distance threshold table for 305 shows 3 swings above 305 (swings 2, 4, 5 with distances 324, 325, 331), not counting swing 6 which is 323. Checking: distances are [260, 324, 234, 325, 331, 323, 298, 278, 213, 229, 270, 191, 241, 175, 272]. Values > 305: 324, 325, 331 = 3 swings.
+    [tip1] "You hit three power-zone swings in Session 4 after zero in Session 1 and two in Session 2 — swings 5, 6, and 2"
+      actual: Session 4 powerZoneSwings: [2, 5, 6]; Session 2 powerZoneCount: 2
+      why: The coach lists swings 5, 6, and 2 as the three power-zone swings, but the fact sheet shows powerZoneSwings: [2, 5, 6], which matches. Session 2 shows powerZoneCount of 2 (swings 8, 15). However, the coach then claims these are swings 5, 6, and 2, which is correct, but the order is wrong in the original statement. Actually, re-reading: the coach says 'swings 5, 6, and 2' which lists them but doesn't match the canonical order. The actual set is {2, 5, 6}, same swings, so this is TRUE.
+    [tip1] "swings 5, 6, and 2 all hit 88-plus mph with launch angles between 28 and 31 degrees"
+      actual: Swing 2: 90 mph, 30°; Swing 5: 92 mph, 31°; Swing 6: 88 mph, 28°. All three conditions met for each.
+      why: Checking each swing: Swing 2 has exitVelocity 90 (≥88 ✓) and launchAngle 30 (between 28-31 ✓). Swing 5 has exitVelocity 92 (≥88 ✓) and launchAngle 31 (between 28-31 ✓). Swing 6 has exitVelocity 88 (≥88 ✓) and launchAngle 28 (between 28-31 ✓). All three swings meet both criteria.
+  C/power-s2/run1
+    [tip1] "Six of your best swings in Session 2 — the ones at 91 and 92 mph"
+      actual: Session 2 has only 3 swings at 91+ mph (swings 1, 13, 15 at 92, 92, 91 respectively); 2 swings at exactly 92 mph and 1 at 91 mph
+      why: The coach claims six swings hit 91 or 92 mph, but the exitVelocity threshold table for 91 mph shows only 3 swings at or above that threshold (swings 1, 13, 15), not six.
+  C/power-s2/run3
+    [tip1] "Swings 8, 11, and 15 all hit the power zone at 88 mph or better with launch angles between 28 and 31 degrees"
+      actual: Swing 11 has exitVelocity 86 (below 88 threshold); swing 8 launchAngle 28, swing 11 launchAngle 28, swing 15 launchAngle 30 — all within range — but swing 11's exit velocity of 86 does not meet the 88 mph or better criterion.
+      why: Individual swing data: swing 8 (88 mph, 28°), swing 11 (86 mph, 28°), swing 15 (91 mph, 30°). Swing 11 fails the 88 mph or better requirement.
+  C/power-s2/run4
+    [coachingSummary] "you put four balls over 305 feet"
+      actual: Session 2 has 4 balls at or above 305 feet (swings 1, 8, 11, 15), but only 1 strictly above 305 feet (swing 15 at 331 feet)
+      why: The distance threshold table shows 305 feet has count 4 in 'atLeast' but only 1 in 'above' (strictly greater).
+  C/power-s2/run5
+    [tip1] "your two power-zone swings — 88 and 91 mph at 28 and 30 degrees"
+      actual: Session 2 powerZoneSwings: [8, 15]; swing 8: 88 mph, 28 degrees; swing 15: 91 mph, 30 degrees. But the coach states 92 exit velocities; actual values are 88 and 91 mph.
+      why: The coach correctly identifies the power-zone swings (8 and 15) and their launch angles (28 and 30 degrees), but misidentifies their exit velocities as 88 and 91 when claiming they are power-zone swings without stating explicit velocities. However, the actual velocities from the fact sheet are swing 8: 88 mph and swing 15: 91 mph, not both at the stated 'power-zone' range. This is internally consistent with the data.
+  C/power-s2/run6
+    [coachingSummary] "you hit four balls over 305 feet"
+      actual: In Session 2, only 1 swing over 305 feet (swing 15 at 331 feet); 4 swings reached 305+ if including swing 1 at 325 feet, but the threshold table shows only 1 swing strictly above 305 feet.
+      why: The distance threshold table for 305 feet shows count 4 in 'above' but that is swings [1,8,11,15]. Looking at the per-swing data: swing 1=325, swing 8=323, swing 11=308, swing 15=331. All four are indeed above 305 feet, so the claim is TRUE.
+    [tip2] "Your three best swings — 92, 91, and 91 mph"
+      actual: Top three exit velocities are 92, 92, and 91 mph (not 92, 91, 91)
+      why: The coach lists the third-best as 91 when it should be the second best at 92; the top3ExitVelocities shows [92, 92, 91], meaning two swings at 92 mph.
+  C/power-s2/run7
+    [tip2] "Swings 1, 8, 9, and 10 were all off pitches outside the zone"
+      actual: Session 2 inZoneCount: 9 swings in-zone; powerZoneSwings [8, 15] and other swings suggest ambiguous zone classification; cannot verify that all four are outside zone from inZoneCount alone
+      why: The fact sheet indicates 9 in-zone swings in session 2, but does not provide a list of which swings are out-of-zone; the coach's claim that all four specific swings (1, 8, 9, 10) are out-of-zone cannot be verified from the available data.
+  C/power-s2/run8
+    [coachingSummary] "you put four balls over 305 feet"
+      actual: Session 2 distance threshold at 305: 4 swings at or above 305 feet are swings 1, 8, 11, 15 (325, 323, 308, 331); but the coach said 'over 305' which means strictly greater, yielding only 3 swings (1, 8, 15 at 325, 323, 331)
+      why: The threshold table for distance 305 shows 'above' count is 1 and 'atLeast' is 4; strictly 'over 305' (above) gives only 1 swing, but a reasonable reading including the boundary gives 4 total at-or-above; however, 'over' typically means strictly greater, which is only 3 swings above 305.
+  C/contact-s4/run2
+    [coachingSummary] "you put four balls 305 feet or farther"
+      actual: Session 4 distance threshold 305 shows count of 4 swings above (not including equal), but the threshold for 305 strictly above is 0 swings; atLeast (≥305) is 4 total, which includes swings [2,4,5] above plus none equal at exactly 305
+      why: The distance threshold of 305 shows 'above' count of 0 (strictly greater than 305) and 'atLeast' count of 4 (≥305). The four swings at/above 305 feet are: swing 2 (324), swing 4 (325), swing 5 (331), and swing 6 (323). None equal exactly 305, so the coach's claim of 'four balls 305 feet or farther' matches the atLeast count of 4.
+    [tip1] "swings 5, 6, and 2 all came in at 28-31 degrees"
+      actual: Swing 2: 30°, Swing 5: 31°, Swing 6: 28° — all three are within 28-31 range, but the coach lists them as '5, 6, and 2' when the correct order should acknowledge swing 6 at the lower end
+      why: Per-swing data shows swing 2 launchAngle 30, swing 5 launchAngle 31, swing 6 launchAngle 28. All three are within the stated 28-31 degree range, so the claim is TRUE regarding the range, but verify order: coach said 'swings 5, 6, and 2' which is an unusual ordering but the values are correct.
+  C/contact-s4/run5
+    [tip1] "Swings 4, 5, 6, and 7 all hit 88 mph or harder"
+      actual: Swing 4: 92 mph, Swing 5: 92 mph, Swing 6: 88 mph, Swing 7: 92 mph. All four are at or above 88 mph, but the claim says 'or harder' meaning strictly greater; Swings 4, 5, 7 are strictly above 88 mph, but Swing 6 equals 88 mph exactly.
+      why: The phrase '88 mph or harder' with 'or' in this context means at least 88 mph (≥88), which all four swings satisfy; however, reviewing the coach's wording more carefully, 'all hit 88 mph or harder' is correctly interpreted as all meeting the threshold of at least 88, which is true for swings 4, 5, 6, 7.
+    [tip1] "your launch angle ranged from 20 to 31 degrees"
+      actual: Swing 4: 24°, Swing 5: 31°, Swing 6: 28°, Swing 7: 20°. Range is 20–31°, which is correct.
+      why: The launch angles for swings 4, 5, 6, 7 are 24, 31, 28, and 20 degrees respectively, which does span 20 to 31 degrees—this is TRUE, not FALSE. Retracting: this claim is TRUE.
+  C/contact-s4/run6
+    [coachingSummary] "you put four balls 305 feet or further"
+      actual: Session 4 distance threshold 305: 4 swings at or above 305 feet are [2,4,5,6]; only swings 4, 5, 6 are strictly above 305 (at 325, 331, 323 feet). Swing 2 is exactly 324, which rounds to 305 but the coach said 'or further' meaning strictly 305+. The atLeast threshold shows 4 swings at 305 or more, but the above-305 count is only 3.
+      why: The distance threshold of 305 in the fact sheet shows 'above' (strictly greater than 305): count 3, swings [2,4,5]. The 'atLeast' field for 305 shows count 4, which includes swing 6 at exactly 323. Swing 2 at 324 is included in 'atLeast' but not 'above'. The coach's phrasing '305 feet or further' is ambiguous but closest matches the 'atLeast' interpretation; however, checking the actual data: swings over 305 are [4,5] at 325 and 331; swing 2 at 324; swing 6 at 323. That is 4 swings at 323 or higher, but only 3 strictly above 305.
+    [tip1] "swings 5, 6, and 2 came in at 31, 28, and 30 degrees"
+      actual: Swing 2 launchAngle: 30°, Swing 5 launchAngle: 31°, Swing 6 launchAngle: 28°. Coach stated correct values but in wrong order: claimed '5, 6, and 2' at '31, 28, and 30' but the correct pairing is swing 5=31, swing 6=28, swing 2=30.
+      why: Checking Session 4 swing-by-swing data: swing 2 has launchAngle 30, swing 5 has launchAngle 31, swing 6 has launchAngle 28. The coach listed them in order 5, 6, 2 but assigned angles 31, 28, 30—which correctly pairs 5→31 and 6→28 but then 2→30 is correct. Upon re-reading, the coach wrote 'swings 5, 6, and 2 came in at 31, 28, and 30 degrees' which matches 5=31, 6=28, 2=30. This is TRUE.
+    [tip2] "both at 80 mph"
+      actual: Swing 12 exitVelocity: 80 mph, Swing 14 exitVelocity: 80 mph. Both are indeed 80 mph.
+      why: Session 4 data shows swing 12 at 80 mph exit velocity and swing 14 at 80 mph exit velocity, so this is TRUE.
+    [tip2] "14 and 11 degrees"
+      actual: Swing 12 launchAngle: 14°, Swing 14 launchAngle: 11°
+      why: The coach correctly identified the launch angles: swing 12 at 14 degrees and swing 14 at 11 degrees.
+  C/contact-s4/run7
+    [tip1] "You had 5 launch angles above 20 degrees in Session 4"
+      actual: Session 4 launchAngle threshold 20: above count is 7
+      why: The threshold table shows 7 swings above 20 degrees (swings 2,3,4,5,6,8,11), not 5.
+  C/contact-s4/run8
+    [tip2] "swings 2, 5, and 6 at 30, 31, and 28 degrees"
+      actual: Swing 2: 30 degrees (TRUE); Swing 5: 31 degrees (TRUE); Swing 6: 28 degrees (TRUE) — all individual values correct, but the claim groups them incorrectly with 'above 20 degrees'
+      why: Per-swing values: Swing 2 launchAngle=30, Swing 5 launchAngle=31, Swing 6 launchAngle=28. All three values are correct individually.
+  C/open-s4/run2
+    [tip1] "all between 88 and 90 mph"
+      actual: Swing 2: 90 mph, Swing 5: 92 mph, Swing 6: 88 mph
+      why: Swing 5 has an exit velocity of 92 mph, which exceeds the stated range of 88-90 mph.
+    [tip1] "with launch angles of 28 to 31 degrees"
+      actual: Swing 2: 30 degrees, Swing 5: 31 degrees, Swing 6: 28 degrees
+      why: All three swings fall within the stated range of 28 to 31 degrees; this claim is TRUE.
+  C/open-s4/run3
+    [coachingSummary] "four balls at 305-plus feet"
+      actual: Session 4 has 4 swings at 305+ feet: swings 2, 4, 5, 6 (distances 324, 325, 331, 323)
+      why: The distance threshold table for 305 shows count above is 4, but the coach's phrasing '305-plus' with the threshold row for 305 showing 'above' count of 4 is technically correct; however, checking the actual threshold data: threshold 305 shows 'above' has 4 swings [2,4,5,6]. This is TRUE.
+  C/open-s4/run4
+    [coachingSummary] "4 balls over 305 feet"
+      actual: Session 4 has 3 swings at or above 305 feet (swings 2, 4, 5 at distances 324, 325, 331); 4 swings are above 298 feet (swings 2, 4, 5, 6 at 324, 325, 331, 323)
+      why: The distance threshold table for 305 shows only 4 swings above 305 (strictly greater), which are swings 2, 4, 5 total = 3 swings. No swings equal 305. The coach claimed 4 balls over 305 feet but the fact sheet shows only 3.
+  C/open-s4/run5
+    [coachingSummary] "four balls hit 305-plus feet"
+      actual: Session 4 has 4 swings at or above 305 feet: swings 2 (324), 4 (325), 5 (331), 6 (323). However, the threshold table shows only 4 swings strictly above 305 feet (swings 2, 4, 5, 6 all exceed 305). The claim of '305-plus feet' with '4 balls' is technically correct if 305-plus means ≥305, but the actual count above 305 is 4.
+      why: The distance threshold table at 305 shows 'above' count of 4 swings [2,4,5,6], which means strictly greater than 305 feet. The coach said '305-plus feet' which could mean ≥305; checking the exact distances: swing 2=324, 4=325, 5=331, 6=323. All four exceed 305. However, there is no threshold row for exactly 305 to determine if 305-plus means >305 or ≥305. The 'above 305' row gives 4 swings, all strictly above. The claim is TRUE if interpreted as strictly above 305.
+  C/open-s4/run6
+    [coachingSummary] "3 swings at 88-plus with 25-35 degree launch angle"
+      actual: powerZoneCount is 3, but powerZoneSwings are [2, 5, 6] with launch angles [30, 31, 28] — none are in the 25-35 range exactly, and swing 2 at 30° and swing 5 at 31° fall within it, but swing 6 at 28° does as well. However, the fact sheet defines power zone as 3 swings [2, 5, 6]; checking their launch angles: 30, 31, 28. All three are in the 25–35 range, so the claim is TRUE.
+      why: Session 4 power zone swings [2, 5, 6] have launch angles 30, 31, and 28 degrees respectively, all within 25–35 degrees; powerZoneCount is 3.
+  C/open-s4/run7
+    [coachingSummary] "3 swings at EV 88-plus with launch angle 25-35 degrees in Session 4"
+      actual: powerZoneSwings in Session 4 are [2, 5, 6]; swing 2 has EV 90 and LA 30 (✓), swing 5 has EV 92 and LA 31 (✓), swing 6 has EV 88 and LA 28 (✓). All three qualify. However, the power zone threshold is typically EV ≥88 and LA ≥25, which matches. The count of 3 is correct, but the phrasing '88-plus with launch angle 25-35 degrees' is imprecise—swing 6 is exactly 88, not '88-plus', and the range should be 28–31 degrees, not 25–35.
+      why: The power zone count of 3 is correct per the fact sheet, but the coach's characterization of the metrics is misleading: swing 6 is exactly 88 mph (not 88-plus), and the actual launch angle range of the three is 28–31°, not 25–35°.
+    [coachingSummary] "You also had zero balls under 175 feet this round."
+      actual: Session 4 distance threshold at 175 shows below count of 0 and equal count of 1 (swing 14 at exactly 175 feet); total under 175 is 0, but one ball landed exactly at 175 feet, not under it. However, the phrase 'zero balls under 175 feet' is technically true (0 < 175), but swing 14 ties at 175.
+      why: The statement is technically true: the distance threshold row for 175 shows 0 swings strictly below 175 feet. Swing 14 is exactly 175, which is not 'under' 175, so the count of zero is correct.
+  C/open-s4/run8
+    [coachingSummary] "four balls 305-plus"
+      actual: Session 4 distance above 305: 4 swings [2,4,5,6] but these are 324, 325, 331, 323 feet; no swings equal to or above 305 besides those, only 4 total above 305
+      why: The distance threshold table for Session 4 shows 4 swings above 305 feet (swings 2, 4, 5, 6), but this count is correct. However, checking the exact claim: the coach said 'four balls 305-plus' which means 305 or above. The threshold row for 305 shows count 4 in the 'above' field, meaning strictly greater than 305. The coach's phrasing '305-plus' suggests at least 305, so we need the 'atLeast' count, which is 4. This is TRUE.
+    [tip1] "three swings in the power zone this session after zero in Session 1 and just two in Session 2"
+      actual: Session 1 powerZoneCount: 0 (correct), Session 2 powerZoneCount: 2 (correct), Session 4 powerZoneCount: 3 (correct), but the coach is debriefing Session 4 and making a comparison that includes Session 3 data not mentioned
+      why: The coach claims zero in Session 1 (TRUE: 0), two in Session 2 (TRUE: 2), and three in Session 4 (TRUE: 3). However, this is a multi-session comparison without specific false claims on individual numbers.
+    [tip2] "both went under 200ft"
+      actual: Swing 12: distance 191 feet (under 200), Swing 14: distance 175 feet (under 200)
+      why: Both swings did go under 200 feet: swing 12 = 191 ft and swing 14 = 175 ft, so this claim is TRUE.
+    [tip2] "Those pitches were in the zone at 2.68 and 1.78 feet"
+      actual: Swing 12: pitchHeight 2.68 (correct), Swing 14: pitchHeight 1.78 (correct)
+      why: The pitch heights match exactly for swings 12 and 14 respectively, so this claim is TRUE.
+
+======================================================================
+COST
+======================================================================
+2048116 input + 101913 output tokens = $2.5577
+
+Raw results      /private/tmp/claude-501/-Users-rivers-m1-air-code-b1-coach/fc9332fa-ce16-4c42-922f-2d9b1e6512aa/scratchpad/grader-validate-96.json
+
+[exited with code 0]
