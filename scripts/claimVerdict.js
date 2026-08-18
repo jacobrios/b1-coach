@@ -236,10 +236,39 @@ function rangeVerdict(claim, session, context) {
     : ruled('FALSE', actual, `claimed ${statedCount}, the rows give ${inRange}`)
 }
 
+// Which unit words in a coach's sentence are consistent with which session
+// stat. Added after the 17 August 2026 smoke of the blinded extractor, which
+// labeled "4 balls hit 305 feet or more" as the in-zone count and "zero balls
+// under 175 feet" as the under-fifteen-DEGREES count. No session stat measures
+// feet at all, so those are mislabeled extractions, and grading them produces
+// a confident verdict about the gap between two unrelated numbers. A quote
+// whose units contradict its stat is not understood, and says so.
+const STAT_UNIT_WORDS = {
+  avgExitVelocity: /mph/i,
+  topExitVelocity: /mph/i,
+  avgLaunchAngle: /degree/i,
+  underFifteenCount: /degree/i,
+  // Counts of swings and zone membership carry no measurement unit.
+  inZoneCount: null,
+  totalSwings: null,
+  powerZoneCount: null,
+}
+const UNIT_WORDS = /\b(?:mph|degrees?|feet|ft)\b/i
+
 // A whole-session number the debrief prompt already handed the coach.
 function sessionStatVerdict(claim, session) {
-  const { statName, statedValue } = claim
+  const { statName, statedValue, quote } = claim
   if (!Number.isFinite(statedValue)) return unverifiable('no stated value given')
+
+  if (typeof quote === 'string' && statName in STAT_UNIT_WORDS) {
+    const expected = STAT_UNIT_WORDS[statName]
+    const unitInQuote = quote.match(UNIT_WORDS)?.[0]
+    if (unitInQuote && (!expected || !expected.test(unitInQuote))) {
+      return unverifiable(
+        `the quote is in "${unitInQuote}" but ${statName} is not measured in that; this claim was mislabeled by extraction`,
+      )
+    }
+  }
   const value = session.stats?.[statName]
   // Deliberately UNVERIFIABLE rather than derived. The failed run marked "six
   // pitches outside the strike zone" FALSE after correctly reasoning that 15

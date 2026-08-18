@@ -428,6 +428,47 @@ describe('session stat claims', () => {
     expect(result.verdict).toBe('FALSE')
   })
 
+  // The 24-record smoke of 17 August 2026, after the extractor was blinded:
+  // "4 balls hit 305 feet or more" came back as a sessionStat claim against
+  // inZoneCount, and "zero balls under 175 feet" against underFifteenCount
+  // (under fifteen DEGREES). No session stat measures feet, so a quote in
+  // feet with a sessionStat label is a mislabeled extraction, and the honest
+  // answer is that this claim was not understood, not that the coach is wrong
+  // by the margin between two unrelated numbers.
+  it('is UNVERIFIABLE when the quote is in feet, which no session stat measures', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'inZoneCount', statedValue: 4, quote: '4 balls hit 305 feet or more' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  it('is UNVERIFIABLE when the quote is in mph but the stat is a count of swings', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'inZoneCount', statedValue: 4, quote: 'four swings at 88 mph or better' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  it('still rules on a stat whose units match its quote', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'avgExitVelocity', statedValue: 89, quote: 'you averaged 89 mph' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  // "Under fifteen degrees" is the one stat legitimately in degrees, so the
+  // degree guard must not swallow it.
+  it('lets a degrees quote through to the under-fifteen count', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'underFifteenCount', statedValue: 1, quote: 'one swing under 15 degrees', },
+      { ...FACT_SHEET, sessions: [{ ...FACT_SHEET.sessions[0], stats: { ...FACT_SHEET.sessions[0].stats, underFifteenCount: 1 } }] },
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
   it('is UNVERIFIABLE for a stat the fact sheet does not carry', () => {
     const result = verdictForClaim(
       { kind: 'sessionStat', sessionNumber: 4, statName: 'outOfZoneCount', statedValue: 2 },
