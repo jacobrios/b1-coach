@@ -91,6 +91,7 @@ const EXTENSIONLESS_RESOLVE_HOOK = `
 register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK), import.meta.url)
 
 import { buildFactSheet, goalExtraThresholds } from './factSheet.js'
+import { verdictForClaim } from './claimVerdict.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
@@ -310,41 +311,82 @@ function selectSubset(records, args) {
 // The grading prompt
 // ─────────────────────────────────────────────────────────────────────────────
 
-const GRADER_SYSTEM = `You are a fact-checker for an AI hitting coach. You will be given a FACT SHEET (the exact swing-by-swing data and precomputed counts the coach was shown) and the debrief the coach actually wrote, as five text fields.
+// EXTRACTION ONLY. The model is not asked for a verdict and is given no way
+// to express one. See the header of scripts/claimVerdict.js for what the old
+// judge-and-rule prompt did on 17 August 2026 and why this half was split off.
+const GRADER_SYSTEM = `You are an extraction tool for an AI hitting coach's debrief. You will be given the debrief the coach wrote, as five text fields.
 
-Your only job is to find every COUNTABLE claim in the debrief and check it against the fact sheet. A countable claim is one of these three shapes:
-1. A specific value for a specific swing ("swing 4 hit 92 mph", "at 24 degrees").
-2. A count of swings meeting a threshold, whole-session or restricted to named swings ("6 of your 15 swings came in above 20 degrees", "two of swings 3, 8, and 12 were under 84 mph").
-3. A whole-session statistic that also appears in the fact sheet's stats block (average exit velocity, average launch angle, top exit velocity, in-zone count, the under-15-degree count, the power-zone count).
+Your only job is to find every COUNTABLE claim in the debrief and write it out in structured form. You do NOT decide whether any claim is true. You do NOT do arithmetic. Something else checks the claims; your job is only to state precisely what was claimed.
 
-Ignore everything else: coaching advice, encouragement, physical cues, and any sentence with no checkable number in it.
+You are NOT given the session data, on purpose, so you cannot be influenced by it. Extract exactly what the coach's sentences say, pairing swings with values in the order the sentence pairs them. "Swings 12 and 14 at 11 and 14 degrees" pairs swing 12 with 11 and swing 14 with 14, whatever the true values are. Whether the coach is right is not your problem.
 
-YOU DO NO ARITHMETIC. Every number you need is already computed in the fact sheet.
-- For a per-swing value claim: look up that swing's row in the per-swing table and compare directly.
-- For a whole-session threshold claim: find the row in that metric's threshold table matching the exact threshold and comparison the coach used ("above"/"more than" -> the "above" field, strictly greater; "under"/"below"/"less than" -> "below", strictly less; "at least"/"or more" -> "atLeast"; "at most"/"or fewer" -> "atMost"; an exact number with no direction -> "equal"). Compare the coach's stated count directly to that row's count field. If the coach also lists specific swing numbers, compare them to that row's swings list.
-- For an "N of those [swings X, Y, Z] were under T" claim: find the threshold row for T on the right metric, take its FULL swings list, and intersect it with the named swing numbers X, Y, Z. Compare the size of that intersection to the coach's stated N. This is the one place you do a small, bounded set comparison rather than a pure lookup; do not recount the whole session by hand.
-- If the exact threshold the coach used does not appear as a row in that metric's table, mark the claim UNVERIFIABLE. Never estimate or interpolate a count that is not precomputed.
+A countable claim is one of these four shapes. Use the matching "kind":
+
+"swingValue" - a specific value for a specific numbered swing ("swing 4 hit 92 mph", "swing 12 came in at 14 degrees").
+  Fields: sessionNumber, swingNumber, metric, statedValue.
+
+"threshold" - a count of swings meeting a threshold across a whole session ("6 of your 15 swings came in above 20 degrees").
+  Fields: sessionNumber, metric, threshold, comparison, statedCount, and statedSwings if the coach also lists the swing numbers.
+
+"subset" - a count restricted to swings the coach has just named ("two of swings 3, 8 and 12 were under 84 mph", "swings 5, 6 and 2 all hit 88-plus mph").
+  Fields: sessionNumber, metric, threshold, comparison, ofSwings (the named swings), statedCount.
+  "N-plus" and "N or better" on named swings are subset claims with comparison "atLeast", never swingValue claims: the coach is not saying each swing measured exactly N.
+
+"range" - a count of swings inside a two-sided window ("you only hit the 25-to-35-degree window twice", "three swings landed between 8 and 18 degrees").
+  Fields: sessionNumber, metric, min, max, statedCount, and ofSwings when the claim is about swings the coach has named.
+  SCOPE MATTERS MORE THAN ANYTHING ELSE HERE. "Swings 4, 5, 6, and 7 were all between 88 and 92 mph" is a claim about those four named swings, so it carries ofSwings [4, 5, 6, 7] and statedCount 4. Only a claim about the whole session ("6 of your 15 swings landed between 20 and 31 degrees") omits ofSwings. When the sentence follows a list of named swings and says "all three" or "both", the names are the scope: include them as ofSwings.
+  "Your launch angle ranged from 20 to 31 degrees" states a span, not a count. That is kind "other".
+  Use this whenever the coach names BOTH edges of a window, even if the second edge appears earlier in the sentence or in the sentence before. A window is not a threshold: "the 25-to-35-degree window" is a range with min 25 and max 35, NOT "at least 25". Getting this wrong asks a different question than the coach answered.
+  IMPORTANT EXCEPTION. Some goal "windows" are defined by TWO metrics at once, for example a launch-angle range AND a minimum exit velocity. If the coach calls something a power window, a power zone, or the goal's target zone, the count they were given may be the two-metric count rather than the launch-angle count, and the two differ. When a window claim could plausibly mean either, use kind "other". Do not pick one reading. An honest "cannot tell" is correct here; guessing produces a confident wrong answer about a sentence the coach got right.
+
+"sessionStat" - a whole-session statistic ("you averaged 89 mph", "you put 4 of 15 in the zone").
+  Fields: sessionNumber, statName, statedValue.
+  statName must be one of: avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings, topExitVelocity, underFifteenCount, powerZoneCount.
+  Use sessionStat ONLY when the coach names the statistic itself. A count of balls over or under some distance, angle, or speed is a "threshold" claim with that metric, NEVER a sessionStat: "4 balls hit 305 feet or more" is threshold, metric distance, atLeast 305, statedCount 4. Bare "exit velocity" means avgExitVelocity; use topExitVelocity only when the coach says top, best, peak, or hardest.
+
+If a sentence carries a number but fits none of these shapes, use kind "other" and give the quote alone. Do not force it into a shape that does not fit; "other" is the correct and expected answer for anything you cannot structure cleanly.
+
+metric must be one of: exitVelocity, launchAngle, direction, distance, pitchHeight, pitchSide.
+pitchHeight and pitchSide describe where the PITCH was, not what the swing did. Use them for claims like "a pitch 0.6 feet off the ground" or "that pitch was well outside". Never label a pitch-location claim with exitVelocity, launchAngle, direction or distance.
+
+comparison maps from the coach's own words, and the distinction is strict:
+- "above", "over", "more than", "north of" -> "above"
+- "under", "below", "less than" -> "below"
+- "at least", "or more", "or better", "plus" -> "atLeast"
+- "at most", "or fewer", "or less" -> "atMost"
+- an exact number with no direction word -> "equal"
 
 Other rules:
-- A claim naming a session number checks against THAT session's block in the fact sheet, not necessarily the one being viewed.
-- A swing number outside 1-15, or a session number not present in the fact sheet, makes the claim FALSE (an impossible reference), not UNVERIFIABLE.
-- Distance claims are sometimes honestly rounded to a bucket-friendly figure ("320 feet or more" against a real value of 305). If the stated number is a plausible round-up or round-down of a real fact-sheet value in the same direction the coach's wording implies, mark it TRUE and say so in "actual". Only mark FALSE when no reasonable rounding reaches the fact-sheet value.
-- If you genuinely cannot settle a claim from the fact sheet, mark it UNVERIFIABLE and say in "reasoning" what data would be needed. Never guess a verdict.
+- sessionNumber is the session the claim is ABOUT, which is not always the one being debriefed. If the coach names no session, use the session being debriefed.
+- Quote the exact clause making the claim, copied verbatim from the debrief.
+- One entry per claim. A sentence making two claims gets two entries.
+- Ignore coaching advice, encouragement, physical cues, and any sentence with no number in it.
 
 Respond ONLY with valid JSON, no prose before or after, in exactly this shape:
 {"claims": [
-  {"field": "coachingSummary|whatThisMeans|tipsIntro|tip1|tip2", "quote": "the exact clause making the claim", "verdict": "TRUE|FALSE|UNVERIFIABLE", "actual": "the fact-sheet data that settles it, as a short string", "reasoning": "one sentence"}
+  {"field": "coachingSummary|whatThisMeans|tipsIntro|tip1|tip2", "quote": "the exact clause", "kind": "swingValue|threshold|subset|range|sessionStat|other", "sessionNumber": 4, "swingNumber": 12, "metric": "launchAngle", "threshold": 20, "comparison": "above", "min": 25, "max": 35, "statedValue": 14, "statedCount": 6, "statedSwings": [2, 4, 5], "ofSwings": [3, 8, 12]}
 ]}
+Include only the fields that apply to that claim's kind; omit the rest.
 If the debrief contains no countable claims at all, respond {"claims": []}.`
 
+// The extractor is deliberately BLIND: it never sees the session data.
+//
+// The first extraction prompt included the full fact sheet "for context", and
+// the 18 August 2026 re-validation showed what that enables: on two of the
+// fixture's transposition errors ("swings 12 and 14 at 11 and 14 degrees",
+// true values reversed), the extractor returned the pairs already corrected
+// to the true values, so the verdict code graded the coach's error as TRUE.
+// It could only have gotten those pairings from the fact sheet. An extractor
+// that can see the answers can repair the coach's mistakes on the way past,
+// and no prompt rule reliably stops it; not handing it the answers does.
+//
+// It also removes the reason the fact-sheet cache existed: the whole prompt
+// is now a few hundred tokens per record.
 function buildGraderUserPrompt({ record, factSheet, goal }) {
   const fields = record.fields ?? {}
   return `Player: ${PLAYER.firstName}
 Goal: ${goal.label}
 Session being debriefed: ${factSheet.viewingSessionNumber}
-
-FACT SHEET (JSON):
-${JSON.stringify(factSheet)}
 
 THE DEBRIEF THE COACH WROTE:
 coachingSummary: ${fields.coachingSummary ?? ''}
@@ -354,6 +396,11 @@ tip1: ${fields.tip1 ?? ''}
 tip2: ${fields.tip2 ?? ''}`
 }
 
+// No cache breakpoints. The first rebuild cached the fact sheet, which was
+// most of the input; blinding the extractor removed the fact sheet, and what
+// is left (about 1,200 tokens a record) sits under Haiku 4.5's 4096-token
+// minimum cacheable prefix, where a breakpoint caches nothing silently. The
+// report still prints cache tokens if the API ever reports any.
 function buildGraderPrompt(record, factSheet, goal) {
   return { system: GRADER_SYSTEM, user: buildGraderUserPrompt({ record, factSheet, goal }) }
 }
@@ -398,68 +445,100 @@ function parseGraderJson(text) {
   throw new Error('Failed to parse grader response as JSON')
 }
 
-const VALID_VERDICTS = new Set(['TRUE', 'FALSE', 'UNVERIFIABLE'])
 const KNOWN_FIELDS = new Set(['coachingSummary', 'whatThisMeans', 'tipsIntro', 'tip1', 'tip2'])
+const KNOWN_KINDS = new Set(['swingValue', 'threshold', 'subset', 'range', 'sessionStat', 'other'])
+// pitchHeight and pitchSide are readable per swing but have no precomputed
+// threshold rows, so a whole-session count about them comes back
+// UNVERIFIABLE while a single-swing citation can be checked. Added
+// 18 August 2026: without them the extractor had no honest label for "a pitch
+// 0.6 feet off the ground" and graded it against the swing's direction.
+const KNOWN_METRICS = new Set(['exitVelocity', 'launchAngle', 'direction', 'distance', 'pitchHeight', 'pitchSide'])
 
-// Raw model output is a claim, not a fact about its own shape. Every claim
-// is normalized here rather than trusted: an unrecognized verdict, a missing
-// field, or a non-string quote becomes an UNVERIFIABLE entry that says so,
-// instead of throwing and losing every other claim in the same response or
-// silently passing a bad value on to whoever reads the report.
+// Accepts a numeric string as well as a number, because the extraction model
+// intermittently emits numbers as strings, and silently dropping "1" is worse
+// than reading it: a claim about session "1" that loses its session number
+// gets re-defaulted to the viewing session and graded against the wrong data,
+// which review demonstrated turns a true claim FALSE. Anything non-numeric
+// still becomes undefined rather than a guess.
+const num = (v) => {
+  if (typeof v === 'number' && Number.isFinite(v)) return v
+  if (typeof v === 'string' && v.trim() !== '' && Number.isFinite(Number(v))) return Number(v)
+  return undefined
+}
+const swingList = (v) => (Array.isArray(v) ? v.map(num).filter((n) => n !== undefined) : undefined)
+
+// Raw model output is a claim, not a fact about its own shape. Every extracted
+// claim is normalized here rather than trusted: an unrecognized kind, a
+// missing quote or a non-numeric count becomes a claim the verdict code will
+// refuse to rule on, instead of throwing and losing every other claim in the
+// same response.
+//
+// The model no longer supplies a verdict, so there is nothing here to
+// second-guess it about. What used to be verdict validation is now shape
+// validation, which is the whole point of the split.
 function normalizeClaims(rawClaims) {
   const list = Array.isArray(rawClaims) ? rawClaims : []
   let malformedCount = 0
   const claims = list.map((raw, i) => {
-    const problems = []
     if (typeof raw !== 'object' || raw === null) {
       malformedCount++
-      return {
-        field: 'unknown',
-        quote: '(malformed claim entry)',
-        verdict: 'UNVERIFIABLE',
-        actual: null,
-        reasoning: `Claim #${i + 1} was not an object.`,
-      }
+      return { field: 'unknown', quote: '(malformed claim entry)', kind: 'other', note: `Claim #${i + 1} was not an object.` }
     }
+    const problems = []
     const field = KNOWN_FIELDS.has(raw.field) ? raw.field : 'unknown'
     if (!KNOWN_FIELDS.has(raw.field)) problems.push(`unrecognized field "${raw.field}"`)
     const quote = typeof raw.quote === 'string' && raw.quote.trim() ? raw.quote : '(no quote given)'
     if (quote === '(no quote given)') problems.push('missing quote')
-    const verdictRaw = typeof raw.verdict === 'string' ? raw.verdict.toUpperCase() : ''
-    const verdictValid = VALID_VERDICTS.has(verdictRaw)
-    if (!verdictValid) problems.push(`invalid verdict "${raw.verdict}"`)
-    const verdict = verdictValid ? verdictRaw : 'UNVERIFIABLE'
-    const actual =
-      raw.actual == null
-        ? null
-        : typeof raw.actual === 'string'
-          ? raw.actual
-          : JSON.stringify(raw.actual)
-    const reasoning = typeof raw.reasoning === 'string' ? raw.reasoning : ''
-    if (problems.length) {
-      malformedCount++
-      return {
-        field,
-        quote,
-        verdict: 'UNVERIFIABLE',
-        actual,
-        reasoning: `Normalized from a malformed model claim (${problems.join('; ')}). Original reasoning: ${reasoning}`,
-      }
+    // An unrecognized kind degrades to 'other', which the verdict code answers
+    // UNVERIFIABLE. It never degrades to a guess at what the model meant.
+    const kind = KNOWN_KINDS.has(raw.kind) ? raw.kind : 'other'
+    if (!KNOWN_KINDS.has(raw.kind)) problems.push(`unrecognized kind "${raw.kind}"`)
+    const metric = KNOWN_METRICS.has(raw.metric) ? raw.metric : undefined
+
+    if (problems.length) malformedCount++
+    return {
+      field,
+      quote,
+      kind,
+      metric,
+      sessionNumber: num(raw.sessionNumber),
+      swingNumber: num(raw.swingNumber),
+      threshold: num(raw.threshold),
+      min: num(raw.min),
+      max: num(raw.max),
+      comparison: typeof raw.comparison === 'string' ? raw.comparison : undefined,
+      statedValue: num(raw.statedValue),
+      statedCount: num(raw.statedCount),
+      statedSwings: swingList(raw.statedSwings),
+      ofSwings: swingList(raw.ofSwings),
+      statName: typeof raw.statName === 'string' ? raw.statName : undefined,
+      note: problems.length ? `Normalized from a malformed extraction (${problems.join('; ')}).` : undefined,
     }
-    return { field, quote, verdict, actual, reasoning }
   })
   return { claims, malformedCount }
 }
 
-// Parses and normalizes one grader response end to end. Never throws for a
-// malformed BODY (a bad claim shape); it throws only when the whole response
-// is not JSON at all, which the caller treats as a hard failure for that
-// record (excluded from the report, not silently graded as clean).
-function gradeParsedResponse(text) {
+// Parses, normalizes, then RULES IN CODE. Never throws for a malformed claim
+// body; it throws only when the whole response is not JSON at all, which the
+// caller treats as a hard failure for that record (excluded from the report,
+// not silently graded as clean).
+//
+// A claim with no session number defaults to the session being debriefed,
+// matching the extraction prompt's own instruction. Done here rather than in
+// claimVerdict.js so the verdict module stays a pure function of the claim it
+// is handed.
+function gradeParsedResponse(text, factSheet, context) {
   const parsed = parseGraderJson(text)
   const { claims, malformedCount } = normalizeClaims(parsed?.claims)
-  const flagged = claims.some((c) => c.verdict === 'FALSE')
-  return { claims, flagged, malformedCount }
+  const graded = claims.map((claim) => {
+    const withSession = claim.sessionNumber === undefined
+      ? { ...claim, sessionNumber: factSheet?.viewingSessionNumber }
+      : claim
+    const { verdict, actual, why } = verdictForClaim(withSession, factSheet, context)
+    return { ...withSession, verdict, actual, reasoning: why }
+  })
+  const flagged = graded.some((c) => c.verdict === 'FALSE')
+  return { claims: graded, flagged, malformedCount }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -486,15 +565,48 @@ async function callGraderModel({ system, user, apiKey, model }) {
   }
   const data = await res.json()
   const text = data?.content?.[0]?.text
-  if (!text) throw new Error('No text content in the response')
-  return { text, usage: data.usage ?? {} }
+  const usage = data.usage ?? {}
+  // Slice 8, Task 4. The 17 August 2026 run lost 3 of 96 records to
+  // "response was not JSON at all" and could say nothing about why, because
+  // neither of these two values was kept. That matters more than tidiness: if
+  // the cause is truncation at GRADER_MAX_TOKENS, the losses cluster on the
+  // debriefs carrying the most claims, which is a BIASED loss, not a random
+  // one, and it lands hardest on exactly the debriefs most likely to contain
+  // an error. One of the three lost records was a known-wrong one.
+  //
+  // Same blind spot scripts/coachFailureRecord.js closed for the bench in
+  // Slice 7b, in a script written the same week.
+  const diagnosis = {
+    stopReason: data.stop_reason ?? null,
+    outputTokens: usage.output_tokens ?? null,
+    maxTokens: GRADER_MAX_TOKENS,
+    truncated: data.stop_reason === 'max_tokens',
+  }
+  if (!text) {
+    const err = new Error('No text content in the response')
+    err.diagnosis = diagnosis
+    throw err
+  }
+  return { text, usage, diagnosis }
 }
 
 async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
   const { system, user } = buildGraderPrompt(record, factSheet, goal)
-  const { text, usage } = await callGraderModel({ system, user, apiKey, model })
-  const graded = gradeParsedResponse(text)
-  return { ...graded, usage }
+  const { text, usage, diagnosis } = await callGraderModel({ system, user, apiKey, model })
+  try {
+    const graded = gradeParsedResponse(text, factSheet, { goalId: goal?.id })
+    return { ...graded, usage, diagnosis }
+  } catch (err) {
+    // Attach what the response looked like, so a hard failure is diagnosable
+    // rather than just counted. Kept short: the point is the stop reason and
+    // the size, not an archive of the reply. Only for genuine parse failures;
+    // an error from the verdict layer keeping its own message stops a local
+    // bug masquerading as a bad model reply.
+    if (err.message === 'Failed to parse grader response as JSON') {
+      err.diagnosis = { ...diagnosis, replyChars: text.length, replyTail: text.slice(-200) }
+    }
+    throw err
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -503,12 +615,23 @@ async function gradeDebrief(record, { factSheet, goal, apiKey, model }) {
 
 const recordId = (r) => `${r.conditionKey}/${r.cell}/run${r.run}`
 
-function costOf(model, inputTokens, outputTokens) {
+// Cache writes bill at 1.25x the input rate on the 5 minute TTL and reads at
+// 0.1x, so a run that caches has to price three buckets rather than one.
+// Numbers from the Anthropic pricing documentation, read 17 August 2026.
+const CACHE_WRITE_MULTIPLIER = 1.25
+const CACHE_READ_MULTIPLIER = 0.1
+
+function costOf(model, inputTokens, outputTokens, cacheWriteTokens = 0, cacheReadTokens = 0) {
   const rates = PRICING[model] ?? FALLBACK_PRICING
-  return (inputTokens / 1e6) * rates.input + (outputTokens / 1e6) * rates.output
+  return (
+    (inputTokens / 1e6) * rates.input +
+    (cacheWriteTokens / 1e6) * rates.input * CACHE_WRITE_MULTIPLIER +
+    (cacheReadTokens / 1e6) * rates.input * CACHE_READ_MULTIPLIER +
+    (outputTokens / 1e6) * rates.output
+  )
 }
 
-function printReport({ model, results, inputTokens, outputTokens, source, builder }) {
+function printReport({ model, results, inputTokens, outputTokens, cacheWriteTokens = 0, cacheReadTokens = 0, source, builder }) {
   console.log('')
   console.log('='.repeat(70))
   console.log('GRADING REPORT')
@@ -532,6 +655,26 @@ function printReport({ model, results, inputTokens, outputTokens, source, builde
   }
   if (failures.length) {
     console.log(`Hard failures    ${failures.length} record(s) whose response was not JSON at all (excluded above): ${failures.map((r) => recordId(r.record)).join(', ')}`)
+    // Whether the loss is random or biased. Truncation clusters on the
+    // debriefs carrying the most claims, so a truncated failure is not a
+    // record that happened to drop out; it is disproportionately likely to be
+    // one of the interesting ones.
+    const truncated = failures.filter((r) => r.diagnosis?.truncated)
+    if (truncated.length) {
+      console.log(`                 ${truncated.length} of those hit the ${GRADER_MAX_TOKENS}-token output ceiling. That is a BIASED loss, not a random one: read the flagged counts below as a floor.`)
+    } else if (failures.some((r) => r.diagnosis)) {
+      console.log(`                 none hit the output ceiling; stop reasons: ${[...new Set(failures.map((r) => r.diagnosis?.stopReason ?? 'unknown'))].join(', ')}`)
+    }
+  }
+
+  // The narrowing this instrument makes, reported rather than absorbed. The
+  // verdict code rules only on claim shapes it understands, so a high
+  // UNVERIFIABLE rate means the run reached less of the coach's prose than the
+  // claim count suggests.
+  const unverifiable = ok.flatMap((r) => r.claims).filter((c) => c.verdict === 'UNVERIFIABLE')
+  const otherKind = unverifiable.filter((c) => c.kind === 'other').length
+  if (unverifiable.length) {
+    console.log(`Not reached      ${unverifiable.length} claim(s) the verdict code could not rule on (${otherKind} the extractor could not structure at all). Judge the run's coverage by this number, not just by the claim count.`)
   }
 
   console.log('')
@@ -558,8 +701,15 @@ function printReport({ model, results, inputTokens, outputTokens, source, builde
   console.log('='.repeat(70))
   console.log('COST')
   console.log('='.repeat(70))
-  const cost = costOf(model, inputTokens, outputTokens)
+  const cost = costOf(model, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens)
   console.log(`${inputTokens} input + ${outputTokens} output tokens = $${cost.toFixed(4)}`)
+  if (cacheWriteTokens || cacheReadTokens) {
+    const uncachedCost = costOf(model, inputTokens + cacheWriteTokens + cacheReadTokens, outputTokens)
+    console.log(`  cache: ${cacheWriteTokens} written, ${cacheReadTokens} read`)
+    console.log(`  without caching this run would have cost $${uncachedCost.toFixed(4)}`)
+  } else {
+    console.log('  cache: none (expected; the blind extraction prompt is below the cacheable minimum)')
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -637,50 +787,80 @@ async function dryRun(args) {
   console.log(`  sessions in fact sheet   ${factSheet.sessions.length}`)
   console.log(`  threshold rows/session   ${thresholdRowCount}`)
   console.log(`  system prompt            ${system.length} chars`)
-  console.log(`  user prompt              ${user.length} chars (fact sheet + debrief fields)`)
+  console.log(`  user prompt              ${user.length} chars (debrief fields only; the fact sheet goes to the verdict code, never the model)`)
 
-  // 4. Feed canned grader RESPONSES through the real parse/normalize/flag path.
-  console.log('')
-  console.log('Canned grader-response self-checks')
-  console.log('-'.repeat(70))
+  // Blindness, checked rather than assumed: the whole point of the second
+  // rebuild is that the extractor never sees the session data, so a fact
+  // sheet reappearing in this prompt would silently reintroduce the peeking
+  // that let it repair the coach's transposition errors before grading.
+  if (user.includes('FACT SHEET') || user.includes('"thresholds"')) {
+    throw new Error('Self-check failed: the extraction prompt contains session data. The extractor must be blind.')
+  }
+  console.log(`  extractor is blind       true (no session data in the prompt)`)
+
+  // Canned EXTRACTIONS now, not canned verdicts: the model no longer supplies
+  // a verdict, so what these prove is that the code rules correctly on a
+  // claim it is handed. They are written against the real fact sheet built
+  // above, so a wrong expectation here is a real failure and not a typo.
+  const s1 = factSheet.sessions[0]
+  const realSwing = s1.swings[3]
+  const trueRow = s1.thresholds.launchAngle.find((r) => r.threshold === 20)
 
   const cleanMixed = JSON.stringify({
     claims: [
-      { field: 'coachingSummary', quote: 'swing 4 hit 92 mph', verdict: 'true', actual: 'swing 4 exitVelocity = 92', reasoning: 'matches the per-swing table' },
-      { field: 'whatThisMeans', quote: '9 of your 15 swings above 20 degrees', verdict: 'FALSE', actual: 'launchAngle above 20: count 7, swings [2,3,4,5,6,8,11]', reasoning: 'coach said 9, fact sheet says 7' },
-      { field: 'tip1', quote: 'your best swing this session', verdict: 'UNVERIFIABLE', actual: null, reasoning: 'no specific number to check' },
+      { field: 'coachingSummary', quote: `swing 4 hit ${realSwing.exitVelocity} mph`, kind: 'swingValue', sessionNumber: s1.sessionNumber, swingNumber: 4, metric: 'exitVelocity', statedValue: realSwing.exitVelocity },
+      { field: 'whatThisMeans', quote: 'lots of your swings above 20 degrees', kind: 'threshold', sessionNumber: s1.sessionNumber, metric: 'launchAngle', threshold: 20, comparison: 'above', statedCount: trueRow.above.count + 2 },
+      { field: 'tip1', quote: 'your best swing this session', kind: 'other' },
     ],
   })
-  const cleanMixedResult = gradeParsedResponse(cleanMixed)
-  console.log(`  mixed response      -> ${cleanMixedResult.claims.length} claims, flagged=${cleanMixedResult.flagged} (expect 3 claims, flagged=true)`)
+  const cleanMixedResult = gradeParsedResponse(cleanMixed, factSheet)
+  console.log(`  mixed extraction    -> ${cleanMixedResult.claims.length} claims, flagged=${cleanMixedResult.flagged} (expect 3 claims, flagged=true)`)
   if (cleanMixedResult.claims.length !== 3 || cleanMixedResult.flagged !== true) {
-    throw new Error('Self-check failed: mixed canned response did not grade as expected.')
+    throw new Error('Self-check failed: mixed canned extraction did not grade as expected.')
   }
-  if (cleanMixedResult.claims[0].verdict !== 'TRUE') {
-    throw new Error('Self-check failed: lowercase "true" was not normalized to TRUE.')
+  const verdicts = cleanMixedResult.claims.map((c) => c.verdict).join(',')
+  if (verdicts !== 'TRUE,FALSE,UNVERIFIABLE') {
+    throw new Error(`Self-check failed: expected TRUE,FALSE,UNVERIFIABLE from the code, got ${verdicts}.`)
   }
 
   const allTrue = JSON.stringify({
-    claims: [{ field: 'tip2', quote: 'average exit velocity was 84 mph', verdict: 'TRUE', actual: 'avgExitVelocity = 84', reasoning: 'matches session stats' }],
+    claims: [{ field: 'tip2', quote: `average exit velocity was ${s1.stats.avgExitVelocity} mph`, kind: 'sessionStat', sessionNumber: s1.sessionNumber, statName: 'avgExitVelocity', statedValue: s1.stats.avgExitVelocity }],
   })
-  const allTrueResult = gradeParsedResponse(allTrue)
-  console.log(`  all-true response   -> flagged=${allTrueResult.flagged} (expect false)`)
+  const allTrueResult = gradeParsedResponse(allTrue, factSheet)
+  console.log(`  all-true extraction -> flagged=${allTrueResult.flagged} (expect false)`)
   if (allTrueResult.flagged !== false) throw new Error('Self-check failed: an all-TRUE response was flagged.')
 
   const noClaims = JSON.stringify({ claims: [] })
-  const noClaimsResult = gradeParsedResponse(noClaims)
+  const noClaimsResult = gradeParsedResponse(noClaims, factSheet)
   console.log(`  no-claims response  -> ${noClaimsResult.claims.length} claims, flagged=${noClaimsResult.flagged} (expect 0, false)`)
   if (noClaimsResult.claims.length !== 0 || noClaimsResult.flagged !== false) {
     throw new Error('Self-check failed: an empty-claims response did not grade as empty.')
   }
 
+  // The shape that mattered most in the failed run: garbage must never become
+  // FALSE. It becomes UNVERIFIABLE, which is what the code does by
+  // construction rather than because a prompt asked nicely.
   const malformed = JSON.stringify({
     claims: [
-      { field: 'nope', quote: '', verdict: 'MAYBE', actual: 42 },
+      { field: 'nope', quote: '', kind: 'wishful', statedCount: 'lots' },
       'not even an object',
     ],
   })
-  const malformedResult = gradeParsedResponse(malformed)
+
+  // Numeric strings survive normalization instead of being dropped; review
+  // showed a dropped session number silently re-targets the viewing session.
+  const stringyNums = JSON.stringify({
+    claims: [
+      { field: 'tip1', quote: 'one swing below 15 in session 1', kind: 'threshold', sessionNumber: '1', metric: 'launchAngle', threshold: '15', comparison: 'below', statedCount: '1' },
+    ],
+  })
+  const stringyResult = gradeParsedResponse(stringyNums, factSheet)
+  const sc = stringyResult.claims[0]
+  console.log(`  stringy numbers     -> sessionNumber=${sc.sessionNumber}, threshold=${sc.threshold}, statedCount=${sc.statedCount} (expect 1, 15, 1)`)
+  if (sc.sessionNumber !== 1 || sc.threshold !== 15 || sc.statedCount !== 1) {
+    throw new Error('Self-check failed: numeric strings were not coerced during normalization.')
+  }
+  const malformedResult = gradeParsedResponse(malformed, factSheet)
   console.log(
     `  malformed response  -> ${malformedResult.claims.length} claims, ` +
     `${malformedResult.malformedCount} normalized as malformed, every verdict UNVERIFIABLE=` +
@@ -697,7 +877,7 @@ async function dryRun(args) {
   const notJsonAtAll = 'Sorry, I cannot help with that.'
   let threwOnGarbage = false
   try {
-    gradeParsedResponse(notJsonAtAll)
+    gradeParsedResponse(notJsonAtAll, factSheet)
   } catch {
     threwOnGarbage = true
   }
@@ -729,7 +909,7 @@ async function dryRun(args) {
     }
     const { factSheet: sheet, goal } = cellCache.get(record.cell)
     buildGraderPrompt(record, sheet, goal) // built, not sent — proves the real record's fields reach the prompt builder
-    const graded = gradeParsedResponse(allTrue) // canned, no network
+    const graded = gradeParsedResponse(allTrue, sheet) // canned, no network
     inputTokens += 500
     outputTokens += 80
     results.push({ record, ...graded })
@@ -773,6 +953,8 @@ async function validate(args) {
   const results = []
   let inputTokens = 0
   let outputTokens = 0
+  let cacheWriteTokens = 0
+  let cacheReadTokens = 0
 
   for (const record of subset) {
     const id = recordId(record)
@@ -791,15 +973,23 @@ async function validate(args) {
       const graded = await gradeDebrief(record, { factSheet, goal, apiKey, model: args.model })
       inputTokens += graded.usage.input_tokens ?? 0
       outputTokens += graded.usage.output_tokens ?? 0
+      cacheWriteTokens += graded.usage.cache_creation_input_tokens ?? 0
+      cacheReadTokens += graded.usage.cache_read_input_tokens ?? 0
       results.push({ record, ...graded })
       console.log(`${graded.claims.length} claims, flagged=${graded.flagged}`)
     } catch (err) {
-      console.log(`FAILED: ${err.message}`)
-      results.push({ record, error: err.message, claims: [], flagged: false, malformedCount: 0 })
+      // Slice 8, Task 4: keep WHY, not just THAT. A stop reason of
+      // 'max_tokens' means the loss is biased toward the debriefs with the
+      // most claims rather than randomly scattered, which changes what the
+      // run's numbers are allowed to say.
+      const d = err.diagnosis ?? null
+      const suffix = d ? ` [stop=${d.stopReason}, out=${d.outputTokens}/${d.maxTokens}${d.truncated ? ', TRUNCATED' : ''}]` : ''
+      console.log(`FAILED: ${err.message}${suffix}`)
+      results.push({ record, error: err.message, diagnosis: d, claims: [], flagged: false, malformedCount: 0 })
     }
   }
 
-  printReport({ model: args.model, results, inputTokens, outputTokens, source, builder })
+  printReport({ model: args.model, results, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens, source, builder })
 
   if (args.out) {
     writeFileSync(args.out, JSON.stringify(results, null, 2))
