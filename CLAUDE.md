@@ -1113,6 +1113,18 @@ on purpose: this file loads at the start of every session, so it is an index.
   the decision log entry for 18 August 2026 and in
   `docs/eval-fixtures/slice8b-threshold-counts/README.md`.
 
+  **Correction, 18 August 2026, from whole-branch review.** The "18 of 52
+  both rounds, flat" figure above overstates how flat the result actually
+  was. At least 5 of the after round's 18 flagged debriefs are the grading
+  tool mismatching a coach statement it actually got right, because this
+  slice's own new count lines gave the coach five kinds of number the tool's
+  fact sheet has no matching stat for, a mismatch the baseline round could
+  not produce because those goals never carried those count lines before
+  this slice. Corrected for those, the comparison is roughly 17 flagged
+  before against roughly 13 after: a modest real improvement, not a flat
+  result. Detail and the five specific records are in the fixture README and
+  the decision log's 18 August entry.
+
 Slice A, Slice B and Slice C in any older note map to Slices 5, 6 and the
 formerly-numbered-7 coach fidelity work above. Slice 5 shipped on 14 August
 2026 but delivered only the second half of what Slice A covered;
@@ -1537,6 +1549,32 @@ rewritten, per the append-only rule.
   comparison get graded by the same tool the same way, but a single flagged
   claim should not be read as proof of a coach error without a by-hand check,
   and nothing currently measures how often that check would be needed.
+
+  **Correction, 18 August 2026, from whole-branch review.** The "both sides
+  of a before/after comparison get graded by the same tool the same way"
+  sentence above is the exact overstatement whole-branch review flagged for
+  Slice 8b specifically. The tool was unchanged between the two rounds, but
+  the fact sheet it grades against was not kept in step with Slice 8b's own
+  prompt change, which is what the next item below describes. At least 5 of
+  the after round's 18 flagged debriefs are that mechanism rather than a
+  coach error; see the fixture README and the 18 August decision-log entry
+  for the corrected comparison.
+- **The grading tool's fact sheet was never updated for the five new counts
+  Slice 8b added, and that is what caused the false positives above.** Found
+  by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
+  `sessionStatsExtras` still produces the old Power-only stats (a count of
+  swings under 15 degrees, and a count in Power's own zone) for every goal
+  regardless of whether that goal's coaching prose still mentions them, and
+  it produces no matching stat at all for any of the five new counts Slice 8b
+  added to Contact, Hit to All Fields and Reduce Pop-Ups. When the coach
+  correctly repeats one of those five new counts, the grading tool checks it
+  against the nearest old stat instead of the right one and calls a true
+  statement false. This is the direct mechanism behind at least three of the
+  five false positives named in the Slice 8b correction above. Not fixed in
+  this wave; fixing it means giving the fact sheet one matching stat per
+  count line the prompt can now hand the coach, preferring the inclusive
+  bucket when the coach's phrasing is inclusive, and re-grading both rounds
+  (roughly $0.58) to get a clean comparison.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

@@ -51,6 +51,30 @@ so the before-and-after comparison is fair, but it means any single flagged
 claim should be read as "worth a look," not as proof of a coach mistake on
 its own.
 
+*Correction, 18 August 2026, from whole-branch review.* The "flat headline
+number" and the fairness claim in the paragraph above are not accurate, and
+the correction belongs here plainly rather than only in the fixture README.
+This slice's own new count lines hand the coach five kinds of number that the
+grading tool's fact sheet was never updated to match, so at least five of the
+eighteen after-round flags are the tool mismatching a coach statement it
+actually got right against the wrong number, not a coach error. Two examples:
+the coach said "8 swings in the target zone" for Contact, correctly, and the
+tool checked it against an unrelated count of 12; the coach said "3 swings
+cleared 82 mph or higher," correctly, and the tool checked the inclusive
+count against a strict above-82 row that reads 1. None of these five could
+have appeared in the baseline round, because those goals were not handed
+those count lines before this slice. Corrected for them, the comparison is
+roughly 17 flagged debriefs before this fix against roughly 13 after, a
+modest real improvement, not the flat result reported above. The claim that
+"both rounds were graded by the same tool the same way, so the
+before-and-after comparison is fair" is the specific overstatement being
+corrected: the tool itself was unchanged, but what it was being asked to
+grade was not, since the fact sheet it grades against was never updated for
+the five new kinds of number this slice added to the prompt. Full detail, the
+five specific flagged records, and the fix this points to are in
+`docs/eval-fixtures/slice8b-threshold-counts/README.md` and in CLAUDE.md's
+What's Next list.
+
 *Cost.* Two rounds of 52 real coaching debriefs each, plus grading both, spent
 $2.38 against the $6 ceiling approved ahead of time. No further spend is
 planned.

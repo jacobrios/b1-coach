@@ -545,6 +545,14 @@ deliberately left uncounted, held flat too, at 11 wrong claims each round.
 Full numbers in the decision log entry for 18 August 2026 and in
 `docs/eval-fixtures/slice8b-threshold-counts/README.md`.
 
+**Correction, 18 August 2026, from whole-branch review.** The "held flat"
+figure above is corrected in the decision log's 18 August entry: at least 5
+of the 18 after-round flags are grading-tool false positives this slice's
+own new count lines created, and the corrected comparison is roughly 17
+flagged before this fix against roughly 13 after, a modest real improvement
+rather than flat. The pitch-location figure (11 to 11) is unaffected, since
+this slice made no change there.
+
 **Added 17 August 2026, at the point Slice 8 split.** Coach fidelity was
 scheduled as Slice 8 on 17 August. Its first task, validating the claim-accuracy
 grader, failed outright: the grader flagged 72 of 93 debriefs and caught the
