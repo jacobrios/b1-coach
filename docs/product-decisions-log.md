@@ -63,6 +63,78 @@ the same way: the power goal's "below 15 degrees" line prints a dangling
 change needing its own approval. Full numbers and every hand-checked flag
 are in `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
 
+*Correction, 19 August 2026, from Slice 8d.* The "13 to 11" genuine-error
+comparison above undercounts the improvement by one. Slice 8d replayed this
+slice's own stored grading data through a fixed verdict layer and found a
+ninth false positive this slice's hand-check missed: the after round's
+"none of them cracked 88 mph" claim (power-s2/run4) is true, the three named
+swings sat at 88, 87 and 83 mph and none is strictly above 88, so the stored
+FALSE verdict was the grading tool's own complement-bug mistake, not a coach
+error. The corrected comparison is 13 to 10, a slightly larger improvement
+than reported at this slice's close. The pitch-location figure above, 6
+genuine miscounts falling to 3, is unaffected: the missed claim concerned
+exit velocity, not pitch location. Full accounting in
+`docs/eval-fixtures/slice8d-grader-fp/README.md`.
+
+---
+
+## Slice 8d: the measuring instrument gets checked against itself, and the checked number moves (August 19)
+
+*What this slice was, and why it matters for a portfolio demo.* Every
+improvement this project has claimed for the coach since Slice 8, the
+miscount fix in Slice 8b and the strike-zone fix in Slice 8c, rests on one
+grading tool telling a true coach statement from a false one. If a hiring
+manager is ever asked to believe "the coach got more accurate," they are
+trusting that tool, not only the coach. Slice 8c's own hand-check had
+already turned up a recurring pattern: a true "none of them cleared 265
+feet" sentence graded false because the tool checked the wrong bucket. This
+slice closed that specific gap and then measured, formally, how often the
+tool is wrong.
+
+*The two-layer fix, and which layer did the live work.* Two things were
+built: a deterministic rule in the grading tool's verdict code that
+recognizes a negated "none of them broke X" claim and checks it against the
+right bucket, and new wording in the tool's own extraction instructions
+telling it to structure that sentence shape correctly in the first place. In
+two fresh live grading rounds run against the fully fixed tool, the
+extraction wording caught every one of 27 such claims correctly on its own;
+the deterministic rule never had to step in once. That rule is the backstop,
+not the mechanism that did the work live, and it earns its place anyway,
+because instructions to a model are a request, not a guarantee, and the
+rule is what keeps the tool honest the day that request stops being
+followed.
+
+*The replay proof, at no cost.* A new offline check re-ran the tool's fixed
+logic against Slice 8c's own two stored grading rounds, no live spend
+required. Nine stored claims flip from false to true, and nothing else
+moves. One of the nine was not a claim this slice went looking for: Slice
+8c's own hand-check had judged the after round's "none of them cracked 88
+mph" claim a genuine coach error, and it was not. That correction is
+recorded against Slice 8c's own entry above, dated rather than rewritten,
+and moves that slice's headline comparison from 13 to 11 genuine errors to
+13 to 10, a slightly better result than Slice 8c reported at its own close.
+
+*The formal false-positive rate.* Two fresh live rounds, every flagged claim
+read by hand against the real data: about 11% of one round's flags and 42%
+of the other's were the tool being wrong, not the coach. Both rounds'
+remaining false positives trace to two mechanisms this slice deliberately
+did not fix, a small named group of swings checked against a whole-session
+total, and a restated threshold misread as an exact value. The practical
+rule this sets going forward: a raw flag from this tool is not proof of a
+coach error on its own and still needs the same by-hand look this slice gave
+both rounds before it is reported as one.
+
+*Housekeeping, debt, and cost.* A saved grading run now records its own era,
+seed, model, and builder inside the file, closing a gap where a committed
+result could not prove which prompt generation it was graded against. One
+piece of debt, recorded rather than fixed: the deterministic rule matches by
+proximity in the sentence, not by real grammatical structure, so a
+deliberately contrived compound sentence could in principle slip past it;
+judged low-likelihood against how real coach transcripts actually read.
+`npm test`: 506 tests across 22 files, green, up from 489 across 21 at the
+close of Slice 8c. Spend: $0.62 of the $5 approved without a further
+conversation.
+
 ---
 
 ## Slice 8d: opened (August 19)

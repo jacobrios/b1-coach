@@ -239,7 +239,8 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 19 August 2026, at the close of Slice 8c.
+Line counts current as of 19 August 2026, at the close of Slice 8d (the
+`src/` rows are unchanged since Slice 8c; the `scripts/` rows moved).
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
@@ -321,10 +322,10 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           3055 lines across five hand-run scripts, deliberately
+    scripts/*.mjs           3318 lines across six hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
                              scripts, the Slice 7 bench, the Slice 7b before/after
-                             comparison script, and the claim-accuracy grader
+                             comparison script, the claim-accuracy grader
                              (`scripts/grade-coach-accuracy.mjs`), added in
                              Slice 7b and rebuilt in Slice 8 so the model only
                              extracts claims and never issues a verdict; Slice 8b
@@ -335,12 +336,29 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
                              the count lines the prompt generation that produced
                              it actually shipped, and the grader's own extraction
                              prompt learned to tell a strike-zone count from a
-                             goal's own launch-angle target window. See below and
+                             goal's own launch-angle target window. Slice 8d made
+                             the module importable, a guarded entrypoint so a
+                             script can load its cell table and session builders
+                             without triggering a CLI run, and made its saved
+                             output self-describing: `--out` now writes a
+                             `{ meta, results }` file naming the era, seed, model
+                             and builder a run was graded under, so a committed
+                             result can prove from itself which prompt
+                             generation it graded; files saved before 19 August
+                             2026 stay bare arrays. The same slice taught the
+                             extraction prompt to structure a negated "none of
+                             them broke X" sentence correctly instead of
+                             flipping it to the complement. The sixth script,
+                             `scripts/replay-grading.mjs`, added the same slice,
+                             re-runs a saved grading file's stored claims
+                             through today's verdict code at zero cost and no
+                             network call, so a past grading round can be
+                             re-checked for free. See below and
                              the bench section further down. (Corrected here: this
                              line undercounted at four scripts through Slice 8;
                              the fifth, `show-parse-failure-before-after.mjs`,
                              existed since Slice 7b and was missed.)
-    scripts/*.js (tested)    912 lines across six small modules pulled out of
+    scripts/*.js (tested)    1009 lines across seven small modules pulled out of
                              those hand-run scripts so their pure logic can be
                              checked without spending money: `factSheet.js` (the
                              grader's deterministic count table, made goal-aware
@@ -351,16 +369,30 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
                              keeps when a call fails to parse), `claimVerdict.js`
                              (Slice 8: every verdict the grader issues, decided
                              in plain code against the fact sheet; the grading
-                             model extracts claims and rules on nothing),
+                             model extracts claims and rules on nothing; Slice
+                             8d added a negated-exceedance guard that re-rules a
+                             "none of them broke/exceeded X" claim against the
+                             right bucket whenever extraction still flips it to
+                             the complement comparison, proven by replaying it
+                             against the two Slice 8c rounds' stored claims; the
+                             guard matches by proximity in the sentence, not by
+                             real clause structure, so a deliberately contrived
+                             compound sentence could in principle mislead it,
+                             judged low-likelihood and left as recorded debt),
                              `inputRecords.js` (Slice 8b: reads a directory of
                              bench records for the grader's new `--input` flag),
-                             and `handedCounts.js` (Slice 8c: describes, per
+                             `handedCounts.js` (Slice 8c: describes, per
                              goal and per prompt era, which counts the coach was
                              actually handed, so the grader can tell a
                              contradicted handed number apart from a self-derived
-                             one instead of pooling both as one error rate).
+                             one instead of pooling both as one error rate), and
+                             `gradingOutput.js` (Slice 8d: reads a saved grading
+                             file in either shape, the old bare array or the new
+                             `{ meta, results }` wrapper, so the replay script
+                             and any future reader can open a committed run
+                             without caring which slice produced it).
                              (Dated note, 19 August 2026, whole-branch review:
-                             the label this module computes reached the
+                             the label `handedCounts.js` computes reached the
                              grader's printed report only after a one-line fix
                              landed the same day; before that fix the report
                              silently dropped it. The committed Slice 8c rounds
@@ -368,9 +400,9 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
                              split was derived by hand, not printed by the
                              tool. See the dated note in
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
-    scripts/*.test.js       1155 lines across six files, testing those six
+    scripts/*.test.js       1344 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Five directories:
+    docs/eval-fixtures/      Committed ground truth, not code. Six directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -394,8 +426,15 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
                                count lines, the fly-ball fix and the "1 swings"
                                fix, with every flagged claim in both rounds
                                hand-checked genuine or false positive.
+                               `slice8d-grader-fp/` (664 KB) holds this slice's
+                               two fresh live re-grades of the Slice 8b and
+                               Slice 8c after rounds through the fully fixed
+                               tool, the zero-cost offline replay of both Slice
+                               8c rounds against the fixed verdict code, and a
+                               by-hand check of every claim either live round
+                               flagged, genuine or false positive.
                                None is collected by vitest;
-                               all five have their own READMEs covering what is
+                               all six have their own READMEs covering what is
                                and is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
@@ -681,8 +720,9 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 8c on 19 August 2026 it is 489 tests across 21
-   files, up from 461 across 19 at the close of Slice 8b. It covers the
+   vitest, and as of Slice 8d on 19 August 2026 it is 506 tests across 22
+   files, up from 489 across 21 at the close of Slice 8c, up from 461 across
+   19 at the close of Slice 8b. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
    one retry and its unwrapping of a fenced model response; the chart-slot
    fallback and dedupe; the chat reply's chart key; the goal targets and the
@@ -1671,6 +1711,27 @@ rewritten, per the append-only rule.
   it on purpose than the single case that first named it. See
   `docs/eval-fixtures/slice8c-strike-zone-counts/README.md` for every
   flagged claim in both rounds, judged genuine or false positive by hand.
+
+  **Measured, 19 August 2026, in Slice 8d.** Two fresh live grading rounds,
+  hand-checked claim by claim after the complement-bug guard and the
+  matching extraction-prompt wording landed: 2 of 18 flagged claims (11%)
+  were false positives in one round, 8 of 19 (42%) in the other. At the
+  debrief level, the false-positive-only count on the same two rounds Slice
+  8c graded moved from 2 of 15 and 10 of 21 down to 0 of 11 and 6 of 16. The
+  complement bug named above is effectively closed at the source: it fired
+  zero times in either fresh round, because the extraction prompt now
+  structures that sentence shape correctly on its own, with the
+  deterministic guard proven as a backstop by a separate zero-cost replay
+  rather than by these live rounds. **Still not closed, and still worth
+  watching**: every remaining false positive in both rounds traces to two
+  mechanisms this slice deliberately left unfixed, a named subset of swings
+  checked against a whole-session total, and a restated threshold read as an
+  exact value, plus one newly seen variant where the extractor
+  misclassified which stat a sentence was even about. 42% false positives in
+  a round is not a small number, so a raw flag from this tool still needs
+  the same by-hand look this slice gave both rounds before it is reported as
+  a coach error. Full accounting, including which quotes triggered which
+  mechanism, in `docs/eval-fixtures/slice8d-grader-fp/README.md`.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
   by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
@@ -1778,6 +1839,14 @@ rewritten, per the append-only rule.
   any false result in this slice's committed rounds, but it is the shape of
   bug this item exists to catch, and it is one more argument for recording
   the era on the run itself rather than only in the file path.
+
+  **Closed, 19 August 2026, in Slice 8d.** A saved grading run now names
+  itself: `--out` writes `{ meta, results }`, where `meta` carries the era,
+  seed, model and builder a run was graded under, so a committed result can
+  prove from itself which prompt generation it graded rather than relying on
+  its file path. Files written before this slice stay bare arrays; the new
+  `scripts/gradingOutput.js` module and the replay script both read either
+  shape, so nothing older had to be rewritten to close this.
 - **The power-goal "below 15 degrees" count line prints a dangling
   "numbers:" when the count is zero.** Found by the browser-pass payload
   capture on a real session-2 request, which happened to have zero swings
