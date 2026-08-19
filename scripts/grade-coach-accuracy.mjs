@@ -996,6 +996,7 @@ async function dryRun(args) {
         sessions: resolved.sessions,
         viewingSessionNumber: resolved.viewingSessionNumber,
         extraThresholds: goalExtraThresholds(resolved.goal.id),
+        goalId: resolved.goal.id,
       })
       cellCache.set(record.cell, { factSheet: sheet, goal: resolved.goal })
     }
@@ -1061,6 +1062,7 @@ async function validate(args) {
           sessions: resolved.sessions,
           viewingSessionNumber: resolved.viewingSessionNumber,
           extraThresholds: goalExtraThresholds(resolved.goal.id),
+          goalId: resolved.goal.id,
         })
         cellCache.set(record.cell, { factSheet, goal: resolved.goal })
       }
