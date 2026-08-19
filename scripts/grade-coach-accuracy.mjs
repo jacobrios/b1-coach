@@ -51,6 +51,10 @@
 // The third form (Slice 8b) grades a directory of fresh bench --out files
 // instead of the committed fixture; pair it with --dry-run first to see the
 // planned call count for that directory before spending.
+// --out writes { meta, results }, where meta = { generatedAt, model, source,
+// builder, seed, handedEra }. Files written before 19 August 2026 are bare
+// arrays; this change makes a committed grading run prove from its own
+// contents which flags produced it.
 // THIS SPENDS REAL MONEY in --validate mode without --dry-run. It prints the
 // planned call count and model before spending a cent, and refuses outright
 // to plan more than MAX_PLANNED_CALLS.
@@ -75,7 +79,7 @@
 
 import { register } from 'node:module'
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
 // THE SAME LOADER WRINKLE every hand-run script in this project documents:
@@ -194,7 +198,7 @@ function mulberry32(seed) {
 // This is a THIRD hand-maintained copy of the same small facts (bench,
 // rebuild.mjs's frozen CELLS, and now this one); see this task's report for
 // why a fourth consolidation pass was judged out of scope here.
-const CURRENT_CELLS = [
+export const CURRENT_CELLS = [
   { key: 'power-s1', goal: { id: 'power', label: 'Power & Distance' }, session: 1 },
   { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2 },
   { key: 'contact-s4', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 4 },
@@ -238,7 +242,7 @@ async function loadFrozenRebuild() {
 // Resolves ONE cell's session data through the named builder. Throws loudly
 // on an unknown builder name or an unknown cell for that builder, rather
 // than silently falling through to a default.
-async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
+export async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
   if (builder === 'frozen') {
     const { sessionsForCell, CELLS } = await loadFrozenRebuild()
     const cell = CELLS.find((c) => c.key === cellKey)
@@ -1154,7 +1158,18 @@ async function validate(args) {
   printReport({ model: args.model, results, inputTokens, outputTokens, cacheWriteTokens, cacheReadTokens, source, builder })
 
   if (args.out) {
-    writeFileSync(args.out, JSON.stringify(results, null, 2))
+    // A committed grading run must prove from its own contents which flags
+    // produced it. Slice 8c's fixtures could not (recorded on What's Next,
+    // 19 August 2026); from this change on, the file says so itself.
+    const meta = {
+      generatedAt: new Date().toISOString(),
+      model: args.model,
+      source,
+      builder,
+      seed: args.seed,
+      handedEra: args.handedEra,
+    }
+    writeFileSync(args.out, JSON.stringify({ meta, results }, null, 2))
     console.log('')
     console.log(`Raw results      ${args.out}`)
   }
@@ -1224,4 +1239,8 @@ async function main() {
   process.exit(1)
 }
 
-await main()
+// Run only when executed directly, so the replay script (Task 4) can import
+// the cell table and session builders without triggering a CLI run.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  await main()
+}
