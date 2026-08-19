@@ -169,7 +169,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 1, totalSwings: 2 },
   }]
   const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n`
-  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swings, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swings\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -820,7 +820,7 @@ describe('the distance distribution both prompts describe', () => {
     // not just prove the prompt echoes whatever that function currently
     // returns — it proves the buckets are actually the ones the plan chose.
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 
@@ -832,7 +832,7 @@ describe('the distance distribution both prompts describe', () => {
       }),
     )
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 

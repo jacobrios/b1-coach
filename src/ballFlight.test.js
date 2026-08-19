@@ -181,7 +181,7 @@ describe('the exact fifteen distances the app opens on', () => {
 
   it('writes the same five numbers into the sentence the coach reads', () => {
     expect(distanceDistributionLine(swings)).toBe(
-      'Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 })

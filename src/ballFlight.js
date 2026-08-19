@@ -1,3 +1,5 @@
+import { swingCountPhrase } from './promptText.js'
+
 // How far a synthetic swing's ball carries, in feet, and the five buckets
 // that carry distance is grouped into for display.
 //
@@ -223,6 +225,6 @@ export const SPRAY_RINGS = [200, 300].map((feet) => ({
 // hand, and the chat prompt was the one nobody remembered to update.
 export function distanceDistributionLine(swings) {
   return distanceBucketCounts(swings)
-    .map(({ label, count }) => `${label}ft: ${count} swings`)
+    .map(({ label, count }) => `${label}ft: ${swingCountPhrase(count)}`)
     .join(', ')
 }
