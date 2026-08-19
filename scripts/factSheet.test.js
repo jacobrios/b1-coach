@@ -176,8 +176,8 @@ describe('goalExtraThresholds', () => {
   // src/goalCountSpecs.js, the same table the prose itself interpolates, so
   // the grader and the prompt cannot disagree about what was counted.
 
-  it('contact gains the above-20-degrees fly-ball line its prose names', () => {
-    expect(goalExtraThresholds('contact').launchAngle).toContain(20)
+  it('contact gains the above-18-degrees fly-ball line its prose names', () => {
+    expect(goalExtraThresholds('contact').launchAngle).toContain(18)
   })
 
   it('allfields gains both direction cutoffs, a metric it never carried before', () => {

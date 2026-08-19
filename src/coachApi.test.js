@@ -142,7 +142,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       "Goal context: target launch angle 25-35 degrees, target exit velocity 88+ mph. These are the conditions for the player's best contact.",
     )
     expect(goalContext({ id: 'contact' })).toBe(
-      'Goal context: target launch angle 8-18 degrees for true line drives, target exit velocity 85+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.',
+      'Goal context: target launch angle 8-18 degrees for true line drives, target exit velocity 85+ mph for hard contact. Angles above 18 degrees are fly balls, not line drives.',
     )
     expect(goalContext({ id: 'allfields' })).toBe(
       'Goal context: goal is meaningful contact to all three zones — at least 3 swings pull side (direction below -15 degrees), at least 3 swings opposite field (direction above +15 degrees), remainder center field. Exit velocity 82+ mph indicates hard contact that challenges fielders.',
@@ -248,7 +248,7 @@ describe('the count lines each goal is handed', () => {
     const message = messageFor({ id: 'contact', label: 'Line Drives & Contact' })
     expect(message).toContain('- Swings with launch angle in the target 8-18 degrees (including both 8 and 18): 2 swings')
     expect(message).toContain('- Swings with exit velocity 85 mph or higher: 4 swings')
-    expect(message).toContain('- Swings with launch angle strictly above 20 degrees (not including 20): 3 swings')
+    expect(message).toContain('- Swings with launch angle strictly above 18 degrees (not including 18): 4 swings')
     expect(message).not.toContain('power zone')
     expect(message).not.toContain('below 15 degrees')
   })

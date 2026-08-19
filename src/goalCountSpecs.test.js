@@ -24,7 +24,7 @@ describe('GOAL_COUNT_SPECS', () => {
   it('contact carries its band, its exit velocity, and the fly-ball line its prose names', () => {
     expect(GOAL_COUNT_SPECS.contact.launchAngle).toEqual({ min: 8, max: 18 })
     expect(GOAL_COUNT_SPECS.contact.exitVelocity).toBe(85)
-    expect(GOAL_COUNT_SPECS.contact.flyBallAngle).toBe(20)
+    expect(GOAL_COUNT_SPECS.contact.flyBallAngle).toBe(18)
     expect(GOAL_COUNT_SPECS.contact.launchAngle.max).toBe(GOAL_TARGETS.contact.launchAngle.max)
   })
 
@@ -58,11 +58,18 @@ describe('countSpecThresholds', () => {
     })
   })
 
-  it('flattens contact to band edges plus the fly-ball line', () => {
+  it('flattens contact to band edges plus the fly-ball line, deduped', () => {
+    // 18 is named twice (band edge and fly-ball cutoff) and appears once.
     expect(countSpecThresholds('contact')).toEqual({
-      launchAngle: [8, 18, 20],
+      launchAngle: [8, 18],
       exitVelocity: [85],
     })
+  })
+
+  it('leaves no angle uncounted between the line-drive band and the fly-ball line', () => {
+    // The band ends at 18 inclusive and fly balls start strictly above 18,
+    // so every angle is one or the other and 18 itself is a line drive.
+    expect(GOAL_COUNT_SPECS.contact.flyBallAngle).toBe(GOAL_COUNT_SPECS.contact.launchAngle.max)
   })
 
   it('flattens allfields to both direction cutoffs and the hard-contact line', () => {

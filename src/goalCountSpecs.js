@@ -37,10 +37,12 @@ export const GOAL_COUNT_SPECS = {
   contact: {
     launchAngle: { min: CONTACT.launchAngle.min, max: CONTACT.launchAngle.max },
     exitVelocity: CONTACT.exitVelocity,
-    // "Angles above 20 degrees are fly balls, not line drives." The exact
-    // threshold every real "above 20 degrees" claim in the 96-debrief
-    // fixture got wrong.
-    flyBallAngle: 20,
+    // "Angles above 18 degrees are fly balls, not line drives." Was 20 until
+    // Slice 8c (approved 18 August 2026): the band ends at 18, so the old 20
+    // left 18-to-20 counted by neither number, and swing 10 of session 1
+    // sits at exactly 20. One number now governs the goal: the band's own
+    // ceiling, read here so it can never drift from goalTargets.js.
+    flyBallAngle: CONTACT.launchAngle.max,
   },
   allfields: {
     // "at least 3 swings pull side (direction below -15 degrees), at least 3
@@ -73,7 +75,7 @@ export function countSpecThresholds(goalId) {
   const add = (metric, value) => {
     if (!Number.isFinite(value)) return
     if (!out[metric]) out[metric] = []
-    out[metric].push(value)
+    if (!out[metric].includes(value)) out[metric].push(value)
   }
   if (spec.launchAngle) {
     add('launchAngle', spec.launchAngle.min)
