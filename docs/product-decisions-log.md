@@ -65,6 +65,23 @@ are in `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
 
 ---
 
+## Slice 8d: opened (August 19)
+
+*Baseline at slice start, recorded before any code:* `npm test` runs **489
+tests across 21 files, all green**, matching the finishing count recorded at
+the close of Slice 8c below. One declared deviation from the standing
+start-from-main rule: PR #28 (Slice 8c) is approved but its merge click is
+blocked by a harness permission until the product manager returns, so this
+slice's branch is cut from the approved Slice 8c tip instead of main, and
+its pull request will stack on #28 until that merge lands. Scope agreed in
+conversation on 19 August 2026: fix the grading tool's recurring
+complement-bug false positives, make grading runs self-describing and
+replayable offline, and measure the tool's false-positive rate formally.
+Budget: up to $5 without asking, granted the same day; expected spend about
+$0.60. The full entry lands here when the slice closes.
+
+---
+
 ## Slice 8c: opened (August 18)
 
 *Baseline at slice start, recorded before any code:* `npm test` runs **461
