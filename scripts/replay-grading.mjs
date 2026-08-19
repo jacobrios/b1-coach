@@ -67,6 +67,11 @@ function parseArgs(argv) {
 function resolveEraAndSeed(meta, args) {
   let handedEra = args.handedEra
   let seed = args.seed
+  // The era actually in use is the flag whenever one was passed (the flag
+  // always wins on a disagreement, per this script's own header comment);
+  // otherwise it can only have come from the file's meta, since the error
+  // below refuses to proceed with neither.
+  const eraSource = args.handedEra !== null ? 'flag' : 'file meta'
 
   if (meta) {
     if (handedEra === null) {
@@ -91,7 +96,7 @@ function resolveEraAndSeed(meta, args) {
     throw new Error(`Resolved --handed-era "${handedEra}" is not "slice8b" or "current".`)
   }
   if (seed === null) seed = 20260814
-  return { handedEra, seed }
+  return { handedEra, seed, eraSource }
 }
 
 const recordId = (r) => `${r.conditionKey}/${r.cell}/run${r.run}`
@@ -104,7 +109,13 @@ async function main() {
   const args = parseArgs(process.argv.slice(2))
   const raw = JSON.parse(readFileSync(args.input, 'utf8'))
   const { meta, results } = readGradingOutput(raw)
-  const { handedEra, seed } = resolveEraAndSeed(meta, args)
+  const { handedEra, seed, eraSource } = resolveEraAndSeed(meta, args)
+  // Same fallback shape as the era/seed resolution above: bare-array files
+  // predate the self-describing-output change and carry no meta.builder at
+  // all, and every one of them (including both Slice 8c fixtures this
+  // script replays) was graded with --builder current, so that is the only
+  // sane default for the pre-metadata shape.
+  const builder = meta?.builder ?? 'current'
 
   // Fail fast, before doing any grading work, on a record whose cell this
   // session builder does not know about, rather than discovering it one
@@ -118,14 +129,15 @@ async function main() {
     }
   }
 
+  const eraLabel = eraSource === 'flag' ? '(from --handed-era flag)' : '(from file meta)'
   console.log(`REPLAY  ${args.input}`)
-  console.log(`  era=${handedEra}  seed=${seed}  ${meta ? '(from file meta)' : '(no meta in file; from flags)'}`)
+  console.log(`  era=${handedEra} ${eraLabel}  seed=${seed}  ${meta ? '(from file meta)' : '(no meta in file; from flags)'}`)
   console.log('')
 
   const cellCache = new Map()
   async function factSheetForCell(cellKey) {
     if (!cellCache.has(cellKey)) {
-      const resolved = await resolveSessions({ builder: 'current', cellKey, seed })
+      const resolved = await resolveSessions({ builder, cellKey, seed })
       const factSheet = buildFactSheet({
         sessions: resolved.sessions,
         viewingSessionNumber: resolved.viewingSessionNumber,
