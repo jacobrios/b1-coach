@@ -2,6 +2,7 @@ import { goalTarget, meetsTarget } from './goalTargets'
 import { distanceDistributionLine } from './ballFlight'
 import { GOAL_COUNT_SPECS, goalCountValues } from './goalCountSpecs'
 import { swingCountPhrase } from './promptText'
+import { pitchZoneBreakdown, STRIKE_ZONE } from './sessionStats'
 
 // Re-exported so everything that already reads this file's prompt exports
 // (the bench, tests, and Task 6's count lines) finds the threshold table
@@ -490,6 +491,24 @@ function goalCountLines(goalId, swings) {
   }
 }
 
+// The zone breakdown, pre-counted for every goal. The strike-zone summary
+// line above these hands the coach a total and the bounds; before Slice 8c
+// nothing handed it WHICH swings were outside, so it derived that for
+// itself and was measured getting it wrong in 11 of 11 attempts. Same rule
+// as the goal count lines: count every threshold the prompt names.
+function zoneCountLines(swings) {
+  const zone = pitchZoneBreakdown(swings)
+  const line = (label, bucket) =>
+    `- ${label}: ${swingCountPhrase(bucket.count)}` +
+    (bucket.count ? ` — numbers: ${bucket.swings.join(', ')}` : '')
+  return [
+    line('Swings on pitches outside the strike zone', zone.outside),
+    line(`Swings on pitches high (height above ${STRIKE_ZONE.heightMax}ft)`, zone.high),
+    line(`Swings on pitches low (height below ${STRIKE_ZONE.heightMin}ft)`, zone.low),
+    line(`Swings on pitches wide (side outside ${STRIKE_ZONE.sideMin} to ${STRIKE_ZONE.sideMax}ft)`, zone.wide),
+  ]
+}
+
 // The user half of the debrief prompt: every session the player has seen so far,
 // with the current one named at the end. Split out of generateDebrief and
 // exported for the bench, for the reason given on DEBRIEF_SYSTEM above.
@@ -507,7 +526,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph
 - Avg Launch Angle: ${s.stats.avgLaunchAngle} degrees
 - Pitches in strike zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)
-${goalCountLines(goal.id, s.swings).map((line) => `${line}\n`).join('')}- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
+${zoneCountLines(s.swings).map((line) => `${line}\n`).join('')}${goalCountLines(goal.id, s.swings).map((line) => `${line}\n`).join('')}- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
 - Distance distribution: ${distanceDistributionLine(s.swings)}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}

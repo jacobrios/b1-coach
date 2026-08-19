@@ -166,9 +166,9 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
   const pinSessions = [{
     sessionNumber: 1,
     swings: pinSwings,
-    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 1, totalSwings: 2 },
+    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
-  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n`
+  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
   const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
@@ -278,9 +278,47 @@ describe('the count lines each goal is handed', () => {
     expect(message).not.toContain('or higher')
     expect(message).not.toContain('including both')
     expect(message).not.toContain('strictly above')
-    // The strike-zone line runs straight into the top-3 line, no blank line
-    // left behind where the two shipped count lines used to sit.
-    expect(message).toContain('full per-swing pitch coordinates included above)\n- Top 3 exit velocities:')
+    // The strike-zone summary now runs into the zone lines, and the last
+    // zone line runs straight into the top-3 line, no blank line left behind
+    // where the two shipped count lines used to sit.
+    expect(message).toContain('full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone:')
+    expect(message).toContain('side outside -0.7 to 0.7ft): 0 swings\n- Top 3 exit velocities:')
+  })
+})
+
+// Slice 8c: the zone count lines every goal is handed, unconditionally, since
+// the strike-zone summary line they extend is unconditional too. Before this,
+// the coach was handed a total and the bounds but not which swings were
+// outside, so it worked that out for itself and got it wrong.
+describe('the strike-zone count lines every goal is handed', () => {
+  const zoneSwings = [
+    { plateLocHeight: 2.5, plateLocSide: 0.0 },
+    { plateLocHeight: 3.6, plateLocSide: 0.2 },
+    { plateLocHeight: 1.2, plateLocSide: -0.3 },
+    { plateLocHeight: 2.8, plateLocSide: 0.9 },
+    { plateLocHeight: 1.4, plateLocSide: -0.8 },
+    { plateLocHeight: 3.5, plateLocSide: -0.7 },
+  ].map((loc, i) => ({
+    ...loc,
+    hit: { launch: { exitSpeed: 80 + i, angle: 12, direction: 0 }, landing: { distance: 200 + i } },
+  }))
+  const zoneSessions = [{
+    sessionNumber: 1,
+    swings: zoneSwings,
+    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 12, inZoneCount: 2, totalSwings: 6 },
+  }]
+
+  it('names which swings were outside, and which way each pitch was off', () => {
+    const message = buildDebriefUserMessage({
+      goal: { id: 'open', label: 'Open Session' },
+      player: { firstName: 'Jake' },
+      sessions: zoneSessions,
+      viewingSessionNumber: 1,
+    })
+    expect(message).toContain('- Swings on pitches outside the strike zone: 4 swings — numbers: 2, 3, 4, 5')
+    expect(message).toContain('- Swings on pitches high (height above 3.5ft): 1 swing — numbers: 2')
+    expect(message).toContain('- Swings on pitches low (height below 1.5ft): 2 swings — numbers: 3, 5')
+    expect(message).toContain('- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 5')
   })
 })
 
