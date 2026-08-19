@@ -179,7 +179,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swings — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swings\n${pinTail}`,
+      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swing — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swing\n${pinTail}`,
     )
   })
 
@@ -191,7 +191,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swings\n- Swings with exit velocity 82 mph or higher: 1 swings\n${pinTail}`,
+      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing\n- Swings with exit velocity 82 mph or higher: 1 swing\n${pinTail}`,
     )
   })
 })
@@ -264,8 +264,8 @@ describe('the count lines each goal is handed', () => {
 
   it('popup: counts pop-ups, weak grounders, and the target range', () => {
     const message = messageFor({ id: 'popup', label: 'Reduce Pop-Ups' })
-    expect(message).toContain('- Swings popped up (launch angle strictly above 35 degrees, not including 35): 1 swings')
-    expect(message).toContain('- Swings hit as weak grounders (launch angle strictly below 5 degrees, not including 5): 1 swings')
+    expect(message).toContain('- Swings popped up (launch angle strictly above 35 degrees, not including 35): 1 swing')
+    expect(message).toContain('- Swings hit as weak grounders (launch angle strictly below 5 degrees, not including 5): 1 swing')
     expect(message).toContain('- Swings with launch angle in the target 10-25 degrees (including both 10 and 25): 2 swings')
     expect(message).not.toContain('power zone')
     expect(message).not.toContain('below 15 degrees')

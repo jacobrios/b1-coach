@@ -1,6 +1,7 @@
 import { goalTarget, meetsTarget } from './goalTargets'
 import { distanceDistributionLine } from './ballFlight'
-import { GOAL_COUNT_SPECS } from './goalCountSpecs'
+import { GOAL_COUNT_SPECS, goalCountValues } from './goalCountSpecs'
+import { swingCountPhrase } from './promptText'
 
 // Re-exported so everything that already reads this file's prompt exports
 // (the bench, tests, and Task 6's count lines) finds the threshold table
@@ -453,7 +454,7 @@ export async function callApi(body, { onRetry } = {}) {
 function goalCountLines(goalId, swings) {
   const spec = GOAL_COUNT_SPECS[goalId]
   if (!spec) return []
-  const count = (pred) => swings.filter((sw) => pred(sw.hit.launch)).length
+  const v = goalCountValues(goalId, swings)
 
   switch (goalId) {
     case 'power':
@@ -462,27 +463,27 @@ function goalCountLines(goalId, swings) {
       // GOAL_COUNT_SPECS nor goalTargets: it is the shipped line's own
       // literal, named nowhere in the prompt prose, kept as found.
       return [
-        `- Swings with launch angle strictly below 15 degrees (not including 15): ${count((l) => l.angle < 15)} swings — numbers: ${swings.map((sw, i) => sw.hit.launch.angle < 15 ? i + 1 : null).filter(Boolean).join(', ')}`,
-        `- Swings in power zone (EV >= ${spec.exitVelocity} mph AND launch angle ${spec.launchAngle.min}-${spec.launchAngle.max} degrees): ${count((l) => meetsTarget('power', l))} swings`,
+        `- Swings with launch angle strictly below 15 degrees (not including 15): ${swingCountPhrase(v.underFifteen.count)} — numbers: ${v.underFifteen.swings.join(', ')}`,
+        `- Swings in power zone (EV >= ${spec.exitVelocity} mph AND launch angle ${spec.launchAngle.min}-${spec.launchAngle.max} degrees): ${swingCountPhrase(v.powerZone.count)}`,
       ]
     case 'contact':
       return [
-        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${count((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max)} swings`,
-        `- Swings with exit velocity ${spec.exitVelocity} mph or higher: ${count((l) => l.exitSpeed >= spec.exitVelocity)} swings`,
-        `- Swings with launch angle strictly above ${spec.flyBallAngle} degrees (not including ${spec.flyBallAngle}): ${count((l) => l.angle > spec.flyBallAngle)} swings`,
+        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${swingCountPhrase(v.contactTargetBand.count)}`,
+        `- Swings with exit velocity ${spec.exitVelocity} mph or higher: ${swingCountPhrase(v.contactHardHit.count)}`,
+        `- Swings with launch angle strictly above ${spec.flyBallAngle} degrees (not including ${spec.flyBallAngle}): ${swingCountPhrase(v.contactFlyBall.count)}`,
       ]
     case 'allfields':
       // The "+" before oppoDirection matches the prose's own "+15".
       return [
-        `- Swings pull side (direction strictly below ${spec.pullDirection} degrees, not including ${spec.pullDirection}): ${count((l) => l.direction < spec.pullDirection)} swings`,
-        `- Swings opposite field (direction strictly above +${spec.oppoDirection} degrees, not including +${spec.oppoDirection}): ${count((l) => l.direction > spec.oppoDirection)} swings`,
-        `- Swings with exit velocity ${spec.hardContactExitVelocity} mph or higher: ${count((l) => l.exitSpeed >= spec.hardContactExitVelocity)} swings`,
+        `- Swings pull side (direction strictly below ${spec.pullDirection} degrees, not including ${spec.pullDirection}): ${swingCountPhrase(v.pullSide.count)}`,
+        `- Swings opposite field (direction strictly above +${spec.oppoDirection} degrees, not including +${spec.oppoDirection}): ${swingCountPhrase(v.oppoField.count)}`,
+        `- Swings with exit velocity ${spec.hardContactExitVelocity} mph or higher: ${swingCountPhrase(v.allfieldsHardContact.count)}`,
       ]
     case 'popup':
       return [
-        `- Swings popped up (launch angle strictly above ${spec.popUpAngle} degrees, not including ${spec.popUpAngle}): ${count((l) => l.angle > spec.popUpAngle)} swings`,
-        `- Swings hit as weak grounders (launch angle strictly below ${spec.grounderAngle} degrees, not including ${spec.grounderAngle}): ${count((l) => l.angle < spec.grounderAngle)} swings`,
-        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${count((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max)} swings`,
+        `- Swings popped up (launch angle strictly above ${spec.popUpAngle} degrees, not including ${spec.popUpAngle}): ${swingCountPhrase(v.popUp.count)}`,
+        `- Swings hit as weak grounders (launch angle strictly below ${spec.grounderAngle} degrees, not including ${spec.grounderAngle}): ${swingCountPhrase(v.weakGrounder.count)}`,
+        `- Swings with launch angle in the target ${spec.launchAngle.min}-${spec.launchAngle.max} degrees (including both ${spec.launchAngle.min} and ${spec.launchAngle.max}): ${swingCountPhrase(v.popupTargetBand.count)}`,
       ]
     default:
       return []

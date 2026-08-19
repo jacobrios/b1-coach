@@ -7,7 +7,7 @@
 // grader's fact sheet both hang off.
 
 import { describe, it, expect } from 'vitest'
-import { GOAL_COUNT_SPECS, countSpecThresholds } from './goalCountSpecs.js'
+import { GOAL_COUNT_SPECS, countSpecThresholds, goalCountValues } from './goalCountSpecs.js'
 import { GOAL_TARGETS } from './goalTargets.js'
 import { GOAL_COUNT_SPECS as REEXPORTED } from './coachApi.js'
 
@@ -82,5 +82,51 @@ describe('countSpecThresholds', () => {
     expect(countSpecThresholds('open')).toEqual({})
     expect(countSpecThresholds('dashboard')).toEqual({})
     expect(countSpecThresholds(undefined)).toEqual({})
+  })
+})
+
+describe('goalCountValues', () => {
+  // Three swings chosen so each predicate has both members and non-members:
+  // EV 91/74/85, LA 27/9/18, direction -20/18/-15.
+  const swings = [
+    { exitSpeed: 91, angle: 27, direction: -20 },
+    { exitSpeed: 74, angle: 9, direction: 18 },
+    { exitSpeed: 85, angle: 18, direction: -15 },
+  ].map((launch) => ({ hit: { launch } }))
+
+  it('computes power: strictly under 15 degrees, and the two-metric power zone', () => {
+    expect(goalCountValues('power', swings)).toEqual({
+      underFifteen: { count: 1, swings: [2] },   // only 9
+      powerZone: { count: 1, swings: [1] },      // 91 mph at 27 degrees
+    })
+  })
+
+  it('computes contact: inclusive 8-18 band, 85+ hard contact, fly balls strictly above the cutoff', () => {
+    expect(goalCountValues('contact', swings)).toEqual({
+      contactTargetBand: { count: 2, swings: [2, 3] },  // 9 and 18; 18 is inclusive
+      contactHardHit: { count: 2, swings: [1, 3] },     // 91 and exactly 85
+      contactFlyBall: { count: 1, swings: [1] },        // only 27 is strictly above
+    })
+  })
+
+  it('computes allfields: strict direction cutoffs and 82+ hard contact', () => {
+    expect(goalCountValues('allfields', swings)).toEqual({
+      pullSide: { count: 1, swings: [1] },              // -20; -15 exactly is excluded
+      oppoField: { count: 1, swings: [2] },             // 18; +15 exactly would be excluded
+      allfieldsHardContact: { count: 2, swings: [1, 3] },
+    })
+  })
+
+  it('computes popup: strict pop-up and grounder cutoffs, inclusive 10-25 band', () => {
+    expect(goalCountValues('popup', swings)).toEqual({
+      popUp: { count: 0, swings: [] },
+      weakGrounder: { count: 0, swings: [] },
+      popupTargetBand: { count: 1, swings: [3] },       // only 18
+    })
+  })
+
+  it('hands open and unknown goals nothing', () => {
+    expect(goalCountValues('open', swings)).toEqual({})
+    expect(goalCountValues('dashboard', swings)).toEqual({})
   })
 })
