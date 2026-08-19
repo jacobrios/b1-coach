@@ -25,8 +25,9 @@ should stop letting the coach write its own numbers at all.
 
 *The result, read the honest way.* Raw grader numbers looked worse: 15 of 52
 debriefs flagged before this slice's changes, 21 of 52 after. A raw flag is
-not proof of a coach error without a by-hand check, so all 47 flagged claims
-across both rounds were read against the real data one at a time. Most of
+not proof of a coach error without a by-hand check, so all 52 flagged claims
+(26 per round) across 36 flagged debriefs (15 before, 21 after) were read
+against the real data one at a time. Most of
 the apparent decline was the tool, not the coach: 2 of the 15 before-round
 flags and 10 of the 21 after-round flags were the grader calling a true
 statement false. Corrected, genuine coach-error debriefs went from 13 to 11,

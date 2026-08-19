@@ -3,10 +3,8 @@
 // This lives in its own file rather than inside App.jsx so it can be tested
 // without loading the whole app. The logic itself is unchanged from where it
 // used to live, including the strike-zone bounds, which are also written out
-// separately in DebriefScreen.jsx and in the coach prompt. The bounds here
-// back the inZoneCount the prompt hands the coach, and since Slice 8c also
-// the zone count lines and the grader's zone stats, so those three can no
-// longer disagree with each other.
+// separately in DebriefScreen.jsx and in the coach prompt. Bringing those three
+// copies together is deliberately not part of this change.
 
 // The strike-zone bounds, one of the copies CLAUDE.md's consolidation note
 // counts. This file's copy backs the inZoneCount the prompt hands the coach,

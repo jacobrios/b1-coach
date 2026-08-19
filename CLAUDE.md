@@ -359,6 +359,15 @@ Line counts current as of 19 August 2026, at the close of Slice 8c.
                              actually handed, so the grader can tell a
                              contradicted handed number apart from a self-derived
                              one instead of pooling both as one error rate).
+                             (Dated note, 19 August 2026, whole-branch review:
+                             the label this module computes reached the
+                             grader's printed report only after a one-line fix
+                             landed the same day; before that fix the report
+                             silently dropped it. The committed Slice 8c rounds
+                             predate the fix, so their handed-versus-derived
+                             split was derived by hand, not printed by the
+                             tool. See the dated note in
+                             `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
     scripts/*.test.js       1155 lines across six files, testing those six
                              modules. Not counted in the rows above.
     docs/eval-fixtures/      Committed ground truth, not code. Five directories:
@@ -1760,6 +1769,15 @@ rewritten, per the append-only rule.
   is legible today but is not something a future script could check
   automatically. Found while building this slice's before/after comparison;
   cheap to add, no live spend required.
+  **(Dated addition, 19 August 2026, whole-branch review.)** The same
+  missing-era-record gap has a concrete edge already: `scripts/factSheet.js`'s
+  `sessionStatsExtras` computes `contactFlyBallCount` from today's
+  `GOAL_COUNT_SPECS` regardless of `--handed-era`, so grading a `slice8b`-era
+  record against it silently uses the current 18-degree cutoff instead of the
+  20-degree cutoff the coach was actually handed then. This did not produce
+  any false result in this slice's committed rounds, but it is the shape of
+  bug this item exists to catch, and it is one more argument for recording
+  the era on the run itself rather than only in the file path.
 - **The power-goal "below 15 degrees" count line prints a dangling
   "numbers:" when the count is zero.** Found by the browser-pass payload
   capture on a real session-2 request, which happened to have zero swings

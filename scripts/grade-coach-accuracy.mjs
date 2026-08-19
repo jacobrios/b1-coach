@@ -593,8 +593,21 @@ function gradeParsedResponse(text, factSheet, context) {
     const withSession = claim.sessionNumber === undefined
       ? { ...claim, sessionNumber: factSheet?.viewingSessionNumber }
       : claim
-    const { verdict, actual, reasoning } = verdictForClaim(withSession, factSheet, context)
-    return { ...withSession, verdict, actual, reasoning }
+    const v = verdictForClaim(withSession, factSheet, context)
+    // Slice 8c whole-branch review, Finding 1: verdictForClaim attaches
+    // `handed` only when context.handed was supplied, and that key was being
+    // dropped right here by a destructure that never named it. printReport's
+    // FALSE breakdown and its per-claim (handed)/(self-derived) tags both
+    // read c.handed, so the drop meant every committed run's split was
+    // computed by hand after the fact rather than printed by the tool. See
+    // the dated note in docs/eval-fixtures/slice8c-strike-zone-counts/README.md.
+    return {
+      ...withSession,
+      verdict: v.verdict,
+      actual: v.actual,
+      reasoning: v.reasoning,
+      ...(typeof v.handed === 'boolean' ? { handed: v.handed } : {}),
+    }
   })
   const flagged = graded.some((c) => c.verdict === 'FALSE')
   return { claims: graded, flagged, malformedCount }
@@ -936,6 +949,33 @@ async function dryRun(args) {
   const verdicts = cleanMixedResult.claims.map((c) => c.verdict).join(',')
   if (verdicts !== 'TRUE,FALSE,UNVERIFIABLE') {
     throw new Error(`Self-check failed: expected TRUE,FALSE,UNVERIFIABLE from the code, got ${verdicts}.`)
+  }
+
+  // Slice 8c whole-branch review, Finding 1: prove the `handed` flag survives
+  // gradeParsedResponse's assembly of the graded claim, against a real
+  // handedClaimSpecs object rather than a canned one, in both directions.
+  // Power's own handed set names launchAngle-below-15; it does not name
+  // launchAngle-above-20, so the same fact sheet's own 20-degree row is a
+  // ready-made self-derived comparison.
+  const powerHanded = handedClaimSpecs(frozen.goal.id, 'current')
+  const handedRow = s1.thresholds.launchAngle.find((r) => r.threshold === 15)
+  const handedMixed = JSON.stringify({
+    claims: [
+      { field: 'tip1', quote: 'four swings below 15 degrees', kind: 'threshold', sessionNumber: s1.sessionNumber, metric: 'launchAngle', threshold: 15, comparison: 'below', statedCount: handedRow.below.count + 1 },
+      { field: 'tip2', quote: 'lots of your swings above 20 degrees', kind: 'threshold', sessionNumber: s1.sessionNumber, metric: 'launchAngle', threshold: 20, comparison: 'above', statedCount: trueRow.above.count + 3 },
+    ],
+  })
+  const handedMixedResult = gradeParsedResponse(handedMixed, factSheet, { goalId: frozen.goal.id, handed: powerHanded })
+  const [handedClaim, derivedClaim] = handedMixedResult.claims
+  console.log(
+    `  handed vs derived  -> handed claim handed=${handedClaim.handed} (threshold 15, in power's handed set), ` +
+    `derived claim handed=${derivedClaim.handed} (threshold 20, not in power's handed set) (expect true, false)`,
+  )
+  if (handedClaim.verdict !== 'FALSE' || derivedClaim.verdict !== 'FALSE') {
+    throw new Error('Self-check failed: both handed-vs-derived probe claims were expected to grade FALSE.')
+  }
+  if (handedClaim.handed !== true || derivedClaim.handed !== false) {
+    throw new Error("Self-check failed: verdictForClaim's handed flag did not survive gradeParsedResponse.")
   }
 
   const allTrue = JSON.stringify({

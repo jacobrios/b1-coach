@@ -5,6 +5,18 @@ behind this slice's own version of Slice 8b's question: did pre-counting a
 new dimension (the strike-zone thresholds) reduce the coach's self-derived
 miscounts, and by how much.
 
+**Dated note, 19 August 2026, added by the whole-branch review that closed
+this slice.** The grading transcripts committed in this directory were
+produced before a one-line bug fix landed in `scripts/grade-coach-accuracy.mjs`:
+the tool computed the correct handed-versus-self-derived label for every
+FALSE claim internally, then dropped it before printing the report, so the
+FALSE breakdown line and the per-claim (handed)/(self-derived) tags never
+appeared in either transcript. Every handed-versus-derived split quoted in
+this README was derived by hand from the individual claims and the handed
+set, as the Task 9 report records, and re-verified by the whole-branch
+review that found the bug. From the fix onward, the tool prints the split
+itself; a future re-grading run does not need this hand-check step.
+
 ## What each file holds and how it was produced
 
     before-grading.json / .txt    Slice 8b's committed after-round bench
@@ -18,9 +30,9 @@ miscounts, and by how much.
     after/shipped-52.json         52 fresh live debriefs against the CHANGED
                                    prompt (Slice 8c's strike-zone count
                                    lines, the 18-degree fly-ball fix, the "1
-                                   swings" grammar fix — Tasks 1-9 of this
-                                   slice, already merged before this task
-                                   ran).
+                                   swings" grammar fix, done in Tasks 1-9 of
+                                   this slice, already merged before this
+                                   task ran).
     after-grading.json / .txt     Grading output for the after round, same
                                    tool, same run.
 
@@ -57,7 +69,7 @@ rather than one draw.
 
 The first attempt at the after-round bench command completed all 52 live
 calls, spent $0.96, and then crashed on `writeFileSync` because its output
-directory did not exist yet — the script had no fallback and the calls'
+directory did not exist yet; the script had no fallback and the calls'
 results existed only in memory, so they were gone the moment the process
 exited. That is recorded in full in
 `.superpowers/sdd/slice-8c-plan/task-10-report.md`. Before re-running,
@@ -81,7 +93,7 @@ attempt, run once the guard was in place; it did not fail again.
 Read at face value, this says the after round got *worse*: more debriefs
 flagged (21 vs 15), even though the count of FALSE claims held exactly
 even (26 both rounds). Per this project's own standing rule, a raw flag is
-not proof of a coach error without a by-hand check — and Slice 8b's own
+not proof of a coach error without a by-hand check, and Slice 8b's own
 fixture found the same kind of raw-number trap once before. The hand-check
 below is what that rule requires, and it changes the read substantially.
 
@@ -90,7 +102,7 @@ below is what that rule requires, and it changes the read substantially.
 Every FALSE claim in both transcripts was read against its own record's
 text and, where ground truth is directly available (`power-s1` runs the
 same fixed fifteen swings in `src/sessionOneSwings.js` every time), checked
-by hand-computed arithmetic against those swings — not just against the
+by hand-computed arithmetic against those swings, not just against the
 grader's own "actual" line. For the generated cells (`power-s2`,
 `contact-s4`, `open-s4`, `allfields-s4`), the grader's per-swing "actual"
 values were trusted as ground truth, since those come from
@@ -109,9 +121,9 @@ limits of this grading tool, and one systematic new one:**
    subset, so it checks the claimed count against the session-wide total
    instead. Session-1 ground truth confirms all four instances of "your
    three power-zone swings... all came on pitches between 2.4 and 3.1 feet
-   high" (after-round `run2`/`run3`/`run5`/`run8`) are literally true —
-   swings 3, 5, and 15 have heights 3.1, 2.6, and 2.5, all inside that
-   range — but the grader compared "3" against the session-wide count of 7
+   high" (after-round `run2`/`run3`/`run5`/`run8`) are literally true
+   (swings 3, 5, and 15 have heights 3.1, 2.6, and 2.5, all inside that
+   range), but the grader compared "3" against the session-wide count of 7
    swings in that height band and flagged all four as false. The same
    mechanism appears three times in the before round's `power-s1/run6`
    (the identical power-zone-height claim, plus two EV/LA claims about a
@@ -123,8 +135,8 @@ limits of this grading tool, and one systematic new one:**
    sheet still sometimes compares the literal count differently than the
    claim's own phrasing and reports a mismatch anyway. After-round
    `power-s1/run12` ("none of them broke 80 mph," "none of them got above
-   14 degrees" for swings 2, 9, 12) is confirmed true by hand — all three
-   swings are under 80 mph and at or under 14 degrees — but both were
+   14 degrees" for swings 2, 9, 12) is confirmed true by hand (all three
+   swings are under 80 mph and at or under 14 degrees), but both were
    flagged. This is the **exact same bug the Slice 8b fixture's "What This
    Fixture Does NOT Support Concluding" section already named**: "the
    coach wrote 'nothing cleared 265 feet' and the grader flagged it
@@ -135,8 +147,8 @@ limits of this grading tool, and one systematic new one:**
    `open-s4/run2` version of the identical sentence.
 3. **A threshold restated as a value gets checked as if it were a
    specific measurement.** `power-s2/run3`'s "the pitch was below 1.5
-   feet" for swing 7 was flagged with "claimed 1.5, the table says 0.79"
-   — 0.79 *is* below 1.5, so the claim is true; the extractor structured
+   feet" for swing 7 was flagged with "claimed 1.5, the table says 0.79",
+   but 0.79 *is* below 1.5, so the claim is true; the extractor structured
    it as an exact-value claim instead of a threshold claim. The before
    round's `open-s4/run7` has the same shape twice ("under 10 degrees"
    checked against exact values of 5 and 9, both of which are under 10).
@@ -164,11 +176,12 @@ tell different stories:
 
 **Using the same coarse handed-vs-self-derived split Task 9's report used**
 (no false-positive removal, just "was this a handed number restated wrong,
-or did the coach work it out itself"): of the before round's 21
+or did the coach work it out itself"; see the dated note above on how that
+split was actually produced): of the before round's 21
 self-derived FALSE claims, 7 are pitch-location (height) claims. Of the
 after round's 24 self-derived FALSE claims, 8 are pitch-location. **That
 comparison alone reads as flat** (33% of self-derived errors were
-pitch-location before, 33% after) — which would say this slice's
+pitch-location before, 33% after), which would say this slice's
 zone-count work did nothing.
 
 **After removing the false positives identified above**, the picture
@@ -177,13 +190,13 @@ the "power zone height vs session total" false positive described above,
 leaving **6 genuine pitch-location coach errors**. Of the after round's 8,
 5 are false positives (4 more instances of the same power-zone-height
 mechanism, plus the `power-s2/run3` value-vs-threshold case), leaving
-**3 genuine pitch-location coach errors** — all three the identical
+**3 genuine pitch-location coach errors**, all three the identical
 pattern, "four of those [under-15-degree swings] were on pitches below
 1.5 (or 1.4) feet" when the real count among that named group is 3
 (`power-s1/run6`, `run8`, `run10`, all in the after round, all confirmed
 by hand against session-1 ground truth).
 
-**6 genuine pitch-location errors before, 3 after — a real reduction, not
+**6 genuine pitch-location errors before, 3 after: a real reduction, not
 a flat result, but the raw-number comparison above (7 of 21, 8 of 24)
 would have missed it entirely.** The mechanism behind what is left is
 narrower than "the coach invents pitch-location groupings" broadly: in
@@ -194,7 +207,7 @@ count of 4 when intersecting that with a *different* named group (the
 under-15-degree swings) it had established earlier in the same tip. The
 zone count lines this slice added are totals, not per-swing lists, so the
 coach still has to self-derive any *intersection* between a zone count and
-another named subset — which is exactly where it keeps getting it wrong.
+another named subset, which is exactly where it keeps getting it wrong.
 This is a scoping note for whoever picks up the pitch-location item next,
 not a claim that this slice's fix did nothing.
 
@@ -217,7 +230,7 @@ debrief level, pooled across both rounds.**
   `popup-s4/run2`).
 - After: 1 debrief (`allfields-s4/run2`).
 - **Pooled: 4 of 104 debriefs graded across both rounds contradicted a
-  handed number — roughly 1 in 26.**
+  handed number (roughly 1 in 26).**
 
 **Stated against the decision rule in `docs/queued-slices.md`:** "roughly
 one debrief in fifty means build the fill-in-the-numbers approach; closer
@@ -228,7 +241,7 @@ threshold for leaving it alone.
 
 **One caveat that matters for reading that number honestly: the sample is
 small and narrow, not diverse.** 3 of the 4 flagged debriefs (2 before, 1
-after) are the identical failure shape — two adjacent prior-session
+after) are the identical failure shape, two adjacent prior-session
 averages recited in the wrong order ("down from 83 and 84 in Sessions 2
 and 3" when Session 2 was actually 84 and Session 3 was 83). That is one
 specific pattern (transposing two numbers stated back to back), not
@@ -258,7 +271,7 @@ rate.
   the item.
 - **That the pitch-location fix succeeded outright.** 6 genuine errors
   fell to 3, not to 0. Success here is a sharply lower miscount rate, not
-  zero — the exact standard the brief asked this section to hold to. The
+  zero; the exact standard the brief asked this section to hold to. The
   narrower failure shape identified above (self-derived intersections
   between a handed total and a different named group) is still open.
 - **That every flagged claim not named above as a false positive is
@@ -277,7 +290,7 @@ rate.
 |---|---|
 | Task 9: re-grading Slice 8b's after round with the fixed tool (`before-grading`) | $0.3042 |
 | Task 10, attempt 1: bench round that completed all 52 calls, then lost every record to the `ENOENT` tooling bug above | $0.96 (spent, no usable output) |
-| Guard-fix code commit (`79b61a0`) | $0 — code change only, no live calls |
+| Guard-fix code commit (`79b61a0`) | $0 (code change only, no live calls) |
 | Task 10, attempt 2: bench round, after the guard fix, succeeded (`after/shipped-52.json`) | $0.96 |
 | Task 10: grading the after round (`after-grading`) | $0.3073 |
 | **Slice total so far** | **$2.5315 of the $3.00 ceiling** |

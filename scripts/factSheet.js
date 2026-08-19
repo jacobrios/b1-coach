@@ -143,6 +143,14 @@ function sessionStatsExtras(swings, goalId) {
     .sort((a, b) => b - a)
     .slice(0, 3)
   const stats = { topExitVelocity: topExitVelocity(swings), top3ExitVelocities: top3 }
+  // Residual era leak, found by whole-branch review, 19 August 2026, and
+  // recorded rather than fixed: goalCountValues always reads today's
+  // GOAL_COUNT_SPECS, so contactFlyBallCount here is computed at the current
+  // 18-degree cutoff even when this fact sheet is grading a --handed-era
+  // slice8b record, where the coach was actually handed the old 20-degree
+  // count. It did not bite in this slice's committed rounds (zero
+  // sessionStat claims landed on it), but a future era-specific grading run
+  // could hit it. See the grader-metadata item in CLAUDE.md's What's Next.
   for (const [key, v] of Object.entries(goalCountValues(goalId, swings))) {
     stats[`${key}Count`] = v.count
     stats[`${key}Swings`] = v.swings

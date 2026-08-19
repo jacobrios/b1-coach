@@ -494,8 +494,9 @@ function goalCountLines(goalId, swings) {
 // The zone breakdown, pre-counted for every goal. The strike-zone summary
 // line above these hands the coach a total and the bounds; before Slice 8c
 // nothing handed it WHICH swings were outside, so it derived that for
-// itself and was measured getting it wrong in 11 of 11 attempts. Same rule
-// as the goal count lines: count every threshold the prompt names.
+// itself, measured at 11 wrong claims per 52-debrief round, unchanged
+// across Slice 8b's before and after rounds. Same rule as the goal count
+// lines: count every threshold the prompt names.
 function zoneCountLines(swings) {
   const zone = pitchZoneBreakdown(swings)
   const line = (label, bucket) =>
