@@ -418,6 +418,9 @@ comparison maps from the coach's own words, and the distinction is strict:
 - "at most", "or fewer", "or less" -> "atMost"
 - an exact number with no direction word -> "equal"
 - "cleared", "topped" -> "atLeast"
+- "got past", "got out past", "went past", "beyond" -> "above"
+
+NEGATED EXCEEDANCE. "None of them broke 80 mph", "nothing got out past 265 feet", "no ball cleared 300" are claims that the count ABOVE the threshold is ZERO: comparison "above", statedCount 0. Never map a negated exceedance onto "below" or "atMost", and never use the size of the named group as statedCount. The same applies inside subset claims: "none of swings 2, 9 and 12 broke 80" is comparison "above", statedCount 0, ofSwings [2, 9, 12].
 
 Other rules:
 - sessionNumber is the session the claim is ABOUT, which is not always the one being debriefed. If the coach names no session, use the session being debriefed.
