@@ -6,6 +6,18 @@
 
 ---
 
+## Slice 8c: opened (August 18)
+
+*Baseline at slice start, recorded before any code:* `npm test` runs **461
+tests across 19 files, all green**, matching the finishing count recorded at
+the close of Slice 8b below. No pre-existing failures to carry. Scope is the
+five pieces recorded under "Slice 8c" in `docs/queued-slices.md`; budget
+approved the same day at roughly $1.55 expected with a $3 ceiling, and a
+standing instruction to flag if projected spend approaches $5. The full entry
+for this slice lands here when the slice closes.
+
+---
+
 ## Slice 8b: the fix worked exactly where it was aimed, and nowhere else (August 18)
 
 *What this slice was.* Slice 8's fixture had already shown the pattern: the
