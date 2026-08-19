@@ -62,12 +62,52 @@ const FACT_SHEET = {
           // below = 3 (2 + 1 + 3 = 6 swings). atLeast = above + equal = 3;
           // atMost = below + equal = 4.
           { threshold: 82, above: { count: 2, swings: [2, 4] }, below: { count: 3, swings: [1, 3, 6] }, equal: { count: 1, swings: [5] }, atLeast: { count: 3 }, atMost: { count: 4 } },
+          // Slice 8d: copied verbatim from the real before-round
+          // popup-s4/run3 committed instance ("none of them got above 75
+          // mph" against named swings 1, 7, 13; actual "1 of swings 1, 7, 13
+          // are above 75 exitVelocity (swings 13)"). Deliberately carries
+          // only the "above" bucket, the one bucket either a plain "above"
+          // comparison or the guard reads.
+          { threshold: 75, above: { count: 1, swings: [13] } },
         ],
         direction: [
           { threshold: 15, above: { count: 2, swings: [3, 6] }, below: { count: 3, swings: [1, 2, 5] }, equal: { count: 0, swings: [] }, atLeast: { count: 2 }, atMost: { count: 4 } },
         ],
         distance: [
           { threshold: 305, above: { count: 4, swings: [2, 4, 5, 6] }, below: { count: 2, swings: [1, 3] }, equal: { count: 0, swings: [] }, atLeast: { count: 4 }, atMost: { count: 2 } },
+          // Slice 8d: hand-picked to reproduce the real committed instance's
+          // truth (open-s4, "nothing got out past 265 feet"): all 15 real
+          // swings in that session landed at or under 265 feet, none above.
+          // Not derived from this fixture's own 6 swings, same as the
+          // hand-picked 82 mph row below.
+          { threshold: 265, above: { count: 0, swings: [] }, below: { count: 15, swings: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] }, equal: { count: 0, swings: [] }, atLeast: { count: 15 }, atMost: { count: 15 } },
+        ],
+      },
+    },
+    // Slice 8d: a second session so the negated-exceedance guard's subset
+    // tests can copy their sessionNumber (1) verbatim from the real
+    // power-s1/run12 committed instances. Only the two threshold rows the
+    // guard reads are precomputed; no per-swing table or stats, because
+    // neither thresholdVerdict nor subsetVerdict reads them for these claims.
+    {
+      sessionNumber: 1,
+      swings: [],
+      stats: {},
+      thresholds: {
+        exitVelocity: [
+          // Derived from the real fifteen session-1 swings in
+          // src/sessionOneSwings.js (exit velocities 78, 72, 88, 75, 91, 82,
+          // 76, 85, 79, 83, 87, 70, 86, 80, 92): swings strictly above 80 are
+          // 3, 5, 6, 8, 10, 11, 13, 15 (8 of them); strictly below are 1, 2,
+          // 4, 7, 9, 12 (6); swing 14 sits exactly at 80 (equal).
+          { threshold: 80, above: { count: 8, swings: [3, 5, 6, 8, 10, 11, 13, 15] }, below: { count: 6, swings: [1, 2, 4, 7, 9, 12] }, equal: { count: 1, swings: [14] }, atLeast: { count: 9 }, atMost: { count: 7 } },
+        ],
+        launchAngle: [
+          // Same fifteen swings' launch angles (12, 8, 26, 6, 28, 18, 10, 24,
+          // 14, 20, 22, 4, 25, 16, 27): strictly above 14 are 3, 5, 6, 8, 10,
+          // 11, 13, 14, 15 (9); strictly below are 1, 2, 4, 7, 12 (5); swing
+          // 9 sits exactly at 14 (equal).
+          { threshold: 14, above: { count: 9, swings: [3, 5, 6, 8, 10, 11, 13, 14, 15] }, below: { count: 5, swings: [1, 2, 4, 7, 12] }, equal: { count: 1, swings: [9] }, atLeast: { count: 10 }, atMost: { count: 6 } },
         ],
       },
     },
@@ -598,5 +638,103 @@ describe('range claims at a handed band (Slice 8b false positives, contact-s4)',
       { goalId: 'power', handed: handedClaimSpecs('power', 'current') },
     )
     expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+})
+
+describe('the negated-exceedance guard (Slice 8d)', () => {
+  // The bug: the extractor turns "nothing got out past 265 feet" into
+  // (below|atMost, 0), the complement of what the sentence means, so
+  // comparing 0 against the below/atMost bucket (the whole session) fails a
+  // true statement. Both instances are from the real open-s4 committed
+  // records (docs/eval-fixtures/slice8c-strike-zone-counts/after-grading.json,
+  // elements [28] and [29]); the same quote was stored under both stored
+  // comparisons across the round.
+  it('rules TRUE on a negated-exceedance claim stored as atMost', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'distance', threshold: 265, comparison: 'atMost', statedCount: 0, quote: 'nothing got out past 265 feet' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('rules TRUE on the same negated-exceedance claim stored as below', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'distance', threshold: 265, comparison: 'below', statedCount: 0, quote: 'nothing got out past 265 feet' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  // Pattern robustness: a differently worded quote naming the same fact,
+  // from after-grading.json element [33].
+  it('rules TRUE on a differently worded negated-exceedance quote', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'distance', threshold: 265, comparison: 'atMost', statedCount: 0, quote: 'nothing left the bat past 265 feet' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  // The subset face, from the real power-s1/run12 committed instance
+  // (after-grading.json element [11], claims[4]): "none of them broke 80
+  // mph" of swings 2, 9, 12. All three are really below 80, so none is
+  // above it, so the negated claim is true.
+  it('rules TRUE on a negated-exceedance subset claim', () => {
+    const result = verdictForClaim(
+      { kind: 'subset', sessionNumber: 1, metric: 'exitVelocity', threshold: 80, comparison: 'below', statedCount: 0, ofSwings: [2, 9, 12], quote: 'none of them broke 80 mph' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  // Its pair, from the same real record (claims[5]): "none of them got above
+  // 14 degrees" of the same three swings. Swing 9 sits exactly at 14, which
+  // the above-list excludes, so none of the three is above it either.
+  it('rules TRUE on the paired negated-exceedance subset claim', () => {
+    const result = verdictForClaim(
+      { kind: 'subset', sessionNumber: 1, metric: 'launchAngle', threshold: 14, comparison: 'below', statedCount: 0, ofSwings: [2, 9, 12], quote: 'none of them got above 14 degrees' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  // Negative case 1, the genuinely false complement: from the real
+  // before-round popup-s4/run3 instance, comparison is already "above" (not
+  // below/atMost), so the guard must not reroute it. Swing 13 really is
+  // above 75, so the claim of zero stays FALSE.
+  it('does not reroute a claim already stored as above', () => {
+    const result = verdictForClaim(
+      { kind: 'subset', sessionNumber: 4, metric: 'exitVelocity', threshold: 75, comparison: 'above', statedCount: 0, ofSwings: [1, 7, 13], quote: 'none of them got above 75 mph' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+  })
+
+  // Negative case 2, negation without an exceedance verb: "dipped under"
+  // names no word the exceedance half of the pattern matches, so the guard
+  // must not fire, and the claim is ruled on the below bucket itself, which
+  // is genuinely nonzero (6).
+  it('does not reroute a negation with no exceedance verb', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 1, metric: 'exitVelocity', threshold: 80, comparison: 'below', statedCount: 0, quote: 'none of them dipped under 80 mph' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+    expect(result.reasoning).not.toContain('negates exceedance')
+    expect(result.reasoning).toBe('claimed 0, the row says 6')
+  })
+
+  // Negative case 3, nonzero stated count: from the real before-round
+  // power-s1/run6 instance. The guard only ever applies to a literal zero,
+  // so a claim of 4 is untouched by it and rules on the below bucket itself
+  // (real count 6), exactly as it did before this guard existed.
+  it('does not reroute a negated-exceedance quote with a nonzero stated count', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 1, metric: 'exitVelocity', threshold: 80, comparison: 'below', statedCount: 4, statedSwings: [2, 4, 9, 12], quote: 'none of them broke 80 mph or 15 degrees' },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('FALSE')
+    expect(result.reasoning).not.toContain('negates exceedance')
+    expect(result.reasoning).toBe('claimed 4, the row says 6')
   })
 })
