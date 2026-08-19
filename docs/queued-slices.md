@@ -672,7 +672,12 @@ to the one dimension it deliberately skipped, clean up one grammar bug the
 rule's own count lines introduced, close a small wording gap the rule made
 loud, and fix the measuring tool so the next comparison is trustworthy.
 
-## The four pieces
+*Amended 19 August 2026:* a fifth piece was added, measuring how often the
+coach contradicts a count it was handed rather than one it worked out for
+itself. It costs nothing extra to run and it is what decides a larger
+question this project has deliberately parked; both are below.
+
+## The five pieces
 
 1. **Align the fly-ball wording from 20 degrees to 18.** Line Drives &
    Contact's target band is 8 to 18 degrees, the single source in
@@ -710,7 +715,20 @@ loud, and fix the measuring tool so the next comparison is trustworthy.
    prompt can now hand the coach, re-run the bench's six cells before and
    after this slice's three prompt changes for a clean comparison.
 
-## Why these four travel together
+5. **Measure how often the coach contradicts a count it was handed.** Added
+   19 August 2026, from the conversation that closed Slice 8b. Every rate
+   this project has measured so far is about numbers the coach worked out
+   for itself. Nobody has ever measured the other failure: the coach holding
+   a correct count and stating a different one anyway. It is known to happen,
+   because Slice 8b's QA pass caught one, and it is known to be rare, because
+   all eight measured Hit to All Fields debriefs in that slice's after round
+   stated their counts correctly. Beyond that there is no number. This costs
+   nothing extra to measure, since the before-and-after rounds in piece 4 are
+   already being run and graded; what it needs is for the grading pass to
+   separate the two kinds of wrong claim rather than pooling them. Why it
+   matters is in the next section.
+
+## Why these pieces travel together
 
 All three prompt changes (1 to 3) are small, but each invalidates a
 before/after comparison run before it landed, the same way Slice 8b's own
@@ -720,6 +738,49 @@ together means paying for one clean round that measures all three at once.
 The grader fix (4) has to be first regardless of when the prompt changes
 ship, because measuring against a broken fact sheet is what created the
 problem this slice exists partly to clean up.
+
+## The decision piece 5 exists to inform: whether the app should write the numbers itself
+
+Recorded 19 August 2026. This is a decision **not** to build something yet,
+written down so nobody re-proposes it cold and nobody mistakes the delay for
+an oversight.
+
+The problem it would solve is the one piece 5 measures. Every lever this
+project has pulled at the coach so far is persuasion: the prompt asks for
+good behavior and gets it at a high rate, never at exactly every time. A
+count the coach already holds can still come out wrong, which is what
+happened on Hit to All Fields, and no sharper wording closes that, because
+wording was never what was binding.
+
+The approach that would actually close it is to stop letting the model write
+the figure at all. The coach would produce the sentence with a gap in it and
+the app would fill the number in from the real data, so the model keeps the
+voice, the judgment and the coaching, and the code owns every digit. For any
+number handled that way a contradiction stops being unlikely and starts being
+impossible.
+
+**Deliberately not being done now, and the reasoning is a product judgment
+rather than an engineering one.** It only covers figures the app knows to
+anticipate, and it makes the coach's prose more rigid in exactly the places
+it currently sounds most like a person. That voice is a real part of what
+this demo exists to show. One wrong sentence caught by hand is not enough
+evidence to spend it. The product manager delegated the call and this is the
+recommendation he accepted on 19 August 2026.
+
+**The trigger for revisiting is piece 5's number, and the rough rule agreed
+in advance so the decision is not re-argued from scratch.** If the coach
+contradicts a handed count at something like one debrief in fifty, fill in
+the counts the app already computes and accept the loss of some voice. If it
+is closer to one in several hundred, leave it alone, keep measuring it, and
+spend the effort on the pitch-location gap in piece 2 instead, which is
+known to be the larger source of wrong claims.
+
+A weaker middle option was considered and rejected in the same conversation:
+checking the finished debrief in code before showing it and regenerating when
+a stated count disagrees with a handed one. Rejected because the matching is
+brittle against ordinary English ("once", "a single swing", "just one"), it
+adds a second model call to the slowest screen in the app, and this project
+has already measured that this style of checking raises false alarms.
 
 ## What this does not claim
 

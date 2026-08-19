@@ -1626,6 +1626,24 @@ rewritten, per the append-only rule.
   inside the prompt, but sloppy, and cheap to fix alongside the other two
   prompt changes in this slice.
 
+*Added 19 August 2026, from the conversation that closed Slice 8b:*
+
+- **Measure how often the coach contradicts a count it was handed**, as
+  opposed to one it worked out for itself. Every rate this project has ever
+  measured is about the second kind. The first kind is known to happen, since
+  Slice 8b's QA pass caught one on Hit to All Fields, and known to be rare,
+  since all eight measured Hit to All Fields debriefs stated their counts
+  correctly, but it has no number. Folded into Slice 8c, where it costs
+  nothing extra because the before-and-after rounds are being run anyway.
+- **Decided not to have the app write the coach's numbers itself, for now.**
+  The one approach that would make a contradicted count impossible is to let
+  the coach write the sentence and have the app fill in the figure. It is
+  deliberately parked, because it makes the coach's prose more rigid exactly
+  where it sounds most human, and one wrong sentence is not enough evidence
+  to spend that. The trigger and the decision rule agreed in advance are
+  recorded with Slice 8c in `docs/queued-slices.md`. Do not re-propose this
+  without the measurement above in hand.
+
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
 and `/api/coach`; the safety-net fixes went back to
