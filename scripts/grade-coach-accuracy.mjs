@@ -580,8 +580,8 @@ function gradeParsedResponse(text, factSheet, context) {
     const withSession = claim.sessionNumber === undefined
       ? { ...claim, sessionNumber: factSheet?.viewingSessionNumber }
       : claim
-    const { verdict, actual, why } = verdictForClaim(withSession, factSheet, context)
-    return { ...withSession, verdict, actual, reasoning: why }
+    const { verdict, actual, reasoning } = verdictForClaim(withSession, factSheet, context)
+    return { ...withSession, verdict, actual, reasoning }
   })
   const flagged = graded.some((c) => c.verdict === 'FALSE')
   return { claims: graded, flagged, malformedCount }

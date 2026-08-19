@@ -12,6 +12,7 @@
 import { describe, it, expect } from 'vitest'
 import { verdictForClaim } from './claimVerdict.js'
 import { goalTarget } from '../src/goalTargets.js'
+import { handedClaimSpecs } from './handedCounts.js'
 
 // A small hand-built fact sheet in the exact shape buildFactSheet returns.
 // Hand-built rather than generated so a reader can check the expectations by
@@ -45,9 +46,22 @@ const FACT_SHEET = {
           // answered first and the inverted-range guard was never exercised.
           // Proven by mutation on 18 August 2026.
           { threshold: 30, above: { count: 1, swings: [5] }, below: { count: 4, swings: [1, 3, 4, 6] }, equal: { count: 1, swings: [2] }, atLeast: { count: 2 }, atMost: { count: 5 } },
+          // Slice 8c: rows at 8 and 18, contact's own band edges, derived
+          // from the same six swings' launch angles (18, 30, 22, 24, 31, 28).
+          // At 8, every swing is above it. At 18, swing 1 sits exactly on it
+          // and the other five are above.
+          { threshold: 8, above: { count: 6, swings: [1, 2, 3, 4, 5, 6] }, below: { count: 0, swings: [] }, equal: { count: 0, swings: [] }, atLeast: { count: 6 }, atMost: { count: 0 } },
+          { threshold: 18, above: { count: 5, swings: [2, 3, 4, 5, 6] }, below: { count: 0, swings: [] }, equal: { count: 1, swings: [1] }, atLeast: { count: 6 }, atMost: { count: 1 } },
         ],
         exitVelocity: [
           { threshold: 88, above: { count: 3, swings: [2, 4, 5] }, below: { count: 1, swings: [3] }, equal: { count: 2, swings: [1, 6] }, atLeast: { count: 5 }, atMost: { count: 3 } },
+          // Slice 8c: a hand-picked row for the sibling-bucket test. None of
+          // the six swings above (88, 90, 84, 92, 92, 88) sits at exactly 82
+          // mph, so this row is not derived from them; it stands in for a
+          // session where one swing sits exactly at 82. above = 2, equal = 1,
+          // below = 3 (2 + 1 + 3 = 6 swings). atLeast = above + equal = 3;
+          // atMost = below + equal = 4.
+          { threshold: 82, above: { count: 2, swings: [2, 4] }, below: { count: 3, swings: [1, 3, 6] }, equal: { count: 1, swings: [5] }, atLeast: { count: 3 }, atMost: { count: 4 } },
         ],
         direction: [
           { threshold: 15, above: { count: 2, swings: [3, 6] }, below: { count: 3, swings: [1, 2, 5] }, equal: { count: 0, swings: [] }, atLeast: { count: 2 }, atMost: { count: 4 } },
@@ -502,6 +516,86 @@ describe('claims the verdict code cannot rule on', () => {
     const result = verdictForClaim(
       { kind: 'threshold', sessionNumber: 4, metric: 'launchAngle', comparison: 'above', statedCount: 4 },
       FACT_SHEET,
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+})
+
+describe('handed versus derived (Slice 8c)', () => {
+  it('marks a FALSE claim handed when the prompt handed that count', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'launchAngle', threshold: 20, comparison: 'above', statedCount: 6 },
+      FACT_SHEET,
+      { goalId: 'contact', handed: handedClaimSpecs('contact', 'slice8b') },
+    )
+    expect(result.verdict).toBe('FALSE')
+    expect(result.handed).toBe(true)
+  })
+
+  it('marks a claim at an unhanded threshold derived', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'distance', threshold: 305, comparison: 'atLeast', statedCount: 2 },
+      FACT_SHEET,
+      { goalId: 'contact', handed: handedClaimSpecs('contact', 'slice8b') },
+    )
+    expect(result.handed).toBe(false)
+  })
+
+  it('adds no handed key at all when the context carries no handed set', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'launchAngle', threshold: 20, comparison: 'above', statedCount: 6 },
+      FACT_SHEET,
+    )
+    expect('handed' in result).toBe(false)
+  })
+})
+
+describe('the inclusive-phrasing fix (Slice 8b false positive, allfields-s4/run7)', () => {
+  // "only 3 swings cleared 82 mph": the coach was handed "82 mph or higher"
+  // (atLeast), extraction read "cleared" as strictly above, and the strict
+  // bucket disagreed with the handed inclusive one. When the handed line
+  // used the sibling comparison and the sibling bucket matches the stated
+  // count, the claim is TRUE.
+  it('accepts the sibling bucket when it is the count the coach was handed', () => {
+    // Requires a FACT_SHEET row where above and atLeast differ; extend the
+    // fixture with such a row if it lacks one, keeping it hand-checkable.
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'exitVelocity', threshold: 82, comparison: 'above', statedCount: 3 },
+      FACT_SHEET,
+      { goalId: 'allfields', handed: handedClaimSpecs('allfields', 'slice8b') },
+    )
+    expect(result.verdict).toBe('TRUE')
+    expect(result.reasoning).toContain('handed')
+  })
+
+  it('still rules FALSE when neither the claimed bucket nor the handed sibling matches', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'exitVelocity', threshold: 82, comparison: 'above', statedCount: 9 },
+      FACT_SHEET,
+      { goalId: 'allfields', handed: handedClaimSpecs('allfields', 'slice8b') },
+    )
+    expect(result.verdict).toBe('FALSE')
+  })
+})
+
+describe('range claims at a handed band (Slice 8b false positives, contact-s4)', () => {
+  // "8 swings in the target window" on contact: the prompt hands contact an
+  // launch-angle-only band count, so the old two-metric ambiguity guard does
+  // not apply; the claim is concrete and rulable.
+  it('rules on a goal-band range when the band count was handed', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 8, max: 18, statedCount: 2 },
+      FACT_SHEET,
+      { goalId: 'contact', handed: handedClaimSpecs('contact', 'slice8b') },
+    )
+    expect(result.verdict).not.toBe('UNVERIFIABLE')
+  })
+
+  it('keeps the two-metric guard for power, whose handed count is two-metric', () => {
+    const result = verdictForClaim(
+      { kind: 'range', sessionNumber: 4, metric: 'launchAngle', min: 25, max: 35, statedCount: 2 },
+      FACT_SHEET,
+      { goalId: 'power', handed: handedClaimSpecs('power', 'current') },
     )
     expect(result.verdict).toBe('UNVERIFIABLE')
   })
