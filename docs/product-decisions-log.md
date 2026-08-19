@@ -6,6 +6,64 @@
 
 ---
 
+## Slice 8c: finished the counting rule, fixed the tool measuring it, and put a parked decision back on the table (August 19)
+
+*What this slice was.* Slice 8b proved a mechanism, pre-count a threshold and
+the coach stops getting it wrong, but left one dimension uncounted: pitch
+location. This slice closed that gap, handing the coach four lines naming
+which swings sat outside the strike zone and which way each was off. Two
+cleanups rode along: Contact's fly-ball wording moved from 20 degrees to 18
+to match the goal's own band ceiling, and every count line now reads "1
+swing" instead of "1 swings." Before measuring any of it, the grading tool
+itself was fixed: its fact sheet had been leaking Power's stats onto every
+goal, which produced several of Slice 8b's own false positives, and
+measuring before fixing again would have repeated that mistake. A fifth
+piece, new here, measured for the first time how often the coach contradicts
+a number it was actually handed, rather than one it worked out itself,
+because that number decides a larger, parked question: whether the app
+should stop letting the coach write its own numbers at all.
+
+*The result, read the honest way.* Raw grader numbers looked worse: 15 of 52
+debriefs flagged before this slice's changes, 21 of 52 after. A raw flag is
+not proof of a coach error without a by-hand check, so all 47 flagged claims
+across both rounds were read against the real data one at a time. Most of
+the apparent decline was the tool, not the coach: 2 of the 15 before-round
+flags and 10 of the 21 after-round flags were the grader calling a true
+statement false. Corrected, genuine coach-error debriefs went from 13 to 11,
+and narrowed to the pitch-location claims this slice targeted, from 6
+genuine miscounts to 3, a real improvement. The 3 that remain are one
+narrower pattern: the coach held the correct whole-session total and still
+misstated it while intersecting that total with a different named group of
+swings from earlier in the same sentence. The zone lines added here are
+totals, not per-swing intersections, so a combined count is still something
+the coach derives itself, the next natural target.
+
+*The fifth piece, and the decision it reopens.* Pooled across both
+52-debrief rounds, the coach contradicted a handed number on 4 of 104
+debriefs, roughly one in 26, worse than the one-in-fifty rate agreed in
+advance as the trigger for having the app fill in every number itself and
+let the coach write only the sentence around it. Caveat: three of the four
+are the identical failure, reciting two adjacent prior-session averages in
+the wrong order; four events is not enough to trust a rate closely. This
+moves the fill-in-the-numbers question from parked to live. It does not
+decide it; that call is the product manager's, with the number now in hand.
+
+*Cost, verification, one loose end.* The first after-round attempt completed
+all 52 live calls, spent $0.96, then crashed writing its results because its
+output directory did not exist, losing every answer. The bench now creates
+that directory before writing, fixed and committed the same day before the
+round succeeded. Total spend: $2.53 of the $3.00 ceiling, including the lost
+$0.96. `npm test` moved from 461 tests across 19 files to 489 across 21. A
+live session-1 Power debrief on the local dev server confirmed the real
+request carries the four zone lines and the fixed grammar, and reproduced
+both the fix and the residual pattern above. One pre-existing wart surfaced
+the same way: the power goal's "below 15 degrees" line prints a dangling
+"numbers:" when its count is zero, on the What's Next list as a prompt
+change needing its own approval. Full numbers and every hand-checked flag
+are in `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
+
+---
+
 ## Slice 8c: opened (August 18)
 
 *Baseline at slice start, recorded before any code:* `npm test` runs **461
