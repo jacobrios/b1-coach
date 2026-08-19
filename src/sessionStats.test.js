@@ -5,7 +5,7 @@
 // confidently narrating something that did not happen.
 
 import { describe, it, expect } from 'vitest'
-import { computeStats, topExitVelocity } from './sessionStats.js'
+import { computeStats, topExitVelocity, inStrikeZone, pitchZoneBreakdown, STRIKE_ZONE } from './sessionStats.js'
 
 // Minimal shape of a swing, matching what the app generates.
 const swing = ({ ev = 85, la = 20, height = 2.5, side = 0 }) => ({
@@ -107,5 +107,41 @@ describe('an empty session', () => {
     // swing list existed rather than that it had anything in it, so the player
     // would have been shown "-Infinity mph".
     expect(topExitVelocity([])).toBeNull()
+  })
+})
+
+// Bounds as literals, not read back from STRIKE_ZONE: asserting the zone
+// against itself would pass no matter what the numbers became.
+describe('pitchZoneBreakdown', () => {
+  const swings = [
+    { plateLocHeight: 2.5, plateLocSide: 0.0 },  // in zone
+    { plateLocHeight: 3.6, plateLocSide: 0.2 },  // high
+    { plateLocHeight: 1.2, plateLocSide: -0.3 }, // low
+    { plateLocHeight: 2.8, plateLocSide: 0.9 },  // wide
+    { plateLocHeight: 1.4, plateLocSide: -0.8 }, // low AND wide at once
+    { plateLocHeight: 3.5, plateLocSide: -0.7 }, // exactly on both bounds: in zone
+  ]
+
+  it('classifies high, low, and wide pitches with 1-indexed swing numbers', () => {
+    const zone = pitchZoneBreakdown(swings)
+    expect(zone.high).toEqual({ count: 1, swings: [2] })
+    expect(zone.low).toEqual({ count: 2, swings: [3, 5] })
+    expect(zone.wide).toEqual({ count: 2, swings: [4, 5] })
+  })
+
+  it('counts the outside union once per swing, even when a pitch is off in two directions', () => {
+    const zone = pitchZoneBreakdown(swings)
+    expect(zone.outside).toEqual({ count: 4, swings: [2, 3, 4, 5] })
+  })
+
+  it('treats the bounds as inclusive, matching computeStats', () => {
+    expect(inStrikeZone({ plateLocHeight: 3.5, plateLocSide: -0.7 })).toBe(true)
+    expect(inStrikeZone({ plateLocHeight: 1.5, plateLocSide: 0.7 })).toBe(true)
+    expect(inStrikeZone({ plateLocHeight: 3.51, plateLocSide: 0 })).toBe(false)
+  })
+
+  it('agrees with computeStats about who is in the zone', () => {
+    // 4 outside, so 2 in zone: the two numbers must always sum to the total.
+    expect(computeStats(swings.map((s) => ({ ...s, hit: { launch: { exitSpeed: 80, angle: 10 } } }))).inZoneCount).toBe(2)
   })
 })
