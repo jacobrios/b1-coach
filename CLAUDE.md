@@ -241,9 +241,11 @@ as a side effect of other work.
 
 Line counts current as of 20 August 2026, at the close of Slice 9 (the rows
 that moved are `sessionOneSwings.js`, the two test aggregates, the `scripts/`
-`.mjs` aggregate, and the fixtures directory count; two rows this slice never
-touched, `ballFlight.js` and `coachApi.js`, are each off by a line or two and
-were left alone rather than churned out of lane).
+`.mjs` aggregate, and the fixtures directory count. Some of the rows below
+that this slice never touched are stale by a line or two, `ballFlight.js`,
+`coachApi.js` and `sessionStats.js` among them, and were left alone rather
+than churned out of lane; correct one on the way past if you open the file
+for another reason.
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
@@ -379,6 +381,12 @@ were left alone rather than churned out of lane).
                              a seeded search for fifteen replacement swings under
                              every settled constraint, so session 1's numbers are
                              reproducible rather than a set that appeared once.
+                             Note where the judgment sits: the constraints came
+                             from the 65/35 rule, but which candidate wins is
+                             decided by `believabilityScore` in that file, which
+                             weights distance-bucket shape and how many genuinely
+                             weak swings a session should hold. The counts are
+                             derived; the particular fifteen are taste, scored.
                              The same slice taught the grader two things it did
                              not know: which fifteen swings a saved round of
                              debriefs was actually written about (a third
@@ -1527,9 +1535,16 @@ rewritten, per the append-only rule.
   Contact's target band, which the annotation above says carried zero on-target
   swings, now carries two. Power's carries two, down from three on purpose:
   three was above what a later session typically produces, so a visitor
-  clicking through all four sessions watched the band empty out roughly seven
-  times in ten. Hit to All Fields, which had quietly never met its own stated
-  ask of three pull and three opposite field, now gets three and four. Nothing
+  clicking through all four sessions came in with fewer on-target swings than
+  their first screen roughly seven times in ten. (Fewer, not none. An actually
+  empty Power band is a different and rarer event, about one session in eight,
+  and an earlier draft of this line said "emptied out," which overstated it by
+  roughly six times.) Hit to All Fields, which had quietly never met its own stated
+  ask of three pull and three opposite field, now gets three and four. One
+  other visible change on that screen: the Distance Distribution chart's five
+  bars move from 5, 3, 1, 3, 3 to 4, 4, 3, 2, 2, a flatter spread; review
+  argued the old bimodal shape was itself a product of the ruler, and it was
+  looked at in a browser before it shipped. Nothing
   downstream moved: both of session 1's averages were held to the exact same
   sums, which is pinned by a test against a snapshot of the old data. The full
   reasoning is in `docs/slice-9-plan.md` and the decision log entry for 19-20
@@ -1563,11 +1578,21 @@ rewritten, per the append-only rule.
   claims still match the data over many runs, which is the argument for building
   the bench first and rewriting session 1 second.~~ **Half done 14 August 2026.**
   The eval bench this item asked for now exists (`scripts/bench-coach-brevity.mjs`),
-  built in Slice 7. What is still open is the session 1 rewrite itself and
+  built in Slice 7. ~~What is still open is the session 1 rewrite itself and
   grading it through the bench once it exists as real data: both are blocked on
   extracting the fifteen hand-written swings into their own module first,
-  which is the first task of the next slice. See the bench's session-1 blind
+  which is the first task of the next slice.~~ See the bench's session-1 blind
   spot, described above.
+
+  **Fully closed 19-20 August 2026, in Slice 9, and this is the item that slice
+  most directly answers.** The rewrite happened, and the verification the owner
+  explicitly handed over was done the way he asked: not by eye, but by 192 live
+  debriefs across three rounds, before and after, with every flagged claim
+  adjudicated by hand. There was no whack-a-mole hunt afterwards. The result was
+  a null one, neither better nor worse, with one real improvement on the Line
+  Drives & Contact first screen and zero parse failures across all three rounds.
+  See the decision log entry for 19-20 August 2026 and
+  `docs/eval-fixtures/slice9-session-one/`.
 - **The distance-bucket drift test does not reach the chart.** Recorded in the
   known-debt section above with its reasoning. Only worth revisiting if this
   project ever grows rendering tests, which it deliberately has not.
@@ -1581,8 +1606,9 @@ rewritten, per the append-only rule.
   both wait on this.~~ **Done in Slice 7b, 17 August 2026.** See
   `src/sessionOneSwings.js` above and the bench section's closed blind-spot
   note. Extracting it did not just enable measurement, it surfaced a live
-  parse-failure bug; see the decision log. The session-1 rewrite itself is
-  still open.
+  parse-failure bug; see the decision log. ~~The session-1 rewrite itself is
+  still open.~~ **Done 19 August 2026 in Slice 9**; see the closed item above
+  and the decision log entry for 19-20 August 2026.
 - **The coach rounds numbers loosely.** The bench's own transcripts show it
   saying "320 feet or more" against a session whose real bucket was "305
   plus." Not invention, the number is in the right neighborhood, but not
@@ -1838,9 +1864,11 @@ rewritten, per the append-only rule.
   after comparison run with this tool: **the false-positive rate was not even
   across the rounds, and it was worse on the after side specifically**, because
   the most common mechanism fires on sentences the coach only began writing
-  after the change being measured. An unchecked flag count across those three
-  rounds would have reported the coach getting roughly 80% worse when the
-  hand-check says it did not change at all. The two mechanisms Slice 8d named
+  after the change being measured. An unchecked flag count comparing the before
+  round against the first after round would have reported the coach getting
+  roughly 80% worse (16 flags against 29) when the hand-check says it did not
+  change at all. Note that the second after round flagged 15, below the before
+  round, which is the same point from the other direction. The two mechanisms Slice 8d named
   and left unfixed, a named subset checked against a whole-session total and a
   restated threshold read as an exact value, are still the ones doing it. Every
   flagged claim in all three rounds is adjudicated in

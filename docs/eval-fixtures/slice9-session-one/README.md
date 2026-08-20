@@ -42,8 +42,9 @@ most changes, and nothing had ever measured it.
 ## The exact commands
 
 The three bench rounds, in the order run. The first was run at commit
-`8b07ab0`, against the old data still in the working tree; the other two after
-the rewrite landed at commit `3d13cb5`.
+`f4eb87b`, against the old data still in the working tree; `8b07ab0` is the
+commit that carries its output, not the code it ran against. The other two ran
+after the rewrite landed at commit `3d13cb5`.
 
 ```
 node --env-file=.env.local scripts/bench-coach-brevity.mjs --condition shipped --runs 8 \
@@ -147,16 +148,40 @@ Genuine coach errors, after the hand-check:
 | genuine claim errors, all 64 records | 14 | 19 | 9 |
 | debriefs holding at least one genuine error | 11 / 64 | 16 / 64 | 8 / 64 |
 | genuine claim errors, the 24 seed-independent records | 6 | 7 | 3 |
-| substantive miscounts only (mildest two shapes stripped out) | 8 | 8 | 8 |
+| substantive miscounts only (the three mildest shapes stripped out) | 8 | 8 | 8 |
+
+The last row strips three shapes, not two: a reversed pair of correct values, a
+value sitting exactly on the coach's own stated threshold, and a range boundary
+off by one. That is deliberate and worth saying out loud, because it is the
+**flattest** cut available. Stripping only the first two gives 11 / 8 / 8, which
+would read as an improvement this data cannot support. The conservative cut was
+chosen over the flattering one.
 
 **The two after rounds bracket the before round on every view.** They are
 looking at identical session-1 data and differ from each other by more than
 either differs from before. That is what a null result looks like, and it is why
 this directory does not claim an improvement in overall accuracy.
 
-Two things do point in a direction, and both are named in `HAND-CHECK.md`:
+Two things do point in a direction, and both are named in `HAND-CHECK.md`.
+Before either, the two session-1 cells side by side, because reading one of them
+as signal and the other as noise is a judgment that has to be made out loud:
 
-- **Favourable, and the one thing this slice can claim.** The `contact-s1` cell
+| cell, 12 records per round | before | after-a | after-b |
+|---|---|---|---|
+| `contact-s1` | 3 | 0 | 0 |
+| `power-s1`   | 3 | 7 | 3 |
+
+**`contact-s1` is read as signal and `power-s1` as noise, on this standard: a
+cell whose two after rounds agree with each other is measuring something, and a
+cell whose two after rounds disagree by more than either disagrees with before
+is measuring its own variance.** `contact-s1` reads 0 and 0 against 3, and it
+also has a mechanism behind it that was predicted before the data came in.
+`power-s1` reads 7 and 3 against 3, which brackets the before round the same way
+the full 64-record view does, so it supports no direction at all. Anyone who
+wants to read `power-s1`'s 7 as a real regression has to also read its 3 as a
+real improvement, which is the point.
+
+- **Favourable, and the one thing this slice claims.** The `contact-s1` cell
   went from 3 genuine errors on the old data to **zero** in both after rounds.
   That is the cell whose target band used to be empty, and the coach used to
   keep miscounting the "low and soft" group it had nothing else to talk about.
@@ -176,8 +201,10 @@ back.
 ## What is NOT safe to conclude
 
 - **That the rewrite improved the coach.** It did not, measurably, and this
-  directory does not say it did. Only `contact-s1` moved, on 12 records per
-  round, which is a small cell.
+  directory does not say it did. `contact-s1` is the only cell that moved
+  consistently in one direction, on 12 records per round, which is a small
+  cell. `power-s1` moved too, by more, in both directions, which is why it is
+  read as noise; see the table above for the standard being applied.
 - **That the rewrite made the coach worse.** Same reason, in the other
   direction. The noise floor demonstrated here is wider than the effect.
 - **That any of these are repeatable numbers.** Three rounds of 64, one model
