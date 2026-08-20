@@ -164,24 +164,33 @@ describe('nothing falls through the bottom or off the top', () => {
 })
 
 describe('the exact fifteen distances the app opens on', () => {
-  // src/App.jsx's mockSwings, the hand-written session 1 every visitor sees
-  // first. Before Task 4 the chart rendered 0, 0, 1, 4, 10 against these same
-  // distances: two columns permanently empty, one enormous bar. Task 4's own
-  // edges (150/200/250/300) rendered this as an even 3, 3, 3, 3, 3. Task 10
+  // src/sessionOneSwings.js's SESSION_ONE_SWINGS, the hand-written session 1
+  // every visitor sees first. Before Task 4 of the honest-ball-flight slice
+  // the chart rendered 0, 0, 1, 4, 10 against the original distances: two
+  // columns permanently empty, one enormous bar. Task 4's own edges
+  // (150/200/250/300) rendered that session as an even 3, 3, 3, 3, 3. Task 10
   // moved the edges to 175/225/265/305, the product manager's choice from a
   // rendered comparison (see the header comment in ballFlight.js), which
-  // renders this same session as 5, 3, 1, 3, 3 — uneven, the way a real
+  // rendered that same session as 5, 3, 1, 3, 3, uneven, the way a real
   // measurement reads, rather than five identical bars.
-  const mockDistances = [170, 122, 310, 126, 345, 224, 150, 277, 185, 241, 279, 97, 290, 201, 346]
+  //
+  // Updated 19 August 2026, in Slice 9. Session 1's fifteen swings were
+  // rewritten (see the header comment in src/sessionOneSwings.js for why),
+  // and these are the new distances that rewrite produced, still an
+  // independent literal check rather than an import: this proves these
+  // fifteen specific numbers still sort into the right buckets and still
+  // write the right sentence, not merely that the module re-exports whatever
+  // it happens to hold today.
+  const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map(swingAt)
 
-  it('gives every column real fill: 5, 3, 1, 3, 3', () => {
-    expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([5, 3, 1, 3, 3])
+  it('gives every column real fill: 4, 4, 3, 2, 2', () => {
+    expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([4, 4, 3, 2, 2])
   })
 
   it('writes the same five numbers into the sentence the coach reads', () => {
     expect(distanceDistributionLine(swings)).toBe(
-      'Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Under 175ft: 4 swings, 175-225ft: 4 swings, 225-265ft: 3 swings, 265-305ft: 2 swings, 305+ft: 2 swings',
     )
   })
 })

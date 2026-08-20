@@ -821,9 +821,14 @@ describe('unwrapping what the model actually returns', () => {
 // actual text callApi sends, not a copy of the buckets, so a hand-written
 // range creeping back into either prompt fails here.
 describe('the distance distribution both prompts describe', () => {
-  // src/App.jsx's mockSwings distances, the hand-written session 1 every
-  // visitor opens on.
-  const mockDistances = [170, 122, 310, 126, 345, 224, 150, 277, 185, 241, 279, 97, 290, 201, 346]
+  // src/sessionOneSwings.js's SESSION_ONE_SWINGS distances, the hand-written
+  // session 1 every visitor opens on. Updated 19 August 2026, in Slice 9,
+  // when those fifteen swings were rewritten; see the header comment in
+  // src/sessionOneSwings.js for why. This stays an independent literal
+  // rather than an import, proving these specific numbers still write the
+  // right sentence rather than proving only that the module re-exports
+  // whatever it currently holds.
+  const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map((distance) => ({
     plateLocHeight: 2.5,
     plateLocSide: 0,
@@ -858,7 +863,7 @@ describe('the distance distribution both prompts describe', () => {
     // not just prove the prompt echoes whatever that function currently
     // returns — it proves the buckets are actually the ones the plan chose.
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 4 swings, 175-225ft: 4 swings, 225-265ft: 3 swings, 265-305ft: 2 swings, 305+ft: 2 swings',
     )
   })
 
@@ -870,7 +875,7 @@ describe('the distance distribution both prompts describe', () => {
       }),
     )
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 4 swings, 175-225ft: 4 swings, 225-265ft: 3 swings, 265-305ft: 2 swings, 305+ft: 2 swings',
     )
   })
 
