@@ -9,7 +9,13 @@ import { describe, it, expect } from 'vitest'
 import { mergeInputRecords, classifyInputFile } from './inputRecords.js'
 
 const ok = (cell, run) => ({ conditionKey: 'shipped', cell, run, fields: { coachingSummary: 'text' } })
-const failed = (cell, run) => ({ conditionKey: 'shipped', cell, run, failed: true, error: 'parse failure' })
+// The real shape scripts/coachFailureRecord.js:48 writes: `failed` is the
+// caught error's MESSAGE, a string, never the boolean `true`. This helper
+// used to fabricate `failed: true`, which is why 9 tests built on it never
+// caught the predicate bug fixed in inputRecords.js on 20 August 2026: the
+// fabricated boolean happened to satisfy the wrong `e.failed === true` check
+// the same way the real string never could.
+const failed = (cell, run) => ({ conditionKey: 'shipped', cell, run, failed: 'JSON.parse failed on model reply' })
 // What a grading run writes: the { meta, results } wrapper since 19 August
 // 2026, and a bare array of the same results before that. Slice 9 is the
 // first slice to commit one of these INSIDE a round directory, beside the

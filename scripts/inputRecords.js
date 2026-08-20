@@ -41,11 +41,23 @@ const isObject = (v) => typeof v === 'object' && v !== null && !Array.isArray(v)
 // scripts/bench-coach-brevity.mjs --out: a condition, a cell, a run, and
 // either the coach's parsed fields or the failure marker
 // scripts/coachFailureRecord.js writes.
+//
+// FIXED 20 AUGUST 2026. This used to require `e.failed === true`, but
+// scripts/coachFailureRecord.js:48 has never written that: it writes
+// `failed: err.message`, a STRING. Nothing in this repo ever writes
+// `failed: true`. Every other reader of this shape (mergeInputRecords below,
+// scripts/bench-coach-brevity.mjs around lines 760 and 924, and
+// scripts/show-parse-failure-before-after.mjs around line 88) already treats
+// `failed` as truthy rather than `=== true`; this was the one place that
+// disagreed with the rest of the repo, so a real failure record failed this
+// predicate, classifyInputFile decided the file matched neither known shape,
+// and the whole file was refused instead of the failed record being set
+// aside as designed.
 const looksLikeBenchRecord = (e) =>
   isObject(e) &&
   typeof e.conditionKey === 'string' &&
   typeof e.cell === 'string' &&
-  (e.failed === true || isObject(e.fields))
+  (Boolean(e.failed) || isObject(e.fields))
 
 // scripts/grade-coach-accuracy.mjs --out: one entry per graded record, each
 // wrapping the bench record it graded plus the claims extracted from it.
@@ -73,11 +85,19 @@ export function classifyInputFile(name, parsed) {
   if (parsed.length === 0) return 'bench records'
   if (parsed.every(looksLikeGradingResult)) return 'grading output'
   if (parsed.every(looksLikeBenchRecord)) return 'bench records'
+  // Name the entry that actually broke the predicate, not index 0. In a
+  // mixed file index 0 is usually a GOOD record (that is how the mix
+  // happens: good records with one foreign entry stirred in), so printing
+  // its keys pointed a reader away from the offending entry rather than at
+  // it. Found and fixed 20 August 2026 alongside the looksLikeBenchRecord
+  // predicate bug above.
+  const offendingIndex = parsed.findIndex((e) => !looksLikeGradingResult(e) && !looksLikeBenchRecord(e))
+  const offending = parsed[offendingIndex]
   throw new Error(
     `${name} is an array, but its entries are not all bench records and not all grading results. ` +
     'Refusing: a file that is only half recognised is a file nobody understands, and grading the half ' +
-    'that parses would be a guess. First entry keys: ' +
-    `${isObject(parsed[0]) ? Object.keys(parsed[0]).join(', ') || '(none)' : typeof parsed[0]}.`,
+    `that parses would be a guess. Entry ${offendingIndex} keys: ` +
+    `${isObject(offending) ? Object.keys(offending).join(', ') || '(none)' : typeof offending}.`,
   )
 }
 
@@ -88,10 +108,11 @@ export function classifyInputFile(name, parsed) {
 // the whole files set aside as something other than bench records.
 //
 // Failed records are the ones the bench writes when a live call did not
-// parse (scripts/coachFailureRecord.js): failed: true and no fields. Grading
-// one would send an empty debrief to the extraction model, so they are
-// partitioned out for the caller to report, never silently graded and never
-// silently dropped without a count.
+// parse (scripts/coachFailureRecord.js): a truthy `failed` (the caught
+// error's message, a string) and no `fields`. Grading one would send an
+// empty debrief to the extraction model, so they are partitioned out for the
+// caller to report, never silently graded and never silently dropped without
+// a count.
 export function mergeInputRecords(filesWithRecords) {
   const records = []
   const skippedFailed = []

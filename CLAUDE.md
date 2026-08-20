@@ -2164,6 +2164,36 @@ reread, so anything it discovers has to reach this list to survive.*
   exclusion word ("five *other* swings") dropped in extraction. All four are
   adjudicated case by case in the hand-check.
 
+*Added 20 August 2026, from the fix wave that closed the `looksLikeBenchRecord`
+predicate bug (`scripts/inputRecords.js`). Both are about the grading tool's
+own self-checks, not the coach.*
+
+- **Nothing runs the grading tool's free dry run automatically, and no test
+  asserts it exits 0.** `--dry-run` exists precisely so a slice can prove the
+  instrument still works before any money is spent, but that gate was itself
+  silently dead for this entire slice: it refused every `--input` directory
+  holding even one failed bench record, and nothing noticed until a human ran
+  the command by hand at final review. The same shape of bug will recur the
+  next time a slice hands the tool a new kind of file to read, because the one
+  check meant to catch it was not wired into anything automatic. Cheap fix:
+  one test, or one hook, that shells out to `--dry-run` and asserts a zero
+  exit code.
+- **Four of the grading tool's guardrail self-checks still count ANY exception
+  as a pass.** The four `try { ... } catch (err) { guardOk++; console.log(...)
+  }` blocks in `scripts/grade-coach-accuracy.mjs` around lines 1245 to 1272
+  (the "Builder-selection guardrails" printed in every dry run) log the
+  caught message but never check it says what it is supposed to say, so a
+  guardrail that throws for the wrong reason, or a caller-side bug that throws
+  before the guardrail is even reached, still prints "ok." This is the
+  identical defect this same fix wave just corrected one seat over in
+  `looksLikeBenchRecord`, and the three marker-provenance guards just below
+  those four in the same file were already tightened this way on 20 August
+  2026 (see that block's own comment for what a bare catch let through). Left
+  alone here because these four only exercise argument validation against
+  paths that do not exist, which is lower-stakes than the marker guards, but
+  the fix is the same shape: assert on the message, not just that something
+  was thrown.
+
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
 and `/api/coach`; the safety-net fixes went back to
