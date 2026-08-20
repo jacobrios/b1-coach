@@ -436,13 +436,42 @@ function readBuilderMarker(dir) {
   } catch {
     return null
   }
+  // A PRESENT KEY WITH AN EMPTY VALUE IS MALFORMED, for every field, and it
+  // is refused here rather than left to each field's own validation below.
+  // Found by review on 19 August 2026: `seed = ` with nothing after it used
+  // to survive, because Number('') is 0 and 0 is a perfectly good integer, so
+  // a botched edit or a truncated write produced a silent `seed 0` and a live
+  // round rebuilt sessions 2, 3 and 4 at a seed nothing was generated at.
+  // That is the exact failure this marker exists to prevent, reached through
+  // a different door. An unknown key is refused for the same reason: `sed =
+  // 20260819` would otherwise be ignored in silence and the round would fall
+  // back to the default seed, which is the same silent-wrong-seed outcome one
+  // typo away. A marker is a handful of lines that somebody typed once, so
+  // strict is cheap here and a quiet misread is not.
+  const KNOWN_KEYS = ['builder', 'handed-era', 'seed']
   const settings = {}
   for (const rawLine of text.split('\n')) {
     const line = rawLine.trim()
     if (!line || line.startsWith('#')) continue
     const eq = line.indexOf('=')
     if (eq === -1) continue
-    settings[line.slice(0, eq).trim()] = line.slice(eq + 1).trim()
+    const key = line.slice(0, eq).trim()
+    const value = line.slice(eq + 1).trim()
+    if (!KNOWN_KEYS.includes(key)) {
+      throw new Error(
+        `${markerPath} has a line naming "${key}", which is not one of ${KNOWN_KEYS.join(', ')}. ` +
+        'A misspelled key would be ignored in silence and the run would quietly fall back to a default, ' +
+        'which is the mistake this file exists to stop. Fix the key, or make the line a # comment.',
+      )
+    }
+    if (value === '') {
+      throw new Error(
+        `${markerPath} has a "${key}" line with nothing after the "=". A blank value is malformed, not a ` +
+        'default: it usually means a botched edit or a truncated write. Give it a value or delete the line ' +
+        '(a missing line falls back honestly and says so in the run header).',
+      )
+    }
+    settings[key] = value
   }
   if (!settings.builder) {
     throw new Error(
