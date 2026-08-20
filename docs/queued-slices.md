@@ -682,6 +682,14 @@ already scoped. Full numbers, the hand-check, and every caveat are in the
 decision log entry for 19 August 2026 and in
 `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
 
+**Correction, 19 August 2026, from Slice 8d.** The "13 to 11" figure above
+is off by one. Slice 8d replayed this slice's stored grading data through a
+fixed grading tool and found the after round's "none of them cracked 88
+mph" claim was itself a grading-tool false positive, not a genuine coach
+error; the corrected comparison is 13 to 10. The pitch-location figure, 6
+to 3, is unaffected. See the decision log's Slice 8d entry and
+`docs/eval-fixtures/slice8d-grader-fp/README.md`.
+
 ## What it is, in one line
 
 Finish applying Slice 8b's own rule, count every threshold the prompt names,

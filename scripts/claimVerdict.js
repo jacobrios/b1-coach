@@ -45,6 +45,27 @@ const COMPARISONS_WITH_SWINGS = new Set(['above', 'below', 'equal'])
 const unverifiable = (reasoning) => ({ verdict: 'UNVERIFIABLE', actual: null, reasoning })
 const ruled = (verdict, actual, reasoning) => ({ verdict, actual, reasoning })
 
+// Slice 8d: the negated-exceedance guard. "Nothing got out past 265 feet"
+// reaches this layer as (below|atMost, 0): the extractor flips a negated
+// exceedance to the complement comparison but keeps the literal zero, and
+// comparing 0 against the below-bucket then fails a true sentence. Both
+// words must appear: the negation and the exceedance verb. "None of them
+// dipped under 80" has a negation but no exceedance verb and must NOT
+// reroute, because there the below-comparison is what the coach actually
+// meant. Recurred 8 times across the two Slice 8c rounds; see
+// docs/eval-fixtures/slice8c-strike-zone-counts/README.md.
+const NEGATED_EXCEEDANCE =
+  /\b(?:none|nothing|not one|no ball|never)\b[\s\S]{0,60}?\b(?:above|over|past|beyond|exceed\w*|clear\w*|broke|break\w*|crack\w*|topp\w*)\b/i
+
+function negatedExceedanceReroute(claim) {
+  return (
+    claim.statedCount === 0 &&
+    (claim.comparison === 'below' || claim.comparison === 'atMost') &&
+    typeof claim.quote === 'string' &&
+    NEGATED_EXCEEDANCE.test(claim.quote)
+  )
+}
+
 function findSession(factSheet, sessionNumber) {
   if (!Number.isFinite(sessionNumber)) return null
   return (factSheet?.sessions ?? []).find((s) => s.sessionNumber === sessionNumber) ?? null
@@ -81,6 +102,24 @@ function thresholdVerdict(claim, session, context) {
   const bucket = row[comparison]
   if (!bucket || !Number.isFinite(bucket.count)) {
     return unverifiable(`row for ${metric} at ${threshold} carries no "${comparison}" count`)
+  }
+
+  // Slice 8d: the negated-exceedance guard, before the count comparison
+  // below (including before the sibling-bucket rule), because a rerouted
+  // claim is answering a different question than the stored comparison
+  // asks: "0 above" the threshold, not "N ${comparison}" it.
+  if (negatedExceedanceReroute(claim)) {
+    const aboveBucket = row.above
+    if (!aboveBucket || !Number.isFinite(aboveBucket.count)) {
+      return unverifiable(
+        `row for ${metric} at ${threshold} carries no "above" count to check the negated claim against`,
+      )
+    }
+    const rerouted = describeRow(metric, 'above', threshold, aboveBucket)
+    const reasoning =
+      `the quote negates exceedance, so the claim means "0 above ${threshold}"; ` +
+      `the above count is ${aboveBucket.count}`
+    return ruled(aboveBucket.count === 0 ? 'TRUE' : 'FALSE', rerouted, reasoning)
   }
 
   const actual = describeRow(metric, comparison, threshold, bucket)
@@ -152,6 +191,27 @@ function subsetVerdict(claim, session, context) {
 
   const row = findThresholdRow(session, metric, threshold)
   if (!row) return unverifiable(`no precomputed row for ${metric} at ${threshold}`)
+
+  // Slice 8d: the negated-exceedance guard (see thresholdVerdict above),
+  // before the intersection comparison below, because a rerouted claim
+  // means "none of these named swings is above the threshold," not "N of
+  // them are ${comparison} it."
+  if (negatedExceedanceReroute(claim)) {
+    const aboveSwings = row.above?.swings
+    if (!Array.isArray(aboveSwings)) {
+      return unverifiable(
+        `row for ${metric} at ${threshold} carries no "above" swing list to check the negated claim against`,
+      )
+    }
+    const offenders = ofSwings.filter((n) => aboveSwings.includes(n))
+    const rerouted = `${offenders.length} of swings ${ofSwings.join(', ')} are above ${threshold} ${metric}` +
+      (offenders.length ? ` (swings ${offenders.join(', ')})` : '')
+    const reasoning = offenders.length === 0
+      ? `the quote negates exceedance, so the claim means none of the named swings are above ${threshold}; none are`
+      : `the quote negates exceedance, so the claim means none of the named swings are above ${threshold}; swings ${offenders.join(', ')} are`
+    return ruled(offenders.length === 0 ? 'TRUE' : 'FALSE', rerouted, reasoning)
+  }
+
   const qualifying = row[comparison]?.swings
   if (!Array.isArray(qualifying)) return unverifiable(`row carries no "${comparison}" swing list`)
 

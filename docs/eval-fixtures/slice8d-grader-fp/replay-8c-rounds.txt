@@ -1,0 +1,35 @@
+REPLAY  docs/eval-fixtures/slice8c-strike-zone-counts/before-grading.json
+  era=slice8b  seed=20260814  (no meta in file; from flags)
+
+RECORDS  52
+CLAIMS   430
+  TRUE          stored=274  replayed=275
+  FALSE         stored=26  replayed=25
+  UNVERIFIABLE  stored=130  replayed=130
+FLAGGED DEBRIEFS  stored=15  replayed=14
+
+VERDICT CHANGES, one per claim:
+  shipped/open-s4/run2  field=whatThisMeans  quote="Nothing got past 265 feet this round"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+
+VERDICT CHANGES: 1
+REPLAY  docs/eval-fixtures/slice8c-strike-zone-counts/after-grading.json
+  era=current  seed=20260814  (no meta in file; from flags)
+
+RECORDS  52
+CLAIMS   434
+  TRUE          stored=300  replayed=308
+  FALSE         stored=26  replayed=18
+  UNVERIFIABLE  stored=108  replayed=108
+FLAGGED DEBRIEFS  stored=21  replayed=14
+
+VERDICT CHANGES, one per claim:
+  shipped/power-s1/run12  field=tip1  quote="none of them broke 80 mph"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means none of the named swings are above 80; none are
+  shipped/power-s1/run12  field=tip1  quote="none of them got above 14 degrees"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means none of the named swings are above 14; none are
+  shipped/power-s2/run4  field=tip1  quote="none of them cracked 88 mph"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means none of the named swings are above 88; none are
+  shipped/open-s4/run1  field=coachingSummary  quote="nothing got out past 265 feet"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+  shipped/open-s4/run2  field=coachingSummary  quote="nothing got out past 265 feet"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+  shipped/open-s4/run3  field=coachingSummary  quote="nothing got out past 265 feet"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+  shipped/open-s4/run5  field=coachingSummary  quote="nothing got out past 265 feet"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+  shipped/open-s4/run6  field=coachingSummary  quote="nothing left the bat past 265 feet"  FALSE -> TRUE  reasoning: the quote negates exceedance, so the claim means "0 above 265"; the above count is 0
+
+VERDICT CHANGES: 8
