@@ -13,6 +13,12 @@ import {
   DIRECTION_KEY_LINE,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
+// Imported rather than hand-copied, unlike the distances the block below pins
+// as literals: these tests are about which swings the coach is told went
+// where, so they have to run against the real session 1, not a copy of it.
+import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
+import { sprayBreakdown } from './sessionStats.js'
+import { generateSwings } from './swingGenerator.js'
 
 const RETRY_DELAY_MS = 1500
 const REQUEST_TIMEOUT_MS = 50000
@@ -170,7 +176,11 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
   const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
-  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  // Slice 10 added the three spray count lines here and reworded the direction
+  // key. Swing 1 is -12 degrees (up the middle under the screen's own rule,
+  // which is exactly the case the old "negative is pull side" wording got
+  // wrong) and swing 2 is +18, opposite field.
+  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings up the middle (direction -15 to +15 degrees, including both): 1 swing — numbers: 1\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing — numbers: 2\n- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -242,7 +252,10 @@ describe('the count lines each goal is handed', () => {
     expect(message).toContain('- Swings with launch angle strictly below 15 degrees (not including 15): 2 swings — numbers: 2, 5')
     expect(message).toContain('- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 2 swings')
     expect(message).not.toContain('or higher')
-    expect(message).not.toContain('including both')
+    // Narrowed in Slice 10: "including both" now also appears in the universal
+    // "up the middle" line every goal gets, so this checks for the goal count
+    // line it was written about, not the two words.
+    expect(message).not.toContain('launch angle in the target')
   })
 
   it('contact: counts the target range, hard contact, and fly balls', () => {
@@ -277,8 +290,12 @@ describe('the count lines each goal is handed', () => {
     expect(message).not.toContain('power zone')
     expect(message).not.toContain('below 15 degrees')
     expect(message).not.toContain('or higher')
-    expect(message).not.toContain('including both')
-    expect(message).not.toContain('strictly above')
+    // Both narrowed in Slice 10 for the same reason as the power test above:
+    // the three universal spray count lines legitimately carry "including
+    // both" and "strictly above", so these now name the launch-angle count
+    // lines they were written about. Open still gets no GOAL count lines.
+    expect(message).not.toContain('launch angle in the target')
+    expect(message).not.toContain('launch angle strictly above')
     // The strike-zone summary now runs into the zone lines, and the last
     // zone line runs straight into the top-3 line, no blank line left behind
     // where the two shipped count lines used to sit.
@@ -980,7 +997,7 @@ describe('the direction key both prompts state', () => {
       generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
     )
     expect(message).toContain(
-      '- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.',
+      '- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.',
     )
   })
 
@@ -992,7 +1009,7 @@ describe('the direction key both prompts state', () => {
       }),
     )
     expect(message).toContain(
-      '- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.',
+      '- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.',
     )
   })
 
@@ -1024,6 +1041,146 @@ describe('the direction key both prompts state', () => {
     const adjacency = `${DIRECTION_KEY_LINE}\n- Individual swings:`
     expect(debriefMessage).toContain(adjacency)
     expect(chatMessage).toContain(adjacency)
+  })
+})
+
+// Slice 10 Task 7. The browser QA gate caught the app holding two definitions
+// of pull at once: the coach was handed "negative direction is pull side" and
+// named six pull-side swings, while the spray chart beside it coloured the
+// three below -15 and called the other three Center. Both were right by their
+// own rule. These lines hand the coach the screen's own rule, pre-counted, so
+// it never has to decide for itself which swings went where.
+//
+// Same three-part shape as the two blocks above (debrief, chat, cannot drift),
+// because the chat prompt is the one that gets missed — and it is where the
+// product manager actually saw the defect.
+describe('the spray count lines both prompts state', () => {
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  const sessionOf = (swings) => ({
+    sessionNumber: 1,
+    stats: {
+      avgExitVelocity: 80, avgLaunchAngle: 15,
+      inZoneCount: swings.length, totalSwings: swings.length,
+    },
+    swings,
+  })
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  const debriefFor = (session, forGoal = goal) => capturedMessage(() =>
+    generateDebrief({ goal: forGoal, player, sessions: [session], viewingSessionNumber: 1 }),
+  )
+  const chatFor = (session, forGoal = goal) => capturedMessage(() =>
+    sendChatMessage({
+      goal: forGoal, player, sessions: [session], viewingSessionNumber: 1,
+      messages: [{ role: 'user', content: 'Which ones did I pull?' }],
+    }),
+  )
+
+  // The three lines as the product manager approved them on 20 August 2026,
+  // against session 1's real fifteen swings. Literals, hand-derived from the
+  // directions in src/sessionOneSwings.js (pull: -24, -22, -20; oppo: 29, 24,
+  // 21, 17; the other eight between), so this proves the shipped sentence and
+  // the shipped numbers, not that the prompt echoes whatever the code returns.
+  const PULL_LINE = '- Swings pull side (direction strictly below -15 degrees, not including -15): 3 swings — numbers: 3, 7, 15'
+  const MIDDLE_LINE = '- Swings up the middle (direction -15 to +15 degrees, including both): 8 swings — numbers: 1, 2, 4, 6, 10, 11, 13, 14'
+  const OPPO_LINE = '- Swings opposite field (direction strictly above +15 degrees, not including +15): 4 swings — numbers: 5, 8, 9, 12'
+
+  it('the debrief prompt states all three, exactly, on session 1\'s real swings', async () => {
+    const message = await debriefFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(PULL_LINE)
+    expect(message).toContain(MIDDLE_LINE)
+    expect(message).toContain(OPPO_LINE)
+  })
+
+  it('the chat prompt — where the defect was actually seen — states the identical three', async () => {
+    const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(PULL_LINE)
+    expect(message).toContain(MIDDLE_LINE)
+    expect(message).toContain(OPPO_LINE)
+  })
+
+  it('cannot drift apart: both prompts report the same three lines for the same swings', async () => {
+    const session = sessionOf(SESSION_ONE_SWINGS)
+    const debriefMessage = await debriefFor(session)
+    const chatMessage = await chatFor(session)
+    const extract = (text) => [
+      text.match(/- Swings pull side \([^\n]+/)[0],
+      text.match(/- Swings up the middle \([^\n]+/)[0],
+      text.match(/- Swings opposite field \([^\n]+/)[0],
+    ]
+    expect(extract(debriefMessage)).toEqual(extract(chatMessage))
+    // And the swing numbers are the shared breakdown's, not a third value.
+    const spray = sprayBreakdown(SESSION_ONE_SWINGS)
+    expect(extract(debriefMessage)[0]).toContain(`numbers: ${spray.pull.swings.join(', ')}`)
+  })
+
+  // The same guard Task 2 put on the power below-15 line: a count of zero ends
+  // at the count, with no colon left hanging over nothing.
+  it('a bucket with nothing in it ends at the count, no dangling numbers clause', async () => {
+    const noPulls = [11, 0, 24].map((direction) => ({
+      plateLocHeight: 2.5,
+      plateLocSide: 0,
+      hit: { launch: { exitSpeed: 80, angle: 15, direction }, landing: { distance: 200 } },
+    }))
+    const message = await debriefFor(sessionOf(noPulls))
+    expect(message).toContain('- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n')
+    expect(message).not.toContain('not including -15): 0 swings — numbers:')
+    // And a bucket of exactly one reads "1 swing", not "1 swings".
+    expect(message).toContain('- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing — numbers: 3')
+  })
+
+  // Every swing goes somewhere, and nowhere twice: three counts, one session.
+  // Run over a generated session as well as the hand-written one, because the
+  // generator is where a direction the buckets do not cover would come from.
+  it('the three counts sum to the session, on generated sessions as well as session 1', async () => {
+    const countsIn = (message) => [
+      /- Swings pull side \([^:]+: (\d+) swings?/,
+      /- Swings up the middle \([^:]+: (\d+) swings?/,
+      /- Swings opposite field \([^:]+: (\d+) swings?/,
+    ].map((re) => Number(message.match(re)[1]))
+
+    expect(countsIn(await debriefFor(sessionOf(SESSION_ONE_SWINGS))).reduce((a, b) => a + b)).toBe(15)
+
+    // A fixed sequence rather than Math.random, so a failure here is
+    // reproducible instead of a coin flip nobody can rerun.
+    let seed = 7
+    const random = () => {
+      seed = (seed * 1103515245 + 12345) % 2147483648
+      return seed / 2147483648
+    }
+    for (const sessionNum of [2, 3, 4]) {
+      const swings = generateSwings({
+        sessionNum, goalId: 'power', baselineSwings: SESSION_ONE_SWINGS, random,
+      })
+      const counts = countsIn(await debriefFor(sessionOf(swings)))
+      expect(counts.reduce((a, b) => a + b)).toBe(swings.length)
+    }
+  })
+
+  // The disagreement that caused the defect, one layer up from the unit test
+  // in goalCountSpecs.test.js: on the one goal that states its own pull and
+  // oppo counts, the goal's line and the universal line are two sentences in
+  // one prompt, and they must carry the same number.
+  it('the Hit to All Fields count lines and the universal ones report the same pull and oppo numbers', async () => {
+    const message = await debriefFor(
+      sessionOf(SESSION_ONE_SWINGS),
+      { id: 'allfields', label: 'Hit to All Fields' },
+    )
+    const counts = (label) => [...message.matchAll(
+      new RegExp(`- Swings ${label} \\([^:]+: (\\d+) swings?`, 'g'),
+    )].map((m) => Number(m[1]))
+    // Two lines each: the goal's own, and the universal one.
+    expect(counts('pull side')).toEqual([3, 3])
+    expect(counts('opposite field')).toEqual([4, 4])
   })
 })
 

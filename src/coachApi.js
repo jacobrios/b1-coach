@@ -2,7 +2,7 @@ import { goalTarget, meetsTarget } from './goalTargets'
 import { distanceDistributionLine } from './ballFlight'
 import { GOAL_COUNT_SPECS, goalCountValues } from './goalCountSpecs'
 import { swingCountPhrase } from './promptText'
-import { pitchZoneBreakdown, STRIKE_ZONE } from './sessionStats'
+import { pitchZoneBreakdown, STRIKE_ZONE, sprayBreakdown, SPRAY_CUTOFFS } from './sessionStats'
 
 // Re-exported so everything that already reads this file's prompt exports
 // (the bench, tests, and Task 6's count lines) finds the threshold table
@@ -511,6 +511,27 @@ function zoneCountLines(swings) {
   ]
 }
 
+// Which swings went where, pre-counted from the one shared breakdown. Same
+// rule as the zone and goal count lines: count every threshold the prompt
+// names, because the coach reliably repeats a count it is handed and
+// miscounts anything it works out itself. Every goal gets these, because
+// every goal's prompt carries the direction key above and the raw per-swing
+// directions below, so every goal's coach can be asked "which ones did I
+// pull?" — which is exactly the question that exposed the defect.
+function sprayCountLines(swings) {
+  const spray = sprayBreakdown(swings)
+  const line = (label, bucket) =>
+    `- ${label}: ${swingCountPhrase(bucket.count)}` +
+    (bucket.count ? ` — numbers: ${bucket.swings.join(', ')}` : '')
+  // The "+" before the oppo cutoff matches the Hit to All Fields prose's own
+  // "+15", and the strict/inclusive wording matches the zone lines above.
+  return [
+    line(`Swings pull side (direction strictly below ${SPRAY_CUTOFFS.pull} degrees, not including ${SPRAY_CUTOFFS.pull})`, spray.pull),
+    line(`Swings up the middle (direction ${SPRAY_CUTOFFS.pull} to +${SPRAY_CUTOFFS.oppo} degrees, including both)`, spray.middle),
+    line(`Swings opposite field (direction strictly above +${SPRAY_CUTOFFS.oppo} degrees, not including +${SPRAY_CUTOFFS.oppo})`, spray.oppo),
+  ]
+}
+
 // Every swing's spray direction reaches the coach as a raw signed number, and
 // on five of the six goals nothing tells it which sign means which way. A live
 // Power debrief called a +29 degree ball (opposite field) "driven to the pull
@@ -520,7 +541,14 @@ function zoneCountLines(swings) {
 // missed). Do not touch goalContext: the Hit to All Fields context already
 // states this same convention in its own approved wording, and that goal will
 // now say it twice. That is deliberate redundancy, not disagreement.
-export const DIRECTION_KEY_LINE = '- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.'
+//
+// Reworded on 20 August 2026, approved by the product manager, after the
+// browser QA gate caught the first version doing harm. "Negative direction is
+// pull side" was a THIRD convention: it made six of session 1's swings pull
+// side while the spray chart on the same screen coloured three. The line now
+// names the cutoffs the screen actually draws, so the prose and the chart
+// answer "which ones did I pull?" the same way.
+export const DIRECTION_KEY_LINE = '- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.'
 
 // The user half of the debrief prompt: every session the player has seen so far,
 // with the current one named at the end. Split out of generateDebrief and
@@ -541,7 +569,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Pitches in strike zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)
 ${zoneCountLines(s.swings).map((line) => `${line}\n`).join('')}${goalCountLines(goal.id, s.swings).map((line) => `${line}\n`).join('')}- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
 - Distance distribution: ${distanceDistributionLine(s.swings)}
-${DIRECTION_KEY_LINE}
+${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
 
@@ -574,7 +602,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Distance distribution: ${distanceDistributionLine(s.swings)}
 ${s.debrief?.coachingSummary ? `- Previously told player in session summary: ${s.debrief.coachingSummary}` : ''}
 ${s.debrief?.whatThisMeans ? `- Previously told player in what this means: ${s.debrief.whatThisMeans}` : ''}
-${DIRECTION_KEY_LINE}
+${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
 

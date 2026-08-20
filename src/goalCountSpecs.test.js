@@ -9,6 +9,7 @@
 import { describe, it, expect } from 'vitest'
 import { GOAL_COUNT_SPECS, countSpecThresholds, goalCountValues } from './goalCountSpecs.js'
 import { GOAL_TARGETS } from './goalTargets.js'
+import { SPRAY_CUTOFFS, sprayBreakdown } from './sessionStats.js'
 import { GOAL_COUNT_SPECS as REEXPORTED } from './coachApi.js'
 
 describe('GOAL_COUNT_SPECS', () => {
@@ -32,6 +33,12 @@ describe('GOAL_COUNT_SPECS', () => {
     expect(GOAL_COUNT_SPECS.allfields.pullDirection).toBe(-15)
     expect(GOAL_COUNT_SPECS.allfields.oppoDirection).toBe(15)
     expect(GOAL_COUNT_SPECS.allfields.hardContactExitVelocity).toBe(82)
+    // Slice 10 Task 7: read from SPRAY_CUTOFFS, not re-typed here, the same
+    // way the bands above are read from goalTargets. This goal's prose and
+    // the spray chart disagreeing about where pull starts is the exact defect
+    // the browser QA gate caught, one layer down.
+    expect(GOAL_COUNT_SPECS.allfields.pullDirection).toBe(SPRAY_CUTOFFS.pull)
+    expect(GOAL_COUNT_SPECS.allfields.oppoDirection).toBe(SPRAY_CUTOFFS.oppo)
   })
 
   it('popup carries its band and the pop-up and grounder lines', () => {
@@ -122,6 +129,31 @@ describe('goalCountValues', () => {
       oppoField: { count: 1, swings: [2] },             // 18; +15 exactly would be excluded
       allfieldsHardContact: { count: 2, swings: [1, 3] },
     })
+  })
+
+  // Slice 10 Task 7. The defect the browser QA gate caught was two
+  // definitions of pull inside one app, so this goal's two counts now come
+  // from the shared sprayBreakdown rather than from a filter of their own.
+  //
+  // Swept across every integer direction rather than checked on the fixture,
+  // because a disagreement between two definitions can only show at a
+  // boundary, and a three-swing fixture visits almost none of them. What this
+  // cannot catch is a byte-for-byte duplicate of the shared rule written back
+  // in here; what it does catch is any duplicate that DISAGREES, anywhere,
+  // which is the failure that reached the screen.
+  it('allfields agrees with the shared spray breakdown at every direction, not just the fixture ones', () => {
+    const sweep = Array.from({ length: 81 }, (_, i) => ({
+      hit: { launch: { exitSpeed: 80, angle: 15, direction: i - 40 } },
+    }))
+    const spray = sprayBreakdown(sweep)
+    const values = goalCountValues('allfields', sweep)
+    expect(values.pullSide).toEqual(spray.pull)
+    expect(values.oppoField).toEqual(spray.oppo)
+    // And the sweep really did straddle both cutoffs, so the agreement above
+    // is not two empty lists agreeing about nothing.
+    expect(spray.pull.count).toBeGreaterThan(0)
+    expect(spray.middle.count).toBeGreaterThan(0)
+    expect(spray.oppo.count).toBeGreaterThan(0)
   })
 
   it('computes popup: strict pop-up and grounder cutoffs, inclusive 10-25 band', () => {

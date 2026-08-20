@@ -33,6 +33,40 @@ export function pitchZoneBreakdown(swings) {
   }
 }
 
+// Where pull side ends and opposite field begins. Added in Slice 10 after the
+// browser QA gate caught this app holding two answers to that question at
+// once: the coach was told "negative direction is pull side" and duly named
+// six pull-side swings, while the spray chart beside it coloured only the
+// three below -15 and called the other three Center. Neither was wrong on its
+// own terms; the app was wrong to hold two conventions. These are the chart's
+// numbers, which are also the ones the Hit to All Fields goal has always
+// asked for, so the screen is the winner of the tie.
+//
+// Same job as STRIKE_ZONE above: a classification several places have to
+// agree on, defined once. DebriefScreen.jsx still writes its own -15 and +15
+// into the chart; those agree with these and consolidating them is recorded
+// as remaining debt rather than done here, to keep this fix out of the screen.
+export const SPRAY_CUTOFFS = { pull: -15, oppo: 15 }
+
+// Which swings went where. Every swing lands in exactly one of the three, so
+// the counts are a partition of the session and always sum to its length,
+// which is what lets all three be handed to the coach as fact. Unlike
+// pitchZoneBreakdown above there is no union bucket here: a ball cannot be
+// pulled and hit the other way at once.
+export function sprayBreakdown(swings) {
+  const select = (pred) => {
+    const hit = swings
+      .map((w, i) => ({ n: i + 1, direction: w.hit.launch.direction }))
+      .filter(({ direction }) => pred(direction))
+    return { count: hit.length, swings: hit.map((s) => s.n) }
+  }
+  return {
+    pull: select((d) => d < SPRAY_CUTOFFS.pull),
+    middle: select((d) => d >= SPRAY_CUTOFFS.pull && d <= SPRAY_CUTOFFS.oppo),
+    oppo: select((d) => d > SPRAY_CUTOFFS.oppo),
+  }
+}
+
 // A session with no swings has no average. Null rather than zero, because zero
 // is a claim that the player swung and got nothing, and because the results
 // screen already draws a dash where a number is missing. This is unreachable

@@ -304,3 +304,34 @@ describe('buildFactSheet', () => {
     }
   })
 })
+
+// Slice 10 Task 7. The prompt now hands every goal three spray counts, and a
+// count the coach was handed with no matching fact-sheet stat is exactly what
+// produced Slice 8b's false positives: the grader checks the claim against
+// the nearest other row and calls a true statement false. Directions in the
+// fixture are 5, -5, 20, 0, -20, so pull is swing 5, oppo is swing 3, and the
+// other three are up the middle.
+describe('the spray counts every goal is now handed (Slice 10)', () => {
+  const session = { sessionNumber: 1, swings, stats: { avgExitVelocity: 84, avgLaunchAngle: 16, inZoneCount: 4, totalSwings: 5 } }
+
+  it.each(['open', 'power', 'contact', 'popup', 'allfields'])(
+    'carries pull, up the middle and opposite field for the %s goal',
+    (goalId) => {
+      const sheet = buildSessionFactSheet(session, { goalId })
+      expect(sheet.stats.pullSideCount).toBe(1)
+      expect(sheet.stats.pullSideSwings).toEqual([5])
+      expect(sheet.stats.upTheMiddleCount).toBe(3)
+      expect(sheet.stats.upTheMiddleSwings).toEqual([1, 2, 4])
+      expect(sheet.stats.oppoFieldCount).toBe(1)
+      expect(sheet.stats.oppoFieldSwings).toEqual([3])
+    },
+  )
+
+  it('does not disagree with the allfields goal counts, which name the same two buckets', () => {
+    const sheet = buildSessionFactSheet(session, { goalId: 'allfields' })
+    // allfields' own pullSide/oppoField stats are the same rows, not a second
+    // opinion: the grader ruling a claim against either must get one answer.
+    expect(sheet.stats.pullSideCount).toBe(1)
+    expect(sheet.stats.oppoFieldCount).toBe(1)
+  })
+})
