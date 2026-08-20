@@ -1,208 +1,271 @@
-# Slice 10: one round, bought to prove nothing got worse
+# Slice 10: two rounds, because the first prompt did not ship
 
-This directory holds a single live round of 64 coach debriefs, its grading
-transcript, the by-hand adjudication of every claim that grading flagged, and
-the browser capture showing the two new prompt lines in a request the app really
+This directory holds **two** live rounds of 64 coach debriefs each, their grading
+transcripts, the by-hand adjudication of every claim either grading run flagged,
+and the browser capture showing the prompt lines in a request the app really
 sends.
 
-The question it was bought to answer was stated in `docs/slice-10-plan.md`
-before anything was spent, and it is narrower than it looks: **did adding a
-direction key to the coach's prompt make the coach's claims any less accurate?**
-Not "more accurate". The change fixes an error class that appears in 0 of 112
-measured debriefs outside one goal, so no round at this scale could ever detect
-an improvement. This round is a regression guard.
+*This file described one round until 20 August 2026. It now describes two,
+because the product manager's browser QA pass rejected the prompt the first round
+measured. What follows is the corrected version; the round itself, its grading
+and its hand-check are untouched.*
 
-The answer, in one line: **no, and the result landed inside the null band that
-was written down before the money was spent, which is what was predicted.**
+**Read this first if you read nothing else.** `after/` measured a prompt that
+**never shipped**. `after-spray/` measured the prompt that did. Do not quote a
+number out of `after/` as a fact about the app as it stands.
 
-## What is here
+## The two rounds
 
-    after/shipped-64.json        64 live debriefs written with the direction key
-                                  in the prompt, at seed 20260814.
-    after/BUILDER.txt            Which session data these debriefs describe, at
-                                  which seed, and the TWO ways this round can go
-                                  stale. Read it before re-grading anything.
-    after/grading.json|.txt      The grading run for that round.
-    HAND-CHECK.md                All 21 flagged claims, each read against rebuilt
-                                  session data and judged a genuine coach error
-                                  or a tool false positive.
-    browser-payload-capture.md   What the browser actually sent: the direction
-                                  key in four live debrief requests and one live
-                                  chat request, plus the zero-count branch
-                                  exercised through the shipped module.
+    after/         The direction key as first written: "negative direction is
+                   pull side." Rejected by the product manager's browser QA pass
+                   the same day, because it disagreed with the spray chart.
+    after-spray/   What shipped: the key naming the -15 and +15 cutoffs, plus
+                   three pre-counted spray lines per session, on every goal, in
+                   both prompts, all reading one constant.
 
-The 64 debriefs are the bench's seven cells: `power-s1` 12, `contact-s1` 12,
-`power-s2` 8, `contact-s4` 8, `open-s4` 8, `allfields-s4` 8, `popup-s4` 8.
+Each directory holds `shipped-64.json` (the 64 live debriefs), `BUILDER.txt`
+(which session data they describe, at which seed, and the ways the round can go
+stale), and `grading.json` / `grading.txt`. Beside them:
 
-## Why one round, at this seed, against that baseline
+    HAND-CHECK.md               All 21 flagged claims from the `after` round.
+    HAND-CHECK-after-spray.md   All 23 flagged claims from the `after-spray`
+                                 round, plus a direct test of whether the
+                                 shipped fix worked.
+    browser-payload-capture.md  What the browser actually sent.
 
-`docs/eval-fixtures/slice9-session-one/after-a/` is the comparison partner, and
-it was free. PR #31 touched only `src/DebriefScreen.jsx`, so every prompt file
-and every data file was unchanged between the Slice 9 merge and the start of
-this slice. Slice 9's two after rounds were therefore already a valid
-before-baseline, at two seeds, for any change that leaves the swing data alone.
-That is why this slice buys one round instead of two.
+The 64 debriefs in each round are the bench's seven cells: `power-s1` 12,
+`contact-s1` 12, `power-s2` 8, `contact-s4` 8, `open-s4` 8, `allfields-s4` 8,
+`popup-s4` 8.
 
-Seed `20260814` is the same seed `after-a` used. Session 1 is not generated and
-so does not move with the seed, but sessions 2, 3 and 4 are, and the pairing is
-the whole design: identical swings, identical generated sessions, one prompt line
-different. Grading this round at any other seed rebuilds sessions that never
-existed here.
+## Why the rejected round is kept, and why it is the right comparison
+
+It is the only measurement of the defect. Without it there is no evidence that
+the coach ever used the sign rule, only an anecdote from one browser session.
+With it, the fix is checkable.
+
+The two rounds are also the correct comparison partner for each other: **same
+seed (20260814), same swing data, same cells, one prompt generation apart.**
+Slice 9's `after-a`, which the first round was originally paired against, is now
+two generations back and should not be compared directly.
+
+## Job one: did the fix work? Yes, and it is measurable
+
+Full method and every quote in `HAND-CHECK-after-spray.md`. In short, every
+sentence in both rounds that classifies a swing's direction was pulled out and
+checked against both rules.
+
+Hit to All Fields is excluded from the table below, because its prompt has always
+carried pull and opposite-field counts at the -15 and +15 cutoffs, so the coach
+could not go wrong there in either round. The five goals that had no spray counts
+before this slice are the real test:
+
+| Five goals with no handed spray counts before this slice | after | after-spray |
+|---|---|---|
+| Statements classifying a swing's direction | 1 | 20 |
+| Follow the chart's cutoffs, where the sign rule differs | 0 | 11 |
+| Consistent with both rules | 0 | 7 |
+| **Follow the sign rule only** | **1** | **0** |
+| Follow neither (coach arithmetic slip) | 0 | 2 |
+
+The rejected round's single statement is the defect itself: `contact-s1/run4`
+calls swing 11, at -5 degrees, pull side. That is the product manager's finding
+reproduced independently, without anyone looking for it.
+
+Across the whole shipped round, counting Hit to All Fields back in, there are 33
+classification statements, 23 of which the two rules answer differently, and
+every one follows the chart. **The smallest magnitude called pull anywhere in the
+round is -16.** The mirror case appears too: `contact-s4/run6` calls swings at -2
+and -6 "up the middle," which the sign rule would have called pulls.
+
+## Job two: the claim counts, and why they support no verdict on accuracy
+
+| | after (rejected) | after-spray (shipped) |
+|---|---|---|
+| Claims extracted | 504 | 543 |
+| TRUE | 343 | 402 |
+| Raw FALSE flags | 21 | 23 |
+| UNVERIFIABLE | 140 | 118 |
+| of which the extractor could not structure at all | 82 | 51 |
+| Flagged debriefs | 18 of 64 | 17 of 64 |
+| **Genuine coach errors, hand-checked** | **8** | **13** |
+| **Tool false positives** | **13 (61.9%)** | **10 (43.5%)** |
+| Cost (bench + grading) | $1.12 + $0.3718 | $1.19 + $0.3895 |
+
+Total for the slice: **$3.07**. Zero parse failures across all 128 calls,
+confirmed by reading both record files rather than by trusting a log line.
+
+Before the **first** round, the grader's free `--dry-run --input` was run and
+exited 0, which is not a formality: that gate was silently dead for a whole
+previous slice and nothing said so. Whether it was re-run before the second round
+is not recorded anywhere, so this file does not claim it was.
+
+**Genuine errors moved from 8 to 13, and this directory claims neither a
+regression nor an improvement.** Three reasons, each sufficient alone:
+
+1. **The noise is bigger than the difference.** Slice 9 ran two rounds on
+   identical data with an identical prompt and hand-checked to 19 and 9. The
+   demonstrated same-condition spread is 10; this gap is 5.
+2. **The denominator moved too.** 504 claims to 543, so the per-claim rate went
+   1.6% to 2.4%, a smaller move than "8 to 13" sounds.
+3. **The instrument changed between the rounds, and now sees more.**
+   `scripts/handedCounts.js` and `scripts/grade-coach-accuracy.mjs` were both
+   corrected before the second round was bought, because the new prompt hands
+   direction counts on every goal and the tool did not know it. Coverage rose:
+   unstructurable claims fell 82 to 51, unrulable ones 140 to 118. Some of the
+   extra genuine errors are errors that existed in the first round and were
+   invisible to the tool that graded it.
+
+Anyone re-grading `after/` today gets the corrected tool, not the one that
+produced `after/grading.json`. No re-grade was bought. Say so rather than
+assuming the two transcripts are strictly comparable.
+
+### The pre-registered null band, kept because it is a process record
+
+Before any money was spent on the first round, `docs/slice-10-plan.md` wrote the
+band down: **15 to 29 raw flags is a null; only a result outside it is a
+signal.** The band came from measured noise, Slice 9's `after-a` and `after-b`
+flagging 29 and 15 on the same condition at two seeds, and its before round 16.
+The first round came back at 21, inside the band, and was reported as the null it
+was predicted to be. One footnote on the lower bound: that 15 is one
+verdict-code generation stale, since Slice 9's M4 fix later moved `after-b` to
+14. The band would be 14 to 29 today, and 21 sits comfortably inside either.
+
+That band was written against a comparison with Slice 9's `after-a`, which the
+QA rejection then superseded. It is kept here as a record of the discipline, not
+as a live verdict on the shipped prompt. The shipped round's 23 raw flags also
+sit inside it, which is worth noting and is not evidence of anything on its own,
+given everything above about raw flag counts.
+
+## What the shipped round did change, and nobody asked for it
+
+**The coach now talks about spray in 24 of 64 debriefs, up from 9.** That is what
+the prompt was for, and it is visible on screen. It also means the surface area
+for a future spray error is much larger than it was, and the grading tool
+currently sees very little of it. See the coverage gaps below.
+
+## One correction to both hand-checks
+
+Both hand-check documents say in places that the grading tool "has no spray
+statistic." **That is not true.** `scripts/factSheet.js:164-170` carries all
+three spray counts and their swing numbers per session, added in the same change
+as the prompt lines, and spray sentences in the shipped round were correctly
+ruled TRUE off them (`open-s4` runs 3 and 5, both matched against
+`oppoFieldCount`). The ground truth is there.
+
+What is missing is upstream of it, and it is two specific gaps, both verified by
+reading `after-spray/grading.json` directly:
+
+1. **A spray count can be extracted as a `threshold` claim carrying no
+   comparison, and then falls out as UNVERIFIABLE.** `power-s2/run8`: "You put
+   five swings to the pull side in Session 2" was extracted with
+   `comparison: undefined`, reasoned as `unknown comparison`, and never ruled. It
+   was wrong; the handed count is 6.
+2. **The prior-session half of a cross-session comparison is never extracted at
+   all.** `open-s4/run5`: "five swings go opposite field this round, up from
+   three in Session 1 and four in Session 3." The tool extracted the first half
+   and correctly ruled it TRUE. The error is in "three in Session 1," where the
+   truth is 4, and that half produced no claim.
+
+Gap 2 matters more now than it did last week, because the shipped prompt makes
+the coach write exactly this kind of comparison more often.
+
+## A new coach failure shape, and it is a limit on this project's whole strategy
+
+`contact-s4/run5`. The prompt said "Swings with exit velocity 85 mph or higher: 6
+swings." The coach wrote "Six of your swings came in under 85 mph." The number is
+copied correctly and the sentence is inverted around it; the true answer is 9.
+
+Every coach error of this family previously recorded here was a miscount or a
+transposition, which handing over the number fixes. This one is not. **Nine of
+the shipped round's 13 genuine errors rest on a handed number, against zero of
+eight in the round before it.** That is evidence for the open decision CLAUDE.md
+already carries, about letting the coach write the sentence and having the app
+fill in the figure, rather than a new idea.
+
+## Read this first: a raw flag is a lead, not a finding
+
+The tool's hand-checked false-positive rate across this project's rounds now
+reads 11%, 42%, 12.5%, 34.5%, 40%, **61.9%** and **43.5%**. Nothing in either
+`grading.json` should be reported as a coach error without being read by hand.
+The two `HAND-CHECK` files are the adjudication; the JSON is raw output.
+
+The `after` round produced two false-positive mechanisms new to this project's
+records, both written up in `HAND-CHECK.md`: a handed distribution bucket
+re-derived with an inclusive upper bound (deterministic, in the verdict code, so
+free to fix and free to validate by offline replay), and the denominator of an
+"N out of fifteen" phrase absorbed as the numeric threshold. The `after-spray`
+round produced **no new tool mechanism**, the first time that has been true here.
+Two of its mechanisms recurred on the *identical sentence in the identical cell*
+one round apart, which suggests the known ones are stable and fixable rather than
+random.
+
+**The non-neutrality warning stands and now has a named cell.** M5 accounted for
+7 of the first round's 13 false positives, four of them the same `power-s2`
+sentence: "you cut your under-175-foot swings from 4 down to 1," a correctly
+repeated pair of handed distance-bucket numbers graded against a launch-angle
+count. It recurred in the second round. Any comparison including that cell
+carries roughly four spurious flags from one sentence shape, so a raw flag-count
+delta between two rounds is not usable without a hand-check of at least the M5
+candidates.
+
+## What is NOT safe to conclude
+
+- **That the direction key or the spray counts made the coach more accurate
+  overall.** Not claimed anywhere here. See the three reasons above.
+- **That they made it worse.** Same three reasons, in the other direction.
+- **That the two rounds' claim counts are strictly comparable.** The instrument
+  moved between them and no re-grade was bought.
+- **That 8 genuine errors was better than 13, or than Slice 9's 9 to 19.** Three
+  or five rounds is not a distribution, and two Slice 9 rounds on identical data
+  differ from each other by 10.
+- **That any figure here is repeatable.** One round of 64, one model writing and
+  another extracting, with live re-extraction every time, so the same debriefs
+  graded twice do not produce the same claims. Every number here is one draw.
+- **That the coach's spray grouping is now flawless.** Two of the shipped round's
+  spray statements are arithmetic slips against handed counts, and the grading
+  tool caught neither. What *is* supported is the narrower claim above: the coach
+  now uses the chart's rule rather than the sign rule.
+- **That the tool's false-positive mechanisms are now enumerated.** Each wave of
+  measurement has produced new ones. This wave produced two.
+
+## Both rounds go stale the moment the generator changes
+
+Each `BUILDER.txt` carries the full explanation and should be read before any
+re-grade. In short: the `current` builder rebuilds ground truth from the working
+tree, and it reads **the generator** as well as session 1. Slice 11 is expected
+to change `src/swingGenerator.js`. The moment it does, sessions 2, 3 and 4 stop
+being reconstructible while session 1 stays correct, so a re-grade would produce
+a complete and entirely plausible fact sheet for swings the coach never saw on 40
+of each round's 64 records. Nothing would look broken.
+
+Slice 9's three markers have the identical exposure and say nothing about it,
+because they were written believing session 1 was the only moving part. Repairing
+all five markers, and giving both Slice 10 rounds a frozen generator snapshot, is
+Slice 11's first task.
 
 ## The exact commands
 
 ```
 node --env-file=.env.local scripts/bench-coach-brevity.mjs --condition shipped --runs 8 \
-  --seed 20260814 --out docs/eval-fixtures/slice10-direction-key/after/shipped-64.json
+  --seed 20260814 --out docs/eval-fixtures/slice10-direction-key/<round>/shipped-64.json
 
 node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate \
-  --input docs/eval-fixtures/slice10-direction-key/after --builder current --seed 20260814 \
-  --out docs/eval-fixtures/slice10-direction-key/after/grading.json \
-  | tee docs/eval-fixtures/slice10-direction-key/after/grading.txt
+  --input docs/eval-fixtures/slice10-direction-key/<round> --builder current --seed 20260814 \
+  --out docs/eval-fixtures/slice10-direction-key/<round>/grading.json \
+  | tee docs/eval-fixtures/slice10-direction-key/<round>/grading.txt
 ```
 
-Both flags on the grading command can be omitted; `after/BUILDER.txt` names the
-builder and the seed, the grader fills them in, and it refuses outright when a
-passed flag disagrees.
+`<round>` is `after` or `after-spray`. Both flags on the grading command can be
+omitted; each `BUILDER.txt` names the builder and the seed, the grader fills them
+in, and it refuses outright when a passed flag disagrees.
 
-The bench round cost $1.12 and the grading $0.3718, $1.49 in total. **Zero parse
-failures across all 64 calls.** The grader's free `--dry-run --input` was run
-first and exited 0, which is not a formality: that gate was silently dead for a
-whole previous slice and nothing said so.
-
-One near miss worth recording, because it cost nothing only by design: the first
-grading invocation omitted `--validate`, and the script refused with exit 1
-before making a single API call.
-
-## The result, against a band written before the spend
-
-The plan pre-registered the null band: **15 to 29 raw flags is a null; only a
-result outside it is a signal.** The band comes from the noise this measurement
-has already demonstrated. Slice 9's `after-a` and `after-b` are the same
-condition at two seeds and flagged 29 and 15; its before round flagged 16. One
-footnote on the lower bound: that 15 is one verdict-code generation stale, since
-Slice 9's own M4 fix later moved `after-b` to 14 while the committed
-`after-b/grading.json` still reads 15. The band would be 14 to 29 on today's
-code, and 21 sits comfortably inside either, so nothing about this verdict
-changes.
-
-**This round flagged 21 claims across 18 of 64 debriefs. Inside the band. A
-null, as predicted.**
-
-The full counts: 504 claims extracted, 343 TRUE, 21 FALSE, 140 UNVERIFIABLE, of
-which 82 the extractor could not structure at all.
-
-After the hand-check:
-
-| | this round |
-|---|---|
-| flagged claims adjudicated | 21 |
-| **genuine coach errors** | **8** |
-| **tool false positives** | **13** |
-| false-positive rate on flagged claims | **61.9%** |
-
-For context, and read carefully: using the identical rules and the same
-unchanged tool, Slice 9's three rounds hand-checked to 14, 19 and 9 genuine
-errors. **The same-condition genuine range is 9 to 19, and this round's 8 sits
-just below it. That is not an improvement claim**, and this directory does not
-make one. Three rounds is not a distribution, the two Slice 9 after rounds look
-at identical session-1 data and differ from each other by 10 genuine errors, and
-one draw below a three-point range supports no direction at all.
-
-All 8 genuine errors are numbers the coach derived for itself, rather than
-repeated from a handed count. Seven come off the per-swing table; the eighth
-(`popup-s4/run1`) comes off two handed distribution-bucket rows the coach needed
-to add together and did not. **None is a contradiction of a count the prompt
-handed it.** Six of the
-eight are the over-generalisation habit CLAUDE.md already records: the coach
-names a group of swings and asserts a property across all of them that one
-member breaks.
-
-Note that `grading.txt` labels 7 of its 21 raw flags "contradicting a number the
-prompt handed the coach". That label is applied before adjudication, and all 7
-turned out to be false positives. The label also runs wrong in the other
-direction: `power-s2/run3` is recorded `handed: false` on two numbers the prompt
-gave the coach word for word.
-
-## Read this first: a raw flag is a lead, not a finding
-
-61.9 percent false positives is the highest rate this project has measured. The
-recorded band across five previous rounds was 11 to 42 percent; this round is
-above it.
-
-**Nothing in `grading.json` should be reported as a coach error without being
-read by hand.** `HAND-CHECK.md` is the adjudication; `grading.json` is raw
-output.
-
-Two false-positive mechanisms are new to this project's records:
-
-1. **A handed distribution bucket re-derived with an inclusive upper bound.**
-   `DISTANCE_BUCKETS` in `src/ballFlight.js` is half-open, so a 305-foot ball
-   belongs to `305+`, not to `265-305`. The tool recomputes that bucket
-   inclusively and sweeps the boundary ball back in, turning a correctly
-   repeated handed 5 into a "should be 6". This one is **deterministic and sits
-   in the verdict code rather than in extraction**, so it is cheap to fix and can
-   be validated by replaying the committed rounds offline at zero cost, the same
-   route Slice 9 used for its M4 fix.
-2. **The denominator of an "N out of fifteen" phrase absorbed as the numeric
-   threshold.** "Four swings hit the target zone out of fifteen" became a
-   threshold test at 15 degrees. This one sits in extraction.
-
-A third, a new shape of the already-recorded M5: a plain two-value recital
-("swings like 5 and 13 left the bat at 92 and 89 mph") converted into a subset
-test against 88 mph, a threshold appearing nowhere in the sentence.
-
-## The non-neutrality warning, which outlives this round
-
-M5 accounts for 7 of the 13 false positives, and **four of those seven are the
-same sentence in the same cell**: Power session 2's "you cut your under-175-foot
-swings from 4 down to 1", a correctly repeated pair of handed distance-bucket
-numbers graded against a launch-angle count.
-
-Any future comparison run with this tool that includes the `power-s2` cell
-carries roughly four spurious flags from that one recurring sentence shape. **A
-raw flag-count delta between two rounds is not usable here without a hand-check
-of at least the M5 candidates.**
-
-## What is NOT safe to conclude
-
-- **That the direction key made the coach more accurate.** It cannot be shown at
-  this scale and is not claimed anywhere. The error class it addresses did not
-  appear in the measured population often enough to move a number.
-- **That the direction key made the coach worse.** Same reason, in the other
-  direction. That is what the round was bought to check, and it is the one thing
-  it does support.
-- **That 8 genuine errors is better than Slice 9's 9 to 19.** See above.
-- **That any figure here is repeatable.** One round of 64, one model writing and
-  another extracting, with live re-extraction every time, so the same debriefs
-  graded twice do not produce the same claims. Every number here is one draw.
-- **That the coach's spray grouping is fixed.** The browser capture shows it
-  stating the convention correctly and getting every sign right, then
-  contradicting its own grouping three times in one answer. That is one reply to
-  a question written to force spray grouping, on a topic the coach raises by
-  itself in 0 of 112 measured debriefs. It is a lead for a future slice, not a
-  defect in this one.
-- **That the tool's false-positive mechanisms are now enumerated.** Two more
-  turned up here. Each wave of measurement has produced new ones.
-
-## This round goes stale the moment the generator changes
-
-`after/BUILDER.txt` carries the full explanation and should be read before any
-re-grade. In short: the `current` builder rebuilds ground truth from the working
-tree, and it reads **the generator** as well as session 1. Slice 11 is expected
-to change `src/swingGenerator.js`. The moment it does, sessions 2, 3 and 4 stop
-being reconstructible, while session 1 stays correct, so a re-grade would
-produce a complete and entirely plausible fact sheet for swings the coach never
-saw on 40 of these 64 records. Nothing would look broken.
-
-Slice 9's three markers have the identical exposure and say nothing about it,
-because they were written believing session 1 was the only moving part.
-Repairing them, and giving this round a frozen generator snapshot, is Slice 11's
-first task.
+One near miss worth recording from the first round, because it cost nothing only
+by design: that grading invocation omitted `--validate`, and the script refused
+with exit 1 before making a single API call.
 
 ## Reproducing this
 
-Both commands above spend real money and neither is needed to read the result:
-the grading transcript and the hand-check are committed. A future session that
-does re-run a round must not overwrite these files, because the comparison
-depends on these particular draws and re-running produces different ones.
+Both commands spend real money and neither is needed to read the result: every
+transcript and both hand-checks are committed. A future session that does re-run
+a round must not overwrite these files, because the comparison depends on these
+particular draws and re-running produces different ones.

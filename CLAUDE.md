@@ -239,13 +239,15 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 20 August 2026, at the close of Slice 10. The rows
-that moved are `coachApi.js`, the `src/*.test.js` aggregate, and the fixtures
-directory count, which also gained a directory of its own. Some of the rows
-below that this slice never touched are stale by a line or two,
-`ballFlight.js` and `sessionStats.js` among them, and were left alone rather
-than churned out of lane; correct one on the way past if you open the file
-for another reason.
+Line counts current as of 20 August 2026, at the close of Slice 10, **re-measured
+after that slice was rejected by its own browser QA gate and re-shipped**, so
+these numbers are the second set, not the first. The rows that moved are
+`coachApi.js`, `sessionStats.js`, `goalCountSpecs.js`, the `src/*.test.js`
+aggregate, both `scripts/` aggregates, and the fixtures directory count, which
+also gained a directory of its own. Some of the rows below that this slice never
+touched are stale by a line or two, `ballFlight.js` and `DebriefScreen.jsx`
+among them, and were left alone rather than churned out of lane; correct one on
+the way past if you open the file for another reason.
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
@@ -269,7 +271,7 @@ for another reason.
                              scroll fade, and the shared axis-text style
                              constants, both added in Slice 7.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
-    src/coachApi.js          607 lines. System prompts, the length budget
+    src/coachApi.js          643 lines. System prompts, the length budget
                              appended to the debrief prompt, the goal-context
                              block both prompts share, response parsing,
                              failure classification, the retry policy, and the
@@ -293,8 +295,19 @@ for another reason.
                              individual-swings line in BOTH prompts, and stopped
                              the Power below-15 count line dangling a
                              "numbers:" clause on a zero count; see the decision
-                             log entry for 20 August 2026.
-    src/goalCountSpecs.js    140 lines. One table, per goal, of every threshold
+                             log entry for 20 August 2026. **That first version
+                             of the direction key was rejected by the product
+                             manager's browser QA pass and never shipped**: it
+                             said "negative direction is pull side," which
+                             disagreed with the spray chart on the same screen.
+                             What shipped instead, the same day, is the wording
+                             naming the -15 and +15 cutoffs, plus
+                             `sprayCountLines`, three pre-counted spray lines
+                             per session that now appear on EVERY goal in BOTH
+                             prompts, all of it reading `SPRAY_CUTOFFS` from
+                             `sessionStats.js`. See the second decision log
+                             entry for 20 August 2026.
+    src/goalCountSpecs.js    150 lines. One table, per goal, of every threshold
                              that goal's coaching prose names in words, so the
                              sentence and the count that feeds it cannot drift
                              apart. Added in Slice 8b, re-exported from
@@ -305,6 +318,12 @@ for another reason.
                              now read, and moved Contact's fly-ball cutoff from
                              20 to 18 degrees so it matches the goal's own band
                              ceiling instead of leaving 18-to-20 uncounted.
+                             Slice 10 stopped the Hit to All Fields entry
+                             writing -15 and +15 itself and made it read
+                             `SPRAY_CUTOFFS` from `sessionStats.js`, so the
+                             goal's own prose and the new universal spray lines
+                             cannot disagree. That disagreement is exactly the
+                             defect the browser QA gate rejected the slice over.
     src/ballFlight.js        228 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
@@ -323,12 +342,24 @@ for another reason.
     src/chartSlots.js         64 lines. Which charts can render, how a slot is
                              filled when the model names one that cannot, and
                              whether a single key from a chat reply is usable.
-    src/sessionStats.js       57 lines. The numbers a session is summarized by.
+    src/sessionStats.js       89 lines. The numbers a session is summarized by.
                              Slice 8c added `STRIKE_ZONE`, `inStrikeZone` and
                              `pitchZoneBreakdown`, so the prompt's zone count
                              lines, the grader's fact sheet, and the existing
                              `inZoneCount` all read the same bounds and the same
-                             per-swing classification.
+                             per-swing classification. Slice 10 added
+                             `SPRAY_CUTOFFS` and `sprayBreakdown` on that exact
+                             precedent, and they are now the ONE definition of
+                             pull, up the middle and opposite field in the app.
+                             Everything chains to them: the coach's direction
+                             key, the three spray count lines in both prompts,
+                             the Hit to All Fields goal prose through
+                             `goalCountSpecs.js`, and the grader's fact sheet.
+                             The one copy deliberately left outside is the spray
+                             chart's own inline -15 and +15 in
+                             `DebriefScreen.jsx`; it agrees today and
+                             consolidating it is recorded as debt rather than
+                             done, to keep the fix out of the screen file.
     src/promptText.js          6 lines. One rule of prompt grammar,
                              `swingCountPhrase`, so a count reads "1 swing"
                              rather than "1 swings." Added in Slice 8c; shared
@@ -338,11 +369,18 @@ for another reason.
                              because it sits on the grader's `.js`-extension
                              import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           2711 lines across twelve files, beside what they test.
-                             Slice 10 added 130 lines to coachApi.test.js: the
-                             direction key reaching both prompts, and the Power
+    src/*.test.js           2954 lines across twelve files, beside what they test.
+                             Slice 10 added 373 lines across coachApi.test.js,
+                             sessionStats.test.js and goalCountSpecs.test.js:
+                             the direction key reaching both prompts, the Power
                              count line no longer dangling a "numbers:" clause
-                             on a zero count.
+                             on a zero count, and then, after the QA gate
+                             rejected the first prompt, the three spray count
+                             lines in both prompts, their exact session-1
+                             values, their counts always summing to the swing
+                             count, and the drift guard proving the goal prose
+                             and the universal lines cannot report different
+                             pull numbers.
                              Slice 9 added 310 lines to sessionOneSwings.test.js:
                              eight invariants the rewritten fifteen swings must
                              hold, including a correlation band, a rule that
@@ -352,7 +390,7 @@ for another reason.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           4572 lines across seven hand-run scripts, deliberately
+    scripts/*.mjs           4625 lines across seven hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
                              scripts, the Slice 7 bench, the Slice 7b before/after
                              comparison script, the claim-accuracy grader
@@ -408,12 +446,20 @@ for another reason.
                              refused rather than obeyed when a passed flag
                              disagrees. The bench grew a seventh cell,
                              `contact-s1`.
-    scripts/*.js (tested)    1009 lines across seven small modules pulled out of
+    scripts/*.js (tested)    1175 lines across seven small modules pulled out of
                              those hand-run scripts so their pure logic can be
-                             checked without spending money: `factSheet.js` (the
+                             checked without spending money: `factSheet.js`
+                             (254 lines; the
                              grader's deterministic count table, made goal-aware
                              in Slice 8c so it stops handing every goal Power's
-                             stats and now covers pitch location too),
+                             stats and now covers pitch location too; Slice 10
+                             gave it three spray rows from `sprayBreakdown`, in
+                             the same change that added the count lines, because
+                             a new count with no matching row here is exactly
+                             what manufactured Slice 8b's false positives. Those
+                             three rows are NOT era-gated, which is right for
+                             ground truth and wrong for comparability; see
+                             What's Next),
                              `contentWordOverlap.js` (the bench's restatement
                              check), `coachFailureRecord.js` (what the bench
                              keeps when a call fails to parse), `claimVerdict.js`
@@ -447,11 +493,17 @@ for another reason.
                              exposed this was the lucky half; a pre-19-August
                              bare-array grading file would have been merged in
                              silence and billed as coach prose),
-                             `handedCounts.js` (Slice 8c: describes, per
+                             `handedCounts.js` (171 lines; Slice 8c: describes, per
                              goal and per prompt era, which counts the coach was
                              actually handed, so the grader can tell a
                              contradicted handed number apart from a self-derived
-                             one instead of pooling both as one error rate), and
+                             one instead of pooling both as one error rate;
+                             Slice 10 taught it that direction counts are handed
+                             on every goal in the current era, without which the
+                             tool would have under-counted handed claims on the
+                             new round and biased the after side. It also returns
+                             a `sprayLines` field that nothing reads; see What's
+                             Next), and
                              `gradingOutput.js` (Slice 8d: reads a saved grading
                              file in either shape, the old bare array or the new
                              `{ meta, results }` wrapper, so the replay script
@@ -466,7 +518,7 @@ for another reason.
                              split was derived by hand, not printed by the
                              tool. See the dated note in
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
-    scripts/*.test.js       1344 lines across seven files, testing those seven
+    scripts/*.test.js       1599 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
     docs/eval-fixtures/      Committed ground truth, not code. Eight directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
@@ -508,14 +560,22 @@ for another reason.
                                snapshot of the old swings so the before round
                                stays gradeable, plus `HAND-CHECK.md`
                                adjudicating all 60 flagged claims one at a time.
-                               `slice10-direction-key/` (536 KB) holds the single
-                               64-debrief round behind Slice 10's direction key,
-                               paired against Slice 9's `after-a` at the same
-                               seed so the two rounds differ in one prompt line
-                               and nothing else, with a pre-registered null band
-                               the result landed inside, every flagged claim
-                               hand-checked, and the browser capture of what the
-                               app really sent. None is collected by vitest;
+                               `slice10-direction-key/` (1080 KB) holds TWO
+                               64-debrief rounds, at the same seed and on
+                               identical swing data, one prompt generation
+                               apart. `after/` measured a direction key that was
+                               rejected by the product manager's browser QA pass
+                               and NEVER SHIPPED; it is kept because it is the
+                               only measurement of the defect, and it is the
+                               right comparison partner for the round that did
+                               ship. `after-spray/` is the shipped prompt. Both
+                               have every flagged claim hand-checked, in
+                               `HAND-CHECK.md` and `HAND-CHECK-after-spray.md`,
+                               and the browser capture of what the app really
+                               sent sits beside them. Read the directory's
+                               README before quoting any number out of either
+                               round: the grading instrument was corrected
+                               between them. None is collected by vitest;
                                all eight have their own READMEs covering what is
                                and is not safe to conclude from them.
 
@@ -821,9 +881,11 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of the close of Slice 10 on 20 August 2026 it is 535
+   vitest, and as of the close of Slice 10 on 20 August 2026 it is 570
    tests across 22
-   files, up from 529 at Slice 9's closing review the same day, up from
+   files, up from 535 midway through Slice 10, before the browser QA gate
+   rejected that slice's first prompt and sent it back for a second round of
+   work, up from 529 at Slice 9's closing review the same day, up from
    519 at the close of Slice 9's build, up from
    506 across 22 at the close of Slice 8d, up from 489 across
    21 at the close of Slice 8c, up from 461 across
@@ -840,7 +902,12 @@ specific to this repo:
    strike-zone mix, the in-zone contact advantage, and a pinned-seed snapshot
    proving sessions 2 to 4 do not move when session 1 is rewritten); the
    direction key reaching both prompts, sitting immediately above the swing data
-   it explains, and being the same string in each (Slice 10); and the
+   it explains, and being the same string in each (Slice 10); the three spray
+   count lines reaching both prompts, their exact values on session 1, their
+   counts always summing to the session's swing count, and the guard proving the
+   Hit to All Fields goal prose and the universal lines cannot report different
+   pull numbers (Slice 10's second round of work; that last one is the drift the
+   QA gate caught, and it is now impossible rather than merely true); and the
    deterministic fact-sheet and word-overlap modules the
    claim-accuracy grader and the bench each lean on. It covers **no screens
    and no rendering at all**, so a green suite says nothing about what a
@@ -1116,6 +1183,16 @@ owner's own use explains. Do not build rate limiting without that signal.
   and made honest a truncation bug that predated the slice: at 1280x720 the
   box was already cutting text off mid-sentence, with only a near-invisible
   3px scrollbar as a clue that anything was missing.
+- **The spray chart's legend says "Center" and the coach says "up the middle."
+  Two different words for one thing, on purpose.** Decided by the product
+  manager on 20 August 2026, in the conversation that fixed the spray defect,
+  and recorded here so nobody unifies them later on the grounds that they
+  disagree. They do not disagree: both resolve to the same -15 to +15 window
+  from the single `SPRAY_CUTOFFS` constant, so they cannot drift. What differs
+  is register. A chart legend needs a short word that fits under a colour swatch.
+  A coach or a player never says "center" out loud; they say "up the middle,"
+  and the coach's whole job here is to sound like a person at the cage. A player
+  may type either word in chat and the coach understands both.
 
 ## Known debt and open questions
 
@@ -1939,6 +2016,15 @@ rewritten, per the append-only rule.
   finding, and nothing from `grading.json` reaches a report without a by-hand
   read. Every flagged claim is adjudicated in
   `docs/eval-fixtures/slice10-direction-key/HAND-CHECK.md`.
+
+  **A second round the same day, after the QA gate sent the slice back, came in
+  at 43.5%: 10 of 23 flagged claims were the tool being wrong.** A shade above
+  the older 11 to 42 band and well below 61.9, which reads as one wide spread
+  rather than a trend in either direction. It changes nothing about the rule. Two things are worth carrying: no NEW tool mechanism appeared
+  in this round, the first time that has been true, but two mechanisms recurred
+  on the *identical sentence in the identical cell* one round apart, which says
+  the known ones are stable and fixable rather than random. Adjudicated in
+  `docs/eval-fixtures/slice10-direction-key/HAND-CHECK-after-spray.md`.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
   by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
@@ -2098,6 +2184,16 @@ rewritten, per the append-only rule.
   pre-registered null band and is reported as the null it was predicted to be.
   Read it as insurance, not as an improvement. See
   `docs/eval-fixtures/slice10-direction-key/README.md`.
+
+  **Amended later the same day, and the amendment is the important half.** The
+  wording above never shipped. It said "negative direction is pull side," and
+  the product manager's browser QA pass caught the coach naming six pull-side
+  swings on session 1 while the spray chart beside it coloured three. What
+  shipped is the wording that names the cutoffs, plus three pre-counted spray
+  lines per session on every goal, all reading one constant. The "no accuracy
+  claim" framing above still stands and the second round did not change it, but
+  the defect the second round was bought to check IS measurably fixed. See the
+  second decision log entry for 20 August 2026.
 - **A generator-realism slice, carrying three things measured in Slice 9 and
   deliberately not fixed there.** All three change sessions 2 to 4, which is
   why they were kept out of a slice whose whole measurement depended on those
@@ -2253,10 +2349,14 @@ own self-checks, not the coach.*
 
 - **Four committed fixture directories will start rebuilding the wrong swing
   data the moment `src/swingGenerator.js` changes, and repairing their markers
-  is Slice 11's first task, before the generator is touched.** The `current`
+  is Slice 11's first task, before the generator is touched.** *(Dated
+  correction, 20 August 2026: five, not four. Slice 10's second round,
+  `slice10-direction-key/after-spray/`, has the identical exposure and its own
+  marker says so.)* The `current`
   builder reads the generator out of the working tree, not only session 1, so
   `slice9-session-one/before/`, `slice9-session-one/after-a/`,
-  `slice9-session-one/after-b/` and `slice10-direction-key/after/` would each
+  `slice9-session-one/after-b/`, `slice10-direction-key/after/` and
+  `slice10-direction-key/after-spray/` would each
   re-grade against a complete, entirely plausible fact sheet for sessions 2 to 4
   that no coach ever saw, with nothing appearing broken. Slice 9's three markers
   say nothing about it, because they were written believing session 1 was the
@@ -2264,9 +2364,21 @@ own self-checks, not the coach.*
   the Slice 10 round a frozen generator snapshot at the same time. The full
   statement of the trap is in
   `docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt`.
-- **Pre-count pull, centre and opposite field on every goal. A candidate slice,
+- ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
-  fix.** Slice 10 gave the coach the direction key in words; this would give it
+  fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice
+  10, because the browser QA gate turned it from an expansion into part of the
+  fix.** The rejected prompt left the coach with a definition of pull that the
+  spray chart did not share, and the only way to make the two agree was to hand
+  it the counts from the chart's own constant. So the decline recorded below was
+  correct on the evidence it had and was overtaken within hours by evidence it
+  did not have. Everything it warned about was paid: the fact sheet got matching
+  rows in the same change, and the slice bought its own eval round. **The
+  predicted product cost landed too**: the coach now writes about spray in 24 of
+  64 debriefs, up from 9, which is a much larger surface for a future spray
+  error, and the grading tool sees very little of it. The original entry stands
+  unedited below, because the reasoning that declined it is the part worth
+  keeping. Slice 10 gave the coach the direction key in words; this would give it
   the counts. It was deliberately declined then, on a measurement: across Slice
   9's 128 committed debriefs the coach says anything about where balls went in
   10 of 16 Hit to All Fields debriefs and in **0 of the other 112**, so counting
@@ -2325,6 +2437,65 @@ own self-checks, not the coach.*
   goal. The other four cover a free stopping point at 50 degrees in
   `carryDistance`, session 1 having zero pop-ups, the builder trap Slice 9's
   markers do not anticipate, and why the before-baseline was free.
+
+*Added 20 August 2026, later the same day, from the second round of Slice 10
+work, the one that happened after the browser QA gate rejected the slice. All of
+these came out of the round that measured the prompt that actually shipped.*
+
+- **The coach can take a count it was handed and attach it to the wrong side of
+  its own threshold, and pre-counting cannot fix that.** The prompt said "Swings
+  with exit velocity 85 mph or higher: 6 swings." The coach wrote "Six of your
+  swings came in under 85 mph." The number is copied correctly and the sentence
+  is inverted around it; the true answer is 9. Every coach error of this family
+  this project has recorded before was a miscount or a transposition, which
+  handing over the number fixes. This one is not, which makes it a real limit on
+  the strategy the app has used since Slice 8b. **This is not a new proposal.**
+  It is fresh, independent evidence for the open decision already on this list,
+  the one about letting the coach write the sentence and having the app fill in
+  the figure, whose trigger CLAUDE.md already records as fired and which is
+  waiting on the product manager. Nine of the shipped round's 13 genuine errors
+  rest on a handed number, against zero of eight in the round before it, so the
+  pattern is worth weighing when that decision is taken. Detail in
+  `docs/eval-fixtures/slice10-direction-key/HAND-CHECK-after-spray.md`, claim 13.
+- **Two grading-tool coverage gaps, both about claims that never get ruled on at
+  all, rather than claims ruled wrongly.** These matter more now than they would
+  have last week, because the shipped prompt makes the coach write both sentence
+  shapes far more often. (a) **A spray count can be extracted as a `threshold`
+  claim carrying no comparison, and then falls out as UNVERIFIABLE.** Seen on
+  `power-s2/run8`: "You put five swings to the pull side in Session 2" was
+  extracted with `comparison: undefined`, reasoned as `unknown comparison`, and
+  never ruled. It was wrong, the handed count being 6. (b) **The prior-session
+  half of a cross-session comparison is never extracted.** On `open-s4/run5` the
+  coach wrote "five swings go opposite field this round, up from three in
+  Session 1 and four in Session 3." The tool extracted the first half only and
+  correctly ruled it TRUE. The error is in "three in Session 1," where the truth
+  is 4, and that half produced no claim at all.
+
+  **One correction to the record while these are being written down.** Both
+  hand-check documents say in places that the tool "has no spray statistic."
+  That is not true, and a future session should not act on it:
+  `scripts/factSheet.js:164-170` carries all three spray counts and their swing
+  numbers per session, added in the same change as the prompt lines, and one
+  spray sentence in this round was ruled TRUE off those rows. The ground truth
+  is there. What is missing sits in extraction and in the verdict path, which is
+  what the two gaps above describe.
+- **The fact sheet's three spray rows are not era-gated, so totals from this
+  tool are no longer directly comparable to older committed rounds.**
+  `sessionStatsExtras` adds `pullSideCount`, `upTheMiddleCount` and
+  `oppoFieldCount` unconditionally, regardless of `--handed-era`. That is right
+  for ground truth, since where a ball went does not depend on which prompt
+  generation the coach read. It is wrong for comparability: a pre-Slice-10 round
+  re-graded today gets rows the coach was never handed, so its claim totals and
+  its handed-versus-derived split shift for reasons that have nothing to do with
+  the coach. This is the same shape as the residual era leak already recorded
+  against `contactFlyBallCount`, and it is one more argument for the same fix.
+- **`scripts/handedCounts.js` returns a `sprayLines` field that nothing reads.**
+  Added in Slice 10 alongside the era rule that direction counts are handed on
+  every goal, which the grader does use. The field itself has no consumer
+  anywhere in the repo, unlike its neighbour `zoneLines`, which at least has
+  tests asserting on it. Either wire it up or drop it; a returned value nobody
+  reads is the sort of thing a later session mistakes for a working signal.
+  Tiny, and only worth doing next time that file is open.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
