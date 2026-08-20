@@ -31,7 +31,9 @@ stale), and `grading.json` / `grading.txt`. Beside them:
     HAND-CHECK-after-spray.md   All 23 flagged claims from the `after-spray`
                                  round, plus a direct test of whether the
                                  shipped fix worked.
-    browser-payload-capture.md  What the browser actually sent.
+    browser-payload-capture.md  What the browser actually sent. Taken against
+                                 the REJECTED prompt, before the fix, and not
+                                 re-run afterwards.
 
 The 64 debriefs in each round are the bench's seven cells: `power-s1` 12,
 `contact-s1` 12, `power-s2` 8, `contact-s4` 8, `open-s4` 8, `allfields-s4` 8,
@@ -136,6 +138,33 @@ as a live verdict on the shipped prompt. The shipped round's 23 raw flags also
 sit inside it, which is worth noting and is not evidence of anything on its own,
 given everything above about raw flag counts.
 
+### Four findings from the first round, kept because they are still true
+
+Carried over from this file's earlier version, which described that round alone.
+
+1. **Why only one round was bought at first.** PR #31 touched only
+   `src/DebriefScreen.jsx`, so every prompt and data file was unchanged between
+   the Slice 9 merge and the start of this slice. Slice 9's two after rounds were
+   therefore already a valid before-baseline at two seeds, for free. The QA
+   rejection is what turned one round into two.
+2. **All 8 of that round's genuine errors were numbers the coach derived for
+   itself.** Seven off the per-swing table, the eighth (`popup-s4/run1`) off two
+   handed distribution-bucket rows it needed to add together and did not. None
+   contradicted a handed count. Six of the eight are the over-generalisation
+   habit CLAUDE.md already records: the coach names a group of swings and asserts
+   a property across all of them that one member breaks.
+3. **The tool's own "handed" label is not reliable, in both directions.**
+   `grading.txt` labelled 7 of that round's 21 raw flags "contradicting a number
+   the prompt handed the coach," and all 7 turned out to be false positives. It
+   also ran wrong the other way: `power-s2/run3` is recorded `handed: false` on
+   two numbers the prompt gave the coach word for word. This is why the
+   handed-versus-derived figures in this file come from reading the actual prompt
+   text by hand, not from the label.
+4. **A third false-positive shape, a variant of the recorded M5**: a plain
+   two-value recital ("swings like 5 and 13 left the bat at 92 and 89 mph")
+   converted into a subset test against 88 mph, a threshold appearing nowhere in
+   the sentence.
+
 ## What the shipped round did change, and nobody asked for it
 
 **The coach now talks about spray in 24 of 64 debriefs, up from 9.** That is what
@@ -223,8 +252,11 @@ candidates.
   graded twice do not produce the same claims. Every number here is one draw.
 - **That the coach's spray grouping is now flawless.** Two of the shipped round's
   spray statements are arithmetic slips against handed counts, and the grading
-  tool caught neither. What *is* supported is the narrower claim above: the coach
-  now uses the chart's rule rather than the sign rule.
+  tool caught neither. The browser capture shows the coach contradicting its own
+  grouping three times in one answer, though note that capture was taken against
+  the **rejected** prompt and nothing has re-run that question since. What *is*
+  supported is the narrower claim above: the coach now uses the chart's rule
+  rather than the sign rule.
 - **That the tool's false-positive mechanisms are now enumerated.** Each wave of
   measurement has produced new ones. This wave produced two.
 
