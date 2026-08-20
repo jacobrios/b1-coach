@@ -1,0 +1,13 @@
+# Which session data the debriefs in this directory were written about.
+# See ../before/BUILDER.txt for what this file is and why editing it to make
+# a command work defeats the point.
+#
+# The second of Slice 9's two after rounds, generated on 19 August 2026 AFTER
+# session 1's fifteen hand-written swings were replaced. Same data as
+# ../after-a, a second independent draw of the same 64 cells, so it takes the
+# same builder: the swings in src/sessionOneSwings.js today. If session 1 is
+# ever rewritten again, this round needs a frozen snapshot of its own, in the
+# same shape as ../session-one-before.mjs, and this line changes to name it.
+
+builder = current
+handed-era = current

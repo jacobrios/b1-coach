@@ -1,0 +1,13 @@
+# Which session data the debriefs in this directory were written about.
+# See ../before/BUILDER.txt for what this file is and why editing it to make
+# a command work defeats the point.
+#
+# These 64 debriefs were generated on 19 August 2026 AFTER Slice 9 replaced
+# session 1's fifteen hand-written swings, so they describe the swings that
+# are in src/sessionOneSwings.js today. That is what the current builder
+# reads, and it stays correct only for as long as session 1 is not rewritten
+# again. If it ever is, this round needs a frozen snapshot of its own, in the
+# same shape as ../session-one-before.mjs, and this line changes to name it.
+
+builder = current
+handed-era = current
