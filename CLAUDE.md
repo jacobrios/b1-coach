@@ -269,7 +269,7 @@ for another reason.
                              scroll fade, and the shared axis-text style
                              constants, both added in Slice 7.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
-    src/coachApi.js          592 lines. System prompts, the length budget
+    src/coachApi.js          607 lines. System prompts, the length budget
                              appended to the debrief prompt, the goal-context
                              block both prompts share, response parsing,
                              failure classification, the retry policy, and the
@@ -286,7 +286,14 @@ for another reason.
                              which way each was off) built from
                              `pitchZoneBreakdown`, and fixed the "1 swings"
                              grammar across every generated count line; see
-                             the decision log entry for 19 August 2026.
+                             the decision log entry for 19 August 2026. Slice 10
+                             added `DIRECTION_KEY_LINE`, one exported constant
+                             telling the coach which sign of the spray direction
+                             means pull, interpolated immediately above the
+                             individual-swings line in BOTH prompts, and stopped
+                             the Power below-15 count line dangling a
+                             "numbers:" clause on a zero count; see the decision
+                             log entry for 20 August 2026.
     src/goalCountSpecs.js    140 lines. One table, per goal, of every threshold
                              that goal's coaching prose names in words, so the
                              sentence and the count that feeds it cannot drift
@@ -457,7 +464,7 @@ for another reason.
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
     scripts/*.test.js       1344 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Seven directories:
+    docs/eval-fixtures/      Committed ground truth, not code. Eight directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -497,8 +504,15 @@ for another reason.
                                snapshot of the old swings so the before round
                                stays gradeable, plus `HAND-CHECK.md`
                                adjudicating all 60 flagged claims one at a time.
-                               None is collected by vitest;
-                               all seven have their own READMEs covering what is
+                               `slice10-direction-key/` (524 KB) holds the single
+                               64-debrief round behind Slice 10's direction key,
+                               paired against Slice 9's `after-a` at the same
+                               seed so the two rounds differ in one prompt line
+                               and nothing else, with a pre-registered null band
+                               the result landed inside, every flagged claim
+                               hand-checked, and the browser capture of what the
+                               app really sent. None is collected by vitest;
+                               all eight have their own READMEs covering what is
                                and is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
@@ -803,9 +817,10 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 9's closing review on 20 August 2026 it is 529
+   vitest, and as of the close of Slice 10 on 20 August 2026 it is 535
    tests across 22
-   files, up from 519 at the close of Slice 9's build the same day, up from
+   files, up from 529 at Slice 9's closing review the same day, up from
+   519 at the close of Slice 9's build, up from
    506 across 22 at the close of Slice 8d, up from 489 across
    21 at the close of Slice 8c, up from 461 across
    19 at the close of Slice 8b. It covers the
@@ -819,7 +834,9 @@ specific to this repo:
    sums held exactly, the on-target counts per goal, the pull and opposite-field
    counts, a correlation band, a rule that rules out a ruler-straight ramp, the
    strike-zone mix, the in-zone contact advantage, and a pinned-seed snapshot
-   proving sessions 2 to 4 do not move when session 1 is rewritten); and the
+   proving sessions 2 to 4 do not move when session 1 is rewritten); the
+   direction key reaching both prompts, sitting immediately above the swing data
+   it explains, and being the same string in each (Slice 10); and the
    deterministic fact-sheet and word-overlap modules the
    claim-accuracy grader and the bench each lean on. It covers **no screens
    and no rendering at all**, so a green suite says nothing about what a
@@ -1907,6 +1924,17 @@ rewritten, per the append-only rule.
   be an outright logic bug (see the next entry). Every flagged claim in all
   three rounds is adjudicated in
   `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`.
+
+  **Measured again, 20 August 2026, in Slice 10, on one fresh round, and this
+  one is ABOVE the band: 13 of 21 flagged claims, 61.9%, were the tool being
+  wrong.** The recorded band was 11% to 42% across five previous rounds, so the
+  band as written no longer holds and the honest read is that this rate is
+  unbounded rather than settled. Two of the mechanisms behind it had never been
+  seen before, which is another wave in a row producing new ones. The
+  rule does not change, it only gets firmer: a raw flag is a lead, not a
+  finding, and nothing from `grading.json` reaches a report without a by-hand
+  read. Every flagged claim is adjudicated in
+  `docs/eval-fixtures/slice10-direction-key/HAND-CHECK.md`.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
   by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
@@ -2022,7 +2050,7 @@ rewritten, per the append-only rule.
   its file path. Files written before this slice stay bare arrays; the new
   `scripts/gradingOutput.js` module and the replay script both read either
   shape, so nothing older had to be rewritten to close this.
-- **The power-goal "below 15 degrees" count line prints a dangling
+- ~~**The power-goal "below 15 degrees" count line prints a dangling
   "numbers:" when the count is zero.** Found by the browser-pass payload
   capture on a real session-2 request, which happened to have zero swings
   under 15 degrees. The line renders as "Swings with launch angle strictly
@@ -2030,11 +2058,18 @@ rewritten, per the append-only rule.
   after the colon. Cosmetic and invisible to a visitor since it lives inside
   the prompt the coach reads, not the screen, but it is a coach-prompt
   change and needs the same approval any other prompt wording change gets
-  before it ships.
+  before it ships.~~ **Fixed 20 August 2026 in Slice 10**, with the product
+  manager's approval, using the same conditional `zoneCountLines` already
+  used four lines below it. Two tests seen red first, one for the zero case
+  and one proving the common case keeps its shape. Note what the live
+  evidence does and does not cover: no session in the browser run produced a
+  zero count, so the branch was exercised through the shipped module in the
+  browser rather than by a live request; see
+  `docs/eval-fixtures/slice10-direction-key/browser-payload-capture.md`.
 
 *Added at the close of Slice 9, 20 August 2026:*
 
-- **The coach is never told which sign means pull, on five of the six goals.**
+- ~~**The coach is never told which sign means pull, on five of the six goals.**
   Each swing's spray direction reaches the coach as a raw signed number
   (`src/coachApi.js:532`) and only the Hit to All Fields goal context
   (`src/coachApi.js:57`) says which way is which. So on Power, Contact,
@@ -2045,7 +2080,15 @@ rewritten, per the append-only rule.
   coach has to interpret without being told how, and it is probably the
   cheapest remaining accuracy fix in the app. **It is a prompt wording change,
   so it needs the product manager's approval on the exact sentence before it
-  ships.** Strongest candidate of everything on this list.
+  ships.** Strongest candidate of everything on this list.~~ **Shipped 20
+  August 2026 in Slice 10**, on approved wording, as one exported constant
+  interpolated into both prompts immediately above the swing data it explains.
+  **It ships with no accuracy claim attached, deliberately.** The error class
+  appears in 0 of 112 measured non-All-Fields debriefs, so no bench round at
+  this scale could detect its effect; the one round bought landed inside a
+  pre-registered null band and is reported as the null it was predicted to be.
+  Read it as insurance, not as an improvement. See
+  `docs/eval-fixtures/slice10-direction-key/README.md`.
 - **A generator-realism slice, carrying three things measured in Slice 9 and
   deliberately not fixed there.** All three change sessions 2 to 4, which is
   why they were kept out of a slice whose whole measurement depended on those
@@ -2193,6 +2236,70 @@ own self-checks, not the coach.*
   paths that do not exist, which is lower-stakes than the marker guards, but
   the fix is the same shape: assert on the message, not just that something
   was thrown.
+
+*Added at the close of Slice 10, 20 August 2026:*
+
+- **Pre-count pull, centre and opposite field on every goal. A candidate slice,
+  now with live evidence behind it, and it is a product expansion rather than a
+  fix.** Slice 10 gave the coach the direction key in words; this would give it
+  the counts. It was deliberately declined then, on a measurement: across Slice
+  9's 128 committed debriefs the coach says anything about where balls went in
+  10 of 16 Hit to All Fields debriefs and in **0 of the other 112**, so counting
+  spray on the other five goals creates new behaviour on screens where spray is
+  not what the player asked about, competing for a word budget the coach already
+  overruns. **What changed the case is one live reply.** Asked directly which
+  swings went to the pull side, the coach stated the convention correctly,
+  unprompted, and got every sign right, then contradicted its own grouping three
+  times in one answer: swing 15 under pull side and again up the middle, swing
+  10 under pull side and again opposite field, and 13 degrees called opposite
+  field while 11 degrees was called up the middle. The approved sentence gives
+  no countable boundary, by design; the plan predicted the improvisation but not
+  that the same swing would land in two buckets. **The cost is not one prompt
+  line.** It must extend `scripts/factSheet.js` in the same slice, because an
+  uncounted new stat is exactly what manufactured Slice 8b's false positives,
+  and it must buy its own eval round. Read the live reply as a lead: it is one
+  answer to a question written to force spray grouping, on a topic the coach
+  raises by itself in 0 of 112 measured debriefs. Evidence in
+  `docs/eval-fixtures/slice10-direction-key/browser-payload-capture.md`.
+- **Two more grading-tool failure mechanisms, and one of them is free to fix.**
+  (a) **A handed distribution bucket re-derived with an inclusive upper bound.**
+  `DISTANCE_BUCKETS` is half-open, so a 305-foot ball belongs to `305+`; the
+  tool recomputes `265-305` inclusively, sweeps that ball back in, and turns a
+  correctly repeated handed 5 into a "should be 6". **Deterministic, in the
+  verdict code rather than in extraction**, so it is cheap to fix and can be
+  validated by replaying the committed rounds offline at zero cost, the route
+  Slice 9 used for its M4 fix. Strongest candidate of the tool items. (b) **The
+  denominator of an "N out of fifteen" phrase absorbed as the numeric
+  threshold**: "Four swings hit the target zone out of fifteen" became a
+  threshold test at 15 degrees. That one sits in extraction and cannot be
+  validated without a fresh live round. Both are adjudicated case by case in
+  `docs/eval-fixtures/slice10-direction-key/HAND-CHECK.md`.
+- **The M5 non-neutrality warning now has a named cell.** M5 accounted for 7 of
+  Slice 10's 13 false positives, and **four of those seven are the same sentence
+  in the same cell**: Power session 2's "you cut your under-175-foot swings from
+  4 down to 1", a correctly repeated pair of handed distance-bucket numbers
+  graded against a launch-angle count. Any comparison including the `power-s2`
+  cell carries roughly four spurious flags from that one sentence shape, so a
+  raw flag-count delta between two rounds is not usable without a hand-check of
+  at least the M5 candidates. This sharpens, and does not replace, the standing
+  M5 entry above saying the tool should be fixed before it is used for another
+  before/after comparison.
+- **Six scoping findings from Slice 10 live in `docs/slice-10-plan.md`, under
+  "The findings this slice produced that are not fixes", and are not restated
+  here.** Two of them are Slice 11 material and are the reason to read that
+  section before scoping it. **Finding 1**: on Power session 4, 1,886 of 45,000
+  generated swings (4.2 percent) sit at exactly 35.0 degrees because the
+  generator clamps launch angle there, drawing a flat row of dots pinned to the
+  top edge of a chart every visitor sees. That is the same class of first-screen
+  credibility defect as the impossible distances Slice 6 removed, and it was
+  recorded nowhere before now. **Finding 2**: Hit to All Fields meets its own
+  stated bar of at least 3 pull and 3 opposite field only 64 percent of the time
+  at session 2, 59 percent at session 3 and 52 percent at session 4, because
+  spray direction is multiplied by the shrinking variance factor, so a visitor
+  who picks that goal and clicks through watches the demo get worse at its own
+  goal. The other four cover a free stopping point at 50 degrees in
+  `carryDistance`, session 1 having zero pop-ups, the builder trap Slice 9's
+  markers do not anticipate, and why the before-baseline was free.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

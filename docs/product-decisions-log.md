@@ -6,6 +6,62 @@
 
 ---
 
+## Slice 10: told the coach which way is which, and reported the null it predicted (August 20)
+
+*What this slice was.* Each swing's spray direction reaches the coach as a raw
+signed number, and only one of the six goals, Hit to All Fields, ever told it
+which sign meant pull. On the other five it guessed, and during Slice 9's
+browser gate it called an opposite-field ball a pull-side ball. Two prompt lines
+shipped, both approved word for word before any code: a direction key naming the
+convention, in both prompts, immediately above the swing data it explains; and a
+smaller fix stopping the Power count line dangling a "numbers:" clause when the
+count is zero.
+
+*Decision: split the prompt change from the data change.* Four symptoms came out
+of one scoping pass. One changes what the coach is told; three change what the
+swing data contains. The three data ones move sessions 2 to 4, and PR #31 had
+touched only the debrief screen, which left Slice 9's two after rounds standing
+as a free before-baseline at two seeds for any change that leaves the data
+alone. Splitting therefore bought a controlled comparison for the price of one
+round rather than two. That baseline expires the moment the generator moves,
+which is Slice 11.
+
+*Decision: decline the spray-counts expansion, and measure before declining it.*
+The tempting larger move was to pre-count pull, centre and opposite field on
+every goal, the mechanism that worked in Slices 8b and 8c. It was declined on a
+measurement: across Slice 9's 128 committed debriefs the coach says anything
+about where balls went in 10 of 16 Hit to All Fields debriefs and in 0 of the
+other 112. Counting spray on the other five goals would create new behaviour on
+screens where spray is not what the player asked about, competing for a word
+budget the coach already overruns, and a new count with no matching row in the
+grading tool's fact sheet is exactly what manufactured Slice 8b's false
+positives. It stays a candidate slice, now with live evidence: asked directly,
+the coach got every sign right, then contradicted its own grouping three times
+in one answer.
+
+*Decision: pre-register the null band before spending.* The error class this
+slice fixes appears in 0 of 112 measured debriefs outside one goal, so no round
+at this scale could detect it. Rather than buy a round and then decide what the
+number meant, the band went into the plan first: 15 to 29 raw flags is a null.
+It came back at 21, reported as the null it was predicted to be. Hand-checked,
+that is 8 genuine coach errors against a same-condition range of 9 to 19 from
+Slice 9's own rounds: a regression guard holding, not an improvement. This slice
+makes no accuracy claim anywhere.
+
+*What it cost, and what it turned up.* $1.49 for 64 live debriefs and their
+grading, zero parse failures, both free dry runs clean before any spend, and
+`npm test` from 529 tests across 22 files to 535, green. The hand-check found
+the grading tool wrong on 13 of the 21 flags, a 61.9 percent false-positive rate
+above the 11 to 42 percent band recorded so far, plus two failure mechanisms
+never seen before, one of them deterministic and fixable offline for nothing.
+Six scoping findings that are not fixes are written out in
+`docs/slice-10-plan.md` and carried onto What's Next, the sharpest being a
+launch-angle clamp that pins 4.2 percent of Power session-4 swings at exactly
+35.0 degrees, drawing a flat row of dots along the top of a chart every visitor
+sees.
+
+---
+
 ## Slice 9: the first screen stopped being a ruler, and the honest answer was "neither better nor worse" (August 19-20)
 
 *What this slice was.* Every visitor lands on a scripted first practice session
