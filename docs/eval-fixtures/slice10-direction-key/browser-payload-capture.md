@@ -93,3 +93,65 @@ to force spray grouping, on the one topic the measurement says the coach
 almost never raises by itself (0 claims about where balls went across 112 of
 Slice 9's 128 committed debriefs). It is a lead for that future slice, not a
 defect in this one.
+
+---
+
+# Second capture, 20 August 2026: the shipped prompt, in a browser
+
+Everything above was captured against the prompt the product manager's QA pass
+then rejected. It is kept because it is the evidence that the rejected prompt
+did reach the request, which is a true and useful thing to have recorded. But
+it says nothing about what shipped.
+
+This section is the same check re-run against the shipped prompt, on the same
+screen, with the same question. It exists because the browser gate is what
+caught this defect in the first place, and closing a slice on eval numbers
+alone would repeat exactly the mistake being fixed.
+
+## The check
+
+Power & Distance, session 1, the identical question the product manager asked:
+"Which of my swings went to the pull side and which went the other way?"
+
+Session 1's ground truth, by the cutoffs the spray chart draws:
+
+    pull (below -15):        swings 3 (-24), 7 (-22), 15 (-20)
+    up the middle (-15..15): swings 1, 2, 4, 6, 10, 11, 13, 14
+    opposite field (> +15):  swings 5 (29), 8 (24), 9 (21), 12 (17)
+
+## What the coach answered, verbatim
+
+    Pull side (swings 3, 7, 15) — those went hard to the pull side,
+    below -15 degrees.
+
+    Up the middle (swings 1, 2, 4, 6, 10, 11, 13, 14) — the bulk of your
+    session, right through the middle of the field.
+
+    Opposite field (swings 5, 8, 9, 12) — four swings went the other way,
+    above +15 degrees.
+
+Correct on all fifteen swings, and it matches the three orange dots the spray
+chart draws in the same screenshot.
+
+Three things worth naming beyond the counts being right:
+
+1. **Every swing appears exactly once**, and all fifteen are accounted for.
+   The rejected prompt produced an answer that put swing 15 and swing 10 each
+   in two different buckets. That second defect is gone too, and it went
+   unmentioned in the fix because it was never separately targeted: giving the
+   coach three counted, disjoint groups removed the need for it to improvise
+   boundaries at all.
+2. **It states the cutoffs in its own words**, "below -15 degrees" and "above
+   +15 degrees", rather than restating a sign convention.
+3. **It uses "up the middle" while the chart legend says "Center"**, which is
+   the deliberate decision recorded in CLAUDE.md, not a drift.
+
+## One thing this capture shows that is not a win
+
+The reply ends "The spray chart will show you exactly where each one landed."
+The spray chart **was** rendered on that screen, so the sentence is true here.
+But nothing guarantees it: the coach chooses which two charts render, and it
+could say that when the spray chart is not one of them. The prompt deliberately
+never mentions the chart, so this is the coach reasoning from its own
+chart-selection instructions, and it predates this slice. Recorded as a lead,
+not fixed here.

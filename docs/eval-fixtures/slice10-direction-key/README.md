@@ -96,10 +96,18 @@ and -6 "up the middle," which the sign rule would have called pulls.
 Total for the slice: **$3.07**. Zero parse failures across all 128 calls,
 confirmed by reading both record files rather than by trusting a log line.
 
-Before the **first** round, the grader's free `--dry-run --input` was run and
-exited 0, which is not a formality: that gate was silently dead for a whole
-previous slice and nothing said so. Whether it was re-run before the second round
-is not recorded anywhere, so this file does not claim it was.
+Before **each** round, the free dry runs were run and exited 0, which is not a
+formality: that gate was silently dead for a whole previous slice and nothing
+said so. Before the first round, the grader's `--dry-run --input` was pointed at
+a directory holding both bench records and grading output, the exact case that
+had been broken. Before the second round, both the bench's `--dry-run` and the
+grader's were re-run, because the code under test had changed in between, and
+the grading instrument itself had been edited.
+
+*(Corrected 20 August 2026. The first draft of this paragraph said the second
+round's dry run "is not recorded anywhere", because the record lived in the
+slice's working ledger rather than here. It was run. This file is where that
+belongs, so it now says so.)*
 
 **Genuine errors moved from 8 to 13, and this directory claims neither a
 regression nor an improvement.** Three reasons, each sufficient alone:
