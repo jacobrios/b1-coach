@@ -464,7 +464,8 @@ function goalCountLines(goalId, swings) {
       // GOAL_COUNT_SPECS nor goalTargets: it is the shipped line's own
       // literal, named nowhere in the prompt prose, kept as found.
       return [
-        `- Swings with launch angle strictly below 15 degrees (not including 15): ${swingCountPhrase(v.underFifteen.count)} — numbers: ${v.underFifteen.swings.join(', ')}`,
+        `- Swings with launch angle strictly below 15 degrees (not including 15): ${swingCountPhrase(v.underFifteen.count)}` +
+          (v.underFifteen.count ? ` — numbers: ${v.underFifteen.swings.join(', ')}` : ''),
         `- Swings in power zone (EV >= ${spec.exitVelocity} mph AND launch angle ${spec.launchAngle.min}-${spec.launchAngle.max} degrees): ${swingCountPhrase(v.powerZone.count)}`,
       ]
     case 'contact':

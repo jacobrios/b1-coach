@@ -287,6 +287,51 @@ describe('the count lines each goal is handed', () => {
   })
 })
 
+// Task 2, Slice 10: the below-15 line predates zoneCountLines and always
+// appended "— numbers: ${list}" unconditionally, so a session with nothing
+// under 15 degrees rendered a dangling "0 swings — numbers:" with nothing
+// after the colon. zoneCountLines already guards on count four lines below;
+// this brings the older line in line with it.
+describe('the power below-15 line, on the dangling numbers clause', () => {
+  const sessionFor = (swings) => [{
+    sessionNumber: 1,
+    swings,
+    stats: { avgExitVelocity: 82, avgLaunchAngle: 22, inZoneCount: swings.length, totalSwings: swings.length },
+  }]
+  const messageFor = (swings) => buildDebriefUserMessage({
+    goal: { id: 'power', label: 'Power & Distance' },
+    player: { firstName: 'Jake' },
+    sessions: sessionFor(swings),
+    viewingSessionNumber: 1,
+  })
+
+  it('a session with nothing under 15 degrees ends the line at the count, no trailing numbers clause', () => {
+    const swings = [
+      { exitSpeed: 80, angle: 20, direction: 0 },
+      { exitSpeed: 85, angle: 25, direction: 5 },
+      { exitSpeed: 90, angle: 30, direction: -5 },
+    ].map((launch, i) => ({
+      plateLocHeight: 2.0,
+      plateLocSide: 0.1,
+      hit: { launch, landing: { distance: 150 + i } },
+    }))
+    const message = messageFor(swings)
+    expect(message).toContain('- Swings with launch angle strictly below 15 degrees (not including 15): 0 swings\n')
+    expect(message).not.toContain('below 15 degrees (not including 15): 0 swings — numbers:')
+  })
+
+  it('a session with some swings under 15 degrees is unchanged: count and numbers still print', () => {
+    const angles = [20, 10, 22, 25, 30, 18, 5, 28, 33, 19, 12]
+    const swings = angles.map((angle, i) => ({
+      plateLocHeight: 2.0,
+      plateLocSide: 0.1,
+      hit: { launch: { exitSpeed: 75 + i, angle, direction: 0 }, landing: { distance: 150 + i } },
+    }))
+    const message = messageFor(swings)
+    expect(message).toContain('- Swings with launch angle strictly below 15 degrees (not including 15): 3 swings — numbers: 2, 7, 11\n')
+  })
+})
+
 // Slice 8c: the zone count lines every goal is handed, unconditionally, since
 // the strike-zone summary line they extend is unconditional too. Before this,
 // the coach was handed a total and the bounds but not which swings were
