@@ -300,8 +300,10 @@ the way past if you open the file for another reason.
                              manager's browser QA pass and never shipped**: it
                              said "negative direction is pull side," which
                              disagreed with the spray chart on the same screen.
-                             What shipped instead, the same day, is the wording
-                             naming the -15 and +15 cutoffs, plus
+                             What shipped instead, the same day, is:
+                             "- Direction key: below -15 degrees is pull side,
+                             above +15 degrees is opposite field, -15 to +15 is
+                             up the middle." Plus
                              `sprayCountLines`, three pre-counted spray lines
                              per session that now appear on EVERY goal in BOTH
                              prompts, all of it reading `SPRAY_CUTOFFS` from

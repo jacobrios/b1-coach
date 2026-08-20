@@ -13,21 +13,20 @@ records what was decided and measured before the product manager ran the QA
 script. **The prompt it describes never shipped.**
 
 *What the gate caught.* Asked which swings went pull side, the coach named six on
-session 1. The spray chart beside it coloured three. Both were behaving
-correctly; the app was wrong, holding two definitions of "pull" and handing the
-coach the one the screen does not use. The shipped line said "negative direction
-is pull side"; the chart calls a ball pulled only past -15 degrees. Three swings
-read as pull in the prose and Center in the chart at once.
+session 1. The spray chart beside it coloured three. Both behaved correctly; the
+app was wrong, holding two definitions of "pull" and handing the coach the one
+the screen does not use. Three swings read as pull in the prose and Center in the
+chart at once.
 
-*This was a controller error, not an implementation one.* The wording was chosen
-deliberately over an option naming the cutoffs, on the reasoning that naming a
-threshold the prompt does not pre-count is what makes this coach invent counts.
-Sound, and incomplete: it never weighed the cost of leaving the coach with a
-different definition from the screen. The product manager's instinct in the
-original conversation pointed here and was talked out of it. The slice's own
-verification then walked past it, having asked the identical question, noticed
-the coach's buckets contradicted each other, and never checked them against the
-chart.
+*This was a controller error, not an implementation one.* The rejected line said
+"negative direction is pull side." That wording was chosen deliberately over an
+option naming the -15 and +15 cutoffs, on the reasoning that naming a threshold
+the prompt does not pre-count is what makes this coach invent counts. Sound, and
+incomplete: it never weighed the cost of leaving the coach with a different
+definition from the screen. The product manager's instinct in the original
+conversation pointed here and was talked out of it. The slice's own verification
+then walked past it, having asked the identical question, noticed the coach's
+buckets contradicted each other, and never checked them against the chart.
 
 *This is a process success, not an embarrassment.* The gate that caught it is the
 one this project says may never degrade, and it worked on a defect that automated
@@ -37,10 +36,9 @@ tests, a pre-registered measurement and 64 live debriefs had all missed.
 app, `SPRAY_CUTOFFS` in `src/sessionStats.js`, beside the strike-zone constants
 that set the precedent. Everything chains to it: the direction key, three
 pre-counted spray lines per session on every goal in both prompts, the Hit to All
-Fields prose, and the grading tool's fact sheet. The key reads: "Direction key:
-below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15
-is up the middle." The prose and the counts can no longer disagree, and a test
-proves it rather than the numbers merely agreeing today.
+Fields prose, and the grading tool's fact sheet. The approved key names the
+cutoffs the chart uses. The prose and the counts can no longer disagree, and a
+test proves it rather than the numbers merely agreeing today.
 
 *The defect is fixed, measured rather than asserted.* Two rounds of 64 live
 debriefs, same seed, identical swing data, one prompt generation apart. In the
