@@ -6,6 +6,136 @@
 
 ---
 
+## Slice 9: the first screen stopped being a ruler, and the honest answer was "neither better nor worse" (August 19-20)
+
+*What this slice was.* Every visitor lands on a scripted first practice session
+of fifteen hand-written swings, and those fifteen were drawn with a ruler: sort
+them by exit velocity and the launch angles climbed in near-lockstep, a
+correlation of 0.975 against the roughly 0.36 the app's own generator produces.
+That single artifact was doing more damage than it looked. It left Line Drives
+& Contact with **zero** on-target swings on the first screen, so the second
+goal a visitor is likely to click opened with no success anywhere to look at.
+And Hit to All Fields, whose own coaching instructions ask for at least three
+pull-side and three opposite-field swings, was handed two and two: it had never
+met its own stated bar on any first debrief since the app existed. Nothing was
+checking either.
+
+*Five decisions, settled before any code.* Hold both of session 1's averages
+exactly, as sums rather than as rounded figures: 1224 mph of exit velocity and
+260 degrees of launch angle across the fifteen, which is what keeps the first
+two stat tiles reading 82 and 17 and keeps every generated session where it
+was. Set the on-target counts to
+Power 2, Contact 2, Reduce Pop-Ups 11. Give Hit to All Fields 3 pull and 4
+opposite field. Aim the exit-velocity-to-launch-angle relationship at about
+0.36, the generator's own median. Leave the strike-zone mix alone at 9 pitches
+in, 6 out.
+
+*Why those counts were derived rather than picked by taste, which is the
+finding underneath the whole slice.* The demo has a rule: a later session has a
+65 percent chance of looking better than session 1 and a 35 percent chance of
+looking worse. Measured over 6,000 replays, average exit velocity lands below
+session 1's exactly 35 percent of the time, so the rule works as designed on
+the one number it was written for. It had never been applied to the counts a
+visitor actually reads off the charts, and once measured, **Power's arc ran
+backwards**: session 1 showed 3 swings on target, and sessions 2, 3 and 4 came
+in below that 78, 70 and 63 percent of the time. A visitor who picks the most
+popular goal and clicks through all four sessions watched the target band empty
+out roughly seven times in ten. The other goals were miscalibrated the other
+way, effectively unable to look worse (Contact 0 percent, Pop-Ups 5 / 3 / 1
+percent). The new counts are the numbers that put every goal near the app's own
+35 percent, not numbers anyone liked the look of.
+
+*Holding both averages bought a control group nobody had asked for.* Every
+later session is generated from session 1's two averages, so freezing those
+sums exactly meant sessions 2, 3 and 4 come out bit for bit identical to what
+they were before the rewrite. That is pinned by a test against a snapshot of
+the old data, so it is proven rather than argued, and it is also why the before
+round and the first after round are a controlled comparison across all 64
+records rather than only the 24 first-session ones.
+
+*The measurement, reported straight: neither better nor worse.* Three live
+rounds of 64 debriefs each, every flagged claim read against the real data by
+hand. Genuine coach errors came in at 14 before, 19 in the first after round
+and 9 in the second. The two after rounds are looking at **identical**
+first-session data and differ from each other by more than either differs from
+the before round, which is what a null result looks like: the run-to-run noise
+in this instrument is larger than any effect the rewrite had. Stripping out the
+two mildest error shapes leaves 8, 8 and 8, dead flat. Worth stating plainly
+because it nearly went the other way: a raw flag count, unchecked, would have
+read 16 flags before against 29 after and reported a coach that had got 80
+percent worse. Ten of those 29 were the grading tool calling a true sentence
+false. Buying a second round at a second seed is the only reason any of this is
+knowable, and it is the cheapest insurance this project has bought.
+
+*The one thing that did move, and one thing the product manager chose to
+accept.* Line Drives & Contact on session 1, the exact screen this slice
+existed to fix, went from 3 genuine coach errors to zero in both after rounds.
+That fits the mechanism: a goal with no on-target swings gave the coach nothing
+to describe but the failures, and it kept miscounting them. Against that, the
+coach has a habit of grouping the three low pitches and calling them all flat
+and weak. That sentence was true of the old data by coincidence; it is false of
+the new, because one of those three is now a soft lofted ball. Six of the 28
+genuine after-round errors are that one sentence. **Decision: accept and
+record.** The over-generalisation is a pre-existing flaw in how the coach
+writes, which the old uniform data happened to mask, and re-tuning the swings
+to keep it hidden would restore the very sameness this slice exists to remove.
+
+*Three things the execution discovered that nobody planned for.* First, the
+grading tool rebuilt its idea of the practice session from whatever is in the
+working tree, so grading the before round after the rewrite would have checked
+old-data statements against new-data facts and marked correct coaching wrong on
+24 of 64 records. Fixed with a frozen snapshot of the old session and a note
+committed beside each round naming the data it describes: the same hazard the
+tool already carried a written warning about one fixture generation earlier,
+which is the argument for a committed note over a warning. Second, review
+caught that the note had to record the random seed too, because the seed
+decides sessions 2 to 4: grading the second after round at the wrong seed would
+have rebuilt sessions that never existed for 40 of 64 records while leaving 24
+correct, a report that looks partly sane rather than obviously broken. Third,
+pre-existing: the coach gets each swing's spray direction as a raw signed
+number with no statement of which sign means pull, on five of the six goals.
+Only Hit to All Fields explains it, and on the first Power debrief rendered in
+a browser the coach called an opposite-field ball a pull-side ball. Now on the
+What's Next list; it is a prompt wording change, so it needs its own approval.
+
+*Seven more findings that are measurements, not fixes, recorded so nobody
+rediscovers them.* Two are above: Hit to All Fields had never met its own bar,
+and the on-target counts were uncalibrated in both directions. The other five.
+There is no control group in the usual sense, because every prior session's
+swings are printed into the prompt in full, so a session-4 debrief carries
+session 1 verbatim and every bench cell moves when session 1 moves. The
+generator has **no link at all** between where a pitch was and how well it was
+struck, where session 1 has an 8.8 mph gap, so any pitch-location conclusion
+the coach draws on a generated session is a coincidence. Reduce Pop-Ups names a
+failure that cannot happen: the goal calls a pop-up anything above 35 degrees
+and the generator clamps at exactly 35, so across 360,000 generated swings the
+count was zero and the coach is handed "0 swings" forever. The four-session
+improvement arc does not exist and **that is correct**, not a bug: average exit
+velocity reads 82.94, 82.99 and 82.98 across sessions 2 to 4, because a real
+hitter does not gain exit velocity in a week, while swing shape, the coachable
+part, genuinely ramps. And `CONTACT_CORRELATION`, set to 0.6, does not hold a
+correlation; it produces 0.36, so anyone retuning it toward "0.5" would get
+0.25.
+
+*Cost and verification.* $3.31 on 192 live debriefs and $1.15 on grading them,
+$4.46 total, plus about four cents during the browser pass, against a $5
+reporting threshold the product manager set as "tell me when you are close,"
+not a stop. A planned fourth measurement, re-grading one round twice to size
+the grader's own noise, was **skipped and $0.38 saved**: the two after rounds
+measure that noise better, because the first-session cells are seed-independent
+and so see byte-identical data through the whole pipeline rather than only
+through the grader. The hard gate held: zero parse failures across all 192
+debriefs, which was the real risk, since a rewritten session 1 could have
+pushed the coach back past the output ceiling that broke it before Slice 7b.
+`npm test` moved from 506 tests across 22 files to 519 across 22, green. Both
+first debriefs were opened in a real browser and read: the scatter is a cloud,
+both goals show two on-target swings where Contact showed none, and the three
+stat tiles are unchanged. All 60 flagged claims are itemised in
+`docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`; what is and is not safe
+to conclude is in that directory's README.
+
+---
+
 ## Slice 8c: finished the counting rule, fixed the tool measuring it, and put a parked decision back on the table (August 19)
 
 *What this slice was.* Slice 8b proved a mechanism, pre-count a threshold and
