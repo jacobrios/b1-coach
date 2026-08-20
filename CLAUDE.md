@@ -2378,6 +2378,25 @@ own self-checks, not the coach.*
 
 *Added at the close of Slice 10, 20 August 2026:*
 
+- **The coach now says which way "pull" is on the field, and the app has never
+  recorded whether the hitter is right or left handed.** Found in the product
+  manager's own merge-gate QA pass, in a reply that was otherwise perfect: it
+  described the pull-side swings as going "hard left of center" and the
+  opposite-field ones as "right of center." That is correct for a right-handed
+  hitter and wrong for a left-handed one, and nothing in the data says which
+  Bill is. It is not a contradiction of the screen: the spray chart already
+  draws pull to the left, so the app has always quietly assumed a right-handed
+  hitter, and the coach is agreeing with it. What changed is that the
+  assumption is now stated out loud in prose a visitor reads, where before it
+  was only implied by a chart's geometry. Small, and it is the same shape as
+  every other item in the Slice 8 series: a fact the coach infers because
+  nothing hands it one. Two ways to close it, and they are a product choice
+  rather than an engineering one: add handedness to the player and hand it to
+  the coach, or tell the coach not to name a field. Do not close it by
+  changing the chart. **Recorded rather than fixed on the way past**, because
+  it surfaced at the merge gate and it is a prompt-wording change, which
+  needs the product manager's approval on the exact sentence.
+
 - **Four committed fixture directories will start rebuilding the wrong swing
   data the moment `src/swingGenerator.js` changes, and repairing their markers
   is Slice 11's first task, before the generator is touched.** *(Dated
