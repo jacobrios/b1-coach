@@ -118,6 +118,42 @@ change: the Distance Distribution chart moves from 5, 3, 1, 3, 3 to 4, 4, 3, 2,
 All 60 flagged claims are itemised in
 `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`.
 
+*Postscript, 20 August 2026: five fixes from the final whole-branch review, and
+one of them was a dead safety gate.* None touch the product; all five are the
+measuring tooling and the records, and they are recorded because the pattern
+across them is worth more than any one fix. **The free dry run had stopped
+running at all.** This slice is the first to commit a round's grading output
+inside the round's own directory, and the grader reads every `.json` in an
+`--input` directory, so it crashed before reaching roughly 190 lines of
+self-checks, including the one that counts its own guardrails. The gate this
+project relies on to be sure of a run before paying for it had been dead for
+the whole slice and nothing said so. The loader now identifies each file by its
+contents rather than by being in the directory: bench records are graded,
+grading output is set aside by name, and anything unrecognised is refused. That
+was chosen over the tidier-looking option of moving the files somewhere else,
+because moving them fixes today and leaves the trap armed for whoever writes the
+next round, and because the silent half of the bug is worse than the crash: an
+older bare-array grading file would have been merged in without a word and sent
+to the model as though it were coaching prose, at real cost, producing a
+complete and plausible wrong report. **Two guardrail self-checks were counting
+any exception as a pass.** Both now check what the refusal actually said. They
+happen to be correct today only because of the order two function calls are made
+in, which is an accident rather than a design, and reversing that order (the
+most natural refactor in the file) would have turned six green guards into six
+lies. **One live logic bug in the grading tool**: a coach claim with the right
+count that named no individual swings was ruled false for disagreeing with a
+list it never made. Fixing an instrument after the measurement is a real cost to
+a committed result, so the fix was measured rather than waved through: all three
+rounds were replayed offline through the corrected code at zero cost, 1,583
+claims, and exactly one verdict changed, the one the hand-check had already
+called a false positive. No reported number moves. **And a comment in shipped
+code still described session 1's distance chart as the old fifteen swings
+rendered it**, which is precisely the class of claim this project keeps
+correcting: a measured fact, true when written, quietly falsified by later work
+and never re-checked. Corrected with its new numbers and dated. The bucket
+decision itself stands and was not reopened. `npm test` 519 to 529 across 22
+files, green.
+
 ---
 
 ## Slice 8c: finished the counting rule, fixed the tool measuring it, and put a parked decision back on the table (August 19)

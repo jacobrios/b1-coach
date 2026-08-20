@@ -417,9 +417,25 @@ for another reason.
                              guard matches by proximity in the sentence, not by
                              real clause structure, so a deliberately contrived
                              compound sentence could in principle mislead it,
-                             judged low-likelihood and left as recorded debt),
+                             judged low-likelihood and left as recorded debt;
+                             20 August 2026 fixed the named-swing check firing
+                             on an EMPTY list of named swings, which had been
+                             ruling correct counts false, and replayed all three
+                             Slice 9 rounds offline to show it moved exactly one
+                             verdict out of 1,583),
                              `inputRecords.js` (Slice 8b: reads a directory of
-                             bench records for the grader's new `--input` flag),
+                             bench records for the grader's new `--input` flag;
+                             20 August 2026 gave it `classifyInputFile`, which
+                             identifies each file in that directory by its own
+                             contents, because Slice 9 was the first slice to
+                             commit grading output beside the bench records and
+                             `--input` reads every `.json` it finds. Bench
+                             records are graded, grading output is set aside by
+                             name in the run header, and an unrecognised file is
+                             refused rather than guessed at. The crash that
+                             exposed this was the lucky half; a pre-19-August
+                             bare-array grading file would have been merged in
+                             silence and billed as coach prose),
                              `handedCounts.js` (Slice 8c: describes, per
                              goal and per prompt era, which counts the coach was
                              actually handed, so the grader can tell a
@@ -787,8 +803,10 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 9 on 20 August 2026 it is 519 tests across 22
-   files, up from 506 across 22 at the close of Slice 8d, up from 489 across
+   vitest, and as of Slice 9's closing review on 20 August 2026 it is 529
+   tests across 22
+   files, up from 519 at the close of Slice 9's build the same day, up from
+   506 across 22 at the close of Slice 8d, up from 489 across
    21 at the close of Slice 8c, up from 461 across
    19 at the close of Slice 8b. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
@@ -1868,10 +1886,26 @@ rewritten, per the append-only rule.
   round against the first after round would have reported the coach getting
   roughly 80% worse (16 flags against 29) when the hand-check says it did not
   change at all. Note that the second after round flagged 15, below the before
-  round, which is the same point from the other direction. The two mechanisms Slice 8d named
-  and left unfixed, a named subset checked against a whole-session total and a
-  restated threshold read as an exact value, are still the ones doing it. Every
-  flagged claim in all three rounds is adjudicated in
+  round, which is the same point from the other direction.
+
+  **Corrected 20 August 2026, by whole-branch review, and the correction
+  matters more than the sentence it replaces.** This entry originally said the
+  two mechanisms Slice 8d named and left unfixed "are still the ones doing
+  it." Counted against HAND-CHECK.md's own mechanism table, they are not, and
+  they are not even the majority: a named subset checked against a
+  whole-session total accounts for 3 of the 18 false positives and a restated
+  threshold read as an exact value for 7, which is 10, leaving **8 from five
+  mechanisms nobody had seen before**: a value matched against the wrong swing
+  when an ordinal phrase is read as a swing index (3), an illustrative list
+  read as exhaustive (2), the named-swing check firing on an empty list (1), a
+  hedged quantifier turned into a count of zero (1), and an exclusion word
+  ("five *other* swings") dropped in extraction (1). The fixture README's own
+  wording was more careful and did not carry this error. The practical
+  difference: reading the tool as having two known holes invites the
+  assumption that its failures are understood and bounded, when in fact more
+  than half of this wave's mechanisms were new, and one of them turned out to
+  be an outright logic bug (see the next entry). Every flagged claim in all
+  three rounds is adjudicated in
   `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
@@ -2075,6 +2109,60 @@ rewritten, per the append-only rule.
   session 1, which is a fact any future measurement design has to start from.
   Slice 9 was scoped believing the opposite and had to buy a second seed
   instead of a control group.
+
+*Added 20 August 2026, from the whole-branch review that closed Slice 9. All
+three are the grading tool rather than the coach, and all three were found
+inside `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`, which is a
+finding in itself: that document is a per-claim adjudication nobody will
+reread, so anything it discovers has to reach this list to survive.*
+
+- ~~**The named-swing check fires on an empty list of named swings** (M4 in the
+  hand-check's table). A claim carrying the CORRECT count and naming no swings
+  at all was ruled FALSE, "the count matches but the named swings do not",
+  because the guard tested `Array.isArray(statedSwings)` and an empty array is
+  still an array.~~ **Fixed 20 August 2026, and measured rather than
+  asserted.** `scripts/claimVerdict.js` now requires `statedSwings.length > 0`,
+  with a test seen failing against the old code first. Because this changed the
+  instrument after the measurement, all three committed rounds were re-run
+  through the fixed verdict code offline with `scripts/replay-grading.mjs`, at
+  zero cost and with no re-extraction: **1,583 claims replayed, exactly 1
+  verdict changed**, the after-b claim "Nine of your fifteen swings came out
+  above 18 degrees" going FALSE to TRUE. Round totals move only there (after-b
+  raw flags 15 to 14, flagged debriefs 14 to 13); the before and after-a rounds
+  are byte-identical under the new code. No hand-checked conclusion moves at
+  all, because the hand-check had already adjudicated that one claim a false
+  positive. Kept here rather than deleted so nobody re-proposes it, and so the
+  next person to change a verdict rule sees that replaying the committed rounds
+  is the expected way to do it.
+- **The extractor assigns a claim to the wrong statistic entirely** (M5, and
+  the single largest source of false positives in this wave at 7 of 18). It
+  graded "sub-175-foot balls" against the count of swings under 15 degrees,
+  "12 of 15 strikes" against a pitch-side value, "11 strikes" against the
+  high-pitch count, and an average against the top exit velocity. Unlike M4
+  this is not a logic bug with a one-word fix: the mis-assignment happens in
+  the extraction model's output, and the same sentence was extracted correctly
+  in other runs of the same round, so it is non-determinism rather than a
+  stable rule and the fix is extraction-prompt wording plus, most likely, a
+  deterministic sanity check that a claim's units match the statistic it was
+  filed under. Deliberately not attempted on 20 August 2026: validating any
+  extraction-prompt change needs a fresh live grading round to measure, which
+  is real spend, and doing it blind is how an instrument gets fitted to the
+  answer it is supposed to test. **This one is not neutral for before/after
+  work and should be fixed before the tool is used for another comparison**:
+  four of the seven fire on a sentence shape the coach only began writing after
+  the change being measured ("cut your sub-175ft balls from 4 down to 1"), so
+  the tool over-flags the after side specifically.
+- **Five of the seven false-positive mechanisms in this wave had never been
+  seen before**, which is the number worth carrying forward rather than any
+  individual mechanism. Each new measurement round has turned up new ways for
+  the tool to be wrong, so the honest reading is that its failure modes are not
+  yet enumerated, and "a raw flag is a lead, not a finding" is a standing rule
+  rather than a caveat that will expire once a known list is worked through.
+  The remaining four beyond M1 and M5, one case each or thereabouts, are an
+  ordinal phrase read as a swing index, an illustrative list read as
+  exhaustive, a hedged quantifier ("most") turned into a count of zero, and an
+  exclusion word ("five *other* swings") dropped in extraction. All four are
+  adjudicated case by case in the hand-check.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

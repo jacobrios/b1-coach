@@ -386,9 +386,17 @@ function loadFixtureRecords() {
 
 // The Slice 8b --input flag: a whole directory of bench --out files, merged
 // in filename order. The filesystem half lives here; every decision made
-// after parsing (concatenation order, refusing a non-array file, setting
-// aside failed bench records instead of grading their empty fields) lives in
-// scripts/inputRecords.js, where the test suite reaches it.
+// after parsing (which files are bench records at all, concatenation order,
+// refusing a file nobody can identify, setting aside failed bench records
+// instead of grading their empty fields) lives in scripts/inputRecords.js,
+// where the test suite reaches it.
+//
+// 20 August 2026: this reads every .json in the directory and always has,
+// which was harmless only while a round directory held nothing but bench
+// output. Slice 9 writes each round's grading.json in beside its records, so
+// classifyInputFile now decides what each file actually is. See that module's
+// header for what the old behaviour would have done with a bare-array
+// grading file, and why it would not have said so.
 function loadInputDirectory(dir) {
   const names = readdirSync(dir).filter((n) => n.endsWith('.json')).sort()
   if (names.length === 0) {
@@ -606,10 +614,11 @@ function resolveRecordsAndBuilder(args) {
         '--builder slice9-before for Slice 9\'s pre-rewrite round, or --builder frozen only if the directory ' +
         'holds records generated against the old stand-in session 1 (rare, and you should know why).',
     })
-    const { records, skippedFailed } = loadInputDirectory(args.input)
+    const { records, skippedFailed, skippedFiles } = loadInputDirectory(args.input)
     return {
       records,
       skippedFailed,
+      skippedFiles,
       builder: reconciled.builder,
       handedEra: reconciled.handedEra,
       seed: reconciled.seed,
@@ -1132,7 +1141,7 @@ async function dryRun(args) {
   // This is the plan for THIS invocation's flags; the numbered sections
   // after it are the standing self-checks and run regardless.
   if (args.input || args.records) {
-    const { records, skippedFailed, builder, handedEra, seed, seedSource, provenance, source } =
+    const { records, skippedFailed, skippedFiles, builder, handedEra, seed, seedSource, provenance, source } =
       resolveRecordsAndBuilder(args)
     // Adopted before selectSubset, because --sample draws from the same
     // seeded PRNG: a plan must sample the same records the live run will.
@@ -1147,6 +1156,11 @@ async function dryRun(args) {
     // failed-record channel to report.
     if (skippedFailed?.length) {
       console.log(`  set aside        ${skippedFailed.length} failed bench record(s), never graded`)
+    }
+    // Named, not just counted: which file was passed over is the one thing a
+    // reader needs to spot a records file that got misidentified.
+    for (const f of skippedFiles ?? []) {
+      console.log(`  set aside        ${f.name} (${f.kind}, not bench records), never graded`)
     }
     console.log(`  planned calls    ${subset.length} of ${records.length} gradeable records`)
     console.log('')
@@ -1281,12 +1295,38 @@ async function dryRun(args) {
       console.log(`  FAILED: ${rel} names seed ${marker.seed}, expected ${c.seed}`)
       continue
     }
+    // ASSERT ON THE REASON, NOT MERELY THAT SOMETHING THREW. Corrected
+    // 20 August 2026: both of these blocks used to be a bare `catch {}`, so
+    // ANY exception counted as proof the marker had done its job.
+    //
+    // Be precise about what saves the old version today, because it is an
+    // accident and not a design: resolveRecordsAndBuilder happens to call
+    // reconcileWithMarker BEFORE loadInputDirectory, so the marker is always
+    // what throws first, and the two prechecks above catch a marker that
+    // reads wrong. Reverse those two calls, which is the most natural
+    // refactor in the file (load the records, then reconcile them), and
+    // every one of these six guards goes green on an exception the marker
+    // was never consulted for. Verified by doing exactly that on 20 August
+    // 2026: with the loader made to throw, the bare-catch version printed
+    // `ok: ... refused --builder current` while the version below printed
+    // FAILED and named the real error. A guard that cannot tell one failure
+    // from another is not a guard.
     try {
       resolveRecordsAndBuilder({ input: c.dir, builder: c.wrong, handedEra: 'current', seed: c.seed })
       console.log(`  FAILED: ${rel} accepted --builder ${c.wrong}`)
-    } catch {
-      guardOk++
-      console.log(`  ok: ${rel} is marked "${c.expected}" and refused --builder ${c.wrong}`)
+    } catch (err) {
+      const refusedForTheRightReason =
+        err.message.includes(BUILDER_MARKER_FILENAME) &&
+        err.message.includes(`--builder ${c.wrong}`) &&
+        err.message.includes(c.expected)
+      if (!refusedForTheRightReason) {
+        console.log(
+          `  FAILED: ${rel} threw, but not because the marker refused --builder ${c.wrong}: "${err.message.slice(0, 120)}"`,
+        )
+      } else {
+        guardOk++
+        console.log(`  ok: ${rel} is marked "${c.expected}" and refused --builder ${c.wrong}`)
+      }
     }
     // The seed half of the same guard: a contradicting explicit --seed must
     // refuse, and a run that passes none must come back with the marker's
@@ -1295,9 +1335,19 @@ async function dryRun(args) {
     try {
       resolveRecordsAndBuilder({ input: c.dir, seed: wrongSeed, seedGiven: true, handedEra: 'current' })
       console.log(`  FAILED: ${rel} accepted --seed ${wrongSeed}`)
-    } catch {
-      guardOk++
-      console.log(`  ok: ${rel} is marked seed ${c.seed} and refused --seed ${wrongSeed}`)
+    } catch (err) {
+      const refusedForTheRightReason =
+        err.message.includes(BUILDER_MARKER_FILENAME) &&
+        err.message.includes(`--seed ${wrongSeed}`) &&
+        err.message.includes(String(c.seed))
+      if (!refusedForTheRightReason) {
+        console.log(
+          `  FAILED: ${rel} threw, but not because the marker refused --seed ${wrongSeed}: "${err.message.slice(0, 120)}"`,
+        )
+      } else {
+        guardOk++
+        console.log(`  ok: ${rel} is marked seed ${c.seed} and refused --seed ${wrongSeed}`)
+      }
     }
     const adopted = resolveRecordsAndBuilder({ input: c.dir, seed: 20260814, handedEra: 'current' })
     if (adopted.seed !== c.seed) {
@@ -1510,7 +1560,7 @@ async function validate(args) {
     process.exit(1)
   }
 
-  const { records, skippedFailed, builder, handedEra, seed, seedSource, provenance, source } =
+  const { records, skippedFailed, skippedFiles, builder, handedEra, seed, seedSource, provenance, source } =
     resolveRecordsAndBuilder(args)
   // The marker beside the records wins over the flag default; a marker that
   // DISAGREES with an explicit flag has already thrown by this point. Both
@@ -1535,6 +1585,9 @@ async function validate(args) {
   console.log(`Provenance       ${provenance ?? 'no BUILDER.txt beside these records; builder and seed taken from the flags alone'}`)
   if (skippedFailed?.length) {
     console.log(`Set aside        ${skippedFailed.length} failed bench record(s) with no debrief to grade`)
+  }
+  for (const f of skippedFiles ?? []) {
+    console.log(`Set aside        ${f.name} (${f.kind}, not bench records), never graded`)
   }
   console.log(`Records to grade ${subset.length} of ${records.length} available`)
   console.log(`Rough cost       $${(subset.length * 0.01).toFixed(2)} at a rough ~1 cent/debrief guess; the real total prints at the end`)

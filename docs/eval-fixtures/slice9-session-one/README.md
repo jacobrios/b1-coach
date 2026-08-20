@@ -232,3 +232,63 @@ result: the grading transcripts and the hand-check are committed. If a future
 session does re-run a round, it must not overwrite these files, because the
 comparison depends on these particular draws and re-running produces different
 ones.
+
+---
+
+## Postscript, 20 August 2026: the grading tool changed after these rounds were graded
+
+Added by the whole-branch review that closed Slice 9. The three `grading.json`
+files in this directory are untouched and stay untouched. What changed is the
+code that produced them, and this note exists so a future reader can tell the
+two apart.
+
+**One verdict rule was fixed.** `scripts/claimVerdict.js` was ruling a claim
+FALSE when it carried the correct count and named no individual swings at all,
+because the "the count matches but the named swings do not" guard tested only
+that `statedSwings` was an array, and an empty array is one. That is mechanism
+M4 in `HAND-CHECK.md`, already adjudicated there as a false positive.
+
+**The effect on these rounds was measured, not assumed.** All three were re-run
+through the fixed verdict code with `scripts/replay-grading.mjs`, which replays
+stored claims offline with no re-extraction, no network call and no spend:
+
+```
+node scripts/replay-grading.mjs --input docs/eval-fixtures/slice9-session-one/before/grading.json
+node scripts/replay-grading.mjs --input docs/eval-fixtures/slice9-session-one/after-a/grading.json
+node scripts/replay-grading.mjs --input docs/eval-fixtures/slice9-session-one/after-b/grading.json
+```
+
+Across 1,583 replayed claims, **exactly one verdict changed**:
+
+| round | claims | stored FALSE | replayed FALSE | flagged debriefs, stored -> replayed |
+|---|---|---|---|---|
+| before | 516 | 16 | 16 | 13 -> 13 |
+| after-a | 542 | 29 | 29 | 22 -> 22 |
+| after-b | 525 | 15 | **14** | 14 -> **13** |
+
+The single change is `shipped/contact-s1/run12`, tip1, "Nine of your fifteen
+swings came out above 18 degrees", FALSE to TRUE. Nine is correct and the
+sentence names no swings.
+
+**Nothing in the result section above moves.** Every number there is drawn from
+the hand-check, and the hand-check had already ruled this claim a false
+positive, so it was never counted as a coach error in the first place. What
+moves is the tool's raw flag count on after-b, which the README already warns
+should not be read on its own.
+
+**The bullet above saying "two of the three mechanisms it named are still
+live" is superseded for M4 only.** M4 is fixed. M1 and M5 are still live, and
+M5 is now recorded on CLAUDE.md's What's Next list as the one that should be
+fixed before this tool is used for another before/after comparison, because it
+over-flags the after side specifically.
+
+**Separately, the grader stopped choking on this directory.** Slice 9 is the
+first slice to commit grading output inside a round directory beside the bench
+records, and `--input` reads every `.json` in the directory. The
+`{ meta, results }` files here crashed it, which took the free dry run down
+with it; a pre-19-August bare-array grading file would instead have been
+concatenated silently and graded as if it were coach prose, at real cost. The
+loader now identifies each file by its contents and sets aside anything that is
+not bench records, naming it in the run header. The commands in "The exact
+commands" above are unchanged and all three now pass a free
+`--dry-run --input <dir>`.

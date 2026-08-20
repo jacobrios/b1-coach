@@ -109,11 +109,31 @@ export function carryDistance({ exitSpeed, angle } = {}) {
 // is the very case that surfaced the problem. The shipped edges were chosen on
 // how the three rendered, not on this number, and the paragraph above says so.
 //
-// The hand-written session 1 (src/App.jsx's mockSwings) renders 3, 3, 3, 3, 3
+// The hand-written session 1 (src/sessionOneSwings.js) rendered 3, 3, 3, 3, 3
 // under the draft edges, 6, 3, 2, 1, 3 under scheme B, and 5, 3, 1, 3, 3 under
 // these. The product manager preferred the uneven shape on sight: five
 // identical bars reads as placeholder data, not as something real measurement
 // produced.
+//
+// CORRECTED 20 AUGUST 2026, and read the correction before quoting those
+// three shapes at anyone. Slice 9 rewrote session 1's fifteen swings, so all
+// three numbers above describe swings that no longer exist. Re-measured the
+// same day against the rewritten session, by rerunning the script named
+// below: 2, 3, 6, 2, 2 under the draft edges, 5, 6, 2, 0, 2 under scheme B,
+// and 4, 4, 3, 2, 2 under these.
+//
+// The DECISION is untouched and is not being relitigated here. It was made
+// across every goal and every session that has a target, on the empty-column
+// table above, and session 1 was one illustration of it rather than its
+// basis. What is worth noticing is that the illustration now argues the same
+// way for a different reason: scheme B leaves the fourth column of the first
+// screen a visitor ever sees completely empty (that 0), which the shipped
+// edges do not.
+//
+// Two stale pointers fixed in the same pass: the session lived in
+// src/App.jsx's `mockSwings` until Slice 7b moved it to
+// src/sessionOneSwings.js, and this comment had gone on naming the old home
+// for three slices.
 //
 // Rerun this yourself with `node scripts/compare-distance-bucket-schemes.mjs`
 // rather than trusting the numbers above. That script is what actually
