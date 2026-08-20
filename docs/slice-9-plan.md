@@ -47,8 +47,8 @@ own stated bar.
 Deterministic tests for every invariant, each seen failing first, including a
 pinned-seed regression proving sessions 2 to 4 do not move. Then live coach
 measurement: an already-paid before side, two independent after rounds, a
-grader-noise floor, and every flagged claim hand-checked. About $3.48 against a
-$5 ceiling. Detail in Tasks 1 and 7.
+grader-noise floor, and every flagged claim hand-checked. About $3.48, with $5
+as a reporting threshold rather than a ceiling. Detail in Tasks 1 and 7.
 
 ### The debt this slice is expected to open
 
@@ -361,9 +361,14 @@ another, so a raw flag count is not a coach error count. The same discipline
 Slices 8c and 8d used applies here: every flagged claim read by hand and judged
 genuine or false positive, with the quotes recorded.
 
-**Budget.** About $3.48 all in, against the $5 no-ask ceiling. Hard stop at
-$4.50: if the spend is tracking past that, stop and report rather than
-finishing the round.
+**Budget.** About $3.48 all in. Corrected 19 August 2026, at the execution go:
+$5 is a **reporting threshold, not a ceiling**. The product manager's words
+were "my ceiling isn't at $5, I just want to know when we're getting close to
+$5, I'm happy to spend more if needed." So the rule for this slice is to
+report as the projection approaches $5 and keep going, not to stop. Stopping a
+measurement mid-round would waste what was already spent and leave the slice
+unverifiable, which is the outcome the budget conversation exists to prevent.
+Every dollar still gets reported in the decision record and the PR.
 
 **What counts as "the coach did not get worse."** Three bars, and all three
 have to hold:
