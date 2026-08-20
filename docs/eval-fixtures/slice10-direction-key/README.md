@@ -79,7 +79,12 @@ before making a single API call.
 The plan pre-registered the null band: **15 to 29 raw flags is a null; only a
 result outside it is a signal.** The band comes from the noise this measurement
 has already demonstrated. Slice 9's `after-a` and `after-b` are the same
-condition at two seeds and flagged 29 and 15; its before round flagged 16.
+condition at two seeds and flagged 29 and 15; its before round flagged 16. One
+footnote on the lower bound: that 15 is one verdict-code generation stale, since
+Slice 9's own M4 fix later moved `after-b` to 14 while the committed
+`after-b/grading.json` still reads 15. The band would be 14 to 29 on today's
+code, and 21 sits comfortably inside either, so nothing about this verdict
+changes.
 
 **This round flagged 21 claims across 18 of 64 debriefs. Inside the band. A
 null, as predicted.**
@@ -104,8 +109,11 @@ make one. Three rounds is not a distribution, the two Slice 9 after rounds look
 at identical session-1 data and differ from each other by 10 genuine errors, and
 one draw below a three-point range supports no direction at all.
 
-All 8 genuine errors are numbers the coach derived for itself from the per-swing
-table. **None is a contradiction of a count the prompt handed it.** Six of the
+All 8 genuine errors are numbers the coach derived for itself, rather than
+repeated from a handed count. Seven come off the per-swing table; the eighth
+(`popup-s4/run1`) comes off two handed distribution-bucket rows the coach needed
+to add together and did not. **None is a contradiction of a count the prompt
+handed it.** Six of the
 eight are the over-generalisation habit CLAUDE.md already records: the coach
 names a group of swings and asserts a property across all of them that one
 member breaks.

@@ -239,11 +239,11 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 20 August 2026, at the close of Slice 9 (the rows
-that moved are `sessionOneSwings.js`, the two test aggregates, the `scripts/`
-`.mjs` aggregate, and the fixtures directory count. Some of the rows below
-that this slice never touched are stale by a line or two, `ballFlight.js`,
-`coachApi.js` and `sessionStats.js` among them, and were left alone rather
+Line counts current as of 20 August 2026, at the close of Slice 10. The rows
+that moved are `coachApi.js`, the `src/*.test.js` aggregate, and the fixtures
+directory count, which also gained a directory of its own. Some of the rows
+below that this slice never touched are stale by a line or two,
+`ballFlight.js` and `sessionStats.js` among them, and were left alone rather
 than churned out of lane; correct one on the way past if you open the file
 for another reason.
 
@@ -338,7 +338,11 @@ for another reason.
                              because it sits on the grader's `.js`-extension
                              import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           2581 lines across twelve files, beside what they test.
+    src/*.test.js           2711 lines across twelve files, beside what they test.
+                             Slice 10 added 130 lines to coachApi.test.js: the
+                             direction key reaching both prompts, and the Power
+                             count line no longer dangling a "numbers:" clause
+                             on a zero count.
                              Slice 9 added 310 lines to sessionOneSwings.test.js:
                              eight invariants the rewritten fifteen swings must
                              hold, including a correlation band, a rule that
@@ -504,7 +508,7 @@ for another reason.
                                snapshot of the old swings so the before round
                                stays gradeable, plus `HAND-CHECK.md`
                                adjudicating all 60 flagged claims one at a time.
-                               `slice10-direction-key/` (524 KB) holds the single
+                               `slice10-direction-key/` (536 KB) holds the single
                                64-debrief round behind Slice 10's direction key,
                                paired against Slice 9's `after-a` at the same
                                seed so the two rounds differ in one prompt line
@@ -2060,8 +2064,13 @@ rewritten, per the append-only rule.
   change and needs the same approval any other prompt wording change gets
   before it ships.~~ **Fixed 20 August 2026 in Slice 10**, with the product
   manager's approval, using the same conditional `zoneCountLines` already
-  used four lines below it. Two tests seen red first, one for the zero case
-  and one proving the common case keeps its shape. Note what the live
+  used four lines below it. **One** test was seen red first, the zero case.
+  The second test, which pins the common case unchanged, was green from the
+  start and never could have been anything else: the old line appended its
+  numbers clause unconditionally, and for a non-empty list that produces
+  byte-identical text, so the test does not touch the buggy path at all. It
+  is a shape guard against a future edit, not red-first evidence, and this
+  project's own bar was met once here rather than twice. Note what the live
   evidence does and does not cover: no session in the browser run produced a
   zero count, so the branch was exercised through the shipped module in the
   browser rather than by a live request; see
@@ -2092,7 +2101,10 @@ rewritten, per the append-only rule.
 - **A generator-realism slice, carrying three things measured in Slice 9 and
   deliberately not fixed there.** All three change sessions 2 to 4, which is
   why they were kept out of a slice whose whole measurement depended on those
-  sessions not moving. (a) *Pitch location does not predict contact quality at
+  sessions not moving. **Before touching `src/swingGenerator.js`, read the
+  fixture-marker item added at the close of Slice 10 below: repairing four
+  committed directories' markers is this slice's first task, not an
+  afterthought.** (a) *Pitch location does not predict contact quality at
   all.* Session 1 has an 8.8 mph gap between swings on strikes and swings on
   balls, put there by hand; the generator's gap, across 4,000 sessions, is
   0.0 mph, because the pitch and the outcome are drawn independently. Since
@@ -2239,6 +2251,19 @@ own self-checks, not the coach.*
 
 *Added at the close of Slice 10, 20 August 2026:*
 
+- **Four committed fixture directories will start rebuilding the wrong swing
+  data the moment `src/swingGenerator.js` changes, and repairing their markers
+  is Slice 11's first task, before the generator is touched.** The `current`
+  builder reads the generator out of the working tree, not only session 1, so
+  `slice9-session-one/before/`, `slice9-session-one/after-a/`,
+  `slice9-session-one/after-b/` and `slice10-direction-key/after/` would each
+  re-grade against a complete, entirely plausible fact sheet for sessions 2 to 4
+  that no coach ever saw, with nothing appearing broken. Slice 9's three markers
+  say nothing about it, because they were written believing session 1 was the
+  only moving part. Fix them as dated annotations rather than rewrites, and give
+  the Slice 10 round a frozen generator snapshot at the same time. The full
+  statement of the trap is in
+  `docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt`.
 - **Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.** Slice 10 gave the coach the direction key in words; this would give it

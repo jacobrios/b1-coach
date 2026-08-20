@@ -48,6 +48,18 @@ that is 8 genuine coach errors against a same-condition range of 9 to 19 from
 Slice 9's own rounds: a regression guard holding, not an improvement. This slice
 makes no accuracy claim anywhere.
 
+*One plan deviation, disclosed.* The plan said that if the browser capture did
+not happen to produce a session with zero swings under 15 degrees, the session
+should be re-rolled until it did, so the dangling-"numbers:" fix would be proven
+against a real request. No session in the run produced a zero count, and no
+re-roll was done. The zero branch was exercised instead by importing the shipped
+module in the running browser and rendering the line from it, which proves the
+code that ships behaves correctly but does not prove it inside a request the app
+actually sent. Judged adequate because the fix is one conditional on a prompt
+line no visitor ever sees, and because a unit test covers the same branch and was
+seen red first. It is a weaker piece of evidence than the plan asked for, and it
+is named as such in `docs/eval-fixtures/slice10-direction-key/browser-payload-capture.md`.
+
 *What it cost, and what it turned up.* $1.49 for 64 live debriefs and their
 grading, zero parse failures, both free dry runs clean before any spend, and
 `npm test` from 529 tests across 22 files to 535, green. The hand-check found

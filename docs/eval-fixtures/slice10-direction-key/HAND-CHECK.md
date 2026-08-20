@@ -471,8 +471,11 @@ one.
 Six of the eight genuine errors are the same underlying habit CLAUDE.md already
 records: the coach names a group of swings and then over-generalises a property
 across all of them. None of the eight is a contradiction of a number the prompt
-handed the coach as a count; every one is something the coach derived itself
-from the per-swing table.
+handed the coach as a count; every one is something the coach derived for
+itself. Seven of the eight derive it from the per-swing table. The eighth,
+`popup-s4 run1` in the table above, derives it from two handed
+distribution-bucket rows that needed adding together, of which the coach used
+only one.
 
 ### New mechanisms seen
 

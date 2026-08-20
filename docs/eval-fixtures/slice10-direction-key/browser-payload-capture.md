@@ -11,7 +11,9 @@ Anthropic (see CLAUDE.md, "THE TRAP"), so these are real calls with real
 replies, and `api/coach.js` is not involved. That is correct here: this
 slice changes neither the serverless function nor anything it touches.
 
-One run, Power & Distance, all four sessions, plus one chat message.
+One run, Power & Distance, sessions 2, 3 and 4, plus one chat message. The
+session 1 debrief is not in this evidence: it fired before the `window.fetch`
+wrapper was installed, so it was never captured.
 
 ## The direction key reaches both prompts
 

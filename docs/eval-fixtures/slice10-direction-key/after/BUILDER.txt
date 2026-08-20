@@ -9,8 +9,8 @@
 # is one added prompt line (the direction key) and one count line that stops
 # dangling on a zero count. No swing data moved.
 #
-# THIS ROUND HAS TWO WAYS TO GO STALE, NOT ONE, AND THE SECOND ONE IS THE
-# REASON THIS PARAGRAPH EXISTS.
+# THIS ROUND HAS THREE WAYS TO GO STALE, NOT ONE, AND THE SECOND ONE IS THE
+# REASON THIS PARAGRAPH EXISTS. THE THIRD IS SET OUT FURTHER DOWN.
 #
 # The first is the one Slice 9's markers already anticipate: if session 1's
 # fifteen swings are rewritten again, this round needs a frozen snapshot of
@@ -32,6 +32,20 @@
 # the only moving part. Repairing them is Slice 11's first task, as a dated
 # annotation rather than a rewrite. Whoever does that should give this round
 # a frozen generator snapshot at the same time.
+#
+# THERE IS A THIRD AXIS, AND SLICE 10 IS THE SLICE THAT ADDED IT.
+#
+# The grader does not only rebuild the swing data. It rebuilds the prompt the
+# coach saw, using the live buildDebriefUserMessage out of the working tree,
+# and Slice 10 added a line to that prompt. So re-grading any Slice 9 round
+# today reconstructs a prompt one line different from the one its coach was
+# actually given. That third axis is inert today: the added line is a
+# direction key carrying no count, so no handed-versus-derived attribution
+# moves and no verdict changes because of it. It is recorded here anyway,
+# because it is exactly the silent-drift class this file exists to catch, and
+# because the next prompt line added may not be inert. Any future prompt
+# change should ask this question of every committed round before assuming a
+# re-grade is comparable.
 #
 # The seed matters as much as the builder. Session 1 is the same fifteen
 # swings at any seed, but sessions 2, 3 and 4 are GENERATED from it with a
