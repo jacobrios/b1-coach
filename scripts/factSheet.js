@@ -33,7 +33,7 @@
 // goal's own target numbers on top, since those differ per debrief.
 
 import { goalTarget } from '../src/goalTargets.js'
-import { topExitVelocity, pitchZoneBreakdown, STRIKE_ZONE } from '../src/sessionStats.js'
+import { topExitVelocity, pitchZoneBreakdown, STRIKE_ZONE, sprayBreakdown } from '../src/sessionStats.js'
 import { DISTANCE_BUCKETS } from '../src/ballFlight.js'
 import { countSpecThresholds, goalCountValues } from '../src/goalCountSpecs.js'
 
@@ -155,6 +155,19 @@ function sessionStatsExtras(swings, goalId) {
     stats[`${key}Count`] = v.count
     stats[`${key}Swings`] = v.swings
   }
+  // Slice 10: the three spray counts every goal's prompt now carries. A count
+  // the coach was handed with no matching row here is the mechanism behind
+  // Slice 8b's false positives, where the grader checked a correct statement
+  // against the nearest unrelated stat and called it false. For allfields
+  // these repeat what goalCountValues already wrote above, at the same values,
+  // because both read the one sprayBreakdown.
+  const spray = sprayBreakdown(swings)
+  stats.pullSideCount = spray.pull.count
+  stats.pullSideSwings = spray.pull.swings
+  stats.upTheMiddleCount = spray.middle.count
+  stats.upTheMiddleSwings = spray.middle.swings
+  stats.oppoFieldCount = spray.oppo.count
+  stats.oppoFieldSwings = spray.oppo.swings
   const zone = pitchZoneBreakdown(swings)
   stats.outsideZoneCount = zone.outside.count
   stats.outsideZoneSwings = zone.outside.swings

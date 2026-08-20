@@ -353,6 +353,11 @@ const STAT_UNIT_WORDS = {
   contactFlyBallCount: /degree/i,
   pullSideCount: /degree/i,
   oppoFieldCount: /degree/i,
+  // Slice 10: the third spray bucket, handed to every goal from this slice on.
+  // Degrees for the same reason as its two siblings, the cutoffs are stated in
+  // degrees; the sentence a coach actually writes ("eight went up the middle")
+  // carries no unit at all and passes straight through.
+  upTheMiddleCount: /degree/i,
   allfieldsHardContactCount: /mph/i,
   popUpCount: /degree/i,
   weakGrounderCount: /degree/i,

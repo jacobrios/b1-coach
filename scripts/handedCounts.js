@@ -21,6 +21,7 @@
 // project.
 
 import { GOAL_COUNT_SPECS, goalCountValues } from '../src/goalCountSpecs.js'
+import { SPRAY_CUTOFFS } from '../src/sessionStats.js'
 import { goalExtraThresholds } from './factSheet.js'
 
 // Every era hands the coach these five numbers, regardless of goal.
@@ -30,6 +31,24 @@ const BASE_STAT_NAMES = ['avgExitVelocity', 'avgLaunchAngle', 'inZoneCount', 'to
 // strike-zone count lines (Slice 8c). They go to every goal, since the zone
 // breakdown is unconditional on which goal is active.
 const ZONE_STAT_NAMES = ['outsideZoneCount', 'highPitchCount', 'lowPitchCount', 'widePitchCount']
+
+// The three spray counts, handed starting in the current era's spray count
+// lines (Slice 10). Like the zone lines above, they go to every goal, so a
+// direction claim on Power is now a handed claim rather than a derived one.
+// Getting this wrong is not only mis-attribution: claimVerdict's
+// sibling-bucket rescue reads these thresholds to tell an ambiguous
+// above/atLeast phrasing apart from a wrong count, and a swing sitting
+// exactly on a cutoff is reachable, so a missing entry can only push a
+// rescuable TRUE to FALSE.
+const SPRAY_STAT_NAMES = ['pullSideCount', 'upTheMiddleCount', 'oppoFieldCount']
+
+// Read from SPRAY_CUTOFFS rather than typed, for the same reason the goal
+// shapes below read from GOAL_COUNT_SPECS: this module describing a cutoff
+// the prompt no longer uses is the exact drift it exists to prevent.
+const SPRAY_THRESHOLDS = [
+  { metric: 'direction', threshold: SPRAY_CUTOFFS.pull, comparison: 'below' },
+  { metric: 'direction', threshold: SPRAY_CUTOFFS.oppo, comparison: 'above' },
+]
 
 // The pitch-height thresholds the current era's zone lines name. Pitch side
 // (wide) has no single-sided threshold in the prompt prose, only the
@@ -116,7 +135,26 @@ export function handedClaimSpecs(goalId, era = 'current') {
     statNames.push(...ZONE_STAT_NAMES)
   }
 
-  return { thresholds, ranges, statNames, zoneLines }
+  // Slice 10's spray count lines, on the same era gate: they go to every goal
+  // in the current prompt and existed in no form in the slice8b one. Hit to
+  // All Fields already pushed the same two cutoffs from its own goal lines
+  // above, in both eras, so the two sets overlap on that one goal and are
+  // deduplicated below rather than described twice.
+  const sprayLines = era === 'current'
+  if (sprayLines) {
+    thresholds.push(...SPRAY_THRESHOLDS)
+    statNames.push(...SPRAY_STAT_NAMES)
+  }
+
+  const seen = new Set()
+  const uniqueThresholds = thresholds.filter((t) => {
+    const key = `${t.metric}:${t.threshold}:${t.comparison}`
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  return { thresholds: uniqueThresholds, ranges, statNames: [...new Set(statNames)], zoneLines, sprayLines }
 }
 
 // goalExtraThresholds, widened for a specific era: the slice8b prompt named

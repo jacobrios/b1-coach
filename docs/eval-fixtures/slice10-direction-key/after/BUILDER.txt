@@ -1,0 +1,93 @@
+# Which session data the debriefs in this directory were written about.
+# See ../../slice9-session-one/before/BUILDER.txt for what this file is and
+# why editing it to make a command work defeats the point.
+#
+# These 64 debriefs were generated on 20 August 2026, in Slice 10, against
+# the working tree as it stood at that moment: session 1's fifteen swings as
+# Slice 9 rewrote them, and the generator untouched. The only thing that
+# differs from Slice 9's after-a round, which this round is paired against,
+# is one added prompt line (the direction key) and one count line that stops
+# dangling on a zero count. No swing data moved.
+#
+# THIS ROUND HAS THREE WAYS TO GO STALE, NOT ONE, AND THE SECOND ONE IS THE
+# REASON THIS PARAGRAPH EXISTS. THE THIRD IS SET OUT FURTHER DOWN.
+#
+# The first is the one Slice 9's markers already anticipate: if session 1's
+# fifteen swings are rewritten again, this round needs a frozen snapshot of
+# its own, in the same shape as ../../slice9-session-one/session-one-before.mjs,
+# and the line below changes to name it.
+#
+# The second is the one no marker in this repository anticipated before
+# today. THE "current" BUILDER READS THE GENERATOR OUT OF THE WORKING TREE
+# TOO, not only session 1. Slice 11 is expected to change
+# src/swingGenerator.js (the pitch-location-to-contact link, the pull and
+# opposite-field bias, and the pop-up ceiling). The moment it does, this
+# round's sessions 2, 3 and 4 stop being reconstructible from the working
+# tree, while session 1 stays correct, so a re-grade would produce a
+# complete and entirely plausible fact sheet for swings the coach never saw
+# on 40 of these 64 records. Nothing would look broken.
+#
+# Slice 9's own after-a and after-b markers have the identical exposure and
+# say nothing about it, because they were written believing session 1 was
+# the only moving part. Repairing them is Slice 11's first task, as a dated
+# annotation rather than a rewrite. Whoever does that should give this round
+# a frozen generator snapshot at the same time.
+#
+# THERE IS A THIRD AXIS, AND SLICE 10 IS THE SLICE THAT ADDED IT.
+#
+# The grader does not only rebuild the swing data. It rebuilds the prompt the
+# coach saw, using the live buildDebriefUserMessage out of the working tree,
+# and Slice 10 added a line to that prompt. So re-grading any Slice 9 round
+# today reconstructs a prompt one line different from the one its coach was
+# actually given. That third axis is inert today: the added line is a
+# direction key carrying no count, so no handed-versus-derived attribution
+# moves and no verdict changes because of it. It is recorded here anyway,
+# because it is exactly the silent-drift class this file exists to catch, and
+# because the next prompt line added may not be inert. Any future prompt
+# change should ask this question of every committed round before assuming a
+# re-grade is comparable.
+#
+# ANNOTATION, 20 August 2026, FINAL REVIEW OF SLICE 10. THE "INERT TODAY"
+# SENTENCE ABOVE IS NO LONGER TRUE, AND IT IS THE ONLY LINE IN THIS DIRECTORY
+# THAT THE RECORD PASS MISSED.
+#
+# It was true of the prompt this round was written against, which carried the
+# direction key and nothing else. It is false of the prompt that shipped. The
+# QA gate rejected the first prompt and the second one adds THREE SPRAY COUNT
+# LINES to every goal, not just a key. Two things follow that the sentence
+# above rules out:
+#
+#   1. Attribution moves. scripts/handedCounts.js around lines 143 to 147 now
+#      marks three spray stats and two direction thresholds as HANDED on every
+#      goal in the "current" era. Every coach in this directory was handed
+#      neither. Re-grade this round today and its spray sentences are scored as
+#      the coach repeating a number it was given, when in fact it derived every
+#      one of them itself.
+#   2. Verdicts move. claimVerdict's sibling-bucket rescue reads those same
+#      direction thresholds, so a claim can be ruled differently, not merely
+#      attributed differently.
+#
+# This applies to every committed round pinned at handed-era = current whose
+# coach predates the spray count lines: this round, and Slice 9's after-a and
+# after-b. None of their coaches ever saw a spray count line.
+#
+# WHAT A RE-GRADER SHOULD DO. Do not re-grade this round at
+# handed-era = current and compare the result to anything. Either grade it at
+# an era that matches the prompt its coach actually read, which means giving
+# handedCounts.js a third era for the direction-key-only prompt, or accept a
+# re-grade as spray-blind and exclude every spray claim from any total drawn
+# from it. The after-spray round beside this one is the only round here whose
+# coach was handed the spray counts, so it is the only one "current" describes
+# correctly.
+#
+# The seed matters as much as the builder. Session 1 is the same fifteen
+# swings at any seed, but sessions 2, 3 and 4 are GENERATED from it with a
+# seeded PRNG, so the seed alone decides what those sessions contain. This
+# round deliberately uses 20260814, the same seed as
+# ../../slice9-session-one/after-a, because that pairing is the whole design:
+# identical swings, identical generated sessions, one prompt line different.
+# Grading it at 20260819 would rebuild sessions that never existed here.
+
+builder = current
+handed-era = current
+seed = 20260814

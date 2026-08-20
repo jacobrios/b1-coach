@@ -1,0 +1,63 @@
+# Which session data the debriefs in this directory were written about.
+# See ../../slice9-session-one/before/BUILDER.txt for what this file is and
+# why editing it to make a command work defeats the point.
+#
+# These 64 debriefs were generated on 20 August 2026, in Slice 10, AFTER the
+# product manager's browser QA pass rejected the slice's first prompt. Same
+# session data as ../after: session 1 exactly as Slice 9 left it, the
+# generator untouched, seed 20260814. NO SWING DATA DIFFERS between this round
+# and ../after, and none differs from Slice 9's after-a either.
+#
+# WHAT DOES DIFFER, AND WHAT TO COMPARE THIS AGAINST.
+#
+# ../after measured a prompt that told the coach "negative direction is pull
+# side". That disagreed with the spray chart on screen, which calls a ball
+# pulled only below -15 degrees, so the coach named six pull-side swings while
+# the chart coloured three. That prompt was replaced and never shipped.
+#
+# This round measures the prompt that did ship: one shared definition of pull
+# (SPRAY_CUTOFFS in src/sessionStats.js), plus three pre-counted spray lines
+# per session naming the swings, on every goal, in both the debrief and the
+# chat prompt.
+#
+# So ../after is this round's nearest neighbour and the right comparison:
+# identical data, identical seed, one prompt generation apart. Slice 9's
+# after-a is two generations back and should not be compared directly.
+#
+# THE GRADING INSTRUMENT ALSO MOVED BETWEEN ../after AND THIS ROUND, which is
+# unusual and has to be read carefully. scripts/handedCounts.js and
+# scripts/grade-coach-accuracy.mjs were both corrected before this round was
+# bought, because the new prompt hands direction counts on every goal and the
+# tool did not know it. Without those fixes the tool would have under-counted
+# handed claims and had no label for a sentence the coach now writes routinely,
+# both of which bias the after side. The fixes are era-gated, so a slice8b-era
+# run still reports what that generation actually handed. Anyone re-grading
+# ../after today gets the corrected tool, not the one that produced
+# ../after/grading.json, and the two are therefore not strictly comparable
+# without a re-grade. Say so rather than assuming.
+#
+# TWO WAYS THIS ROUND GOES STALE.
+#
+# First, if session 1's fifteen swings are rewritten again, this round needs a
+# frozen snapshot of its own, in the shape of
+# ../../slice9-session-one/session-one-before.mjs, and the line below changes
+# to name it.
+#
+# Second, and the one no marker in this repository anticipated before Slice 10:
+# THE "current" BUILDER READS THE GENERATOR OUT OF THE WORKING TREE TOO.
+# Slice 11 is expected to change src/swingGenerator.js. The moment it does,
+# this round's sessions 2, 3 and 4 stop being reconstructible while session 1
+# stays correct, so a re-grade produces a complete and entirely plausible fact
+# sheet for swings the coach never saw on 40 of these 64 records. Nothing would
+# look broken. Repairing the markers on all five affected directories is Slice
+# 11's first task, before the generator is touched.
+#
+# The seed matters as much as the builder. Session 1 is the same fifteen
+# swings at any seed, but sessions 2, 3 and 4 are GENERATED from it with a
+# seeded PRNG, so the seed alone decides what those sessions contain. 20260814
+# is deliberate here: it is what ../after and Slice 9's after-a both used, and
+# holding it is the whole point of the comparison.
+
+builder = current
+handed-era = current
+seed = 20260814

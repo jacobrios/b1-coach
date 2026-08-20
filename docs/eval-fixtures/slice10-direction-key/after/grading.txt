@@ -1,0 +1,185 @@
+B1 coach accuracy grader
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/slice10-direction-key/after (directory) (builder: current)
+Handed era       current
+Seed             20260814 (from docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt)
+Provenance       docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt (builder current, handed era current, seed 20260814)
+Records to grade 64 of 64 available
+Rough cost       $0.64 at a rough ~1 cent/debrief guess; the real total prints at the end
+
+  shipped/power-s1/run1... 7 claims, flagged=false
+  shipped/power-s1/run2... 8 claims, flagged=false
+  shipped/power-s1/run3... 7 claims, flagged=false
+  shipped/power-s1/run4... 11 claims, flagged=false
+  shipped/power-s1/run5... 7 claims, flagged=false
+  shipped/power-s1/run6... 7 claims, flagged=false
+  shipped/power-s1/run7... 8 claims, flagged=false
+  shipped/power-s1/run8... 9 claims, flagged=false
+  shipped/power-s1/run9... 8 claims, flagged=false
+  shipped/power-s1/run10... 7 claims, flagged=false
+  shipped/power-s1/run11... 8 claims, flagged=false
+  shipped/power-s1/run12... 7 claims, flagged=false
+  shipped/power-s2/run1... 7 claims, flagged=true
+  shipped/power-s2/run2... 9 claims, flagged=false
+  shipped/power-s2/run3... 7 claims, flagged=true
+  shipped/power-s2/run4... 7 claims, flagged=true
+  shipped/power-s2/run5... 7 claims, flagged=false
+  shipped/power-s2/run6... 7 claims, flagged=true
+  shipped/power-s2/run7... 7 claims, flagged=true
+  shipped/power-s2/run8... 8 claims, flagged=true
+  shipped/contact-s1/run1... 7 claims, flagged=false
+  shipped/contact-s1/run2... 10 claims, flagged=true
+  shipped/contact-s1/run3... 6 claims, flagged=false
+  shipped/contact-s1/run4... 9 claims, flagged=false
+  shipped/contact-s1/run5... 8 claims, flagged=false
+  shipped/contact-s1/run6... 11 claims, flagged=true
+  shipped/contact-s1/run7... 8 claims, flagged=false
+  shipped/contact-s1/run8... 7 claims, flagged=true
+  shipped/contact-s1/run9... 5 claims, flagged=true
+  shipped/contact-s1/run10... 7 claims, flagged=false
+  shipped/contact-s1/run11... 12 claims, flagged=false
+  shipped/contact-s1/run12... 6 claims, flagged=false
+  shipped/contact-s4/run1... 8 claims, flagged=false
+  shipped/contact-s4/run2... 10 claims, flagged=false
+  shipped/contact-s4/run3... 11 claims, flagged=false
+  shipped/contact-s4/run4... 7 claims, flagged=true
+  shipped/contact-s4/run5... 7 claims, flagged=false
+  shipped/contact-s4/run6... 7 claims, flagged=false
+  shipped/contact-s4/run7... 12 claims, flagged=true
+  shipped/contact-s4/run8... 9 claims, flagged=true
+  shipped/open-s4/run1... 8 claims, flagged=true
+  shipped/open-s4/run2... 5 claims, flagged=false
+  shipped/open-s4/run3... 8 claims, flagged=false
+  shipped/open-s4/run4... 7 claims, flagged=true
+  shipped/open-s4/run5... 7 claims, flagged=false
+  shipped/open-s4/run6... 6 claims, flagged=true
+  shipped/open-s4/run7... 8 claims, flagged=false
+  shipped/open-s4/run8... 8 claims, flagged=false
+  shipped/allfields-s4/run1... 7 claims, flagged=false
+  shipped/allfields-s4/run2... 7 claims, flagged=false
+  shipped/allfields-s4/run3... 8 claims, flagged=false
+  shipped/allfields-s4/run4... 8 claims, flagged=false
+  shipped/allfields-s4/run5... 7 claims, flagged=false
+  shipped/allfields-s4/run6... 7 claims, flagged=false
+  shipped/allfields-s4/run7... 7 claims, flagged=false
+  shipped/allfields-s4/run8... 9 claims, flagged=false
+  shipped/popup-s4/run1... 9 claims, flagged=true
+  shipped/popup-s4/run2... 7 claims, flagged=false
+  shipped/popup-s4/run3... 8 claims, flagged=false
+  shipped/popup-s4/run4... 8 claims, flagged=false
+  shipped/popup-s4/run5... 9 claims, flagged=false
+  shipped/popup-s4/run6... 9 claims, flagged=true
+  shipped/popup-s4/run7... 10 claims, flagged=false
+  shipped/popup-s4/run8... 7 claims, flagged=false
+
+======================================================================
+GRADING REPORT
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/slice10-direction-key/after (directory) (builder: current)
+Records graded   64
+
+Claims found     504 (TRUE 343, FALSE 21, UNVERIFIABLE 140)
+FALSE breakdown  7 contradicting a number the prompt handed the coach, 14 self-derived
+                 debriefs contradicting a handed number: 6 of 64
+Not reached      140 claim(s) the verdict code could not rule on (82 the extractor could not structure at all). Judge the run's coverage by this number, not just by the claim count.
+
+======================================================================
+FLAGGED DEBRIEFS: 18 of 64
+======================================================================
+This script does not know which records are known-wrong. It only
+reports what it flagged; comparing that list to ground truth is the
+controller's job, done blind, once.
+
+  shipped/power-s2/run1
+    [coachingSummary] "You also cut your sub-175ft swings from 4 down to 1" (handed)
+      actual: underFifteenCount: 3
+      why: claimed 1, the stats say 3
+  shipped/power-s2/run3
+    [coachingSummary] "you had 5 swings reach 265-305ft compared to 2 in Session 1" (self-derived)
+      actual: distance between 265 and 305 inclusive: 6
+      why: claimed 5, the rows give 6
+  shipped/power-s2/run4
+    [coachingSummary] "You also cut your under-175-foot balls from 4 down to 1" (handed)
+      actual: underFifteenCount: 3
+      why: claimed 1, the stats say 3
+  shipped/power-s2/run6
+    [coachingSummary] "You cut your under-175-foot swings from 4 down to 1" (handed)
+      actual: underFifteenCount: 3
+      why: claimed 1, the stats say 3
+  shipped/power-s2/run7
+    [coachingSummary] "You cut your under-175-foot swings from 4 down to 1" (handed)
+      actual: underFifteenCount: 3
+      why: claimed 1, the stats say 3
+  shipped/power-s2/run8
+    [coachingSummary] "you added three more balls in the 265-305ft range" (self-derived)
+      actual: distance between 265 and 305 inclusive: 6
+      why: claimed 3, the rows give 6
+    [tip2] "all three came in under 88 mph" (self-derived)
+      actual: 2 of swings 7, 9, 15 are below 88 exitVelocity (swings 9, 15)
+      why: claimed 3, the intersection is 2
+  shipped/contact-s1/run2
+    [tip1] "swings 6 and 14 on pitches above 3.5 feet" (handed)
+      actual: swing 6 pitchHeight: 3.8
+      why: claimed 3.5, the table says 3.8
+    [tip1] "swings 6 and 14 on pitches above 3.5 feet" (handed)
+      actual: swing 14 pitchHeight: 3.6
+      why: claimed 3.5, the table says 3.6
+  shipped/contact-s1/run6
+    [tip1] "swings like 5 and 13 left the bat at 92 and 89 mph" (self-derived)
+      actual: 0 of swings 5, 13 are equal 88 exitVelocity
+      why: claimed 2, the intersection is 0
+  shipped/contact-s1/run8
+    [tip1] "Your hardest swings — 92, 89, and 89 mph — all came out between 15 and 27 degrees" (self-derived)
+      actual: launchAngle between 15 and 27 inclusive: 10
+      why: claimed 3, the rows give 10
+  shipped/contact-s1/run9
+    [coachingSummary] "Four swings hit the target zone out of fifteen" (self-derived)
+      actual: launchAngle atMost 15: 6
+      why: claimed 4, the row says 6
+  shipped/contact-s4/run4
+    [tip2] "your hardest swings were on pitches in the zone at heights between 1.5 and 3 feet" (self-derived)
+      actual: pitchHeight between 1.5 and 3 inclusive: 8
+      why: claimed 3, the rows give 8
+  shipped/contact-s4/run7
+    [coachingSummary] "making contact on 12 of 15 strikes" (handed)
+      actual: contactTargetBandCount: 8
+      why: claimed 12, the stats say 8
+    [tip1] "swings 2 and 12 both came in under 80 mph with angles below 8 degrees" (self-derived)
+      actual: 1 of swings 2, 12 are below 80 exitVelocity (swings 12)
+      why: claimed 2, the intersection is 1
+  shipped/contact-s4/run8
+    [tip1] "none of them reached 80 mph" (self-derived)
+      actual: 1 of swings 1, 10, 13 are above 80 exitVelocity (swings 13)
+      why: claimed 0, the intersection is 1
+  shipped/open-s4/run1
+    [tip2] "exit velocities under 80 mph" (self-derived)
+      actual: 2 of swings 5, 10, 12 are below 80 exitVelocity (swings 10, 12)
+      why: claimed 3, the intersection is 2
+  shipped/open-s4/run4
+    [tip2] "You had five balls go under 175 feet this round — swings 1, 7, 9, 12, and 13" (self-derived)
+      actual: distance below 175: 5 (swings 1, 7, 10, 12, 13)
+      why: the count matches but the named swings do not
+  shipped/open-s4/run6
+    [tip2] "swings 10, 12, and 13 were all under 10 degrees of launch angle" (self-derived)
+      actual: 2 of swings 10, 12, 13 are below 10 launchAngle (swings 10, 12)
+      why: claimed 3, the intersection is 2
+  shipped/popup-s4/run1
+    [tip2] "Sessions 2 and 3 both had five swings go 265 or farther" (self-derived)
+      actual: distance atLeast 265: 7
+      why: claimed 5, the row says 7
+  shipped/popup-s4/run6
+    [tip2] "Swings 12 and 15 both came in at 5 degrees of launch angle" (self-derived)
+      actual: 1 of swings 12, 15 are equal 5 launchAngle (swings 12)
+      why: claimed 2, the intersection is 1
+
+======================================================================
+COST
+======================================================================
+154295 input + 43498 output tokens = $0.3718
+  cache: none (expected; the blind extraction prompt is below the cacheable minimum)
+
+Raw results      docs/eval-fixtures/slice10-direction-key/after/grading.json
+
+[exited with code 0]

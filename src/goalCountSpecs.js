@@ -24,6 +24,7 @@
 // re-exports the table, so app code and the bench still find it there.
 
 import { goalTarget, meetsTarget } from './goalTargets.js'
+import { SPRAY_CUTOFFS, sprayBreakdown } from './sessionStats.js'
 
 const POWER = goalTarget('power')
 const CONTACT = goalTarget('contact')
@@ -47,9 +48,12 @@ export const GOAL_COUNT_SPECS = {
   allfields: {
     // "at least 3 swings pull side (direction below -15 degrees), at least 3
     // swings opposite field (direction above +15 degrees)". The same cutoffs
-    // the spray chart's Pull/Center/Oppo legend draws.
-    pullDirection: -15,
-    oppoDirection: 15,
+    // the spray chart's Pull/Center/Oppo legend draws, and since Slice 10 read
+    // from the one place that says so (SPRAY_CUTOFFS in sessionStats.js)
+    // rather than typed again here. This goal's prose was already right about
+    // where pull starts; what was wrong was the rest of the app not agreeing.
+    pullDirection: SPRAY_CUTOFFS.pull,
+    oppoDirection: SPRAY_CUTOFFS.oppo,
     // "Exit velocity 82+ mph indicates hard contact that challenges
     // fielders." Deliberately NOT the 85 or 88 other goals use; the three
     // disagreeing hard-contact numbers are their own queued item.
@@ -122,12 +126,18 @@ export function goalCountValues(goalId, swings) {
         contactHardHit: select((l) => l.exitSpeed >= spec.exitVelocity),
         contactFlyBall: select((l) => l.angle > spec.flyBallAngle),
       }
-    case 'allfields':
+    case 'allfields': {
+      // Delegated to the shared breakdown rather than filtered again here, as
+      // of Slice 10. This goal's two counts and the universal spray count
+      // lines every goal now gets are the same arithmetic run once, so the
+      // coach cannot be handed two answers about which swings it pulled.
+      const spray = sprayBreakdown(swings)
       return {
-        pullSide: select((l) => l.direction < spec.pullDirection),
-        oppoField: select((l) => l.direction > spec.oppoDirection),
+        pullSide: spray.pull,
+        oppoField: spray.oppo,
         allfieldsHardContact: select((l) => l.exitSpeed >= spec.hardContactExitVelocity),
       }
+    }
     case 'popup':
       return {
         popUp: select((l) => l.angle > spec.popUpAngle),

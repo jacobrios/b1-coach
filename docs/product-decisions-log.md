@@ -6,6 +6,147 @@
 
 ---
 
+## Slice 10, continued: the QA gate rejected it, and the second attempt is the one that shipped (August 20)
+
+*Read this before the entry below it.* That entry stands as written, because it
+records what was decided and measured before the product manager ran the QA
+script. **The prompt it describes never shipped.**
+
+*What the gate caught.* Asked which swings went pull side, the coach named six on
+session 1. The spray chart beside it coloured three. Both behaved correctly; the
+app was wrong, holding two definitions of "pull" and handing the coach the one
+the screen does not use. Three swings read as pull in the prose and Center in the
+chart at once.
+
+*This was a controller error, not an implementation one.* The rejected line said
+"negative direction is pull side." That wording was chosen deliberately over an
+option naming the -15 and +15 cutoffs, on the reasoning that naming a threshold
+the prompt does not pre-count is what makes this coach invent counts. Sound, and
+incomplete: it never weighed the cost of leaving the coach with a different
+definition from the screen. The product manager's instinct in the original
+conversation pointed here and was talked out of it. The slice's own verification
+then walked past it, having asked the identical question, noticed the coach's
+buckets contradicted each other, and never checked them against the chart.
+
+*This is a process success, not an embarrassment.* The gate that caught it is the
+one this project says may never degrade, and it worked on a defect that automated
+tests, a pre-registered measurement and 64 live debriefs had all missed.
+
+*What shipped, approved before any code.* One definition of pull for the whole
+app, `SPRAY_CUTOFFS` in `src/sessionStats.js`, beside the strike-zone constants
+that set the precedent. Everything chains to it: the direction key, three
+pre-counted spray lines per session on every goal in both prompts, the Hit to All
+Fields prose, and the grading tool's fact sheet. The approved key names the
+cutoffs the chart uses. The prose and the counts can no longer disagree, and a
+test proves it rather than the numbers merely agreeing today.
+
+*The defect is fixed, measured rather than asserted.* Two rounds of 64 live
+debriefs, same seed, identical swing data, one prompt generation apart. In the
+rejected round, across the five goals with no spray counts, the coach classified
+a direction exactly once, using the sign rule: a swing at -5 degrees called pull
+side, the product manager's finding reproduced independently. The shipped round
+has 33 direction statements across all goals, 23 of which the two rules answer
+differently, and every
+one follows the chart. It never calls a swing between -15 and 0 a pull, and the
+mirror case appears too: swings at -2 and -6 called "up the middle," which the
+old rule would have called pulls. Two spray sentences in that round are still
+wrong, but both are ordinary counting slips against a handed number, not the
+prose-versus-chart disagreement the gate rejected.
+
+*What it cost in behaviour.* The coach now talks about spray in 24 of 64
+debriefs, up from 9. Nobody asked for that, it is visible on screen, and the
+surface for a future spray error is much larger than it was.
+
+*The honest non-result.* Hand-checked genuine coach errors went 8 to 13, and
+**this entry claims neither a regression nor an improvement.** Slice 9 ran two
+rounds on identical data with an identical prompt and hand-checked to 19 and 9,
+so the demonstrated same-condition spread is 10 and this gap is 5. The
+denominator moved too, 504 claims to 543, so the rate went 1.6% to 2.4%. And the
+instrument was corrected between the rounds and now sees more: unstructurable
+claims fell 82 to 51, unrulable ones 140 to 118, so some of the extra errors were
+present in the first round and invisible.
+
+*Spend, both rounds and both gradings, $3.07. Tests 529 to 570 across 22 files,
+green.* Every flagged claim in both rounds is adjudicated one at a time in
+`docs/eval-fixtures/slice10-direction-key/`.
+
+---
+
+## Slice 10: told the coach which way is which, and reported the null it predicted (August 20)
+
+> **Superseded, 20 August 2026. The prompt this entry describes never shipped.**
+> The browser QA gate rejected it, and the wording below saying two prompt lines
+> "shipped" is true of the attempt, not of the app. What shipped is in the entry
+> directly above this one, "Slice 10, continued." Read that one first. This entry
+> is kept whole and unedited because it records what was decided and measured
+> before the gate ran, which is the part that stays useful.
+
+*What this slice was.* Each swing's spray direction reaches the coach as a raw
+signed number, and only one of the six goals, Hit to All Fields, ever told it
+which sign meant pull. On the other five it guessed, and during Slice 9's
+browser gate it called an opposite-field ball a pull-side ball. Two prompt lines
+shipped, both approved word for word before any code: a direction key naming the
+convention, in both prompts, immediately above the swing data it explains; and a
+smaller fix stopping the Power count line dangling a "numbers:" clause when the
+count is zero.
+
+*Decision: split the prompt change from the data change.* Four symptoms came out
+of one scoping pass. One changes what the coach is told; three change what the
+swing data contains. The three data ones move sessions 2 to 4, and PR #31 had
+touched only the debrief screen, which left Slice 9's two after rounds standing
+as a free before-baseline at two seeds for any change that leaves the data
+alone. Splitting therefore bought a controlled comparison for the price of one
+round rather than two. That baseline expires the moment the generator moves,
+which is Slice 11.
+
+*Decision: decline the spray-counts expansion, and measure before declining it.*
+The tempting larger move was to pre-count pull, centre and opposite field on
+every goal, the mechanism that worked in Slices 8b and 8c. It was declined on a
+measurement: across Slice 9's 128 committed debriefs the coach says anything
+about where balls went in 10 of 16 Hit to All Fields debriefs and in 0 of the
+other 112. Counting spray on the other five goals would create new behaviour on
+screens where spray is not what the player asked about, competing for a word
+budget the coach already overruns, and a new count with no matching row in the
+grading tool's fact sheet is exactly what manufactured Slice 8b's false
+positives. It stays a candidate slice, now with live evidence: asked directly,
+the coach got every sign right, then contradicted its own grouping three times
+in one answer.
+
+*Decision: pre-register the null band before spending.* The error class this
+slice fixes appears in 0 of 112 measured debriefs outside one goal, so no round
+at this scale could detect it. Rather than buy a round and then decide what the
+number meant, the band went into the plan first: 15 to 29 raw flags is a null.
+It came back at 21, reported as the null it was predicted to be. Hand-checked,
+that is 8 genuine coach errors against a same-condition range of 9 to 19 from
+Slice 9's own rounds: a regression guard holding, not an improvement. This slice
+makes no accuracy claim anywhere.
+
+*One plan deviation, disclosed.* The plan said that if the browser capture did
+not happen to produce a session with zero swings under 15 degrees, the session
+should be re-rolled until it did, so the dangling-"numbers:" fix would be proven
+against a real request. No session in the run produced a zero count, and no
+re-roll was done. The zero branch was exercised instead by importing the shipped
+module in the running browser and rendering the line from it, which proves the
+code that ships behaves correctly but does not prove it inside a request the app
+actually sent. Judged adequate because the fix is one conditional on a prompt
+line no visitor ever sees, and because a unit test covers the same branch and was
+seen red first. It is a weaker piece of evidence than the plan asked for, and it
+is named as such in `docs/eval-fixtures/slice10-direction-key/browser-payload-capture.md`.
+
+*What it cost, and what it turned up.* $1.49 for 64 live debriefs and their
+grading, zero parse failures, both free dry runs clean before any spend, and
+`npm test` from 529 tests across 22 files to 535, green. The hand-check found
+the grading tool wrong on 13 of the 21 flags, a 61.9 percent false-positive rate
+above the 11 to 42 percent band recorded so far, plus two failure mechanisms
+never seen before, one of them deterministic and fixable offline for nothing.
+Six scoping findings that are not fixes are written out in
+`docs/slice-10-plan.md` and carried onto What's Next, the sharpest being a
+launch-angle clamp that pins 4.2 percent of Power session-4 swings at exactly
+35.0 degrees, drawing a flat row of dots along the top of a chart every visitor
+sees.
+
+---
+
 ## Slice 9: the first screen stopped being a ruler, and the honest answer was "neither better nor worse" (August 19-20)
 
 *What this slice was.* Every visitor lands on a scripted first practice session
