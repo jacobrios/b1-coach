@@ -359,9 +359,15 @@ the way past if you open the file for another reason.
                              `goalCountSpecs.js`, and the grader's fact sheet.
                              The one copy deliberately left outside is the spray
                              chart's own inline -15 and +15 in
-                             `DebriefScreen.jsx`; it agrees today and
+                             `DebriefScreen.jsx`, four literals across two
+                             charts; it agrees today and
                              consolidating it is recorded as debt rather than
                              done, to keep the fix out of the screen file.
+                             *(20 August 2026, final review: still debt, but no
+                             longer unwatched. A guard in
+                             `src/sessionStats.test.js` reads the screen file as
+                             text and holds all four literals to
+                             `SPRAY_CUTOFFS`, so a drift turns the suite red.)*
     src/promptText.js          6 lines. One rule of prompt grammar,
                              `swingCountPhrase`, so a count reads "1 swing"
                              rather than "1 swings." Added in Slice 8c; shared
@@ -883,9 +889,11 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of the close of Slice 10 on 20 August 2026 it is 570
+   vitest, and as of the close of Slice 10 on 20 August 2026 it is 573
    tests across 22
-   files, up from 535 midway through Slice 10, before the browser QA gate
+   files, up from 570 before that slice's final review added the guard holding
+   the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535
+   midway through Slice 10, before the browser QA gate
    rejected that slice's first prompt and sent it back for a second round of
    work, up from 529 at Slice 9's closing review the same day, up from
    519 at the close of Slice 9's build, up from
@@ -908,8 +916,13 @@ specific to this repo:
    count lines reaching both prompts, their exact values on session 1, their
    counts always summing to the session's swing count, and the guard proving the
    Hit to All Fields goal prose and the universal lines cannot report different
-   pull numbers (Slice 10's second round of work; that last one is the drift the
-   QA gate caught, and it is now impossible rather than merely true); and the
+   pull numbers (Slice 10's second round of work; that last one makes ONE of
+   the two drifts impossible, prompt line against prompt line, which is not the
+   drift the QA gate actually caught. The gate caught the coach's prose
+   disagreeing with the spray chart, and that one is still merely true rather
+   than impossible: it is now watched by a guard in `src/sessionStats.test.js`
+   that reads `src/DebriefScreen.jsx` as text and holds its four hardcoded
+   cutoffs to `SPRAY_CUTOFFS`); and the
    deterministic fact-sheet and word-overlap modules the
    claim-accuracy grader and the bench each lean on. It covers **no screens
    and no rendering at all**, so a green suite says nothing about what a
@@ -1190,7 +1203,23 @@ owner's own use explains. Do not build rate limiting without that signal.
   manager on 20 August 2026, in the conversation that fixed the spray defect,
   and recorded here so nobody unifies them later on the grounds that they
   disagree. They do not disagree: both resolve to the same -15 to +15 window
-  from the single `SPRAY_CUTOFFS` constant, so they cannot drift. What differs
+  today. ~~from the single `SPRAY_CUTOFFS` constant, so they cannot drift.~~
+  **Corrected 20 August 2026, by the final review of this same slice: that
+  clause was false the day it was written, and it was false about the exact
+  guarantee whose absence got this slice rejected.** Only the prompt side reads
+  `SPRAY_CUTOFFS`. `src/DebriefScreen.jsx` imports nothing from
+  `sessionStats.js` and writes the two cutoffs out as its own literals four
+  times, twice in `SprayDirection` around `:696` and `:700` and twice in
+  `PitchLocation` around `:779` and `:781`. They agree, and nothing about the
+  construction makes them agree. The remaining copy is recorded as debt in the
+  `src/sessionStats.js` entry further up this file, around lines 360 to 364.
+  **What changed on 20 August 2026 is that a drift now turns the suite red**: a
+  guard in `src/sessionStats.test.js` reads the screen file as plain text and
+  holds all four of its literals to `SPRAY_CUTOFFS`, seen failing first against
+  a deliberately changed one. That is a tripwire, not a guarantee, and the
+  difference matters: change the constant and the suite tells you the chart did
+  not follow, rather than the chart following on its own. The rest of this
+  decision stands unchanged and is sound. What differs
   is register. A chart legend needs a short word that fits under a colour swatch.
   A coach or a player never says "center" out loud; they say "up the middle,"
   and the coach's whole job here is to sound like a person at the cage. A player
@@ -2473,9 +2502,13 @@ these came out of the round that measured the prompt that actually shipped.*
   correctly ruled it TRUE. The error is in "three in Session 1," where the truth
   is 4, and that half produced no claim at all.
 
-  **One correction to the record while these are being written down.** Both
-  hand-check documents say in places that the tool "has no spray statistic."
-  That is not true, and a future session should not act on it:
+  **One correction to the record while these are being written down.** ~~Both
+  hand-check documents say~~ **Corrected 20 August 2026, by final review: only
+  ONE hand-check document says it, twice.** `HAND-CHECK-after-spray.md` says at
+  its lines 159 and 716 that the tool "has no spray statistic", and both places
+  now carry a dated annotation saying otherwise. `HAND-CHECK.md` does not
+  contain the word "spray" at all. The claim itself is still the thing to
+  ignore, and a future session should not act on it:
   `scripts/factSheet.js:164-170` carries all three spray counts and their swing
   numbers per session, added in the same change as the prompt lines, and one
   spray sentence in this round was ruled TRUE off those rows. The ground truth
@@ -2498,6 +2531,29 @@ these came out of the round that measured the prompt that actually shipped.*
   tests asserting on it. Either wire it up or drop it; a returned value nobody
   reads is the sort of thing a later session mistakes for a working signal.
   Tiny, and only worth doing next time that file is open.
+
+*Added 20 August 2026, from the final review that closed Slice 10:*
+
+- **Hit to All Fields gets its pull and oppo counts handed to it twice.** That
+  goal's own two count lines and the universal spray count lines every goal now
+  receives say the same thing in near-identical words. The numbers cannot
+  disagree, since both run the one `sprayBreakdown` and a test pins them equal,
+  so this is not a correctness bug. It is prompt bloat on the goal whose coach
+  overruns its word budget most often, and it was disclosed only inside a test
+  comment until now. **The option:** drop that goal's own two lines and let the
+  universal ones serve it, which removes two lines from the prompt and changes
+  no number. It is a coach-prompt change, so it needs the product manager's
+  approval on what the prompt ends up saying, same as every other one. Small,
+  and worth pairing with whatever prompt slice comes next rather than doing
+  alone.
+- **The spray chart's four cutoff literals are watched, not consolidated.** The
+  guard added at the close of Slice 10 reads `src/DebriefScreen.jsx` as text and
+  fails the suite if any of its four hardcoded -15 and +15 stop matching
+  `SPRAY_CUTOFFS`. That is a tripwire. The chart still does not read the
+  constant, and this project has deliberately declined to touch the screen file
+  for a prompt fix twice now. Only worth closing if the screen file is being
+  opened for another reason; the tripwire is the cheap 90% and the remaining
+  10% costs a browser pass.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

@@ -348,6 +348,28 @@ Approved by the product manager on 20 August 2026, before any code:
   chart's copy is recorded as remaining debt rather than done here, to keep this
   fix out of the screen file entirely.
 
+  *(Added 20 August 2026, final review. The screen file is still not touched.
+  What did land is a guard in `src/sessionStats.test.js` that reads it as plain
+  text and holds all four of its cutoff literals to `SPRAY_CUTOFFS`. The debt is
+  unchanged; what changed is that a drift now turns the suite red instead of
+  reaching a visitor.)*
+- **Hit to All Fields carries its pull and oppo counts twice, and that is
+  deliberate.** Added 20 August 2026, final review, because until now this was
+  disclosed only inside a test comment. On that one goal the prompt gets two
+  near-identical pull lines and two near-identical oppo lines, one pair from the
+  goal's own `goalCountLines` and one from the universal `sprayCountLines` every
+  goal now receives. The numbers cannot disagree: both run the one
+  `sprayBreakdown`, and a test at `src/coachApi.test.js` pins them equal on
+  session 1. So this is not a correctness bug. It is prompt bloat, on the goal
+  whose coach already runs over its word budget most often, and it is worth
+  naming rather than leaving for someone to rediscover. Kept because the goal's
+  own two lines are approved wording that states the ask in the goal's own
+  terms, and dropping them inside a slice already sent back once by the QA gate
+  would have widened it again. **The alternative, queued rather than taken:**
+  drop Hit to All Fields' own two count lines and let the universal ones serve
+  that goal alone, which removes two lines from that prompt and leaves the
+  numbers identical.
+
 ---
 
 ## Task 7: one definition of pull, and counts to go with it

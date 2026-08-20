@@ -74,6 +74,13 @@ green.* Every flagged claim in both rounds is adjudicated one at a time in
 
 ## Slice 10: told the coach which way is which, and reported the null it predicted (August 20)
 
+> **Superseded, 20 August 2026. The prompt this entry describes never shipped.**
+> The browser QA gate rejected it, and the wording below saying two prompt lines
+> "shipped" is true of the attempt, not of the app. What shipped is in the entry
+> directly above this one, "Slice 10, continued." Read that one first. This entry
+> is kept whole and unedited because it records what was decided and measured
+> before the gate ran, which is the part that stays useful.
+
 *What this slice was.* Each swing's spray direction reaches the coach as a raw
 signed number, and only one of the six goals, Hit to All Fields, ever told it
 which sign meant pull. On the other five it guessed, and during Slice 9's

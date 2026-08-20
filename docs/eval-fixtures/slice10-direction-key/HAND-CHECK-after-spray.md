@@ -159,6 +159,15 @@ have produced, so neither weakens the finding above. Both matter separately,
 because **the grading tool flagged neither**: it has no spray statistic, so Job 2's
 counts cannot see spray claims at all.
 
+> *Annotation, 20 August 2026, final review of Slice 10. "It has no spray
+> statistic" is false and should not be acted on.* `scripts/factSheet.js:164-170`
+> carries all three spray counts and their swing numbers for every session. The
+> ground truth is there. What is missing sits upstream of it, in extraction and
+> in the verdict path, which is why these two claims went unflagged. The two
+> specific gaps are set out under "One correction to the hand-checks" in
+> `README.md`. Nothing below is changed: both adjudications stand, and both
+> statements are still genuine coach errors that the tool did not catch.
+
 1. **power-s2 / run8, tip2.** "You put five swings to the pull side in Session 2,
    up from three in Session 1." Session 2's handed line reads "Swings pull side
    ...: 6 swings - numbers: 3, 7, 11, 12, 13, 14". The coach said five. The
@@ -713,9 +722,24 @@ Three things can be said honestly about what that does and does not explain.
    decision.
 
 One further caution for anyone using this tool for before-and-after work in
-future, restating what Slice 9 already found. The tool has no spray statistic at
-all. This round's prompt made the coach write spray sentences in 24 of 64 debriefs
+future, restating what Slice 9 already found. ~~The tool has no spray statistic at
+all.~~ This round's prompt made the coach write spray sentences in 24 of 64 debriefs
 instead of 9, and every one of those sentences is invisible to the flag count.
 Two of them are genuine coach errors that no flag caught. A comparison run across
 a prompt change that alters *what the coach talks about* will systematically
 mis-measure it, in whichever direction the new subject happens to fall.
+
+> *Annotation, 20 August 2026, final review of Slice 10, and this is the more
+> damaging of the two places this document says it.* "The tool has no spray
+> statistic at all" is false, and a forward-looking recommendation for future
+> before-and-after work must not rest on it. `scripts/factSheet.js:164-170`
+> carries all three spray counts per session, and at least one spray sentence
+> in this very round was correctly ruled TRUE off those rows. What is actually
+> missing is narrower and sits upstream: a spray count can be extracted as a
+> `threshold` claim carrying no comparison and then never ruled, and the prior-
+> session half of a cross-session spray comparison is never extracted at all.
+> Both gaps are set out under "One correction to the hand-checks" in
+> `README.md`. **The caution in the paragraph above still holds on its own
+> terms** and should still be acted on: spray claims are badly under-seen by
+> the flag count, and a prompt change that alters what the coach talks about
+> will still mis-measure. Only the stated reason was wrong.

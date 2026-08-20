@@ -31,9 +31,16 @@ stale), and `grading.json` / `grading.txt`. Beside them:
     HAND-CHECK-after-spray.md   All 23 flagged claims from the `after-spray`
                                  round, plus a direct test of whether the
                                  shipped fix worked.
-    browser-payload-capture.md  What the browser actually sent. Taken against
-                                 the REJECTED prompt, before the fix, and not
-                                 re-run afterwards.
+    browser-payload-capture.md  What the browser actually sent. Two captures:
+                                 one against the REJECTED prompt, before the
+                                 fix, and a second against the SHIPPED prompt,
+                                 same screen and same question, added 20 August
+                                 2026. ~~and not re-run afterwards.~~ (Corrected
+                                 20 August 2026 by final review: it was re-run,
+                                 in commit 3bc7600, and that second capture is
+                                 the strongest single piece of evidence in this
+                                 directory. This line was understating the
+                                 branch's own work.)
 
 The 64 debriefs in each round are the bench's seven cells: `power-s1` 12,
 `contact-s1` 12, `power-s2` 8, `contact-s4` 8, `open-s4` 8, `allfields-s4` 8,
@@ -180,10 +187,14 @@ the prompt was for, and it is visible on screen. It also means the surface area
 for a future spray error is much larger than it was, and the grading tool
 currently sees very little of it. See the coverage gaps below.
 
-## One correction to both hand-checks
+## One correction to the hand-checks
 
-Both hand-check documents say in places that the grading tool "has no spray
-statistic." **That is not true.** `scripts/factSheet.js:164-170` carries all
+~~Both hand-check documents say in places~~ **Corrected 20 August 2026, final
+review: only ONE of them says it, and it says it twice.**
+`HAND-CHECK-after-spray.md` says it at its lines 159 and 716, and both places
+now carry a dated annotation pointing here. `HAND-CHECK.md` does not contain
+the word "spray" anywhere. The claim itself is what matters and it is
+unchanged: the grading tool "has no spray statistic." **That is not true.** `scripts/factSheet.js:164-170` carries all
 three spray counts and their swing numbers per session, added in the same change
 as the prompt lines, and spray sentences in the shipped round were correctly
 ruled TRUE off them (`open-s4` runs 3 and 5, both matched against
@@ -262,7 +273,14 @@ candidates.
   spray statements are arithmetic slips against handed counts, and the grading
   tool caught neither. The browser capture shows the coach contradicting its own
   grouping three times in one answer, though note that capture was taken against
-  the **rejected** prompt and nothing has re-run that question since. What *is*
+  the **rejected** prompt. ~~and nothing has re-run that question since.~~
+  **Corrected 20 August 2026, final review: the question WAS re-run.** The
+  second half of `browser-payload-capture.md`, added in commit 3bc7600, puts
+  the same question to the shipped prompt on the same screen and gets all
+  fifteen swings in the right bucket, each named exactly once, with the
+  double-counting gone. That is one reply and does not make the grouping
+  flawless, so the caution this bullet exists for stands. It does mean the
+  caution should not be read as "untested against what shipped." What *is*
   supported is the narrower claim above: the coach now uses the chart's rule
   rather than the sign rule.
 - **That the tool's false-positive mechanisms are now enumerated.** Each wave of

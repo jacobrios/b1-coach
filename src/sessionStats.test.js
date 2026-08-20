@@ -5,6 +5,7 @@
 // confidently narrating something that did not happen.
 
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   computeStats, topExitVelocity, inStrikeZone, pitchZoneBreakdown, STRIKE_ZONE,
   sprayBreakdown, SPRAY_CUTOFFS,
@@ -192,5 +193,57 @@ describe('sprayBreakdown', () => {
     expect(spray.pull.count + spray.middle.count + spray.oppo.count).toBe(15)
     expect([...spray.pull.swings, ...spray.middle.swings, ...spray.oppo.swings].sort((a, b) => a - b))
       .toEqual(Array.from({ length: 15 }, (_, i) => i + 1))
+  })
+})
+
+// Slice 10, final review. The claim that the coach's prose and the spray chart
+// "cannot drift" was false the day it was written. `src/DebriefScreen.jsx`
+// imports nothing from this file: it types the two cutoffs out four times of
+// its own, twice in the spray chart and twice in the pitch-location chart.
+// They agree today. Nothing whatsoever made them agree, and the drift they
+// could produce is the exact defect the browser QA gate rejected this slice
+// for. This is what closes that: the two are still not guaranteed by
+// construction, but a drift now turns the suite red.
+//
+// It reads the screen file as TEXT, the same technique
+// `scripts/factSheet.test.js` uses on the grader's extraction prompt. It is
+// NOT a rendering test: nothing is mounted, no DOM, no Recharts. This project
+// deliberately has no rendering tests and does not gain one here.
+//
+// Read against SPRAY_CUTOFFS rather than against literals, which is the
+// opposite of the block above, and deliberately so. Up there the literals are
+// the point, because asserting a convention against itself proves nothing.
+// Down here AGREEMENT is the point, and the literals are already pinned at
+// -15 and +15 twenty lines up, so a change to the constant fails there first.
+describe('the spray chart\'s own hardcoded cutoffs, read out of the shipped screen file', () => {
+  const source = readFileSync(new URL('./DebriefScreen.jsx', import.meta.url), 'utf8')
+
+  // `dir` is the spray chart's classifier, `payload.direction` the pitch
+  // location chart's. `dir > 0` in the raw data table is a sign test choosing
+  // whether to print a leading "+", not a classification, and zero is never a
+  // cutoff, so it is dropped rather than checked.
+  const comparisons = [...source.matchAll(/(?:dir|payload\.direction)\s*([<>])\s*(-?\d+(?:\.\d+)?)/g)]
+    .map(([text, operator, literal]) => ({ text, operator, value: Number(literal) }))
+    .filter(({ value }) => value !== 0)
+
+  // Pinned exactly, not loosely. If this count moves, either a fifth copy was
+  // added or one of the four was renamed out of this regex's sight, and both
+  // want a person to look rather than a quietly green suite.
+  it('finds exactly the four copies it is meant to be checking, two per chart', () => {
+    expect(comparisons).toHaveLength(4)
+    expect(comparisons.filter((c) => c.operator === '<')).toHaveLength(2)
+    expect(comparisons.filter((c) => c.operator === '>')).toHaveLength(2)
+  })
+
+  it('draws pull side at exactly SPRAY_CUTOFFS.pull, in both charts', () => {
+    for (const c of comparisons.filter((x) => x.operator === '<')) {
+      expect({ found: c.text, value: c.value }).toEqual({ found: c.text, value: SPRAY_CUTOFFS.pull })
+    }
+  })
+
+  it('draws opposite field at exactly SPRAY_CUTOFFS.oppo, in both charts', () => {
+    for (const c of comparisons.filter((x) => x.operator === '>')) {
+      expect({ found: c.text, value: c.value }).toEqual({ found: c.text, value: SPRAY_CUTOFFS.oppo })
+    }
   })
 })

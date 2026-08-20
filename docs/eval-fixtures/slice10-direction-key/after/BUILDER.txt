@@ -47,6 +47,39 @@
 # change should ask this question of every committed round before assuming a
 # re-grade is comparable.
 #
+# ANNOTATION, 20 August 2026, FINAL REVIEW OF SLICE 10. THE "INERT TODAY"
+# SENTENCE ABOVE IS NO LONGER TRUE, AND IT IS THE ONLY LINE IN THIS DIRECTORY
+# THAT THE RECORD PASS MISSED.
+#
+# It was true of the prompt this round was written against, which carried the
+# direction key and nothing else. It is false of the prompt that shipped. The
+# QA gate rejected the first prompt and the second one adds THREE SPRAY COUNT
+# LINES to every goal, not just a key. Two things follow that the sentence
+# above rules out:
+#
+#   1. Attribution moves. scripts/handedCounts.js around lines 143 to 147 now
+#      marks three spray stats and two direction thresholds as HANDED on every
+#      goal in the "current" era. Every coach in this directory was handed
+#      neither. Re-grade this round today and its spray sentences are scored as
+#      the coach repeating a number it was given, when in fact it derived every
+#      one of them itself.
+#   2. Verdicts move. claimVerdict's sibling-bucket rescue reads those same
+#      direction thresholds, so a claim can be ruled differently, not merely
+#      attributed differently.
+#
+# This applies to every committed round pinned at handed-era = current whose
+# coach predates the spray count lines: this round, and Slice 9's after-a and
+# after-b. None of their coaches ever saw a spray count line.
+#
+# WHAT A RE-GRADER SHOULD DO. Do not re-grade this round at
+# handed-era = current and compare the result to anything. Either grade it at
+# an era that matches the prompt its coach actually read, which means giving
+# handedCounts.js a third era for the direction-key-only prompt, or accept a
+# re-grade as spray-blind and exclude every spray claim from any total drawn
+# from it. The after-spray round beside this one is the only round here whose
+# coach was handed the spray counts, so it is the only one "current" describes
+# correctly.
+#
 # The seed matters as much as the builder. Session 1 is the same fifteen
 # swings at any seed, but sessions 2, 3 and 4 are GENERATED from it with a
 # seeded PRNG, so the seed alone decides what those sessions contain. This
