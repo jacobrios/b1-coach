@@ -1439,6 +1439,21 @@ rewritten, per the append-only rule.
   Fixing it means rewriting the scripted session, which is a product decision
   about the demo's first impression, not a correctness fix. Natural companion to
   Slice 6b.
+
+  **Annotation, 19 August 2026, from the product manager's QA pass on Slices 8c
+  and 8d.** The straight line has a second consequence nobody had written down:
+  it also guarantees an empty target zone on Line Drives & Contact. Every
+  well-angled swing in session 1 was hit too softly and every hard-hit swing
+  went too high, so not one of the fifteen meets that goal's ask of 8 to 18
+  degrees at 85+ mph. The result is that the first screen of the second goal a
+  visitor is likely to click carries zero on-target swings, in both the Launch
+  Angle vs Exit Velocity chart and the Pitch Location chart. Nothing reads as
+  broken, because the coach correctly says the angle is a tick too high, but
+  there is no success anywhere on screen to look at. The generator's re-roll
+  guard exists to stop exactly this and cannot reach session 1, which is
+  hand-written rather than generated. So the rewrite is a first-impression
+  question on two goals, not one, and the empty-band risk it removes is the
+  same one the re-roll already protects sessions 2 to 4 against.
 - **`varianceFactor` has no test that can see it.** Now that the generator is its
   own module, a reviewer changed that constant six-fold and all 22 generator
   tests still passed, because every test drives noise at a neutral value. This
