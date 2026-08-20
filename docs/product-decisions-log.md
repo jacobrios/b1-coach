@@ -6,6 +6,156 @@
 
 ---
 
+## Slice 9: the first screen stopped being a ruler, and the honest answer was "neither better nor worse" (August 19-20)
+
+*What this slice was.* Every visitor lands on a scripted first practice session
+of fifteen hand-written swings, and those fifteen were drawn with a ruler:
+sorted by exit velocity, the launch angles climbed in near-lockstep, a
+correlation of 0.975 against the roughly 0.36 the app's own generator produces.
+That did more damage than it looked. It left Line Drives & Contact with **zero**
+on-target swings on the first screen, so the second goal a visitor is likely to
+click opened with no success anywhere to look at. And Hit to All Fields, whose
+own coaching instructions ask for at least three pull-side and three
+opposite-field swings, was handed two and two: it had never met its own stated
+bar on any first debrief since the app existed. Nothing was checking either.
+
+*Five decisions, settled before any code.* Hold both of session 1's averages
+exactly, as sums rather than rounded figures: 1224 mph of exit velocity and 260
+degrees of launch angle across the fifteen. Set the on-target counts to Power 2,
+Contact 2, Reduce Pop-Ups 11. Give Hit to All Fields 3 pull and 4 opposite
+field. Aim the exit-velocity-to-launch-angle relationship at about 0.36, the
+generator's own median. Leave the strike-zone mix at 9 pitches in, 6 out.
+
+*Why the counts were derived rather than chosen, which is the finding
+underneath the whole slice.* The demo has a rule: a later session looks better
+than session 1 65 percent of the time and worse 35 percent. Average exit
+velocity obeys it exactly, at 35 percent over 6,000 replays. It had never been
+applied to the counts a visitor reads off the charts,
+and once measured, **Power's arc ran backwards**: session 1 showed 3 swings on
+target, and sessions 2, 3 and 4 came in with fewer than that 78, 70 and 63
+percent of the time, so a visitor clicking through all four saw a thinner target
+band than their first screen roughly seven times in ten. Thinner, not empty: an
+actually empty band is rarer, about one time in eight. The other goals could
+barely look worse at all, Contact 0 percent and Pop-Ups 5 / 3 / 1. The new
+counts **moved every goal toward** that 35 percent, from extremes of 78 and 0,
+without landing on it. Measured by review after the fact rather than during the
+calibration: Power 51.5 / 45.3 / 38.0, Contact 33.3 / 32.8 / 34.1, Pop-Ups 29.6
+/ 22.4 / 13.9. And "derived" covers the counts, not the swings: which particular
+fifteen hit them was settled by a believability score weighting distance-bucket
+shape and weak-swing count.
+
+*Holding both averages froze everything downstream.* Every later session is
+generated from session 1's two averages, so freezing those sums exactly left
+sessions 2, 3 and 4 bit for bit identical, pinned by a test against a snapshot
+of the old data. That is why the before round and the first after round compare
+cleanly across all 64 records, not just the 24 first-session ones. Not a control
+group in the ordinary sense, though: every prior session's swings are printed
+into the coach's prompt in full, so no cell was untouched. What is held constant
+is the swing data underneath, not the prompt above it.
+
+*The measurement, reported straight: neither better nor worse.* Three live
+rounds of 64 debriefs, every flagged claim read against the real data by hand.
+Genuine coach errors: 14 before, 19 in the first after round, 9 in the second.
+The two after rounds look at **identical** first-session data and differ from
+each other by more than either differs from before, which is what a null result
+looks like. Stripping the three mildest error shapes (a reversed pair of correct
+values, a value sitting exactly on the coach's own threshold, a range boundary
+off by one) leaves 8, 8 and 8, dead flat. Which cut was chosen matters, so:
+that is the flattest one available, and stripping only the first two shapes
+gives 11 / 8 / 8, which would read as an improvement. The conservative reading
+was taken rather than the flattering one. It nearly went the other way, too. An
+unchecked flag count would have read 16 before against 29 in the first after
+round and reported a coach roughly 80 percent worse; ten of those 29 were the
+grading tool calling a true sentence false, and the second after round read 15,
+below the before round. Buying a second seed is the only reason any of this is
+knowable.
+
+*The one thing that moved, and one thing the product manager chose to accept.*
+Line Drives & Contact on session 1, the screen this slice existed to fix, went
+from 3 genuine coach errors to zero in both after rounds. Against that, the
+coach habitually groups the three low pitches and calls them all flat and weak.
+True of the old data by coincidence, false of the new, and it accounts for six
+of the 28 genuine after-round errors. **Decision: accept and record.** The
+over-generalisation is a pre-existing flaw the old uniform data happened to
+mask, and re-tuning the swings to hide it would restore the sameness this slice
+exists to remove.
+
+*Three things the execution discovered, two of them money-critical.* The
+grading tool rebuilt the practice session from the working tree, so grading the
+before round after the rewrite would have marked correct coaching wrong on 24 of
+64 records; it now reads a committed note beside each round naming both the data
+and the seed. Review found the seed half, then found that first fix defective on
+re-check, a blank seed value reading as zero, the same failure class the fix
+existed to close. Third, and pre-existing: the coach is never told which sign
+means pull on five of the six goals, and guessed wrong on a rendered Power
+debrief. That one is a prompt change and needs its own approval.
+
+*The seven scoping findings* (Hit to All Fields never meeting its own bar; the
+uncalibrated counts; no bench cell being unaffected by a session-1 change; the
+generator having no link at all between pitch location and contact quality where
+session 1 has an 8.8 mph gap; Reduce Pop-Ups naming a failure the generator
+cannot produce, zero in 360,000 swings; the four-session improvement arc not
+existing, which is correct and must not be "fixed"; and `CONTACT_CORRELATION`
+producing 0.36 rather than the 0.6 it is named for) are written out in full in
+`docs/slice-9-plan.md`, and the ones wanting action are on CLAUDE.md's What's
+Next list.
+
+*Cost and verification.* $3.31 on 192 live debriefs, $1.15 on grading, $4.46
+total, plus about four cents in the browser. The projection crossed the $5
+reporting line at about $5.10 when the product manager chose a fresh seven-cell
+before round over reusing the older six-cell baseline, and he approved crossing
+it rather than let every comparison straddle a change to the measuring
+instrument as well as to the data; the actual came in under. A planned
+noise-floor re-grade was **skipped and $0.38 saved**, because the two after
+rounds measure that noise better. The hard gate held: zero parse failures across
+all 192 debriefs, the real risk here given the output-ceiling failure Slice 7b
+found. `npm test` moved from 506 tests across 22 files to 519 across 22, green. Both
+first debriefs were read in a real browser: the scatter is a cloud, both goals
+show two on-target swings where Contact showed none, and all four headline
+figures hold (82 mph, 17 degrees, 9 of 15 in the zone, 92 mph top). One visible
+change: the Distance Distribution chart moves from 5, 3, 1, 3, 3 to 4, 4, 3, 2,
+2, and review argued the old bimodal shape was itself a product of the ruler.
+All 60 flagged claims are itemised in
+`docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`.
+
+*Postscript, 20 August 2026: five fixes from the final whole-branch review, and
+one of them was a dead safety gate.* None touch the product; all five are the
+measuring tooling and the records, and they are recorded because the pattern
+across them is worth more than any one fix. **The free dry run had stopped
+running at all.** This slice is the first to commit a round's grading output
+inside the round's own directory, and the grader reads every `.json` in an
+`--input` directory, so it crashed before reaching roughly 190 lines of
+self-checks, including the one that counts its own guardrails. The gate this
+project relies on to be sure of a run before paying for it had been dead for
+the whole slice and nothing said so. The loader now identifies each file by its
+contents rather than by being in the directory: bench records are graded,
+grading output is set aside by name, and anything unrecognised is refused. That
+was chosen over the tidier-looking option of moving the files somewhere else,
+because moving them fixes today and leaves the trap armed for whoever writes the
+next round, and because the silent half of the bug is worse than the crash: an
+older bare-array grading file would have been merged in without a word and sent
+to the model as though it were coaching prose, at real cost, producing a
+complete and plausible wrong report. **Two guardrail self-checks were counting
+any exception as a pass.** Both now check what the refusal actually said. They
+happen to be correct today only because of the order two function calls are made
+in, which is an accident rather than a design, and reversing that order (the
+most natural refactor in the file) would have turned six green guards into six
+lies. **One live logic bug in the grading tool**: a coach claim with the right
+count that named no individual swings was ruled false for disagreeing with a
+list it never made. Fixing an instrument after the measurement is a real cost to
+a committed result, so the fix was measured rather than waved through: all three
+rounds were replayed offline through the corrected code at zero cost, 1,583
+claims, and exactly one verdict changed, the one the hand-check had already
+called a false positive. No reported number moves. **And a comment in shipped
+code still described session 1's distance chart as the old fifteen swings
+rendered it**, which is precisely the class of claim this project keeps
+correcting: a measured fact, true when written, quietly falsified by later work
+and never re-checked. Corrected with its new numbers and dated. The bucket
+decision itself stands and was not reopened. `npm test` 519 to 529 across 22
+files, green.
+
+---
+
 ## Slice 8c: finished the counting rule, fixed the tool measuring it, and put a parked decision back on the table (August 19)
 
 *What this slice was.* Slice 8b proved a mechanism, pre-count a threshold and

@@ -147,7 +147,14 @@ function thresholdVerdict(claim, session, context) {
   // the fixture holds one: six swings claimed above 20 degrees where the count
   // was wrong AND the list omitted two real members while including a swing
   // sitting exactly on the threshold.
-  if (Array.isArray(statedSwings) && COMPARISONS_WITH_SWINGS.has(comparison)) {
+  // `statedSwings.length > 0`, not merely `Array.isArray`, and the distinction
+  // is load-bearing: an empty array is still an array, so until 20 August 2026
+  // a claim that named a CORRECT count and no swings at all was ruled FALSE
+  // for disagreeing with a swing list it never made. Found by Slice 9's
+  // hand-check as mechanism M4 ("Nine of your fifteen swings came out above 18
+  // degrees", statedSwings: []). No swings named means the count is the whole
+  // claim, and the count already matched by the time we reach here.
+  if (Array.isArray(statedSwings) && statedSwings.length > 0 && COMPARISONS_WITH_SWINGS.has(comparison)) {
     if (!sameSwings(statedSwings, bucket.swings ?? [])) {
       return ruled('FALSE', actual, 'the count matches but the named swings do not')
     }

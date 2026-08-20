@@ -1,0 +1,23 @@
+# Which session data the debriefs in this directory were written about.
+# See ../before/BUILDER.txt for what this file is and why editing it to make
+# a command work defeats the point.
+#
+# These 64 debriefs were generated on 19 August 2026 AFTER Slice 9 replaced
+# session 1's fifteen hand-written swings, so they describe the swings that
+# are in src/sessionOneSwings.js today. That is what the current builder
+# reads, and it stays correct only for as long as session 1 is not rewritten
+# again. If it ever is, this round needs a frozen snapshot of its own, in the
+# same shape as ../session-one-before.mjs, and this line changes to name it.
+
+#
+# The seed matters as much as the builder, and for a reason that is easy to
+# miss: session 1 is the same fifteen swings at any seed, but sessions 2, 3
+# and 4 are GENERATED from it with a seeded PRNG, so the seed alone decides
+# what those sessions contain. Grading this round at the wrong seed rebuilds
+# sessions that never existed for every multi-session cell while the
+# session-1 cells stay correct, and the report that comes out looks partly
+# sane rather than obviously broken.
+
+builder = current
+handed-era = current
+seed = 20260814

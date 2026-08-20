@@ -239,18 +239,31 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 19 August 2026, at the close of Slice 8d (the
-`src/` rows are unchanged since Slice 8c; the `scripts/` rows moved).
+Line counts current as of 20 August 2026, at the close of Slice 9 (the rows
+that moved are `sessionOneSwings.js`, the two test aggregates, the `scripts/`
+`.mjs` aggregate, and the fixtures directory count. Some of the rows below
+that this slice never touched are stale by a line or two, `ballFlight.js`,
+`coachApi.js` and `sessionStats.js` among them, and were left alone rather
+than churned out of lane; correct one on the way past if you open the file
+for another reason.
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
                              session-1 swings moved out to src/sessionOneSwings.js
                              in Slice 7b; swing generation moved out in Slice 6.
-    src/sessionOneSwings.js   52 lines. The fifteen hand-written swings of the
+    src/sessionOneSwings.js   77 lines. The fifteen hand-written swings of the
                              scripted first session every visitor sees, extracted
                              from App.jsx in Slice 7b so a plain Node script can
                              finally read them. See the bench section below for
-                             why that mattered.
+                             why that mattered. Slice 9 replaced all fifteen
+                             values (the straight-line problem, closed 19 August
+                             2026) and rewrote the header comment to say what
+                             they are now calibrated to. The two sums, 1224 of
+                             exit velocity and 260 of launch angle, are the
+                             invariant every generated session depends on and
+                             must never be hand-edited. The file's own header
+                             says why; the reasoning is in `docs/slice-9-plan.md`
+                             and the decision log entry for 19-20 August 2026.
     src/DebriefScreen.jsx   1534 lines. The results screen, all six chart
                              components, the chat panel, the session summary's
                              scroll fade, and the shared axis-text style
@@ -318,11 +331,17 @@ Line counts current as of 19 August 2026, at the close of Slice 8d (the
                              because it sits on the grader's `.js`-extension
                              import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           2257 lines across twelve files, beside what they test.
+    src/*.test.js           2581 lines across twelve files, beside what they test.
+                             Slice 9 added 310 lines to sessionOneSwings.test.js:
+                             eight invariants the rewritten fifteen swings must
+                             hold, including a correlation band, a rule that
+                             rules out a ramp, both sums held exactly, and a
+                             pinned-seed snapshot proving sessions 2 to 4 do
+                             not move.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           3318 lines across six hand-run scripts, deliberately
+    scripts/*.mjs           4572 lines across seven hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
                              scripts, the Slice 7 bench, the Slice 7b before/after
                              comparison script, the claim-accuracy grader
@@ -357,7 +376,27 @@ Line counts current as of 19 August 2026, at the close of Slice 8d (the
                              the bench section further down. (Corrected here: this
                              line undercounted at four scripts through Slice 8;
                              the fifth, `show-parse-failure-before-after.mjs`,
-                             existed since Slice 7b and was missed.)
+                             existed since Slice 7b and was missed.) The seventh,
+                             `scripts/search-session-one-swings.mjs`, is Slice 9's:
+                             a seeded search for fifteen replacement swings under
+                             every settled constraint, so session 1's numbers are
+                             reproducible rather than a set that appeared once.
+                             Note where the judgment sits: the constraints came
+                             from the 65/35 rule, but which candidate wins is
+                             decided by `believabilityScore` in that file, which
+                             weights distance-bucket shape and how many genuinely
+                             weak swings a session should hold. The counts are
+                             derived; the particular fifteen are taste, scored.
+                             The same slice taught the grader two things it did
+                             not know: which fifteen swings a saved round of
+                             debriefs was actually written about (a third
+                             builder, `slice9-before`, reading the frozen
+                             snapshot under `docs/eval-fixtures/slice9-session-
+                             one/`), and which seed it was run at, both read from
+                             a `BUILDER.txt` committed beside the round and
+                             refused rather than obeyed when a passed flag
+                             disagrees. The bench grew a seventh cell,
+                             `contact-s1`.
     scripts/*.js (tested)    1009 lines across seven small modules pulled out of
                              those hand-run scripts so their pure logic can be
                              checked without spending money: `factSheet.js` (the
@@ -378,9 +417,25 @@ Line counts current as of 19 August 2026, at the close of Slice 8d (the
                              guard matches by proximity in the sentence, not by
                              real clause structure, so a deliberately contrived
                              compound sentence could in principle mislead it,
-                             judged low-likelihood and left as recorded debt),
+                             judged low-likelihood and left as recorded debt;
+                             20 August 2026 fixed the named-swing check firing
+                             on an EMPTY list of named swings, which had been
+                             ruling correct counts false, and replayed all three
+                             Slice 9 rounds offline to show it moved exactly one
+                             verdict out of 1,583),
                              `inputRecords.js` (Slice 8b: reads a directory of
-                             bench records for the grader's new `--input` flag),
+                             bench records for the grader's new `--input` flag;
+                             20 August 2026 gave it `classifyInputFile`, which
+                             identifies each file in that directory by its own
+                             contents, because Slice 9 was the first slice to
+                             commit grading output beside the bench records and
+                             `--input` reads every `.json` it finds. Bench
+                             records are graded, grading output is set aside by
+                             name in the run header, and an unrecognised file is
+                             refused rather than guessed at. The crash that
+                             exposed this was the lucky half; a pre-19-August
+                             bare-array grading file would have been merged in
+                             silence and billed as coach prose),
                              `handedCounts.js` (Slice 8c: describes, per
                              goal and per prompt era, which counts the coach was
                              actually handed, so the grader can tell a
@@ -402,7 +457,7 @@ Line counts current as of 19 August 2026, at the close of Slice 8d (the
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
     scripts/*.test.js       1344 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Six directories:
+    docs/eval-fixtures/      Committed ground truth, not code. Seven directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -433,8 +488,17 @@ Line counts current as of 19 August 2026, at the close of Slice 8d (the
                                8c rounds against the fixed verdict code, and a
                                by-hand check of every claim either live round
                                flagged, genuine or false positive.
+                               `slice9-session-one/` (1.5 MB) holds the three
+                               64-debrief rounds behind Slice 9's rewrite of
+                               session 1: one against the old fifteen swings,
+                               two against the new ones at two different seeds,
+                               each with a committed note saying which swings
+                               and which seed it belongs to, plus a frozen
+                               snapshot of the old swings so the before round
+                               stays gradeable, plus `HAND-CHECK.md`
+                               adjudicating all 60 flagged claims one at a time.
                                None is collected by vitest;
-                               all six have their own READMEs covering what is
+                               all seven have their own READMEs covering what is
                                and is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
@@ -641,6 +705,17 @@ bench now creates its output directory before writing
 the full suite and committed on its own before the round was re-run. See the
 decision log entry for 19 August 2026 for the full accounting.
 
+**Grew to seven cells in Slice 9, 19 August 2026.** `contact-s1` was added:
+Line Drives & Contact on session 1, the screen the session-1 rewrite most
+changes and the one cell nothing had ever measured, weighted 1.5 to match
+`power-s1` because it is the other session-1 cell. At the default `--runs 8`
+a round is now 64 calls (12 + 8 + 12 + 8 + 8 + 8 + 8) at roughly $1.10, and
+the hand-copied goal-label comment carries seven entries. `--condition all`
+is now well past the script's own planned-call cap and refuses outright,
+which is correct rather than a bug: it was already a wasteful invocation
+before these cells existed. **There is still no `--cell` flag**, so a single
+cell cannot be measured on its own; that is on the What's Next list.
+
 ## The data is synthetic
 
 There is no real TrackMan feed. All swing data comes from `generateSwings` in
@@ -649,6 +724,14 @@ simulate improvement over time with a 65% chance of a session trending better
 than the last. Session 1 is not generated at all: it is the fifteen hand-written
 swings in `mockSwings` in `App.jsx`, and only their distances have ever been
 recomputed.
+
+*Correction, 20 August 2026.* Two halves of that last sentence are now stale.
+Those fifteen swings moved to `src/sessionOneSwings.js` in Slice 7b, and Slice 9
+replaced every value in all fifteen, not only their distances. The rest holds:
+session 1 is still hand-written rather than generated, which is also why the
+generator's empty-target-band re-roll cannot protect it and why the counts had
+to be set deliberately. Every generated session is still built from session 1's
+two averages, which is why those two sums are frozen.
 
 This matters when judging output quality. If the coach says something that
 contradicts the numbers, that is a real bug. If the numbers themselves look
@@ -720,8 +803,11 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 8d on 19 August 2026 it is 506 tests across 22
-   files, up from 489 across 21 at the close of Slice 8c, up from 461 across
+   vitest, and as of Slice 9's closing review on 20 August 2026 it is 529
+   tests across 22
+   files, up from 519 at the close of Slice 9's build the same day, up from
+   506 across 22 at the close of Slice 8d, up from 489 across
+   21 at the close of Slice 8c, up from 461 across
    19 at the close of Slice 8b. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
    one retry and its unwrapping of a fenced model response; the chart-slot
@@ -729,7 +815,12 @@ specific to this repo:
    coach prompt built from them; the summary box's scroll-fade tolerance;
    `computeStats`; a pin that recomputes each of session 1's fifteen swings
    against its own exit speed and angle so a wrong distance turns the suite
-   red; and the deterministic fact-sheet and word-overlap modules the
+   red; the eight invariants Slice 9 pinned on those same fifteen swings (both
+   sums held exactly, the on-target counts per goal, the pull and opposite-field
+   counts, a correlation band, a rule that rules out a ruler-straight ramp, the
+   strike-zone mix, the in-zone contact advantage, and a pinned-seed snapshot
+   proving sessions 2 to 4 do not move when session 1 is rewritten); and the
+   deterministic fact-sheet and word-overlap modules the
    claim-accuracy grader and the bench each lean on. It covers **no screens
    and no rendering at all**, so a green suite says nothing about what a
    visitor sees, and it still never calls the model: the length budget's four
@@ -1430,8 +1521,8 @@ rewritten, per the append-only rule.
 
 *Added at the close of Slice 6, 14 August 2026:*
 
-- **Session 1's fifteen hand-written swings form an almost perfect straight
-  line.** Sort them by exit velocity and the launch angles climb in near-lockstep,
+- ~~**Session 1's fifteen hand-written swings form an almost perfect straight
+  line.**~~ Sort them by exit velocity and the launch angles climb in near-lockstep,
   so the first debrief's Launch Angle vs Exit Velocity scatter reads like a ruler
   rather than a hitter. Pre-existing, untouched by Slice 6, which deliberately
   changed only their distances. It is the same class of problem as the impossible
@@ -1454,6 +1545,30 @@ rewritten, per the append-only rule.
   hand-written rather than generated. So the rewrite is a first-impression
   question on two goals, not one, and the empty-band risk it removes is the
   same one the re-roll already protects sessions 2 to 4 against.
+
+  **Both halves closed 19 August 2026, in Slice 9.** All fifteen swings were
+  replaced. The exit-velocity-to-launch-angle relationship went from 0.975, a
+  ruler, to 0.36, which is the generator's own median, and the first debrief's
+  scatter now reads as a cloud in a real browser, not a diagonal. Line Drives &
+  Contact's target band, which the annotation above says carried zero on-target
+  swings, now carries two. Power's carries two, down from three on purpose:
+  three was above what a later session typically produces, so a visitor
+  clicking through all four sessions came in with fewer on-target swings than
+  their first screen roughly seven times in ten. (Fewer, not none. An actually
+  empty Power band is a different and rarer event, about one session in eight,
+  and an earlier draft of this line said "emptied out," which overstated it by
+  roughly six times.) Hit to All Fields, which had quietly never met its own stated
+  ask of three pull and three opposite field, now gets three and four. One
+  other visible change on that screen: the Distance Distribution chart's five
+  bars move from 5, 3, 1, 3, 3 to 4, 4, 3, 2, 2, a flatter spread; review
+  argued the old bimodal shape was itself a product of the ruler, and it was
+  looked at in a browser before it shipped. Nothing
+  downstream moved: both of session 1's averages were held to the exact same
+  sums, which is pinned by a test against a snapshot of the old data. The full
+  reasoning is in `docs/slice-9-plan.md` and the decision log entry for 19-20
+  August 2026, and the coach was measured across 192 live debriefs before and
+  after (`docs/eval-fixtures/slice9-session-one/`), coming out neither better
+  nor worse overall, with one real win on the Contact first screen.
 - **`varianceFactor` has no test that can see it.** Now that the generator is its
   own module, a reviewer changed that constant six-fold and all 22 generator
   tests still passed, because every test drives noise at a neutral value. This
@@ -1481,11 +1596,21 @@ rewritten, per the append-only rule.
   claims still match the data over many runs, which is the argument for building
   the bench first and rewriting session 1 second.~~ **Half done 14 August 2026.**
   The eval bench this item asked for now exists (`scripts/bench-coach-brevity.mjs`),
-  built in Slice 7. What is still open is the session 1 rewrite itself and
+  built in Slice 7. ~~What is still open is the session 1 rewrite itself and
   grading it through the bench once it exists as real data: both are blocked on
   extracting the fifteen hand-written swings into their own module first,
-  which is the first task of the next slice. See the bench's session-1 blind
+  which is the first task of the next slice.~~ See the bench's session-1 blind
   spot, described above.
+
+  **Fully closed 19-20 August 2026, in Slice 9, and this is the item that slice
+  most directly answers.** The rewrite happened, and the verification the owner
+  explicitly handed over was done the way he asked: not by eye, but by 192 live
+  debriefs across three rounds, before and after, with every flagged claim
+  adjudicated by hand. There was no whack-a-mole hunt afterwards. The result was
+  a null one, neither better nor worse, with one real improvement on the Line
+  Drives & Contact first screen and zero parse failures across all three rounds.
+  See the decision log entry for 19-20 August 2026 and
+  `docs/eval-fixtures/slice9-session-one/`.
 - **The distance-bucket drift test does not reach the chart.** Recorded in the
   known-debt section above with its reasoning. Only worth revisiting if this
   project ever grows rendering tests, which it deliberately has not.
@@ -1499,8 +1624,9 @@ rewritten, per the append-only rule.
   both wait on this.~~ **Done in Slice 7b, 17 August 2026.** See
   `src/sessionOneSwings.js` above and the bench section's closed blind-spot
   note. Extracting it did not just enable measurement, it surfaced a live
-  parse-failure bug; see the decision log. The session-1 rewrite itself is
-  still open.
+  parse-failure bug; see the decision log. ~~The session-1 rewrite itself is
+  still open.~~ **Done 19 August 2026 in Slice 9**; see the closed item above
+  and the decision log entry for 19-20 August 2026.
 - **The coach rounds numbers loosely.** The bench's own transcripts show it
   saying "320 feet or more" against a session whose real bucket was "305
   plus." Not invention, the number is in the right neighborhood, but not
@@ -1747,6 +1873,40 @@ rewritten, per the append-only rule.
   the same by-hand look this slice gave both rounds before it is reported as
   a coach error. Full accounting, including which quotes triggered which
   mechanism, in `docs/eval-fixtures/slice8d-grader-fp/README.md`.
+
+  **Measured again, 20 August 2026, in Slice 9, on three fresh rounds: 12.5%,
+  34.5% and 40% of flagged claims were the tool being wrong.** Consistent with
+  the 11% to 42% band above, so the band is holding, and the rule stands
+  unchanged: a raw flag is a lead, not a finding. One thing Slice 9 adds that
+  the earlier measurements could not see, and it matters for any before-and-
+  after comparison run with this tool: **the false-positive rate was not even
+  across the rounds, and it was worse on the after side specifically**, because
+  the most common mechanism fires on sentences the coach only began writing
+  after the change being measured. An unchecked flag count comparing the before
+  round against the first after round would have reported the coach getting
+  roughly 80% worse (16 flags against 29) when the hand-check says it did not
+  change at all. Note that the second after round flagged 15, below the before
+  round, which is the same point from the other direction.
+
+  **Corrected 20 August 2026, by whole-branch review, and the correction
+  matters more than the sentence it replaces.** This entry originally said the
+  two mechanisms Slice 8d named and left unfixed "are still the ones doing
+  it." Counted against HAND-CHECK.md's own mechanism table, they are not, and
+  they are not even the majority: a named subset checked against a
+  whole-session total accounts for 3 of the 18 false positives and a restated
+  threshold read as an exact value for 7, which is 10, leaving **8 from five
+  mechanisms nobody had seen before**: a value matched against the wrong swing
+  when an ordinal phrase is read as a swing index (3), an illustrative list
+  read as exhaustive (2), the named-swing check firing on an empty list (1), a
+  hedged quantifier turned into a count of zero (1), and an exclusion word
+  ("five *other* swings") dropped in extraction (1). The fixture README's own
+  wording was more careful and did not carry this error. The practical
+  difference: reading the tool as having two known holes invites the
+  assumption that its failures are understood and bounded, when in fact more
+  than half of this wave's mechanisms were new, and one of them turned out to
+  be an outright logic bug (see the next entry). Every flagged claim in all
+  three rounds is adjudicated in
+  `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
   by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
@@ -1871,6 +2031,168 @@ rewritten, per the append-only rule.
   the prompt the coach reads, not the screen, but it is a coach-prompt
   change and needs the same approval any other prompt wording change gets
   before it ships.
+
+*Added at the close of Slice 9, 20 August 2026:*
+
+- **The coach is never told which sign means pull, on five of the six goals.**
+  Each swing's spray direction reaches the coach as a raw signed number
+  (`src/coachApi.js:532`) and only the Hit to All Fields goal context
+  (`src/coachApi.js:57`) says which way is which. So on Power, Contact,
+  Pop-Ups, Open Session and the rest, the coach guesses, and on the very first
+  Power debrief rendered during this slice's browser gate it called an
+  opposite-field ball a pull-side ball. Pre-existing and not caused by Slice 9.
+  It is the same error class the whole Slice 8 series worked on, a number the
+  coach has to interpret without being told how, and it is probably the
+  cheapest remaining accuracy fix in the app. **It is a prompt wording change,
+  so it needs the product manager's approval on the exact sentence before it
+  ships.** Strongest candidate of everything on this list.
+- **A generator-realism slice, carrying three things measured in Slice 9 and
+  deliberately not fixed there.** All three change sessions 2 to 4, which is
+  why they were kept out of a slice whose whole measurement depended on those
+  sessions not moving. (a) *Pitch location does not predict contact quality at
+  all.* Session 1 has an 8.8 mph gap between swings on strikes and swings on
+  balls, put there by hand; the generator's gap, across 4,000 sessions, is
+  0.0 mph, because the pitch and the outcome are drawn independently. Since
+  Slice 8c the coach is handed which pitches were outside the zone and reasons
+  about them out loud, so on every generated session that reasoning is a
+  coincidence. (b) *The pull and opposite-field bias runs the wrong way against
+  the 65/35 rule*, the same miscalibration Slice 9 fixed inside session 1. (c)
+  *Reduce Pop-Ups names a failure that cannot happen*: the goal calls a pop-up
+  anything above 35 degrees and the generator clamps launch angle at exactly
+  35, so across 360,000 generated swings the pop-up count was zero and the
+  coach is handed "0 swings" forever. Coupling to re-check, not assume, if the
+  clamp is raised: `carryDistance`'s shape term floors above 28 degrees, so a
+  60 degree pop-up would currently be credited with a respectable fly-ball
+  distance. Explicitly rejected while scoping: giving Pop-Ups an exit velocity
+  requirement, because that makes it and Line Drives & Contact one goal with
+  two names.
+- **The coach over-generalises about a group of swings it has named, and the
+  product manager decided to accept that rather than hide it.** It habitually
+  calls the three low pitches "all flat and weak." That was true of the old
+  session 1 by coincidence and is false of the new one, and it accounts for six
+  of the 28 genuine coach errors across Slice 9's two after rounds. Recorded
+  rather than fixed on purpose: re-tuning the swings to make the sentence true
+  again would restore the uniformity Slice 9 existed to remove. If anything
+  about the coach's accuracy is worth a follow-up, it is this one sentence
+  shape, not the aggregate rate.
+- **Two test files hold their own copies of session 1's distances and cannot
+  notice when session 1 changes.** `src/ballFlight.test.js:184` and
+  `src/coachApi.test.js:831` each carry a hardcoded array rather than importing
+  `src/sessionOneSwings.js`, so both stayed green with stale data after Slice 9
+  swapped all fifteen swings. They were updated by hand and are correct today.
+  The point is that nothing would have said so. Small; the awkward part is that
+  they are expected values inside assertions, which is exactly the shape this
+  project has previously and correctly declined to collapse.
+- **The eval bench cannot run one cell.** There is no `--cell` flag, so
+  measuring a single screen costs a full seven-cell round, roughly $1.10. This
+  turned a planned $0.15 measurement in Slice 9 into a $1.11 one. Worth adding
+  the next time a live round is being bought anyway; not worth a slice of its
+  own.
+- **`CONTACT_CORRELATION` does not hold a correlation.** The constant reads
+  `0.6` but it is applied to both readings, so the correlation it actually
+  produces is 0.36, confirmed by measurement (median 0.36 across generated
+  sessions). Anyone retuning it toward "0.5" would get 0.25. One comment line
+  in `src/swingGenerator.js`; left undone in Slice 9 only because that slice
+  did not touch the generator, and it should ride along with the
+  generator-realism slice above.
+- **`scripts/search-session-one-swings.mjs` hand-copies the generator's own
+  exit-velocity and launch-angle clamps** rather than importing them, and its
+  comment calls them "the clamps the generator obeys" without saying they are a
+  copy. Harmless today because the numbers agree, and it is a hand-run script
+  rather than shipped code, but a silent copy of a shipped number is the exact
+  failure mode this project consolidates hard against everywhere else. Cheap to
+  close if that script is ever opened again.
+- **Every prior session's individual swings are printed into the coach's
+  prompt in full**, so a session-4 debrief carries session 1's fifteen swings
+  verbatim. Not a defect and nothing is asked here; it is recorded because it
+  means there is no such thing as a bench cell unaffected by a change to
+  session 1, which is a fact any future measurement design has to start from.
+  Slice 9 was scoped believing the opposite and had to buy a second seed
+  instead of a control group.
+
+*Added 20 August 2026, from the whole-branch review that closed Slice 9. All
+three are the grading tool rather than the coach, and all three were found
+inside `docs/eval-fixtures/slice9-session-one/HAND-CHECK.md`, which is a
+finding in itself: that document is a per-claim adjudication nobody will
+reread, so anything it discovers has to reach this list to survive.*
+
+- ~~**The named-swing check fires on an empty list of named swings** (M4 in the
+  hand-check's table). A claim carrying the CORRECT count and naming no swings
+  at all was ruled FALSE, "the count matches but the named swings do not",
+  because the guard tested `Array.isArray(statedSwings)` and an empty array is
+  still an array.~~ **Fixed 20 August 2026, and measured rather than
+  asserted.** `scripts/claimVerdict.js` now requires `statedSwings.length > 0`,
+  with a test seen failing against the old code first. Because this changed the
+  instrument after the measurement, all three committed rounds were re-run
+  through the fixed verdict code offline with `scripts/replay-grading.mjs`, at
+  zero cost and with no re-extraction: **1,583 claims replayed, exactly 1
+  verdict changed**, the after-b claim "Nine of your fifteen swings came out
+  above 18 degrees" going FALSE to TRUE. Round totals move only there (after-b
+  raw flags 15 to 14, flagged debriefs 14 to 13); the before and after-a rounds
+  are byte-identical under the new code. No hand-checked conclusion moves at
+  all, because the hand-check had already adjudicated that one claim a false
+  positive. Kept here rather than deleted so nobody re-proposes it, and so the
+  next person to change a verdict rule sees that replaying the committed rounds
+  is the expected way to do it.
+- **The extractor assigns a claim to the wrong statistic entirely** (M5, and
+  the single largest source of false positives in this wave at 7 of 18). It
+  graded "sub-175-foot balls" against the count of swings under 15 degrees,
+  "12 of 15 strikes" against a pitch-side value, "11 strikes" against the
+  high-pitch count, and an average against the top exit velocity. Unlike M4
+  this is not a logic bug with a one-word fix: the mis-assignment happens in
+  the extraction model's output, and the same sentence was extracted correctly
+  in other runs of the same round, so it is non-determinism rather than a
+  stable rule and the fix is extraction-prompt wording plus, most likely, a
+  deterministic sanity check that a claim's units match the statistic it was
+  filed under. Deliberately not attempted on 20 August 2026: validating any
+  extraction-prompt change needs a fresh live grading round to measure, which
+  is real spend, and doing it blind is how an instrument gets fitted to the
+  answer it is supposed to test. **This one is not neutral for before/after
+  work and should be fixed before the tool is used for another comparison**:
+  four of the seven fire on a sentence shape the coach only began writing after
+  the change being measured ("cut your sub-175ft balls from 4 down to 1"), so
+  the tool over-flags the after side specifically.
+- **Five of the seven false-positive mechanisms in this wave had never been
+  seen before**, which is the number worth carrying forward rather than any
+  individual mechanism. Each new measurement round has turned up new ways for
+  the tool to be wrong, so the honest reading is that its failure modes are not
+  yet enumerated, and "a raw flag is a lead, not a finding" is a standing rule
+  rather than a caveat that will expire once a known list is worked through.
+  The remaining four beyond M1 and M5, one case each or thereabouts, are an
+  ordinal phrase read as a swing index, an illustrative list read as
+  exhaustive, a hedged quantifier ("most") turned into a count of zero, and an
+  exclusion word ("five *other* swings") dropped in extraction. All four are
+  adjudicated case by case in the hand-check.
+
+*Added 20 August 2026, from the fix wave that closed the `looksLikeBenchRecord`
+predicate bug (`scripts/inputRecords.js`). Both are about the grading tool's
+own self-checks, not the coach.*
+
+- **Nothing runs the grading tool's free dry run automatically, and no test
+  asserts it exits 0.** `--dry-run` exists precisely so a slice can prove the
+  instrument still works before any money is spent, but that gate was itself
+  silently dead for this entire slice: it refused every `--input` directory
+  holding even one failed bench record, and nothing noticed until a human ran
+  the command by hand at final review. The same shape of bug will recur the
+  next time a slice hands the tool a new kind of file to read, because the one
+  check meant to catch it was not wired into anything automatic. Cheap fix:
+  one test, or one hook, that shells out to `--dry-run` and asserts a zero
+  exit code.
+- **Four of the grading tool's guardrail self-checks still count ANY exception
+  as a pass.** The four `try { ... } catch (err) { guardOk++; console.log(...)
+  }` blocks in `scripts/grade-coach-accuracy.mjs` around lines 1245 to 1272
+  (the "Builder-selection guardrails" printed in every dry run) log the
+  caught message but never check it says what it is supposed to say, so a
+  guardrail that throws for the wrong reason, or a caller-side bug that throws
+  before the guardrail is even reached, still prints "ok." This is the
+  identical defect this same fix wave just corrected one seat over in
+  `looksLikeBenchRecord`, and the three marker-provenance guards just below
+  those four in the same file were already tightened this way on 20 August
+  2026 (see that block's own comment for what a bare catch let through). Left
+  alone here because these four only exercise argument validation against
+  paths that do not exist, which is lower-stakes than the marker guards, but
+  the fix is the same shape: assert on the message, not just that something
+  was thrown.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

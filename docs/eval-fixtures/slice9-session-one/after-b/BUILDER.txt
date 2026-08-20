@@ -1,0 +1,29 @@
+# Which session data the debriefs in this directory were written about.
+# See ../before/BUILDER.txt for what this file is and why editing it to make
+# a command work defeats the point.
+#
+# The second of Slice 9's two after rounds, generated on 19 August 2026 AFTER
+# session 1's fifteen hand-written swings were replaced. Same data as
+# ../after-a, a second independent draw of the same 64 cells, so it takes the
+# same builder: the swings in src/sessionOneSwings.js today. If session 1 is
+# ever rewritten again, this round needs a frozen snapshot of its own, in the
+# same shape as ../session-one-before.mjs, and this line changes to name it.
+
+#
+# The seed matters as much as the builder, and for a reason that is easy to
+# miss: session 1 is the same fifteen swings at any seed, but sessions 2, 3
+# and 4 are GENERATED from it with a seeded PRNG, so the seed alone decides
+# what those sessions contain. Grading this round at the wrong seed rebuilds
+# sessions that never existed for every multi-session cell while the
+# session-1 cells stay correct, and the report that comes out looks partly
+# sane rather than obviously broken.
+#
+# NOTE THE SEED ON THIS ROUND. It is 20260819, not the 20260814 the other two
+# rounds and the script's own default use. This round was generated at a
+# different seed on purpose, as a second independent draw. Nothing about the
+# file paths or the record contents says so, which is exactly why it is
+# written down here.
+
+builder = current
+handed-era = current
+seed = 20260819

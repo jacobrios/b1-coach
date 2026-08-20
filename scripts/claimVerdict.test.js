@@ -189,6 +189,20 @@ describe('threshold count claims', () => {
     expect(result.verdict).toBe('FALSE')
   })
 
+  // Slice 9's hand-check, mechanism M4: a correct count that names no swings
+  // at all was being ruled FALSE, because an empty array is still an array.
+  // "Nine of your fifteen swings came out above 18 degrees" names nine as a
+  // count and names no individual swing, so there is no swing list to
+  // disagree with and the count is the whole claim.
+  it('does not fire the named-swing check when no swings were named', () => {
+    const result = verdictForClaim(
+      { kind: 'threshold', sessionNumber: 4, metric: 'distance', threshold: 305, comparison: 'above', statedCount: 4, statedSwings: [] },
+      FACT_SHEET,
+    )
+    expect(result.verdict).toBe('TRUE')
+    expect(result.reasoning).not.toMatch(/named swings/)
+  })
+
   it('is UNVERIFIABLE when the threshold is not a precomputed row', () => {
     const result = verdictForClaim(
       { kind: 'threshold', sessionNumber: 4, metric: 'launchAngle', threshold: 19, comparison: 'below', statedCount: 6 },

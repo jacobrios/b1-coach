@@ -51,6 +51,16 @@
 // The third form (Slice 8b) grades a directory of fresh bench --out files
 // instead of the committed fixture; pair it with --dry-run first to see the
 // planned call count for that directory before spending.
+//
+// Slice 9's three rounds, for the record:
+//   --input docs/eval-fixtures/slice9-session-one/before  --builder slice9-before --seed 20260814
+//   --input docs/eval-fixtures/slice9-session-one/after-a --builder current       --seed 20260814
+//   --input docs/eval-fixtures/slice9-session-one/after-b --builder current       --seed 20260819
+// NOTE THE THIRD SEED. Round B was generated at a different seed from the
+// other two and from this script's own default. Each of those directories
+// carries a BUILDER.txt naming its own builder AND its own seed, so both
+// flags are checked rather than trusted, and both can be omitted entirely.
+// See the session-builders section below.
 // --out writes { meta, results }, where meta = { generatedAt, model, source,
 // builder, seed, handedEra }. Files written before 19 August 2026 are bare
 // arrays; this change makes a committed grading run prove from its own
@@ -115,6 +125,7 @@ import { handedClaimSpecs, eraExtraThresholds } from './handedCounts.js'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const FIXTURE_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice7-debriefs')
+const SLICE9_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice9-session-one')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model, pricing, cost guardrails
@@ -147,7 +158,7 @@ const FALLBACK_PRICING = PRICING['claude-haiku-4-5-20251001']
 const MAX_PLANNED_CALLS = 100
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Session builders: frozen (the 96-debrief fixture) vs current (a fresh bench run)
+// Session builders: frozen, slice9-before, current
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // This is the subtlest part of the task, so the mechanism is spelled out
@@ -170,16 +181,47 @@ const MAX_PLANNED_CALLS = 100
 // so grading a NEW records file needs the opposite: the current generator,
 // not the frozen stand-in.
 //
+// *** THE SAME HAZARD RECURRED ONE GENERATION LATER, 19 AUGUST 2026. ***
+// Slice 9 REPLACED all fifteen swings in src/sessionOneSwings.js. Its
+// before round (docs/eval-fixtures/slice9-session-one/before/) was generated
+// against the OLD fifteen; its after rounds against the NEW fifteen. The
+// "current" builder reads the working tree, so grading the before round with
+// --builder current would check claims written about the old swings against
+// facts derived from the new ones, and for the 24 session-1 records in that
+// round the entire fact sheet would be wrong while every verdict still
+// looked plausible. Hence a THIRD builder, "slice9-before", which reads a
+// frozen snapshot of the old fifteen
+// (docs/eval-fixtures/slice9-session-one/session-one-before.mjs) instead of
+// the working tree. It shares every line of session-construction logic with
+// the current builder and differs in nothing but which fifteen swings it
+// starts from.
+//
+// Which builder goes with which records:
+//   frozen         docs/eval-fixtures/slice7-debriefs (the 96-debrief fixture)
+//   slice9-before  docs/eval-fixtures/slice9-session-one/before
+//   current        anything produced by the bench against today's working
+//                  tree, including slice9-session-one/after-*
+//
 // The flag design makes the choice unavoidable rather than defaulted:
 //   - No --records flag (the default: grade the 96-debrief fixture) locks
-//     the builder to "frozen" outright. Passing --builder current in this
+//     the builder to "frozen" outright. Passing any other --builder in this
 //     mode is refused with an error, because that combination is exactly
 //     the mistake that would silently produce wrong verdicts against the
 //     fixture's own ground truth.
-//   - A --records flag REQUIRES an explicit --builder. There is no default,
+//   - A --records or --input flag REQUIRES an explicit --builder, unless the
+//     records carry a provenance marker (see below). There is no default,
 //     on purpose: a silent default here is the one mistake with no error
-//     message to catch it, since both builders produce a plausible-looking
+//     message to catch it, since every builder produces a plausible-looking
 //     fact sheet, just for the wrong swings.
+//   - A records directory may commit a BUILDER.txt naming the builder its
+//     debriefs were written against. When one is present, a --builder flag
+//     that disagrees with it is refused outright rather than obeyed. That is
+//     the only fully enforceable guard available here: a bench record
+//     carries no field saying which session-1 swings produced it, so nothing
+//     in the records themselves can be checked against the working tree.
+//     The marker is committed beside the records by whoever generated them,
+//     which is the one moment the answer is actually known. See
+//     readBuilderMarker below.
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -198,6 +240,11 @@ function mulberry32(seed) {
 // This is a THIRD hand-maintained copy of the same small facts (bench,
 // rebuild.mjs's frozen CELLS, and now this one); see this task's report for
 // why a fourth consolidation pass was judged out of scope here.
+//
+// One cell list, shared by the two baseline-driven builders (current and
+// slice9-before): a cell says which goal and which session number, and both
+// builders answer that question the same way. Only the fifteen baseline
+// swings differ.
 export const CURRENT_CELLS = [
   { key: 'power-s1', goal: { id: 'power', label: 'Power & Distance' }, session: 1 },
   { key: 'power-s2', goal: { id: 'power', label: 'Power & Distance' }, session: 2 },
@@ -208,22 +255,32 @@ export const CURRENT_CELLS = [
   // would fail to resolve here and the round could not be graded at all.
   { key: 'allfields-s4', goal: { id: 'allfields', label: 'Hit to All Fields' }, session: 4 },
   { key: 'popup-s4', goal: { id: 'popup', label: 'Reduce Pop-Ups' }, session: 4 },
+  // The cell Slice 9 added to the bench, same hand-kept convention. The label
+  // was checked against the real GOALS array in src/App.jsx, which this
+  // script cannot import. Without this entry every Slice 9 round fails to
+  // resolve on 12 of its 64 records and cannot be graded at all.
+  { key: 'contact-s1', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 1 },
 ]
 
-let _currentBuilderDeps = null
-async function loadCurrentBuilderDeps() {
-  if (_currentBuilderDeps) return _currentBuilderDeps
+let _generatorDeps = null
+async function loadGeneratorDeps() {
+  if (_generatorDeps) return _generatorDeps
   const { generateSwings } = await import(`${REPO_ROOT}/src/swingGenerator.js`)
   const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
-  const { SESSION_ONE_SWINGS } = await import(`${REPO_ROOT}/src/sessionOneSwings.js`)
-  _currentBuilderDeps = { generateSwings, computeStats, SESSION_ONE_SWINGS }
-  return _currentBuilderDeps
+  _generatorDeps = { generateSwings, computeStats }
+  return _generatorDeps
 }
 
-async function buildSessionsCurrent({ goalId, upTo, seed }) {
-  const { generateSwings, computeStats, SESSION_ONE_SWINGS } = await loadCurrentBuilderDeps()
+// The one piece of session-construction logic behind both baseline-driven
+// builders. Deliberately not forked per builder: the seeding, the generator
+// call and the stats are identical for the before round and the after
+// rounds, and the whole point of the before/after comparison is that the
+// fifteen baseline swings are the ONLY thing that differs. Two copies of
+// this loop would let something else drift into the difference without
+// anyone noticing.
+async function buildSessionsFromBaseline({ baseline, goalId, upTo, seed }) {
+  const { generateSwings, computeStats } = await loadGeneratorDeps()
   const random = mulberry32(seed)
-  const baseline = SESSION_ONE_SWINGS
   const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
   for (let n = 2; n <= upTo; n++) {
     const swings = generateSwings({ sessionNum: n, goalId, baselineSwings: baseline, random })
@@ -231,6 +288,43 @@ async function buildSessionsCurrent({ goalId, upTo, seed }) {
   }
   return sessions
 }
+
+// The working tree's live session 1: what a bench round run today is written
+// about.
+let _currentBaseline = null
+async function loadCurrentBaseline() {
+  if (_currentBaseline) return _currentBaseline
+  const { SESSION_ONE_SWINGS } = await import(`${REPO_ROOT}/src/sessionOneSwings.js`)
+  _currentBaseline = SESSION_ONE_SWINGS
+  return _currentBaseline
+}
+
+// The frozen pre-rewrite session 1: what Slice 9's before round is written
+// about. A committed snapshot, never the working tree, for the reason its own
+// header spells out at length.
+let _slice9BeforeBaseline = null
+async function loadSlice9BeforeBaseline() {
+  if (_slice9BeforeBaseline) return _slice9BeforeBaseline
+  const url = pathToFileURL(path.join(SLICE9_DIR, 'session-one-before.mjs')).href
+  const { SESSION_ONE_SWINGS_BEFORE } = await import(url)
+  if (!Array.isArray(SESSION_ONE_SWINGS_BEFORE) || SESSION_ONE_SWINGS_BEFORE.length !== 15) {
+    throw new Error(`${url} did not export fifteen frozen session-1 swings.`)
+  }
+  _slice9BeforeBaseline = SESSION_ONE_SWINGS_BEFORE
+  return _slice9BeforeBaseline
+}
+
+// builder name -> how to get its fifteen baseline swings. Adding a fourth
+// generation of session 1 means adding one line here and one frozen
+// snapshot, not another copy of the loop above.
+const BASELINE_LOADERS = {
+  current: loadCurrentBaseline,
+  'slice9-before': loadSlice9BeforeBaseline,
+}
+const BUILDER_NAMES = ['frozen', ...Object.keys(BASELINE_LOADERS)]
+// The prompt eras --handed-era accepts. One list, so a value arriving from a
+// marker is checked against exactly what a value arriving from the flag is.
+const HANDED_ERAS = ['slice8b', 'current']
 
 let _frozenRebuild = null
 async function loadFrozenRebuild() {
@@ -253,17 +347,24 @@ export async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
     }
     return { sessions: sessionsForCell(cellKey), goal: cell.goal, viewingSessionNumber: cell.session }
   }
-  if (builder === 'current') {
+  const loadBaseline = BASELINE_LOADERS[builder]
+  if (loadBaseline) {
     const cell = CURRENT_CELLS.find((c) => c.key === cellKey)
     if (!cell) {
       throw new Error(
-        `Unknown cell "${cellKey}" for the current builder. Known: ${CURRENT_CELLS.map((c) => c.key).join(', ')}`,
+        `Unknown cell "${cellKey}" for the ${builder} builder. Known: ${CURRENT_CELLS.map((c) => c.key).join(', ')}`,
       )
     }
-    const sessions = await buildSessionsCurrent({ goalId: cell.goal.id, upTo: cell.session, seed })
+    const baseline = await loadBaseline()
+    const sessions = await buildSessionsFromBaseline({
+      baseline,
+      goalId: cell.goal.id,
+      upTo: cell.session,
+      seed,
+    })
     return { sessions, goal: cell.goal, viewingSessionNumber: cell.session }
   }
-  throw new Error(`Unknown builder "${builder}". Must be "frozen" or "current".`)
+  throw new Error(`Unknown builder "${builder}". Must be one of: ${BUILDER_NAMES.join(', ')}.`)
 }
 
 // Same PLAYER every bench run has used (scripts/bench-coach-brevity.mjs);
@@ -285,9 +386,17 @@ function loadFixtureRecords() {
 
 // The Slice 8b --input flag: a whole directory of bench --out files, merged
 // in filename order. The filesystem half lives here; every decision made
-// after parsing (concatenation order, refusing a non-array file, setting
-// aside failed bench records instead of grading their empty fields) lives in
-// scripts/inputRecords.js, where the test suite reaches it.
+// after parsing (which files are bench records at all, concatenation order,
+// refusing a file nobody can identify, setting aside failed bench records
+// instead of grading their empty fields) lives in scripts/inputRecords.js,
+// where the test suite reaches it.
+//
+// 20 August 2026: this reads every .json in the directory and always has,
+// which was harmless only while a round directory held nothing but bench
+// output. Slice 9 writes each round's grading.json in beside its records, so
+// classifyInputFile now decides what each file actually is. See that module's
+// header for what the old behaviour would have done with a bare-array
+// grading file, and why it would not have said so.
 function loadInputDirectory(dir) {
   const names = readdirSync(dir).filter((n) => n.endsWith('.json')).sort()
   if (names.length === 0) {
@@ -300,6 +409,191 @@ function loadInputDirectory(dir) {
   return mergeInputRecords(files)
 }
 
+// ── The provenance marker ────────────────────────────────────────────────────
+//
+// WHAT CAN ACTUALLY BE ENFORCED HERE, AND WHAT CANNOT.
+// A bench record (scripts/bench-coach-brevity.mjs's --out shape) carries a
+// condition, a cell, a run number and the coach's five text fields. It
+// carries NOTHING about which fifteen session-1 swings the coach was looking
+// at. So there is no way to read a records file and check it against the
+// working tree; the information simply is not in there. Guessing it back out
+// of the prose (does the coach quote numbers that appear in these swings?)
+// would be a heuristic that fails quietly on exactly the rounds where it
+// matters, which is worse than no guard at all.
+//
+// What IS enforceable is a marker written at the one moment the answer is
+// known for certain: when the round is committed. A records directory may
+// hold a BUILDER.txt of `key = value` lines (# starts a comment) naming the
+// builder those debriefs were written against, and optionally the
+// --handed-era they should be graded under. When one is present:
+//   - a --builder that disagrees with it is REFUSED, loudly, not obeyed;
+//   - a --builder that agrees is confirmed in the run header;
+//   - no --builder at all is filled in from the marker, and the run header
+//     says where the value came from. This is not the silent default the
+//     comment block above rules out: a default is a guess, a marker is a
+//     recorded fact committed beside the records it describes.
+// A directory with no marker behaves exactly as it did before: an explicit
+// --builder is required and nothing can be cross-checked.
+const BUILDER_MARKER_FILENAME = 'BUILDER.txt'
+
+function readBuilderMarker(dir) {
+  const markerPath = path.join(dir, BUILDER_MARKER_FILENAME)
+  let text
+  try {
+    text = readFileSync(markerPath, 'utf8')
+  } catch {
+    return null
+  }
+  // A PRESENT KEY WITH AN EMPTY VALUE IS MALFORMED, for every field, and it
+  // is refused here rather than left to each field's own validation below.
+  // Found by review on 19 August 2026: `seed = ` with nothing after it used
+  // to survive, because Number('') is 0 and 0 is a perfectly good integer, so
+  // a botched edit or a truncated write produced a silent `seed 0` and a live
+  // round rebuilt sessions 2, 3 and 4 at a seed nothing was generated at.
+  // That is the exact failure this marker exists to prevent, reached through
+  // a different door. An unknown key is refused for the same reason: `sed =
+  // 20260819` would otherwise be ignored in silence and the round would fall
+  // back to the default seed, which is the same silent-wrong-seed outcome one
+  // typo away. A marker is a handful of lines that somebody typed once, so
+  // strict is cheap here and a quiet misread is not.
+  const KNOWN_KEYS = ['builder', 'handed-era', 'seed']
+  const settings = {}
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('#')) continue
+    const eq = line.indexOf('=')
+    if (eq === -1) continue
+    const key = line.slice(0, eq).trim()
+    const value = line.slice(eq + 1).trim()
+    if (!KNOWN_KEYS.includes(key)) {
+      throw new Error(
+        `${markerPath} has a line naming "${key}", which is not one of ${KNOWN_KEYS.join(', ')}. ` +
+        'A misspelled key would be ignored in silence and the run would quietly fall back to a default, ' +
+        'which is the mistake this file exists to stop. Fix the key, or make the line a # comment.',
+      )
+    }
+    if (value === '') {
+      throw new Error(
+        `${markerPath} has a "${key}" line with nothing after the "=". A blank value is malformed, not a ` +
+        'default: it usually means a botched edit or a truncated write. Give it a value or delete the line ' +
+        '(a missing line falls back honestly and says so in the run header).',
+      )
+    }
+    settings[key] = value
+  }
+  if (!settings.builder) {
+    throw new Error(
+      `${markerPath} exists but names no builder. It must carry a line reading "builder = <name>". ` +
+      'Fix it or delete it; a marker that says nothing is worse than none, because it looks like a check that ran.',
+    )
+  }
+  if (!BUILDER_NAMES.includes(settings.builder)) {
+    throw new Error(
+      `${markerPath} names builder "${settings.builder}", which this script does not have. ` +
+      `Known builders: ${BUILDER_NAMES.join(', ')}.`,
+    )
+  }
+  // A value arriving from a marker gets the same validation a value arriving
+  // from a flag gets. Without this a marker reading "handed-era = slice8c" is
+  // accepted and printed, and then every record throws inside the per-record
+  // try, so the run ends with an empty report rather than an error naming the
+  // cause.
+  const handedEra = settings['handed-era'] ?? null
+  if (handedEra !== null && !HANDED_ERAS.includes(handedEra)) {
+    throw new Error(
+      `${markerPath} names handed era "${handedEra}", which this script does not have. ` +
+      `Known eras: ${HANDED_ERAS.join(', ')}.`,
+    )
+  }
+  let seed = null
+  if (settings.seed != null) {
+    seed = Number(settings.seed)
+    if (!Number.isInteger(seed)) {
+      throw new Error(`${markerPath} names seed "${settings.seed}", which is not a whole number.`)
+    }
+  }
+  return { path: markerPath, builder: settings.builder, handedEra, seed }
+}
+
+// Reconciles a marker (if any) with the flags actually passed. Returns the
+// builder, handed era and seed to use, plus a line for the run header saying
+// where each came from.
+//
+// *** WHY THE SEED IS HERE AND NOT LEFT TO ITS DEFAULT ***
+// Found by review on 19 August 2026, after the first version of this marker
+// closed the session-1 hazard and left the identical hazard open one level
+// down. Session 1 is the same whatever the seed, but sessions 2, 3 and 4 are
+// generated from it with a seeded PRNG, so the seed alone decides what those
+// sessions contain. Slice 9's rounds were not all run at the same seed: the
+// before round and after round A used 20260814 (the default), and after round
+// B used 20260819. Grading round B at the default rebuilds sessions that
+// never existed for the five multi-session cells, which is 40 of its 64
+// records, while the 24 session-1 records stay correct. That is worse than an
+// outright failure, not better: the report comes out looking partly sane.
+// So a marker may record the seed too, on exactly the same terms as the
+// builder: an explicit --seed that contradicts it is refused, and a run that
+// passes no --seed takes the marker's value rather than the default.
+function reconcileWithMarker({ dir, args, missingBuilderMessage }) {
+  const marker = readBuilderMarker(dir)
+  if (!marker) {
+    if (!args.builder) throw new Error(missingBuilderMessage)
+    // No marker: the seed falls back to the flag or its default, exactly as
+    // it always has. Older committed fixtures carry no marker and were all
+    // graded at the default, so changing this would break them. What changed
+    // instead is that the resolved seed and where it came from are now
+    // PRINTED, in the run header and in the dry-run plan, so an unmarked
+    // round says out loud which seed it is about to use.
+    return {
+      builder: args.builder,
+      handedEra: args.handedEra,
+      seed: args.seed,
+      seedSource: args.seedGiven ? '--seed flag' : 'script default, no marker',
+      provenance: null,
+    }
+  }
+  if (args.builder && args.builder !== marker.builder) {
+    throw new Error(
+      `${marker.path} records that these debriefs were written against the "${marker.builder}" session data, ` +
+      `but --builder ${args.builder} was passed. Refusing: grading a round through the wrong builder does not ` +
+      'fail, it produces a complete, plausible-looking fact sheet for the wrong fifteen swings, and every ' +
+      'verdict computed from it is garbage that reads like a result. Fix the flag. Do not edit the marker to ' +
+      'match the flag; the marker was written by whoever generated the round, which is the only moment the ' +
+      'answer was actually known.',
+    )
+  }
+  if (marker.handedEra && args.handedEraGiven && args.handedEra !== marker.handedEra) {
+    throw new Error(
+      `${marker.path} records that these debriefs were produced by the "${marker.handedEra}" prompt era, but ` +
+      `--handed-era ${args.handedEra} was passed. Refusing: the era decides which FALSE claims are counted as ` +
+      'contradicting a number the prompt handed the coach, so the wrong era silently mislabels the split. ' +
+      'Fix the flag rather than the marker.',
+    )
+  }
+  if (marker.seed != null && args.seedGiven && args.seed !== marker.seed) {
+    throw new Error(
+      `${marker.path} records that these debriefs were generated at seed ${marker.seed}, but --seed ${args.seed} ` +
+      'was passed. Refusing: session 1 is the same at any seed, but sessions 2, 3 and 4 are generated from it ' +
+      'with a seeded PRNG, so the wrong seed rebuilds sessions that never existed for every multi-session ' +
+      'cell while the session-1 cells stay correct. The report that comes out looks partly sane, which is ' +
+      'worse than an outright failure. Fix the flag rather than the marker.',
+    )
+  }
+  const seed = marker.seed ?? args.seed
+  const seedSource = marker.seed != null
+    ? `${marker.path}`
+    : (args.seedGiven ? '--seed flag' : `script default, marker names no seed`)
+  const recorded = [`builder ${marker.builder}`]
+  if (marker.handedEra) recorded.push(`handed era ${marker.handedEra}`)
+  if (marker.seed != null) recorded.push(`seed ${marker.seed}`)
+  return {
+    builder: marker.builder,
+    handedEra: marker.handedEra ?? args.handedEra,
+    seed,
+    seedSource,
+    provenance: `${marker.path} (${recorded.join(', ')})`,
+  }
+}
+
 function resolveRecordsAndBuilder(args) {
   if (args.records && args.input) {
     throw new Error('Pass --records (one file) or --input (a directory), not both.')
@@ -309,16 +603,29 @@ function resolveRecordsAndBuilder(args) {
     // builder on purpose, because both builders produce a plausible-looking
     // fact sheet, just for the wrong swings, and a silent default is the one
     // mistake with no error message to catch it. A bench round produced
-    // today wants --builder current.
-    if (!args.builder) {
-      throw new Error(
-        '--input was given without --builder. There is no default: pass --builder current for anything ' +
-        'produced by the bench as it runs today, or --builder frozen only if the directory holds records ' +
-        'generated against the old stand-in session 1 (rare, and you should know why).',
-      )
+    // today wants --builder current. A committed BUILDER.txt beside the
+    // records answers this without a flag; see reconcileWithMarker above.
+    const reconciled = reconcileWithMarker({
+      dir: args.input,
+      args,
+      missingBuilderMessage:
+        '--input was given without --builder, and the directory carries no BUILDER.txt. There is no default: ' +
+        'pass --builder current for anything produced by the bench against today\'s working tree, ' +
+        '--builder slice9-before for Slice 9\'s pre-rewrite round, or --builder frozen only if the directory ' +
+        'holds records generated against the old stand-in session 1 (rare, and you should know why).',
+    })
+    const { records, skippedFailed, skippedFiles } = loadInputDirectory(args.input)
+    return {
+      records,
+      skippedFailed,
+      skippedFiles,
+      builder: reconciled.builder,
+      handedEra: reconciled.handedEra,
+      seed: reconciled.seed,
+      seedSource: reconciled.seedSource,
+      provenance: reconciled.provenance,
+      source: `${args.input} (directory)`,
     }
-    const { records, skippedFailed } = loadInputDirectory(args.input)
-    return { records, skippedFailed, builder: args.builder, source: `${args.input} (directory)` }
   }
   if (!args.records) {
     if (args.builder && args.builder !== 'frozen') {
@@ -328,18 +635,38 @@ function resolveRecordsAndBuilder(args) {
         'implied), or pass --records to point at a different file first.',
       )
     }
-    return { records: loadFixtureRecords(), builder: 'frozen', source: 'docs/eval-fixtures/slice7-debriefs (both files)' }
+    return {
+      records: loadFixtureRecords(),
+      builder: 'frozen',
+      handedEra: args.handedEra,
+      seed: args.seed,
+      seedSource: args.seedGiven ? '--seed flag' : 'script default, no marker',
+      provenance: null,
+      source: 'docs/eval-fixtures/slice7-debriefs (both files)',
+    }
   }
-  if (!args.builder) {
-    throw new Error(
-      '--records was given without --builder. There is no default: pass --builder frozen only if this file ' +
-      'was generated against the old stand-in session 1 (rare, and you should know why), or --builder current ' +
-      'for anything produced by the bench as it runs today.',
-    )
-  }
+  // A single --records file is reconciled against a BUILDER.txt sitting in
+  // the same directory, on the same terms as --input.
+  const reconciled = reconcileWithMarker({
+    dir: path.dirname(args.records),
+    args,
+    missingBuilderMessage:
+      '--records was given without --builder, and no BUILDER.txt sits beside it. There is no default: pass ' +
+      '--builder frozen only if this file was generated against the old stand-in session 1 (rare, and you ' +
+      'should know why), --builder slice9-before for Slice 9\'s pre-rewrite round, or --builder current for ' +
+      'anything produced by the bench against today\'s working tree.',
+  })
   const records = JSON.parse(readFileSync(args.records, 'utf8'))
   if (!Array.isArray(records)) throw new Error(`${args.records} did not parse to a JSON array of records.`)
-  return { records, builder: args.builder, source: args.records }
+  return {
+    records,
+    builder: reconciled.builder,
+    handedEra: reconciled.handedEra,
+    seed: reconciled.seed,
+    seedSource: reconciled.seedSource,
+    provenance: reconciled.provenance,
+    source: args.records,
+  }
 }
 
 // --limit takes the first N records as they appear in the file(s), in order.
@@ -813,14 +1140,27 @@ async function dryRun(args) {
   // would grade and what it would cost in calls, before a cent is spent.
   // This is the plan for THIS invocation's flags; the numbered sections
   // after it are the standing self-checks and run regardless.
-  if (args.input) {
-    const { records, skippedFailed, builder, source } = resolveRecordsAndBuilder(args)
+  if (args.input || args.records) {
+    const { records, skippedFailed, skippedFiles, builder, handedEra, seed, seedSource, provenance, source } =
+      resolveRecordsAndBuilder(args)
+    // Adopted before selectSubset, because --sample draws from the same
+    // seeded PRNG: a plan must sample the same records the live run will.
+    args.seed = seed ?? args.seed
     const subset = selectSubset(records, args)
-    console.log('Planned --input run')
+    console.log('Planned run')
     console.log('-'.repeat(70))
-    console.log(`  records source   ${source} (builder: ${builder})`)
-    if (skippedFailed.length) {
+    console.log(`  records source   ${source} (builder: ${builder}, handed era: ${handedEra ?? args.handedEra})`)
+    console.log(`  seed             ${seed ?? args.seed} (from ${seedSource})`)
+    console.log(`  provenance       ${provenance ?? 'no BUILDER.txt beside these records; builder and seed taken from the flags alone'}`)
+    // Only the --input path sets this; a single --records file has no
+    // failed-record channel to report.
+    if (skippedFailed?.length) {
       console.log(`  set aside        ${skippedFailed.length} failed bench record(s), never graded`)
+    }
+    // Named, not just counted: which file was passed over is the one thing a
+    // reader needs to spot a records file that got misidentified.
+    for (const f of skippedFiles ?? []) {
+      console.log(`  set aside        ${f.name} (${f.kind}, not bench records), never graded`)
     }
     console.log(`  planned calls    ${subset.length} of ${records.length} gradeable records`)
     console.log('')
@@ -844,21 +1184,58 @@ async function dryRun(args) {
   if (current.sessions[0].swings.length !== 15 || frozen.sessions[0].swings.length !== 15) {
     throw new Error('Session builder self-check failed: expected 15 swings in session 1 for both builders.')
   }
-  // The two cells Slice 8b added. Resolved here so a typo in their
-  // CURRENT_CELLS entries fails a free dry run rather than a paid grading
-  // run. Only the current builder knows them: the frozen fixture predates
-  // both goals, so they are deliberately absent from its CELLS.
-  for (const newCellKey of ['allfields-s4', 'popup-s4']) {
+  // The two cells Slice 8b added, and the one Slice 9 added. Resolved here
+  // so a typo in their CURRENT_CELLS entries fails a free dry run rather
+  // than a paid grading run. Only the baseline-driven builders know them:
+  // the frozen fixture predates all three, so they are deliberately absent
+  // from its CELLS.
+  for (const newCellKey of ['allfields-s4', 'popup-s4', 'contact-s1']) {
     const cell = await resolveSessions({ builder: 'current', cellKey: newCellKey, seed: 20260814 })
     console.log(
       `  current / ${newCellKey.padEnd(12)} ${cell.sessions.length} sessions, ` +
       `${cell.sessions.reduce((s, ss) => s + ss.swings.length, 0)} total swings, ` +
       `goal ${cell.goal.id}, viewing session ${cell.viewingSessionNumber}`,
     )
-    if (cell.sessions.length !== 4) {
-      throw new Error(`Session builder self-check failed: expected 4 sessions for ${newCellKey}.`)
+    const expectedSessions = CURRENT_CELLS.find((c) => c.key === newCellKey).session
+    if (cell.sessions.length !== expectedSessions) {
+      throw new Error(
+        `Session builder self-check failed: expected ${expectedSessions} sessions for ${newCellKey}.`,
+      )
     }
   }
+
+  // 1b. The slice9-before builder, and the proof that it is not the current
+  // one wearing a different name. Slice 9 replaced all fifteen session-1
+  // swings, so a before-round debrief and an after-round debrief describe
+  // different data through the same cell key. If these two ever stop
+  // differing, the frozen snapshot has been "updated" to match the working
+  // tree and every before/after comparison built on it is void, so this
+  // check is a hard failure rather than a printed note.
+  console.log('')
+  console.log('The two session-1 generations (contact-s1, seed 20260814)')
+  console.log('-'.repeat(70))
+  const beforeS1 = await resolveSessions({ builder: 'slice9-before', cellKey: 'contact-s1', seed: 20260814 })
+  const currentS1 = await resolveSessions({ builder: 'current', cellKey: 'contact-s1', seed: 20260814 })
+  for (const [name, resolved] of [['slice9-before', beforeS1], ['current', currentS1]]) {
+    const swings = resolved.sessions[0].swings
+    const evs = swings.map((s) => s.hit.launch.exitSpeed)
+    const distances = swings.map((s) => s.hit.landing.distance)
+    console.log(
+      `  ${name.padEnd(14)} swing 12 = ${evs[11]} mph / ${distances[11]} ft, ` +
+      `top EV ${Math.max(...evs)} mph, longest ${Math.max(...distances)} ft, ` +
+      `avg EV ${(evs.reduce((a, b) => a + b, 0) / evs.length).toFixed(1)} mph`,
+    )
+  }
+  const beforeJson = JSON.stringify(beforeS1.sessions[0].swings)
+  const currentJson = JSON.stringify(currentS1.sessions[0].swings)
+  if (beforeJson === currentJson) {
+    throw new Error(
+      'Session builder self-check failed: the slice9-before snapshot and the working tree hold the SAME ' +
+      'fifteen session-1 swings. Either the snapshot was wrongly updated to match the working tree, or the ' +
+      'rewrite was reverted. Either way the before/after comparison this builder exists for is void.',
+    )
+  }
+  console.log('  ok: the two builders disagree, which is the whole point of the second one')
 
   // 2. Builder-selection guardrails, exercised without ever making a real call.
   console.log('')
@@ -893,7 +1270,94 @@ async function dryRun(args) {
     guardOk++
     console.log(`  ok: --records and --input together refused ("${err.message.slice(0, 60)}...")`)
   }
-  if (guardOk !== 4) throw new Error('Builder-selection guardrail self-check failed.')
+  // The provenance marker, exercised against the real committed fixtures
+  // rather than a made-up directory, so a marker that goes missing or gets
+  // edited to the wrong value fails a free dry run.
+  const markerCases = [
+    { dir: path.join(SLICE9_DIR, 'before'), expected: 'slice9-before', wrong: 'current', seed: 20260814 },
+    { dir: path.join(SLICE9_DIR, 'after-a'), expected: 'current', wrong: 'slice9-before', seed: 20260814 },
+    // Not the default seed, and nothing but this marker says so. See its own
+    // BUILDER.txt.
+    { dir: path.join(SLICE9_DIR, 'after-b'), expected: 'current', wrong: 'slice9-before', seed: 20260819 },
+  ]
+  for (const c of markerCases) {
+    const rel = path.relative(REPO_ROOT, c.dir)
+    const marker = readBuilderMarker(c.dir)
+    if (!marker) {
+      console.log(`  FAILED: ${rel} carries no ${BUILDER_MARKER_FILENAME}`)
+      continue
+    }
+    if (marker.builder !== c.expected) {
+      console.log(`  FAILED: ${rel} names builder "${marker.builder}", expected "${c.expected}"`)
+      continue
+    }
+    if (marker.seed !== c.seed) {
+      console.log(`  FAILED: ${rel} names seed ${marker.seed}, expected ${c.seed}`)
+      continue
+    }
+    // ASSERT ON THE REASON, NOT MERELY THAT SOMETHING THREW. Corrected
+    // 20 August 2026: both of these blocks used to be a bare `catch {}`, so
+    // ANY exception counted as proof the marker had done its job.
+    //
+    // Be precise about what saves the old version today, because it is an
+    // accident and not a design: resolveRecordsAndBuilder happens to call
+    // reconcileWithMarker BEFORE loadInputDirectory, so the marker is always
+    // what throws first, and the two prechecks above catch a marker that
+    // reads wrong. Reverse those two calls, which is the most natural
+    // refactor in the file (load the records, then reconcile them), and
+    // every one of these six guards goes green on an exception the marker
+    // was never consulted for. Verified by doing exactly that on 20 August
+    // 2026: with the loader made to throw, the bare-catch version printed
+    // `ok: ... refused --builder current` while the version below printed
+    // FAILED and named the real error. A guard that cannot tell one failure
+    // from another is not a guard.
+    try {
+      resolveRecordsAndBuilder({ input: c.dir, builder: c.wrong, handedEra: 'current', seed: c.seed })
+      console.log(`  FAILED: ${rel} accepted --builder ${c.wrong}`)
+    } catch (err) {
+      const refusedForTheRightReason =
+        err.message.includes(BUILDER_MARKER_FILENAME) &&
+        err.message.includes(`--builder ${c.wrong}`) &&
+        err.message.includes(c.expected)
+      if (!refusedForTheRightReason) {
+        console.log(
+          `  FAILED: ${rel} threw, but not because the marker refused --builder ${c.wrong}: "${err.message.slice(0, 120)}"`,
+        )
+      } else {
+        guardOk++
+        console.log(`  ok: ${rel} is marked "${c.expected}" and refused --builder ${c.wrong}`)
+      }
+    }
+    // The seed half of the same guard: a contradicting explicit --seed must
+    // refuse, and a run that passes none must come back with the marker's
+    // seed rather than the script default.
+    const wrongSeed = c.seed === 20260814 ? 20260819 : 20260814
+    try {
+      resolveRecordsAndBuilder({ input: c.dir, seed: wrongSeed, seedGiven: true, handedEra: 'current' })
+      console.log(`  FAILED: ${rel} accepted --seed ${wrongSeed}`)
+    } catch (err) {
+      const refusedForTheRightReason =
+        err.message.includes(BUILDER_MARKER_FILENAME) &&
+        err.message.includes(`--seed ${wrongSeed}`) &&
+        err.message.includes(String(c.seed))
+      if (!refusedForTheRightReason) {
+        console.log(
+          `  FAILED: ${rel} threw, but not because the marker refused --seed ${wrongSeed}: "${err.message.slice(0, 120)}"`,
+        )
+      } else {
+        guardOk++
+        console.log(`  ok: ${rel} is marked seed ${c.seed} and refused --seed ${wrongSeed}`)
+      }
+    }
+    const adopted = resolveRecordsAndBuilder({ input: c.dir, seed: 20260814, handedEra: 'current' })
+    if (adopted.seed !== c.seed) {
+      console.log(`  FAILED: ${rel} resolved seed ${adopted.seed} with no --seed, expected ${c.seed}`)
+    } else {
+      guardOk++
+      console.log(`  ok: ${rel} resolved seed ${c.seed} with no --seed passed (from ${adopted.seedSource})`)
+    }
+  }
+  if (guardOk !== 13) throw new Error('Builder-selection guardrail self-check failed.')
 
   // 3. Build the real fact sheet and the real prompt for one record, report sizes.
   console.log('')
@@ -1096,7 +1560,14 @@ async function validate(args) {
     process.exit(1)
   }
 
-  const { records, skippedFailed, builder, source } = resolveRecordsAndBuilder(args)
+  const { records, skippedFailed, skippedFiles, builder, handedEra, seed, seedSource, provenance, source } =
+    resolveRecordsAndBuilder(args)
+  // The marker beside the records wins over the flag default; a marker that
+  // DISAGREES with an explicit flag has already thrown by this point. Both
+  // are adopted before selectSubset, because --sample draws from the same
+  // seeded PRNG the sessions do.
+  args.handedEra = handedEra ?? args.handedEra
+  args.seed = seed ?? args.seed
   const subset = selectSubset(records, args)
 
   if (subset.length > MAX_PLANNED_CALLS) {
@@ -1109,8 +1580,14 @@ async function validate(args) {
   console.log('='.repeat(70))
   console.log(`Model            ${args.model}`)
   console.log(`Records source   ${source} (builder: ${builder})`)
+  console.log(`Handed era       ${args.handedEra}`)
+  console.log(`Seed             ${args.seed} (from ${seedSource})`)
+  console.log(`Provenance       ${provenance ?? 'no BUILDER.txt beside these records; builder and seed taken from the flags alone'}`)
   if (skippedFailed?.length) {
     console.log(`Set aside        ${skippedFailed.length} failed bench record(s) with no debrief to grade`)
+  }
+  for (const f of skippedFiles ?? []) {
+    console.log(`Set aside        ${f.name} (${f.kind}, not bench records), never graded`)
   }
   console.log(`Records to grade ${subset.length} of ${records.length} available`)
   console.log(`Rough cost       $${(subset.length * 0.01).toFixed(2)} at a rough ~1 cent/debrief guess; the real total prints at the end`)
@@ -1195,6 +1672,15 @@ function parseArgs(argv) {
     model: DEFAULT_MODEL,
     out: null,
     handedEra: 'current',
+    // Whether --handed-era was actually typed, as opposed to left at its
+    // default. A BUILDER.txt may name the era, and "the caller asked for
+    // this era" has to be told apart from "nobody said" before a mismatch
+    // can honestly be refused.
+    handedEraGiven: false,
+    // Same reason as handedEraGiven: a marker may name the seed, and "the
+    // caller asked for this seed" has to be told apart from "nobody said"
+    // before a mismatch can honestly be refused.
+    seedGiven: false,
   }
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
@@ -1213,14 +1699,27 @@ function parseArgs(argv) {
     else if (flag === '--builder') args.builder = value
     else if (flag === '--limit') args.limit = Number(value)
     else if (flag === '--sample') args.sample = Number(value)
-    else if (flag === '--seed') args.seed = Number(value)
+    else if (flag === '--seed') {
+      args.seed = Number(value)
+      args.seedGiven = true
+    }
     else if (flag === '--model') args.model = value
     else if (flag === '--out') args.out = value
-    else if (flag === '--handed-era') args.handedEra = value
+    else if (flag === '--handed-era') {
+      args.handedEra = value
+      args.handedEraGiven = true
+    }
     else throw new Error(`Unknown flag: ${flag}`)
   }
-  if (args.handedEra !== 'slice8b' && args.handedEra !== 'current') {
-    throw new Error(`--handed-era must be "slice8b" or "current", got "${args.handedEra}".`)
+  if (!HANDED_ERAS.includes(args.handedEra)) {
+    throw new Error(`--handed-era must be one of: ${HANDED_ERAS.join(', ')}. Got "${args.handedEra}".`)
+  }
+  // A misspelled builder used to survive as far as the first record's
+  // resolveSessions call, which on a --dry-run --input plan is never reached
+  // at all, so a typo could print a clean-looking plan and then blow up
+  // mid-spend. Rejected here instead, before anything else happens.
+  if (args.builder != null && !BUILDER_NAMES.includes(args.builder)) {
+    throw new Error(`--builder must be one of: ${BUILDER_NAMES.join(', ')}. Got "${args.builder}".`)
   }
   return args
 }
