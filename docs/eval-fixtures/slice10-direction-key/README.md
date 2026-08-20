@@ -191,7 +191,7 @@ currently sees very little of it. See the coverage gaps below.
 
 ~~Both hand-check documents say in places~~ **Corrected 20 August 2026, final
 review: only ONE of them says it, and it says it twice.**
-`HAND-CHECK-after-spray.md` says it at its lines 159 and 716, and both places
+`HAND-CHECK-after-spray.md` says it at its lines 159 and 725, and both places
 now carry a dated annotation pointing here. `HAND-CHECK.md` does not contain
 the word "spray" anywhere. The claim itself is what matters and it is
 unchanged: the grading tool "has no spray statistic." **That is not true.** `scripts/factSheet.js:164-170` carries all

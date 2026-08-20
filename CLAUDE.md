@@ -2505,7 +2505,7 @@ these came out of the round that measured the prompt that actually shipped.*
   **One correction to the record while these are being written down.** ~~Both
   hand-check documents say~~ **Corrected 20 August 2026, by final review: only
   ONE hand-check document says it, twice.** `HAND-CHECK-after-spray.md` says at
-  its lines 159 and 716 that the tool "has no spray statistic", and both places
+  its lines 159 and 725 that the tool "has no spray statistic", and both places
   now carry a dated annotation saying otherwise. `HAND-CHECK.md` does not
   contain the word "spray" at all. The claim itself is still the thing to
   ignore, and a future session should not act on it:
