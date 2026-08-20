@@ -537,6 +537,30 @@ describe('session stat claims', () => {
     expect(result.verdict).toBe('TRUE')
   })
 
+  // Slice 10 fix round 1, review Important 2. The prompt now hands every goal
+  // an "up the middle" count, a sentence shape the coach will write routinely
+  // and that carries no unit word of its own. Without an entry here the guard
+  // stays silent on it, so an extraction that lands the sentence on the
+  // nearest listed name (pullSideCount) produces a confident wrong verdict.
+  // That is mechanism M5 from Slice 9's hand-check, the largest single source
+  // of false positives in that wave, and it would fire on the after side
+  // only, because the sentence shape is new.
+  it('is UNVERIFIABLE when an up-the-middle claim is quoted in mph', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'upTheMiddleCount', statedValue: 8, quote: 'eight up the middle at 88 mph' },
+      { ...FACT_SHEET, sessions: [{ ...FACT_SHEET.sessions[0], stats: { ...FACT_SHEET.sessions[0].stats, upTheMiddleCount: 8 } }] },
+    )
+    expect(result.verdict).toBe('UNVERIFIABLE')
+  })
+
+  it('still rules on an up-the-middle claim carrying no unit word at all', () => {
+    const result = verdictForClaim(
+      { kind: 'sessionStat', sessionNumber: 4, statName: 'upTheMiddleCount', statedValue: 8, quote: 'eight of your fifteen went up the middle' },
+      { ...FACT_SHEET, sessions: [{ ...FACT_SHEET.sessions[0], stats: { ...FACT_SHEET.sessions[0].stats, upTheMiddleCount: 8 } }] },
+    )
+    expect(result.verdict).toBe('TRUE')
+  })
+
   it('is UNVERIFIABLE for a stat the fact sheet does not carry', () => {
     const result = verdictForClaim(
       { kind: 'sessionStat', sessionNumber: 4, statName: 'outOfZoneCount', statedValue: 2 },

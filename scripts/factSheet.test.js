@@ -5,6 +5,7 @@
 // later. See scripts/factSheet.js for what each function is for.
 
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs'
 import {
   swingRow,
   candidateThresholds,
@@ -334,4 +335,36 @@ describe('the spray counts every goal is now handed (Slice 10)', () => {
     expect(sheet.stats.pullSideCount).toBe(1)
     expect(sheet.stats.oppoFieldCount).toBe(1)
   })
+})
+
+// Slice 10 fix round 1, review Important 2. The grading model is given a
+// CLOSED list of statName values it may use, written out in the extraction
+// prompt in scripts/grade-coach-accuracy.mjs. When the prompt starts handing
+// the coach a count with no name on that list, the extractor does not return
+// nothing: it reaches for the nearest name it does have, and the verdict code
+// then rules a correct sentence against the wrong number with full
+// confidence. That is mechanism M5 from Slice 9's hand-check, the largest
+// single source of false positives in that wave.
+//
+// Read out of the shipped source text rather than an exported constant, so
+// this checks the string the grading model is actually sent. Every count the
+// fact sheet can produce, for every goal, must have a name the extractor is
+// allowed to use.
+describe('the extraction prompt can name every count the fact sheet carries', () => {
+  const source = readFileSync(new URL('./grade-coach-accuracy.mjs', import.meta.url), 'utf8')
+  const allowed = source
+    .match(/statName must be one of: ([^.]+)\./)[1]
+    .split(',')
+    .map((name) => name.trim())
+
+  it.each(['open', 'power', 'contact', 'popup', 'allfields'])(
+    'every %s count the coach can be handed has a statName the extractor may use',
+    (goalId) => {
+      const session = { sessionNumber: 1, swings, stats: { avgExitVelocity: 84, avgLaunchAngle: 16, inZoneCount: 4, totalSwings: 5 } }
+      const counts = Object.keys(buildSessionFactSheet(session, { goalId }).stats)
+        .filter((key) => key.endsWith('Count'))
+      expect(counts.length).toBeGreaterThan(0)
+      for (const key of counts) expect(allowed).toContain(key)
+    },
+  )
 })

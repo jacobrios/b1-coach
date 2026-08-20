@@ -1052,7 +1052,7 @@ describe('the direction key both prompts state', () => {
 // it never has to decide for itself which swings went where.
 //
 // Same three-part shape as the two blocks above (debrief, chat, cannot drift),
-// because the chat prompt is the one that gets missed — and it is where the
+// because the chat prompt is the one that gets missed, and it is where the
 // product manager actually saw the defect.
 describe('the spray count lines both prompts state', () => {
   const goal = { id: 'open', label: 'Open Session' }
@@ -1101,7 +1101,7 @@ describe('the spray count lines both prompts state', () => {
     expect(message).toContain(OPPO_LINE)
   })
 
-  it('the chat prompt — where the defect was actually seen — states the identical three', async () => {
+  it('the chat prompt (where the defect was actually seen) states the identical three', async () => {
     const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
     expect(message).toContain(PULL_LINE)
     expect(message).toContain(MIDDLE_LINE)
@@ -1161,8 +1161,13 @@ describe('the spray count lines both prompts state', () => {
       const swings = generateSwings({
         sessionNum, goalId: 'power', baselineSwings: SESSION_ONE_SWINGS, random,
       })
-      const counts = countsIn(await debriefFor(sessionOf(swings)))
-      expect(counts.reduce((a, b) => a + b)).toBe(swings.length)
+      const [pull, middle, oppo] = countsIn(await debriefFor(sessionOf(swings)))
+      expect(pull + middle + oppo).toBe(swings.length)
+      // Summing to the total is satisfied trivially by a classifier that puts
+      // every ball up the middle and never fires the other two, so check the
+      // outer buckets are actually populated on real generated data.
+      expect(pull).toBeGreaterThan(0)
+      expect(oppo).toBeGreaterThan(0)
     }
   })
 

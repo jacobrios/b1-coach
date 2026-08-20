@@ -437,6 +437,21 @@ export async function callApi(body, { onRetry } = {}) {
   }
 }
 
+// One count line, in the one shape every count line in this prompt uses: a
+// label, the count in words, and the swing numbers when there are any. The
+// trailing clause is dropped on a count of zero, because "0 swings — numbers:"
+// with nothing after the colon is what shipped before Slice 10 Task 2.
+//
+// Extracted in Slice 10 when this became the third copy of the same six lines
+// (the goal count lines, the zone count lines, and the spray count lines).
+// Two copies were tolerable; three is where this project has repeatedly
+// watched a shared rule drift apart, so the formatter is defined once and the
+// rendered text is unchanged, byte for byte, in all three places.
+function countLine(label, bucket) {
+  return `- ${label}: ${swingCountPhrase(bucket.count)}` +
+    (bucket.count ? ` — numbers: ${bucket.swings.join(', ')}` : '')
+}
+
 // The pre-computed counts for the thresholds the selected goal's prose names,
 // as prompt lines. Slice 8b: the coach reliably repeats a count it is handed
 // and miscounts anything it derives itself, so every threshold in the goal's
@@ -464,8 +479,7 @@ function goalCountLines(goalId, swings) {
       // GOAL_COUNT_SPECS nor goalTargets: it is the shipped line's own
       // literal, named nowhere in the prompt prose, kept as found.
       return [
-        `- Swings with launch angle strictly below 15 degrees (not including 15): ${swingCountPhrase(v.underFifteen.count)}` +
-          (v.underFifteen.count ? ` — numbers: ${v.underFifteen.swings.join(', ')}` : ''),
+        countLine('Swings with launch angle strictly below 15 degrees (not including 15)', v.underFifteen),
         `- Swings in power zone (EV >= ${spec.exitVelocity} mph AND launch angle ${spec.launchAngle.min}-${spec.launchAngle.max} degrees): ${swingCountPhrase(v.powerZone.count)}`,
       ]
     case 'contact':
@@ -500,14 +514,11 @@ function goalCountLines(goalId, swings) {
 // lines: count every threshold the prompt names.
 function zoneCountLines(swings) {
   const zone = pitchZoneBreakdown(swings)
-  const line = (label, bucket) =>
-    `- ${label}: ${swingCountPhrase(bucket.count)}` +
-    (bucket.count ? ` — numbers: ${bucket.swings.join(', ')}` : '')
   return [
-    line('Swings on pitches outside the strike zone', zone.outside),
-    line(`Swings on pitches high (height above ${STRIKE_ZONE.heightMax}ft)`, zone.high),
-    line(`Swings on pitches low (height below ${STRIKE_ZONE.heightMin}ft)`, zone.low),
-    line(`Swings on pitches wide (side outside ${STRIKE_ZONE.sideMin} to ${STRIKE_ZONE.sideMax}ft)`, zone.wide),
+    countLine('Swings on pitches outside the strike zone', zone.outside),
+    countLine(`Swings on pitches high (height above ${STRIKE_ZONE.heightMax}ft)`, zone.high),
+    countLine(`Swings on pitches low (height below ${STRIKE_ZONE.heightMin}ft)`, zone.low),
+    countLine(`Swings on pitches wide (side outside ${STRIKE_ZONE.sideMin} to ${STRIKE_ZONE.sideMax}ft)`, zone.wide),
   ]
 }
 
@@ -517,18 +528,15 @@ function zoneCountLines(swings) {
 // miscounts anything it works out itself. Every goal gets these, because
 // every goal's prompt carries the direction key above and the raw per-swing
 // directions below, so every goal's coach can be asked "which ones did I
-// pull?" — which is exactly the question that exposed the defect.
+// pull?", which is exactly the question that exposed the defect.
 function sprayCountLines(swings) {
   const spray = sprayBreakdown(swings)
-  const line = (label, bucket) =>
-    `- ${label}: ${swingCountPhrase(bucket.count)}` +
-    (bucket.count ? ` — numbers: ${bucket.swings.join(', ')}` : '')
   // The "+" before the oppo cutoff matches the Hit to All Fields prose's own
   // "+15", and the strict/inclusive wording matches the zone lines above.
   return [
-    line(`Swings pull side (direction strictly below ${SPRAY_CUTOFFS.pull} degrees, not including ${SPRAY_CUTOFFS.pull})`, spray.pull),
-    line(`Swings up the middle (direction ${SPRAY_CUTOFFS.pull} to +${SPRAY_CUTOFFS.oppo} degrees, including both)`, spray.middle),
-    line(`Swings opposite field (direction strictly above +${SPRAY_CUTOFFS.oppo} degrees, not including +${SPRAY_CUTOFFS.oppo})`, spray.oppo),
+    countLine(`Swings pull side (direction strictly below ${SPRAY_CUTOFFS.pull} degrees, not including ${SPRAY_CUTOFFS.pull})`, spray.pull),
+    countLine(`Swings up the middle (direction ${SPRAY_CUTOFFS.pull} to +${SPRAY_CUTOFFS.oppo} degrees, including both)`, spray.middle),
+    countLine(`Swings opposite field (direction strictly above +${SPRAY_CUTOFFS.oppo} degrees, not including +${SPRAY_CUTOFFS.oppo})`, spray.oppo),
   ]
 }
 

@@ -728,7 +728,7 @@ A countable claim is one of these four shapes. Use the matching "kind":
 
 "sessionStat" - a whole-session statistic ("you averaged 89 mph", "you put 4 of 15 in the zone").
   Fields: sessionNumber, statName, statedValue.
-  statName must be one of: avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings, topExitVelocity, underFifteenCount, powerZoneCount, contactTargetBandCount, contactHardHitCount, contactFlyBallCount, pullSideCount, oppoFieldCount, allfieldsHardContactCount, popUpCount, weakGrounderCount, popupTargetBandCount, outsideZoneCount, highPitchCount, lowPitchCount, widePitchCount.
+  statName must be one of: avgExitVelocity, avgLaunchAngle, inZoneCount, totalSwings, topExitVelocity, underFifteenCount, powerZoneCount, contactTargetBandCount, contactHardHitCount, contactFlyBallCount, pullSideCount, upTheMiddleCount, oppoFieldCount, allfieldsHardContactCount, popUpCount, weakGrounderCount, popupTargetBandCount, outsideZoneCount, highPitchCount, lowPitchCount, widePitchCount.
   Use sessionStat ONLY when the coach names the statistic itself. A count of balls over or under some distance, angle, or speed is a "threshold" claim with that metric, NEVER a sessionStat: "4 balls hit 305 feet or more" is threshold, metric distance, atLeast 305, statedCount 4. Bare "exit velocity" means avgExitVelocity; use topExitVelocity only when the coach says top, best, peak, or hardest.
 
 If a sentence carries a number but fits none of these shapes, use kind "other" and give the quote alone. Do not force it into a shape that does not fit; "other" is the correct and expected answer for anything you cannot structure cleanly.
