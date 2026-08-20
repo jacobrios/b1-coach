@@ -62,15 +62,31 @@ function pearsonCorrelation(xs, ys) {
   return covariance / Math.sqrt(varianceX * varianceY)
 }
 
-// How many distinct values appear among the consecutive gaps of a sorted
-// numeric array. A dead-straight ramp (2, 4, 6, 8...) has exactly one
-// distinct gap; a hand-picked-to-look-random-but-isn't sequence can still
-// alternate between only two step sizes. Real, noisy data does neither.
-function distinctConsecutiveGaps(values) {
+// The share of a sorted array's consecutive gaps taken by its single most
+// common gap value. A dead-straight ramp's share is 100%: every gap is the
+// same size. Real, noisy data spreads its gaps across several sizes, so no
+// one size dominates.
+//
+// This replaced a first version, distinctConsecutiveGaps, that counted how
+// many DIFFERENT gap sizes appeared rather than how they were distributed.
+// That is a weak proxy and was caught in review of this task's fix round 1
+// (19 August 2026): a near-perfect ramp of twelve identical gaps plus two
+// single-point perturbations, a stray 1 and a stray 3 alongside a dominant
+// 2, produces three distinct gap values and would have PASSED the old rule
+// outright, despite still reading overwhelmingly as a straight line. See
+// the mutation proof in task-1-report.md, which constructs exactly that
+// sequence and confirms this rule catches it where the old one would not
+// have. distinctConsecutiveGaps is gone; nothing else in this file used it.
+function maxGapShare(values) {
   const sorted = [...values].sort((a, b) => a - b)
-  const gaps = new Set()
-  for (let i = 1; i < sorted.length; i++) gaps.add(sorted[i] - sorted[i - 1])
-  return gaps.size
+  const gapCounts = new Map()
+  for (let i = 1; i < sorted.length; i++) {
+    const gap = sorted[i] - sorted[i - 1]
+    gapCounts.set(gap, (gapCounts.get(gap) ?? 0) + 1)
+  }
+  const totalGaps = sorted.length - 1
+  const mostCommonGapCount = Math.max(...gapCounts.values())
+  return mostCommonGapCount / totalGaps
 }
 
 describe('on-target counts, via the same functions the goal cards and prompts use', () => {
@@ -128,27 +144,47 @@ describe('exit velocity and launch angle read as a hitter, not a ruler', () => {
   })
 })
 
-describe('neither exit velocity nor launch angle steps in an arithmetic progression', () => {
-  // A sorted list of fifteen values whose consecutive gaps take only one or
-  // two distinct sizes reads as a ramp, not a hitter's spread. The two
-  // halves below disagree today, and that disagreement is the reason this
-  // slice's plan calls test 3 out specially: launch angle fails naturally
-  // (today's fifteen angles step by exactly 2 for eleven consecutive
-  // values, so the sorted gaps are {2, 1}, two distinct sizes). Exit
-  // velocity happens to PASS today (sorted gaps are {1, 2, 3}, three
-  // distinct sizes) purely because the hand-picked exit speeds are not
-  // quite as evenly spaced as the angles are, not because anyone verified
-  // the exit-velocity spread is realistic. A test that passes by accident
-  // is not evidence, so this half was proven with a deliberate mutation
-  // before being trusted here; see task-1-report.md.
-  it('launch angle has more than two distinct consecutive gaps', () => {
+describe('neither exit velocity nor launch angle reads as a ramp', () => {
+  // A sorted list of fifteen values where one gap size dominates the other
+  // fourteen consecutive gaps reads as a ramp, not a hitter's spread. The
+  // threshold is a share, not a count: no single gap size may account for
+  // more than 60% of the fourteen gaps. (This rule replaced a first version
+  // that counted DISTINCT gap sizes instead of their distribution and was
+  // caught as a weak proxy in review; see maxGapShare's own comment above
+  // for the near-ramp sequence that exposed it and the mutation proof in
+  // task-1-report.md that confirms this version catches it.)
+  //
+  // The two halves below disagree today, which is why this slice's plan
+  // calls test 3 out specially. Launch angle fails naturally: the gap of 2
+  // accounts for 10 of today's fourteen gaps, 71%, well past the 60% line.
+  // Exit velocity happens to PASS today, at 8 of 14 gaps of size 1 (57%),
+  // purely because the hand-picked exit speeds are not quite as evenly
+  // spaced as the angles are, not because anyone verified the
+  // exit-velocity spread is realistic. A test that passes by accident is
+  // not evidence, so this half was proven with a deliberate mutation before
+  // being trusted here: a constructed near-ramp sequence (twelve gaps of 2,
+  // one gap of 1, one gap of 3) that the OLD distinct-count rule would have
+  // passed outright, confirmed red under this rule. See task-1-report.md.
+  //
+  // A second, complementary check (for example, requiring the gaps
+  // themselves not be monotonically ordered) was considered and not added.
+  // With only fourteen gaps across fifteen swings, a rule that also
+  // penalizes clustering risks flagging a legitimately plausible hitter who
+  // happened to bunch a few similar-quality swings together. The
+  // share-based rule already targets the exact failure mode this fix
+  // responds to, one gap size dominating, and it is backed by a mutation
+  // proof built specifically to defeat the rule it replaced. A second rule
+  // was judged to add complexity without closing a gap known to matter for
+  // fifteen real data points; revisit only if a future sequence is found
+  // that defeats this rule specifically.
+  it('launch angle: no single gap size accounts for more than 60% of the fourteen gaps', () => {
     const launchAngles = SESSION_ONE_SWINGS.map((w) => w.hit.launch.angle)
-    expect(distinctConsecutiveGaps(launchAngles)).toBeGreaterThan(2)
+    expect(maxGapShare(launchAngles)).toBeLessThanOrEqual(0.6)
   })
 
-  it('exit velocity has more than two distinct consecutive gaps', () => {
+  it('exit velocity: no single gap size accounts for more than 60% of the fourteen gaps', () => {
     const exitVelocities = SESSION_ONE_SWINGS.map((w) => w.hit.launch.exitSpeed)
-    expect(distinctConsecutiveGaps(exitVelocities)).toBeGreaterThan(2)
+    expect(maxGapShare(exitVelocities)).toBeLessThanOrEqual(0.6)
   })
 })
 
