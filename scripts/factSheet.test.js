@@ -124,7 +124,7 @@ describe('buildSessionFactSheet', () => {
   })
 
   it('computes underFifteenCount exactly like the coach prompt does (strictly below 15)', () => {
-    const sheet = buildSessionFactSheet(session)
+    const sheet = buildSessionFactSheet(session, { goalId: 'power' })
     // Angles 10, 20, 5, 30, 15 -> strictly under 15 is swings 1 (10) and 3 (5).
     // Swing 5 sits at exactly 15 and must NOT count, matching the prompt's
     // own "not including 15" wording in coachApi.js.
@@ -133,7 +133,7 @@ describe('buildSessionFactSheet', () => {
   })
 
   it('computes powerZoneCount using the real goal target (LA 25-35, EV >= 88)', () => {
-    const sheet = buildSessionFactSheet(session)
+    const sheet = buildSessionFactSheet(session, { goalId: 'power' })
     // Only swing 4 (EV 95, LA 30) meets both.
     expect(sheet.stats.powerZoneCount).toBe(1)
     expect(sheet.stats.powerZoneSwings).toEqual([4])
@@ -155,7 +155,7 @@ describe('buildSessionFactSheet', () => {
 
   it('builds a threshold table for every tracked metric', () => {
     const sheet = buildSessionFactSheet(session)
-    for (const metric of ['exitVelocity', 'launchAngle', 'direction', 'distance']) {
+    for (const metric of ['exitVelocity', 'launchAngle', 'direction', 'distance', 'pitchHeight', 'pitchSide']) {
       expect(Array.isArray(sheet.thresholds[metric])).toBe(true)
       expect(sheet.thresholds[metric].length).toBeGreaterThan(0)
     }
@@ -176,8 +176,8 @@ describe('goalExtraThresholds', () => {
   // src/goalCountSpecs.js, the same table the prose itself interpolates, so
   // the grader and the prompt cannot disagree about what was counted.
 
-  it('contact gains the above-20-degrees fly-ball line its prose names', () => {
-    expect(goalExtraThresholds('contact').launchAngle).toContain(20)
+  it('contact gains the above-18-degrees fly-ball line its prose names', () => {
+    expect(goalExtraThresholds('contact').launchAngle).toContain(18)
   })
 
   it('allfields gains both direction cutoffs, a metric it never carried before', () => {
@@ -196,25 +196,80 @@ describe('goalExtraThresholds', () => {
     expect(extras.launchAngle).toContain(5)
   })
 
-  // Not new behavior: pinned here so the Slice 8b additions cannot quietly
-  // remove it. The shipped prompt reports a power-zone count to every goal
-  // (the POWER constant in src/coachApi.js), so every goal's fact sheet
-  // must keep rows at Power's numbers for the baseline round. Task 7
-  // revisits this once the prompt stops doing that.
-  it('still merges Power\'s targets into every goal, as the shipped prompt requires', () => {
-    for (const goalId of ['contact', 'allfields', 'popup', 'open']) {
+  // Slice 8c: the prompt has been per-goal since Slice 8b, and grading a
+  // correct claim against leaked Power stats is what produced Slice 8b's
+  // false positives (see the 18 August 2026 correction). A goal other than
+  // Power must NOT pick up Power's own launch-angle band or exit-velocity
+  // minimum any more.
+  it('does not merge Power\'s targets into other goals any more', () => {
+    // Power's own band is launch angle 25-35, exit velocity 88. Popup's own
+    // prose legitimately reaches both 25 (its target band's own max) and 35
+    // (its own "pop-ups above 35 degrees" line), so those two are checked
+    // only for the goals that do not own them for a different reason.
+    for (const goalId of ['contact', 'allfields', 'open']) {
       const extras = goalExtraThresholds(goalId)
-      expect(extras.launchAngle).toContain(25)
-      expect(extras.launchAngle).toContain(35)
-      expect(extras.exitVelocity).toContain(88)
+      expect(extras.launchAngle ?? []).not.toContain(25)
+      expect(extras.launchAngle ?? []).not.toContain(35)
+    }
+    for (const goalId of ['contact', 'allfields', 'popup', 'open']) {
+      expect(goalExtraThresholds(goalId).exitVelocity ?? []).not.toContain(88)
     }
   })
 
-  it('a goal with no specs and no target still gets Power\'s rows and nothing invented', () => {
+  it('seeds pitchHeight and pitchSide with the strike-zone bounds for every goal', () => {
     const extras = goalExtraThresholds('open')
-    expect(extras.launchAngle).toEqual([25, 35])
-    expect(extras.exitVelocity).toEqual([88])
+    expect(extras.pitchHeight).toEqual([1.5, 3.5])
+    expect(extras.pitchSide).toEqual([-0.7, 0.7])
+  })
+
+  it('a goal with no specs and no target gets only its own target and the zone bounds', () => {
+    const extras = goalExtraThresholds('open')
+    expect(extras.launchAngle).toEqual([])
+    expect(extras.exitVelocity).toEqual([])
     expect(extras.direction).toBeUndefined()
+  })
+})
+
+describe('per-goal and zone stats (Slice 8c)', () => {
+  const session = { sessionNumber: 1, swings, stats: { avgExitVelocity: 84, avgLaunchAngle: 16, inZoneCount: 4, totalSwings: 5 } }
+
+  it('hands every goal the zone breakdown the prompt now hands the coach', () => {
+    const sheet = buildSessionFactSheet(session, { goalId: 'open' })
+    expect(sheet.stats.outsideZoneCount).toBe(1)
+    expect(sheet.stats.outsideZoneSwings).toEqual([3])
+    expect(sheet.stats.lowPitchCount).toBe(1)
+    expect(sheet.stats.lowPitchSwings).toEqual([3])
+    expect(sheet.stats.highPitchCount).toBe(0)
+    expect(sheet.stats.widePitchCount).toBe(0)
+  })
+
+  it('gives contact its own three counts and no Power stats', () => {
+    const sheet = buildSessionFactSheet(session, { goalId: 'contact' })
+    // Band 8-18 inclusive: angles 10 and 15. 85+: 90, 95, exactly 85.
+    // Fly balls strictly above 18: 20 and 30.
+    expect(sheet.stats.contactTargetBandCount).toBe(2)
+    expect(sheet.stats.contactTargetBandSwings).toEqual([1, 5])
+    expect(sheet.stats.contactHardHitCount).toBe(3)
+    expect(sheet.stats.contactFlyBallCount).toBe(2)
+    expect(sheet.stats.powerZoneCount).toBeUndefined()
+    expect(sheet.stats.underFifteenCount).toBeUndefined()
+  })
+
+  it('keeps power stats, under their pre-8c names, for the power goal only', () => {
+    const sheet = buildSessionFactSheet(session, { goalId: 'power' })
+    // Strictly under 15: angles 10 and 5. Power zone: 95 mph at 30 degrees.
+    expect(sheet.stats.underFifteenCount).toBe(2)
+    expect(sheet.stats.underFifteenSwings).toEqual([1, 3])
+    expect(sheet.stats.powerZoneCount).toBe(1)
+    expect(sheet.stats.powerZoneSwings).toEqual([4])
+    expect(sheet.stats.contactTargetBandCount).toBeUndefined()
+  })
+
+  it('builds pitch-location threshold rows seeded with the zone bounds', () => {
+    const sheet = buildSessionFactSheet(session, { goalId: 'open', extraThresholds: goalExtraThresholds('open') })
+    const row = sheet.thresholds.pitchHeight.find((r) => r.threshold === 1.5)
+    // Heights 2.0, 2.5, 1.0, 2.2, 3.0: only 1.0 is below 1.5.
+    expect(row.below).toEqual({ count: 1, swings: [3] })
   })
 })
 

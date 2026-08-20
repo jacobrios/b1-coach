@@ -665,6 +665,23 @@ Slice 8b itself was written under.
 **Blocked on nothing.** Slice 8b is merged. This can start whenever the
 product manager wants it scheduled.
 
+**Shipped 19 August 2026.** All five pieces landed: the zone count lines,
+the fly-ball 18 fix, the "1 swings" grammar fix, the grading tool's
+goal-aware fact sheet fix, and the handed-versus-derived measurement. The
+result is a split, not a clean win: the raw grader flags looked worse (15 of
+52 debriefs before, 21 of 52 after), but hand-checking every flag found the
+grading tool itself responsible for most of the apparent decline, and
+corrected for that, genuine coach errors actually fell (13 to 11 overall,
+6 to 3 on the pitch-location claims this slice targeted). What is left of
+the pitch-location gap is narrower than before: the coach now holds the
+right whole-session total and only gets it wrong when intersecting that
+total with a different named group of swings, an intersection between two
+handed counts rather than a number invented from nothing. Piece 5's number
+is recorded separately below, since it reopens a decision this document
+already scoped. Full numbers, the hand-check, and every caveat are in the
+decision log entry for 19 August 2026 and in
+`docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
+
 ## What it is, in one line
 
 Finish applying Slice 8b's own rule, count every threshold the prompt names,
@@ -781,6 +798,20 @@ a stated count disagrees with a handed one. Rejected because the matching is
 brittle against ordinary English ("once", "a single swing", "just one"), it
 adds a second model call to the slowest screen in the app, and this project
 has already measured that this style of checking raises false alarms.
+
+**Measured 19 August 2026, in Slice 8c itself: the trigger has fired.**
+Pooled across the slice's two 52-debrief before/after rounds (104 debriefs
+graded), the coach contradicted a number it had been handed directly on 4 of
+them, roughly one in 26. That is on the "build it" side of the rule above,
+worse than the one-in-fifty trigger, not close to the one-in-several-hundred
+"leave it alone" reading. The honest caveat: three of the four are the
+identical failure shape, reciting two adjacent prior-session averages in the
+wrong order, so four events is thin evidence for a precise rate. **This
+slice does not decide the question; it only supplies the number the decision
+rule above was waiting on.** Whether to build the fill-in-the-numbers
+approach is now live for the product manager, not parked. Full numbers in
+the decision log entry for 19 August 2026 and in
+`docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
 
 ## What this does not claim
 

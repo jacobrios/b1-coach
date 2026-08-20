@@ -239,7 +239,7 @@ as a side effect of other work.
 
 ## Where things live
 
-Line counts current as of 18 August 2026, at the close of Slice 8b.
+Line counts current as of 19 August 2026, at the close of Slice 8c.
 
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
@@ -255,7 +255,7 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
                              scroll fade, and the shared axis-text style
                              constants, both added in Slice 7.
     src/LiveSessionScreen.jsx 520 lines. Animated incoming swing data.
-    src/coachApi.js          572 lines. System prompts, the length budget
+    src/coachApi.js          592 lines. System prompts, the length budget
                              appended to the debrief prompt, the goal-context
                              block both prompts share, response parsing,
                              failure classification, the retry policy, and the
@@ -267,13 +267,23 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
                              log entry for 17 August 2026. Slice 8b added the
                              per-goal count lines and two more approved
                              sentences; see the decision log entry for 18
-                             August 2026.
-    src/goalCountSpecs.js     90 lines. One table, per goal, of every threshold
+                             August 2026. Slice 8c added four zone count lines
+                             (which swings sat outside the strike zone, and
+                             which way each was off) built from
+                             `pitchZoneBreakdown`, and fixed the "1 swings"
+                             grammar across every generated count line; see
+                             the decision log entry for 19 August 2026.
+    src/goalCountSpecs.js    140 lines. One table, per goal, of every threshold
                              that goal's coaching prose names in words, so the
                              sentence and the count that feeds it cannot drift
                              apart. Added in Slice 8b, re-exported from
                              `coachApi.js` so the prompt-building code and any
-                             future script read the same source.
+                             future script read the same source. Slice 8c added
+                             `goalCountValues`, the one computation behind every
+                             count both the prompt and the grader's fact sheet
+                             now read, and moved Contact's fly-ball cutoff from
+                             20 to 18 degrees so it matches the goal's own band
+                             ceiling instead of leaving 18-to-20 uncounted.
     src/ballFlight.js        228 lines. How far a struck ball carries, the five
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
@@ -292,13 +302,26 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
     src/chartSlots.js         64 lines. Which charts can render, how a slot is
                              filled when the model names one that cannot, and
                              whether a single key from a chat reply is usable.
-    src/sessionStats.js       31 lines. The numbers a session is summarized by.
+    src/sessionStats.js       57 lines. The numbers a session is summarized by.
+                             Slice 8c added `STRIKE_ZONE`, `inStrikeZone` and
+                             `pitchZoneBreakdown`, so the prompt's zone count
+                             lines, the grader's fact sheet, and the existing
+                             `inZoneCount` all read the same bounds and the same
+                             per-swing classification.
+    src/promptText.js          6 lines. One rule of prompt grammar,
+                             `swingCountPhrase`, so a count reads "1 swing"
+                             rather than "1 swings." Added in Slice 8c; shared
+                             by `coachApi.js`'s count lines and `ballFlight.js`'s
+                             distance-distribution line, the two places the
+                             prompt writes a count out in words. Its own module
+                             because it sits on the grader's `.js`-extension
+                             import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           2118 lines across eleven files, beside what they test.
+    src/*.test.js           2257 lines across twelve files, beside what they test.
     api/coach.test.js        532 lines, testing the serverless proxy.
     .claude/hooks/*.test.js  279 lines across two files, testing the hooks. Not
                              counted in the rows above.
-    scripts/*.mjs           3018 lines across five hand-run scripts, deliberately
+    scripts/*.mjs           3055 lines across five hand-run scripts, deliberately
                              outside the test runner: the two Slice 6 measurement
                              scripts, the Slice 7 bench, the Slice 7b before/after
                              comparison script, and the claim-accuracy grader
@@ -307,26 +330,47 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
                              extracts claims and never issues a verdict; Slice 8b
                              gave it an `--input <dir>` flag so it can grade a
                              fresh directory of bench records instead of only the
-                             committed fixture. See below and the bench section
-                             further down. (Corrected here: this line undercounted
-                             at four scripts through Slice 8; the fifth,
-                             `show-parse-failure-before-after.mjs`, existed since
-                             Slice 7b and was missed.)
-    scripts/*.js (tested)    698 lines across five small modules pulled out of
+                             committed fixture. Slice 8c gave it a `--handed-era
+                             slice8b|current` flag, so a claim is graded against
+                             the count lines the prompt generation that produced
+                             it actually shipped, and the grader's own extraction
+                             prompt learned to tell a strike-zone count from a
+                             goal's own launch-angle target window. See below and
+                             the bench section further down. (Corrected here: this
+                             line undercounted at four scripts through Slice 8;
+                             the fifth, `show-parse-failure-before-after.mjs`,
+                             existed since Slice 7b and was missed.)
+    scripts/*.js (tested)    912 lines across six small modules pulled out of
                              those hand-run scripts so their pure logic can be
                              checked without spending money: `factSheet.js` (the
-                             grader's deterministic count table),
+                             grader's deterministic count table, made goal-aware
+                             in Slice 8c so it stops handing every goal Power's
+                             stats and now covers pitch location too),
                              `contentWordOverlap.js` (the bench's restatement
                              check), `coachFailureRecord.js` (what the bench
                              keeps when a call fails to parse), `claimVerdict.js`
                              (Slice 8: every verdict the grader issues, decided
                              in plain code against the fact sheet; the grading
-                             model extracts claims and rules on nothing), and
+                             model extracts claims and rules on nothing),
                              `inputRecords.js` (Slice 8b: reads a directory of
-                             bench records for the grader's new `--input` flag).
-    scripts/*.test.js        976 lines across five files, testing those five
+                             bench records for the grader's new `--input` flag),
+                             and `handedCounts.js` (Slice 8c: describes, per
+                             goal and per prompt era, which counts the coach was
+                             actually handed, so the grader can tell a
+                             contradicted handed number apart from a self-derived
+                             one instead of pooling both as one error rate).
+                             (Dated note, 19 August 2026, whole-branch review:
+                             the label this module computes reached the
+                             grader's printed report only after a one-line fix
+                             landed the same day; before that fix the report
+                             silently dropped it. The committed Slice 8c rounds
+                             predate the fix, so their handed-versus-derived
+                             split was derived by hand, not printed by the
+                             tool. See the dated note in
+                             `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
+    scripts/*.test.js       1155 lines across six files, testing those six
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Four directories:
+    docs/eval-fixtures/      Committed ground truth, not code. Five directories:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -343,8 +387,15 @@ Line counts current as of 18 August 2026, at the close of Slice 8b.
                                the two grading transcripts were committed) holds
                                the before/after bench and grading records behind
                                Slice 8b's count-line fix, 52 debriefs each round.
+                               `slice8c-strike-zone-counts/` (700 KB) holds this
+                               slice's before/after: Slice 8b's after round
+                               re-graded with the fixed, goal-aware tool, plus a
+                               fresh 52-debrief round against the strike-zone
+                               count lines, the fly-ball fix and the "1 swings"
+                               fix, with every flagged claim in both rounds
+                               hand-checked genuine or false positive.
                                None is collected by vitest;
-                               all four have their own READMEs covering what is
+                               all five have their own READMEs covering what is
                                and is not safe to conclude from them.
 
 The two big files are big. Navigate them by line reference rather than reading
@@ -541,6 +592,16 @@ still-open error class (self-derived subsets over pitch location data) held
 completely flat across both rounds. The raw records for both rounds are
 committed under `docs/eval-fixtures/slice8b-threshold-counts/`.
 
+**A paid round was lost to a missing directory, 18 August 2026, and the fix
+is now in the bench itself.** The first attempt at Slice 8c's after-round
+completed all 52 live calls, spent $0.96, and then crashed writing its
+output because the target directory did not exist yet, so the calls' results
+existed only in memory and were gone the moment the process exited. The
+bench now creates its output directory before writing
+(`mkdirSync(path.dirname(args.out), { recursive: true })`), verified against
+the full suite and committed on its own before the round was re-run. See the
+decision log entry for 19 August 2026 for the full accounting.
+
 ## The data is synthetic
 
 There is no real TrackMan feed. All swing data comes from `generateSwings` in
@@ -620,8 +681,8 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of Slice 8b on 18 August 2026 it is 461 tests across 19
-   files, up from 429 across 17 at the close of Slice 8. It covers the
+   vitest, and as of Slice 8c on 19 August 2026 it is 489 tests across 21
+   files, up from 461 across 19 at the close of Slice 8b. It covers the
    serverless proxy's method routing, validation, and size cap; `callApi`'s
    one retry and its unwrapping of a fenced model response; the chart-slot
    fallback and dedupe; the chat reply's chart key; the goal targets and the
@@ -1553,6 +1614,25 @@ rewritten, per the append-only rule.
   contradicted it in the very next sentence. Pre-counting sharply cuts the
   miscount rate; it is not a guarantee. See the two new What's Next items
   below for the specifics.
+
+  **Annotation, 19 August 2026, from Slice 8c.** The simple version of this
+  is fixed: the coach is now handed which swings sat outside the strike zone
+  and which way each was off, and the live before/after comparison (hand-
+  checked, not the raw grader count) shows genuine pitch-location errors
+  falling from 6 to 3 across 52 debriefs each round. What is left is
+  narrower than "the coach invents pitch-location groupings" broadly. In
+  every one of the 3 remaining cases the coach already held the right
+  whole-session total and still misstated the count when intersecting it
+  with a different named group it had established earlier in the same tip,
+  for example "four of those [under-15-degree swings] were on pitches below
+  1.5 feet" when the true overlap between that named group and the
+  low-pitch group is 3, not 4. The zone count lines this slice added are
+  totals, not per-swing intersections, so an intersection between two
+  handed groups is still something the coach derives for itself. That is
+  the next scoping question for whoever picks this up, not a claim that
+  this slice's fix did nothing. Full numbers and the hand-check are in
+  `docs/eval-fixtures/slice8c-strike-zone-counts/README.md` and the decision
+  log entry for 19 August 2026.
 - **The claim-accuracy grader's false-positive rate has never been measured.**
   The grader was validated in Slice 8 for recall, whether it catches known
   coach errors, and it does. It has never been checked the other way: how
@@ -1574,6 +1654,23 @@ rewritten, per the append-only rule.
   the after round's 18 flagged debriefs are that mechanism rather than a
   coach error; see the fixture README and the 18 August decision-log entry
   for the corrected comparison.
+
+  **Annotation, 19 August 2026, from Slice 8c.** Still not a formally
+  measured false-positive rate, and that item is not closed by this slice.
+  But this slice's own by-hand check of every flagged claim in both of its
+  rounds found the tool's false-positive rate is not small: 2 of 15
+  before-round flags and 10 of 21 after-round flags were the grader calling
+  a true statement false, on two named mechanisms. One of them, a "none of
+  them exceeded X" claim graded as a value mismatch instead of the
+  complement it is, is the identical bug this bullet already named for
+  "nothing cleared 265 feet," and it recurred 8 times across both rounds of
+  this slice alone (5 times on "nothing got out past 265 feet," 3 times on
+  "none of them broke 80 mph" and its paired launch-angle claim). That
+  recurrence is why this item's priority is going up, not down: a bug this
+  slice keeps tripping over by accident is a stronger argument for measuring
+  it on purpose than the single case that first named it. See
+  `docs/eval-fixtures/slice8c-strike-zone-counts/README.md` for every
+  flagged claim in both rounds, judged genuine or false positive by hand.
 - **The grading tool's fact sheet was never updated for the five new counts
   Slice 8b added, and that is what caused the false positives above.** Found
   by whole-branch review, 18 August 2026. `scripts/factSheet.js`'s
@@ -1591,58 +1688,105 @@ rewritten, per the append-only rule.
   bucket when the coach's phrasing is inclusive, and re-grading both rounds
   (roughly $0.58) to get a clean comparison.
 
+  **Closed 19 August 2026, in Slice 8c.** `scripts/factSheet.js` is now
+  goal-aware: `sessionStatsExtras` reads `goalCountValues` for the goal
+  actually being graded, so a goal gets its own counts and no others, and
+  the Power leak this item described is gone. The fact sheet also grew
+  `pitchHeight` and `pitchSide` rows, seeded from the same `STRIKE_ZONE`
+  bounds the prompt now uses, so pitch-location threshold claims became
+  rulable for the first time. Both rounds in
+  `docs/eval-fixtures/slice8c-strike-zone-counts/` were graded with the
+  fixed tool.
+
 *Added from the Slice 8b browser QA pass, 18 August 2026:*
 
-- **Count the strike-zone thresholds too, naming which swings were on
-  pitches outside the zone.** A live browser pass against a real session-1
-  Power debrief on the local dev server confirmed the item above is not just
-  a bench measurement. Every claim this slice pre-counted came back correct
-  on that screen, and the one claim the coach still worked out for itself was
-  wrong: it named three swings as being on pitches below the strike zone, and
-  one of the three was actually inside it. The prompt already hands the coach
-  the strike-zone bounds and a total count of pitches in the zone, but never
-  which specific swings were outside it, so this is a threshold the slice's
-  own rule, count every threshold the prompt names, did not yet reach. Live
-  on the first screen every visitor sees, which is what makes finishing it
-  the natural next slice: apply Slice 8b's own rule to the one dimension it
-  skipped. **The two items below were found the same day, by the product
-  manager's own QA pass on PR #26, and all three belong to the same next
-  slice**, since all three are prompt wording changes that need to ship and
-  be measured together rather than piecemeal.
-- **Align the fly-ball wording from 20 degrees to 18.** Line Drives &
-  Contact's target band is 8 to 18 degrees, the single source in
-  `src/goalTargets.js`, but the coach's own instructions still say "angles
-  above 20 degrees are fly balls, not line drives." The 18-to-20 gap is
-  counted by neither number: swing 10 of session 1 sits at exactly 20
-  degrees and the product manager's QA pass caught it falling into neither
-  the "above 20" set nor the line-drive window. Pre-existing, but pre-
-  counting the above-20 threshold in Slice 8b is what made the coach state
-  it out loud often enough to be noticed. Approved 18 August 2026: change
-  the 20 to an 18 so one number governs the goal. See the postscript on the
-  Slice 8b entry in `docs/product-decisions-log.md`.
-- **Fix the "1 swings" grammar in the generated count lines.** Slice 8b's
-  count lines read "1 swings" whenever a count is exactly one, seen on the
-  Reduce Pop-Ups weak-grounder line. Invisible to a visitor since it lives
-  inside the prompt, but sloppy, and cheap to fix alongside the other two
-  prompt changes in this slice.
+- ~~**Count the strike-zone thresholds too, naming which swings were on
+  pitches outside the zone.**~~ **Shipped 19 August 2026 in Slice 8c.** The
+  coach is now handed four unconditional lines naming which swings sat
+  outside the strike zone and which way each was off (high, low, wide), built
+  from `pitchZoneBreakdown` in `src/sessionStats.js`. A live browser pass on
+  a real session-1 Power debrief confirmed the four lines reach the actual
+  request the app sends, and the coach repeated its handed zone counts
+  correctly on screen. The measured result is a real reduction, not a full
+  fix: hand-checked genuine pitch-location errors fell from 6 to 3 across 52
+  debriefs each round, and the 3 that remain are all one narrower failure,
+  the coach intersecting a handed zone total with a different named group of
+  swings on its own. See the annotation on the item above and
+  `docs/eval-fixtures/slice8c-strike-zone-counts/README.md` for the full
+  numbers.
+- ~~**Align the fly-ball wording from 20 degrees to 18.**~~ **Shipped 19
+  August 2026 in Slice 8c.** The coach's instructions now say "angles above
+  18 degrees are fly balls, not line drives," matching Line Drives & Contact's
+  own 8-to-18 band ceiling in `src/goalTargets.js`, so one number governs the
+  goal and the 18-to-20 gap swing 10 of session 1 used to fall into is
+  closed.
+- ~~**Fix the "1 swings" grammar in the generated count lines.**~~ **Shipped
+  19 August 2026 in Slice 8c.** Every generated count line, the four goal
+  count lines and the distance-distribution line alike, now reads "1 swing"
+  for a count of exactly one, via a shared `swingCountPhrase` helper in the
+  new `src/promptText.js`.
 
 *Added 19 August 2026, from the conversation that closed Slice 8b:*
 
-- **Measure how often the coach contradicts a count it was handed**, as
-  opposed to one it worked out for itself. Every rate this project has ever
-  measured is about the second kind. The first kind is known to happen, since
-  Slice 8b's QA pass caught one on Hit to All Fields, and known to be rare,
-  since all eight measured Hit to All Fields debriefs stated their counts
-  correctly, but it has no number. Folded into Slice 8c, where it costs
-  nothing extra because the before-and-after rounds are being run anyway.
-- **Decided not to have the app write the coach's numbers itself, for now.**
-  The one approach that would make a contradicted count impossible is to let
-  the coach write the sentence and have the app fill in the figure. It is
-  deliberately parked, because it makes the coach's prose more rigid exactly
-  where it sounds most human, and one wrong sentence is not enough evidence
-  to spend that. The trigger and the decision rule agreed in advance are
-  recorded with Slice 8c in `docs/queued-slices.md`. Do not re-propose this
-  without the measurement above in hand.
+- ~~**Measure how often the coach contradicts a count it was handed**, as
+  opposed to one it worked out for itself.~~ **Measured 19 August 2026 in
+  Slice 8c.** Pooled across both of this slice's 52-debrief rounds (104
+  debriefs graded), the coach contradicted a number it had been handed
+  directly on 4 of them, roughly 1 in 26. That is worse (more frequent) than
+  the one-in-fifty trigger the product manager set in advance for building
+  the fill-in-the-numbers approach below, so that decision is now live and
+  waiting on him, not still parked. One honest caveat: the sample is small
+  and lopsided, not diverse. 3 of the 4 flagged debriefs are the identical
+  pattern, reciting two adjacent prior-session averages in the wrong order
+  ("down from 83 and 84" when it was the other way around); the fourth is a
+  distinct off-by-one on a target-zone count. Four events is not enough to
+  trust a rate to one significant figure, and this measurement does not
+  claim to. Full numbers in
+  `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
+- **Decided not to have the app write the coach's numbers itself, for now,
+  and the trigger for revisiting has now fired.** The one approach that
+  would make a contradicted count impossible is to let the coach write the
+  sentence and have the app fill in the figure. It was deliberately parked
+  on 19 August 2026, because it makes the coach's prose more rigid exactly
+  where it sounds most human, and one wrong sentence was not enough evidence
+  to spend that. The trigger agreed in advance was piece 5's measured rate:
+  roughly one debrief in fifty means build it, closer to one in several
+  hundred means leave it alone. That measurement is in now (see the item
+  above): roughly one in 26, past the one-in-fifty line, with the sample-size
+  caveat stated there. **This is now an open product decision for the
+  product manager, not a closed one**, and this document does not decide it
+  on its own. The rule and the full reasoning are recorded with Slice 8c in
+  `docs/queued-slices.md`.
+
+*Added at the close of Slice 8c, 19 August 2026:*
+
+- **A committed grading run carries no record of its own era, seed, or
+  flags.** `scripts/grade-coach-accuracy.mjs`'s output JSON has no field
+  naming which `--handed-era` it was run with, which `--seed`, or which other
+  flags were set, so a committed grading transcript found later cannot prove
+  from itself which prompt generation it graded against. This slice worked
+  around it by naming the era in the file path and the README instead, which
+  is legible today but is not something a future script could check
+  automatically. Found while building this slice's before/after comparison;
+  cheap to add, no live spend required.
+  **(Dated addition, 19 August 2026, whole-branch review.)** The same
+  missing-era-record gap has a concrete edge already: `scripts/factSheet.js`'s
+  `sessionStatsExtras` computes `contactFlyBallCount` from today's
+  `GOAL_COUNT_SPECS` regardless of `--handed-era`, so grading a `slice8b`-era
+  record against it silently uses the current 18-degree cutoff instead of the
+  20-degree cutoff the coach was actually handed then. This did not produce
+  any false result in this slice's committed rounds, but it is the shape of
+  bug this item exists to catch, and it is one more argument for recording
+  the era on the run itself rather than only in the file path.
+- **The power-goal "below 15 degrees" count line prints a dangling
+  "numbers:" when the count is zero.** Found by the browser-pass payload
+  capture on a real session-2 request, which happened to have zero swings
+  under 15 degrees. The line renders as "Swings with launch angle strictly
+  below 15 degrees (not including 15): 0 swings, numbers:" with nothing
+  after the colon. Cosmetic and invisible to a visitor since it lives inside
+  the prompt the coach reads, not the screen, but it is a coach-prompt
+  change and needs the same approval any other prompt wording change gets
+  before it ships.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

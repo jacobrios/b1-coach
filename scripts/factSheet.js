@@ -32,12 +32,12 @@
 // Caller-supplied extras (see grade-coach-accuracy.mjs) add the specific
 // goal's own target numbers on top, since those differ per debrief.
 
-import { goalTarget, meetsTarget } from '../src/goalTargets.js'
-import { topExitVelocity } from '../src/sessionStats.js'
+import { goalTarget } from '../src/goalTargets.js'
+import { topExitVelocity, pitchZoneBreakdown, STRIKE_ZONE } from '../src/sessionStats.js'
 import { DISTANCE_BUCKETS } from '../src/ballFlight.js'
-import { countSpecThresholds } from '../src/goalCountSpecs.js'
+import { countSpecThresholds, goalCountValues } from '../src/goalCountSpecs.js'
 
-export const METRICS = ['exitVelocity', 'launchAngle', 'direction', 'distance']
+export const METRICS = ['exitVelocity', 'launchAngle', 'direction', 'distance', 'pitchHeight', 'pitchSide']
 
 const BASE_EXTRA_THRESHOLDS = {
   launchAngle: [0, 15, 20, 25, 30, 35],
@@ -61,6 +61,17 @@ export function swingRow(swing, index) {
   }
 }
 
+// Pitch location is tracked in feet to a tenth (the strike zone bounds
+// themselves are 1.5/3.5/-0.7/0.7), so rounding it to the nearest whole
+// number the way exit velocity or launch angle round would collapse the
+// zone bounds themselves into different numbers. Every other metric keeps
+// the whole-number rounding a coach's own language uses ("19.7 mph" is
+// never cited as such).
+const DECIMAL_METRICS = new Set(['pitchHeight', 'pitchSide'])
+const roundForMetric = (metricKey, v) => (
+  DECIMAL_METRICS.has(metricKey) ? Math.round(v * 10) / 10 : Math.round(v)
+)
+
 // Every threshold worth precomputing for one metric in one session: the
 // session's own values (rounded, since a coach doesn't cite "19.7 mph") plus
 // the base and caller-supplied extras, deduplicated and sorted.
@@ -68,10 +79,10 @@ export function candidateThresholds(rows, metricKey, extra = []) {
   const values = new Set()
   for (const row of rows) {
     const v = row[metricKey]
-    if (Number.isFinite(v)) values.add(Math.round(v))
+    if (Number.isFinite(v)) values.add(roundForMetric(metricKey, v))
   }
   for (const e of [...(BASE_EXTRA_THRESHOLDS[metricKey] ?? []), ...extra]) {
-    if (Number.isFinite(e)) values.add(Math.round(e))
+    if (Number.isFinite(e)) values.add(roundForMetric(metricKey, e))
   }
   return [...values].sort((a, b) => a - b)
 }
@@ -118,40 +129,48 @@ export function thresholdCounts(rows, metricKey, thresholds) {
   })
 }
 
-// The whole-session numbers the debrief prompt hands the coach directly
-// (buildDebriefUserMessage in src/coachApi.js), computed the same way here so
-// a claim repeating one of these can be checked against the identical
-// definition the coach actually saw, not a re-derivation of it.
-function sessionStatsExtras(swings) {
-  const top = topExitVelocity(swings)
+// The whole-session numbers the debrief prompt hands the coach directly,
+// computed by the same functions the prompt itself renders from
+// (goalCountValues, pitchZoneBreakdown), so a claim repeating one of these
+// is checked against the identical number the coach actually saw. Which
+// counts exist depends on the goal, exactly as it does in the prompt: the
+// pre-8c version emitted Power's two counts for every goal, and grading a
+// correct contact count against a Power stat is what produced Slice 8b's
+// false positives.
+function sessionStatsExtras(swings, goalId) {
   const top3 = [...swings]
     .map((sw) => sw.hit.launch.exitSpeed)
     .sort((a, b) => b - a)
     .slice(0, 3)
-
-  // Strictly below 15, matching the prompt's own "not including 15" wording.
-  const underFifteen = swings
-    .map((sw, i) => ({ n: i + 1, angle: sw.hit.launch.angle }))
-    .filter((s) => s.angle < 15)
-
-  const powerZone = swings
-    .map((sw, i) => ({ n: i + 1, meets: meetsTarget('power', sw.hit.launch) }))
-    .filter((s) => s.meets)
-
-  return {
-    topExitVelocity: top,
-    top3ExitVelocities: top3,
-    underFifteenCount: underFifteen.length,
-    underFifteenSwings: underFifteen.map((s) => s.n),
-    powerZoneCount: powerZone.length,
-    powerZoneSwings: powerZone.map((s) => s.n),
+  const stats = { topExitVelocity: topExitVelocity(swings), top3ExitVelocities: top3 }
+  // Residual era leak, found by whole-branch review, 19 August 2026, and
+  // recorded rather than fixed: goalCountValues always reads today's
+  // GOAL_COUNT_SPECS, so contactFlyBallCount here is computed at the current
+  // 18-degree cutoff even when this fact sheet is grading a --handed-era
+  // slice8b record, where the coach was actually handed the old 20-degree
+  // count. It did not bite in this slice's committed rounds (zero
+  // sessionStat claims landed on it), but a future era-specific grading run
+  // could hit it. See the grader-metadata item in CLAUDE.md's What's Next.
+  for (const [key, v] of Object.entries(goalCountValues(goalId, swings))) {
+    stats[`${key}Count`] = v.count
+    stats[`${key}Swings`] = v.swings
   }
+  const zone = pitchZoneBreakdown(swings)
+  stats.outsideZoneCount = zone.outside.count
+  stats.outsideZoneSwings = zone.outside.swings
+  stats.highPitchCount = zone.high.count
+  stats.highPitchSwings = zone.high.swings
+  stats.lowPitchCount = zone.low.count
+  stats.lowPitchSwings = zone.low.swings
+  stats.widePitchCount = zone.wide.count
+  stats.widePitchSwings = zone.wide.swings
+  return stats
 }
 
 // One session's worth of fact sheet: the per-swing table, the whole-session
 // numbers the prompt already handed the coach, and the threshold tables for
 // every tracked metric.
-export function buildSessionFactSheet(session, { extraThresholds = {} } = {}) {
+export function buildSessionFactSheet(session, { extraThresholds = {}, goalId } = {}) {
   const rows = session.swings.map((sw, i) => swingRow(sw, i))
   const thresholds = {}
   for (const metricKey of METRICS) {
@@ -167,7 +186,7 @@ export function buildSessionFactSheet(session, { extraThresholds = {} } = {}) {
       avgLaunchAngle: session.stats.avgLaunchAngle,
       inZoneCount: session.stats.inZoneCount,
       totalSwings: session.stats.totalSwings,
-      ...sessionStatsExtras(session.swings),
+      ...sessionStatsExtras(session.swings, goalId),
     },
     thresholds,
   }
@@ -178,44 +197,43 @@ export function buildSessionFactSheet(session, { extraThresholds = {} } = {}) {
 // filters to (`sessions.filter(s => s.sessionNumber <= viewingSessionNumber)`
 // in src/coachApi.js), so a claim about an earlier session is checkable and a
 // claim about a session the coach was never shown is not silently answered.
-export function buildFactSheet({ sessions, viewingSessionNumber, extraThresholds } = {}) {
+export function buildFactSheet({ sessions, viewingSessionNumber, extraThresholds, goalId } = {}) {
   const filtered = sessions
     .filter((s) => s.sessionNumber <= viewingSessionNumber)
     .sort((a, b) => a.sessionNumber - b.sessionNumber)
   return {
     viewingSessionNumber,
-    sessions: filtered.map((s) => buildSessionFactSheet(s, { extraThresholds })),
+    sessions: filtered.map((s) => buildSessionFactSheet(s, { extraThresholds, goalId })),
   }
 }
 
 // Goal-specific thresholds worth adding on top of the base set: the goal's
-// own launch-angle band and exit-velocity minimum, plus the power goal's
-// numbers, because the debrief prompt reports a power-zone count for every
-// goal regardless of which one is active (see the POWER constant and comment
-// in src/coachApi.js). Returns the same {metric: [values]} shape
-// buildFactSheet's extraThresholds takes.
+// own launch-angle band and exit-velocity minimum, every threshold the
+// goal's prompt prose names (read from GOAL_COUNT_SPECS via
+// countSpecThresholds rather than re-typed here, so the grader and the
+// prompt cannot disagree about what was counted), and the strike-zone bounds
+// for the two new pitch-location metrics, since the zone count lines go to
+// every goal regardless of which one is active. Returns the same
+// {metric: [values]} shape buildFactSheet's extraThresholds takes.
 //
-// Slice 8b added the second half: every threshold the goal's prompt prose
-// names, read from GOAL_COUNT_SPECS via countSpecThresholds rather than
-// re-typed here, so the grader and the prompt cannot disagree about what was
-// counted. That brings in contact's fly-ball 20, allfields' direction
-// cutoffs and 82 mph hard-contact line, and popup's 35 and 5. The Power
-// merging above it stays as-is for grading the baseline round; Task 7
-// revisits it once the prompt no longer shows Power's zone to every goal.
-// Duplicates across the two halves are fine: candidateThresholds dedupes.
+// The prompt has been per-goal since Slice 8b, and grading a correct claim
+// against leaked Power stats is what produced Slice 8b's false positives
+// (see the 18 August 2026 correction). This function used to also merge in
+// Power's own launch-angle band and exit-velocity minimum for every goal;
+// that merge is gone as of Slice 8c, because nothing in the current prompt
+// hands a non-Power goal Power's numbers.
 export function goalExtraThresholds(goalId) {
   const target = goalTarget(goalId)
-  const power = goalTarget('power')
   const launchAngle = []
   const exitVelocity = []
-  for (const t of [target, power]) {
-    if (!t) continue
-    if (t.launchAngle) {
-      launchAngle.push(t.launchAngle.min, t.launchAngle.max)
-    }
-    if (Number.isFinite(t.exitVelocity)) exitVelocity.push(t.exitVelocity)
+  if (target?.launchAngle) launchAngle.push(target.launchAngle.min, target.launchAngle.max)
+  if (Number.isFinite(target?.exitVelocity)) exitVelocity.push(target.exitVelocity)
+  const merged = {
+    launchAngle,
+    exitVelocity,
+    pitchHeight: [STRIKE_ZONE.heightMin, STRIKE_ZONE.heightMax],
+    pitchSide: [STRIKE_ZONE.sideMin, STRIKE_ZONE.sideMax],
   }
-  const merged = { launchAngle, exitVelocity }
   for (const [metric, values] of Object.entries(countSpecThresholds(goalId))) {
     merged[metric] = [...(merged[metric] ?? []), ...values]
   }

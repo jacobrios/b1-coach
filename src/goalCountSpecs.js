@@ -23,7 +23,7 @@
 // `.js` import extensions, and coachApi.js's own imports do not. coachApi.js
 // re-exports the table, so app code and the bench still find it there.
 
-import { goalTarget } from './goalTargets.js'
+import { goalTarget, meetsTarget } from './goalTargets.js'
 
 const POWER = goalTarget('power')
 const CONTACT = goalTarget('contact')
@@ -37,10 +37,12 @@ export const GOAL_COUNT_SPECS = {
   contact: {
     launchAngle: { min: CONTACT.launchAngle.min, max: CONTACT.launchAngle.max },
     exitVelocity: CONTACT.exitVelocity,
-    // "Angles above 20 degrees are fly balls, not line drives." The exact
-    // threshold every real "above 20 degrees" claim in the 96-debrief
-    // fixture got wrong.
-    flyBallAngle: 20,
+    // "Angles above 18 degrees are fly balls, not line drives." Was 20 until
+    // Slice 8c (approved 18 August 2026): the band ends at 18, so the old 20
+    // left 18-to-20 counted by neither number, and swing 10 of session 1
+    // sits at exactly 20. One number now governs the goal: the band's own
+    // ceiling, read here so it can never drift from goalTargets.js.
+    flyBallAngle: CONTACT.launchAngle.max,
   },
   allfields: {
     // "at least 3 swings pull side (direction below -15 degrees), at least 3
@@ -73,7 +75,7 @@ export function countSpecThresholds(goalId) {
   const add = (metric, value) => {
     if (!Number.isFinite(value)) return
     if (!out[metric]) out[metric] = []
-    out[metric].push(value)
+    if (!out[metric].includes(value)) out[metric].push(value)
   }
   if (spec.launchAngle) {
     add('launchAngle', spec.launchAngle.min)
@@ -87,4 +89,52 @@ export function countSpecThresholds(goalId) {
   add('direction', spec.oppoDirection)
   add('exitVelocity', spec.hardContactExitVelocity)
   return out
+}
+
+// Every count line the debrief prompt states, computed once. The prompt
+// renders these into English in src/coachApi.js and the grader's fact sheet
+// (scripts/factSheet.js) flattens them into per-goal stats, so the count the
+// coach was handed and the count a claim is graded against are the same
+// number by construction, not by parallel arithmetic kept in step by tests.
+// Keys are stable: the fact sheet derives stat names from them, and power's
+// two keys keep their pre-8c stat names on purpose.
+export function goalCountValues(goalId, swings) {
+  const spec = GOAL_COUNT_SPECS[goalId]
+  if (!spec) return {}
+  const select = (pred) => {
+    const hit = swings
+      .map((sw, i) => ({ n: i + 1, launch: sw.hit.launch }))
+      .filter(({ launch }) => pred(launch))
+    return { count: hit.length, swings: hit.map((s) => s.n) }
+  }
+  switch (goalId) {
+    case 'power':
+      return {
+        // Strictly below 15, matching the prompt's own "not including 15".
+        // 15 is a prompt literal, not a goal target; the fact sheet's base
+        // extras carry the same number.
+        underFifteen: select((l) => l.angle < 15),
+        powerZone: select((l) => meetsTarget('power', l)),
+      }
+    case 'contact':
+      return {
+        contactTargetBand: select((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max),
+        contactHardHit: select((l) => l.exitSpeed >= spec.exitVelocity),
+        contactFlyBall: select((l) => l.angle > spec.flyBallAngle),
+      }
+    case 'allfields':
+      return {
+        pullSide: select((l) => l.direction < spec.pullDirection),
+        oppoField: select((l) => l.direction > spec.oppoDirection),
+        allfieldsHardContact: select((l) => l.exitSpeed >= spec.hardContactExitVelocity),
+      }
+    case 'popup':
+      return {
+        popUp: select((l) => l.angle > spec.popUpAngle),
+        weakGrounder: select((l) => l.angle < spec.grounderAngle),
+        popupTargetBand: select((l) => l.angle >= spec.launchAngle.min && l.angle <= spec.launchAngle.max),
+      }
+    default:
+      return {}
+  }
 }

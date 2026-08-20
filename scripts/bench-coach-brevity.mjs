@@ -69,7 +69,8 @@
 // end. It helps Node find the file and touches nothing else.
 import { register } from 'node:module'
 import { performance } from 'node:perf_hooks'
-import { writeFileSync } from 'node:fs'
+import { writeFileSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
 
 const EXTENSIONLESS_RESOLVE_HOOK = `
   export async function resolve(specifier, context, nextResolve) {
@@ -741,6 +742,10 @@ async function main() {
   console.log(`Measured spend   ${inputTokens} input + ${outputTokens} output tokens = $${cost.toFixed(2)}`)
 
   if (args.out) {
+    // A run on 18 August 2026 completed all 52 paid calls and then lost every
+    // record to ENOENT because the output directory did not exist; the
+    // directory is cheaper than the calls.
+    mkdirSync(path.dirname(args.out), { recursive: true })
     writeFileSync(args.out, JSON.stringify(records, null, 2))
     console.log(`Raw records      ${args.out}`)
   }

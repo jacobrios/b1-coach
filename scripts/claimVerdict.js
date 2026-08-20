@@ -42,8 +42,8 @@ const COMPARISONS = new Set(['above', 'below', 'equal', 'atLeast', 'atMost'])
 // See the comment on thresholdCounts in scripts/factSheet.js.
 const COMPARISONS_WITH_SWINGS = new Set(['above', 'below', 'equal'])
 
-const unverifiable = (why) => ({ verdict: 'UNVERIFIABLE', actual: null, why })
-const ruled = (verdict, actual, why) => ({ verdict, actual, why })
+const unverifiable = (reasoning) => ({ verdict: 'UNVERIFIABLE', actual: null, reasoning })
+const ruled = (verdict, actual, reasoning) => ({ verdict, actual, reasoning })
 
 function findSession(factSheet, sessionNumber) {
   if (!Number.isFinite(sessionNumber)) return null
@@ -70,7 +70,7 @@ const describeRow = (metric, comparison, threshold, bucket) =>
 // the fixture pinned down: "above 20 degrees" was wrong in every one of the 96
 // debriefs that attempted it, because the prompt named that threshold in prose
 // and never counted it.
-function thresholdVerdict(claim, session) {
+function thresholdVerdict(claim, session, context) {
   const { metric, threshold, comparison, statedCount, statedSwings } = claim
   if (!COMPARISONS.has(comparison)) return unverifiable(`unknown comparison "${comparison}"`)
   if (!Number.isFinite(threshold)) return unverifiable('no threshold given')
@@ -84,7 +84,23 @@ function thresholdVerdict(claim, session) {
   }
 
   const actual = describeRow(metric, comparison, threshold, bucket)
+  // Slice 8c: the sibling-bucket rule. "Cleared 82 mph" (above) versus "82
+  // mph or higher" (atLeast) are different questions with different counts
+  // whenever a swing sits exactly at the threshold, and extraction cannot
+  // always tell which one a coach's phrasing meant. When the count the coach
+  // was actually HANDED used the sibling comparison, and the stated count
+  // matches that sibling bucket, the phrasing is ambiguous rather than wrong.
   if (bucket.count !== statedCount) {
+    const SIBLING = { above: 'atLeast', atLeast: 'above', below: 'atMost', atMost: 'below' }
+    const sib = SIBLING[comparison]
+    const handedComparison = context?.handed?.thresholds
+      ?.find((t) => t.metric === metric && t.threshold === threshold)?.comparison
+    const sibBucket = sib ? row[sib] : null
+    if (handedComparison === sib && Number.isFinite(sibBucket?.count) && sibBucket.count === statedCount) {
+      return ruled('TRUE', describeRow(metric, sib, threshold, sibBucket),
+        `the stated count matches the ${sib} bucket, which is the count the coach was handed; ` +
+        `the phrasing is ambiguous between ${comparison} and ${sib}`)
+    }
     return ruled('FALSE', actual, `claimed ${statedCount}, the row says ${bucket.count}`)
   }
 
@@ -101,7 +117,7 @@ function thresholdVerdict(claim, session) {
 }
 
 // One swing's own number, read straight out of the per-swing table.
-function swingValueVerdict(claim, session) {
+function swingValueVerdict(claim, session, context) {
   const { swingNumber, metric, statedValue } = claim
   if (!Number.isFinite(swingNumber)) return unverifiable('no swing number given')
   if (!Number.isFinite(statedValue)) return unverifiable('no stated value given')
@@ -125,7 +141,7 @@ function swingValueVerdict(claim, session) {
 // "N of those [swings X, Y, Z] were under T". The one shape that needs a set
 // operation rather than a lookup, and the shape of fixture error #4, where the
 // list was handed to the coach and the subset count was not.
-function subsetVerdict(claim, session) {
+function subsetVerdict(claim, session, context) {
   const { metric, threshold, comparison, ofSwings, statedCount } = claim
   if (!Array.isArray(ofSwings) || ofSwings.length === 0) return unverifiable('no subset swings given')
   if (!Number.isFinite(statedCount)) return unverifiable('no stated count given')
@@ -195,6 +211,15 @@ function rangeVerdict(claim, session, context) {
       : ruled('FALSE', actual, `claimed ${statedCount}, the named swings give ${inside.length}`)
   }
 
+  // Slice 8c: a one-metric band the prompt actually handed the coach as its
+  // own count (contact's 8-to-18 window, handed as a launch-angle-only
+  // count) carries no ambiguity to guard against, even when it happens to
+  // coincide with a goal's window. Power's window is handed as a two-metric
+  // stat and carries no matching range here, so the guard below still
+  // applies to it.
+  const handedRange = context?.handed?.ranges
+    ?.some((r) => r.metric === metric && r.min === min && r.max === max)
+
   // A goal window defined by TWO metrics cannot be checked as a one-metric
   // range. The Power goal asks for 25-35 degrees AND 88+ mph, and the app's
   // own prompt hands the coach the two-metric count, so a coach sentence
@@ -204,18 +229,20 @@ function rangeVerdict(claim, session, context) {
   // sentence the coach got right, which is what the 18 August 2026 smoke test
   // caught. This lives in code because the same rule written into the
   // extraction prompt did not hold.
-  const target = goalTarget(context?.goalId)
-  if (
-    target &&
-    metric === 'launchAngle' &&
-    Number.isFinite(target.exitVelocity) &&
-    min === target.launchAngle?.min &&
-    max === target.launchAngle?.max
-  ) {
-    return unverifiable(
-      `the ${min}-${max} window for this goal also requires ${target.exitVelocity}+ mph, ` +
-      'so a launch-angle-only count is not what the coach was necessarily claiming',
-    )
+  if (!handedRange) {
+    const target = goalTarget(context?.goalId)
+    if (
+      target &&
+      metric === 'launchAngle' &&
+      Number.isFinite(target.exitVelocity) &&
+      min === target.launchAngle?.min &&
+      max === target.launchAngle?.max
+    ) {
+      return unverifiable(
+        `the ${min}-${max} window for this goal also requires ${target.exitVelocity}+ mph, ` +
+        'so a launch-angle-only count is not what the coach was necessarily claiming',
+      )
+    }
   }
 
   const lowRow = findThresholdRow(session, metric, min)
@@ -252,11 +279,26 @@ const STAT_UNIT_WORDS = {
   inZoneCount: null,
   totalSwings: null,
   powerZoneCount: null,
+  // Slice 8c: the per-goal count lines added in Slice 8b and the strike-zone
+  // count lines added in Slice 8c.
+  contactTargetBandCount: /degree/i,
+  contactHardHitCount: /mph/i,
+  contactFlyBallCount: /degree/i,
+  pullSideCount: /degree/i,
+  oppoFieldCount: /degree/i,
+  allfieldsHardContactCount: /mph/i,
+  popUpCount: /degree/i,
+  weakGrounderCount: /degree/i,
+  popupTargetBandCount: /degree/i,
+  outsideZoneCount: /feet|ft/i,
+  highPitchCount: /feet|ft/i,
+  lowPitchCount: /feet|ft/i,
+  widePitchCount: /feet|ft/i,
 }
 const UNIT_WORDS = /\b(?:mph|degrees?|feet|ft)\b/i
 
 // A whole-session number the debrief prompt already handed the coach.
-function sessionStatVerdict(claim, session) {
+function sessionStatVerdict(claim, session, context) {
   const { statName, statedValue, quote } = claim
   if (!Number.isFinite(statedValue)) return unverifiable('no stated value given')
 
@@ -290,6 +332,34 @@ const RULES = {
   sessionStat: sessionStatVerdict,
 }
 
+// Slice 8c: whether the debrief prompt actually handed the coach this
+// claim's count, as opposed to leaving the coach to work it out. This is
+// what lets a before/after comparison tell "the coach contradicted a count
+// it was handed" (rare, and the harder failure) apart from "the coach
+// miscounted something it derived itself" (the mechanism Slice 8b targeted).
+// Comparison is deliberately ignored for a threshold match: rephrasing a
+// handed count ("above 85" versus "at least 85") is still the handed count,
+// not a derived one, which is also what the sibling-bucket rule above
+// depends on.
+function claimWasHanded(claim, handed) {
+  if (!handed) return false
+  switch (claim.kind) {
+    case 'swingValue':
+      // The per-swing table is handed to the coach verbatim.
+      return true
+    case 'sessionStat':
+      return (handed.statNames ?? []).includes(claim.statName)
+    case 'threshold':
+      return (handed.thresholds ?? []).some((t) => t.metric === claim.metric && t.threshold === claim.threshold)
+    case 'range':
+      return (handed.ranges ?? []).some((r) => r.metric === claim.metric && r.min === claim.min && r.max === claim.max)
+    default:
+      // subset claims are always derived: the coach built the subset itself
+      // mid-sentence, even when the threshold it filters on was handed.
+      return false
+  }
+}
+
 // Rule on one extracted claim. Never throws: an unusable claim is
 // UNVERIFIABLE with a stated reason, because a grader that crashes on a
 // surprising extraction loses the whole record rather than one claim.
@@ -303,5 +373,6 @@ export function verdictForClaim(claim, factSheet, context) {
   if (!session) {
     return unverifiable(`session ${claim.sessionNumber} is not in the fact sheet the coach was shown`)
   }
-  return rule(claim, session, context)
+  const result = rule(claim, session, context)
+  return context?.handed ? { ...result, handed: claimWasHanded(claim, context.handed) } : result
 }

@@ -142,7 +142,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       "Goal context: target launch angle 25-35 degrees, target exit velocity 88+ mph. These are the conditions for the player's best contact.",
     )
     expect(goalContext({ id: 'contact' })).toBe(
-      'Goal context: target launch angle 8-18 degrees for true line drives, target exit velocity 85+ mph for hard contact. Angles above 20 degrees are fly balls, not line drives.',
+      'Goal context: target launch angle 8-18 degrees for true line drives, target exit velocity 85+ mph for hard contact. Angles above 18 degrees are fly balls, not line drives.',
     )
     expect(goalContext({ id: 'allfields' })).toBe(
       'Goal context: goal is meaningful contact to all three zones — at least 3 swings pull side (direction below -15 degrees), at least 3 swings opposite field (direction above +15 degrees), remainder center field. Exit velocity 82+ mph indicates hard contact that challenges fielders.',
@@ -166,10 +166,10 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
   const pinSessions = [{
     sessionNumber: 1,
     swings: pinSwings,
-    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 1, totalSwings: 2 },
+    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
-  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 1/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n`
-  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swings, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swings\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
+  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -179,7 +179,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swings — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swings\n${pinTail}`,
+      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swing — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swing\n${pinTail}`,
     )
   })
 
@@ -191,7 +191,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swings\n- Swings with exit velocity 82 mph or higher: 1 swings\n${pinTail}`,
+      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing\n- Swings with exit velocity 82 mph or higher: 1 swing\n${pinTail}`,
     )
   })
 })
@@ -248,7 +248,7 @@ describe('the count lines each goal is handed', () => {
     const message = messageFor({ id: 'contact', label: 'Line Drives & Contact' })
     expect(message).toContain('- Swings with launch angle in the target 8-18 degrees (including both 8 and 18): 2 swings')
     expect(message).toContain('- Swings with exit velocity 85 mph or higher: 4 swings')
-    expect(message).toContain('- Swings with launch angle strictly above 20 degrees (not including 20): 3 swings')
+    expect(message).toContain('- Swings with launch angle strictly above 18 degrees (not including 18): 4 swings')
     expect(message).not.toContain('power zone')
     expect(message).not.toContain('below 15 degrees')
   })
@@ -264,8 +264,8 @@ describe('the count lines each goal is handed', () => {
 
   it('popup: counts pop-ups, weak grounders, and the target range', () => {
     const message = messageFor({ id: 'popup', label: 'Reduce Pop-Ups' })
-    expect(message).toContain('- Swings popped up (launch angle strictly above 35 degrees, not including 35): 1 swings')
-    expect(message).toContain('- Swings hit as weak grounders (launch angle strictly below 5 degrees, not including 5): 1 swings')
+    expect(message).toContain('- Swings popped up (launch angle strictly above 35 degrees, not including 35): 1 swing')
+    expect(message).toContain('- Swings hit as weak grounders (launch angle strictly below 5 degrees, not including 5): 1 swing')
     expect(message).toContain('- Swings with launch angle in the target 10-25 degrees (including both 10 and 25): 2 swings')
     expect(message).not.toContain('power zone')
     expect(message).not.toContain('below 15 degrees')
@@ -278,9 +278,47 @@ describe('the count lines each goal is handed', () => {
     expect(message).not.toContain('or higher')
     expect(message).not.toContain('including both')
     expect(message).not.toContain('strictly above')
-    // The strike-zone line runs straight into the top-3 line, no blank line
-    // left behind where the two shipped count lines used to sit.
-    expect(message).toContain('full per-swing pitch coordinates included above)\n- Top 3 exit velocities:')
+    // The strike-zone summary now runs into the zone lines, and the last
+    // zone line runs straight into the top-3 line, no blank line left behind
+    // where the two shipped count lines used to sit.
+    expect(message).toContain('full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone:')
+    expect(message).toContain('side outside -0.7 to 0.7ft): 0 swings\n- Top 3 exit velocities:')
+  })
+})
+
+// Slice 8c: the zone count lines every goal is handed, unconditionally, since
+// the strike-zone summary line they extend is unconditional too. Before this,
+// the coach was handed a total and the bounds but not which swings were
+// outside, so it worked that out for itself and got it wrong.
+describe('the strike-zone count lines every goal is handed', () => {
+  const zoneSwings = [
+    { plateLocHeight: 2.5, plateLocSide: 0.0 },
+    { plateLocHeight: 3.6, plateLocSide: 0.2 },
+    { plateLocHeight: 1.2, plateLocSide: -0.3 },
+    { plateLocHeight: 2.8, plateLocSide: 0.9 },
+    { plateLocHeight: 1.4, plateLocSide: -0.8 },
+    { plateLocHeight: 3.5, plateLocSide: -0.7 },
+  ].map((loc, i) => ({
+    ...loc,
+    hit: { launch: { exitSpeed: 80 + i, angle: 12, direction: 0 }, landing: { distance: 200 + i } },
+  }))
+  const zoneSessions = [{
+    sessionNumber: 1,
+    swings: zoneSwings,
+    stats: { avgExitVelocity: 82.5, avgLaunchAngle: 12, inZoneCount: 2, totalSwings: 6 },
+  }]
+
+  it('names which swings were outside, and which way each pitch was off', () => {
+    const message = buildDebriefUserMessage({
+      goal: { id: 'open', label: 'Open Session' },
+      player: { firstName: 'Jake' },
+      sessions: zoneSessions,
+      viewingSessionNumber: 1,
+    })
+    expect(message).toContain('- Swings on pitches outside the strike zone: 4 swings — numbers: 2, 3, 4, 5')
+    expect(message).toContain('- Swings on pitches high (height above 3.5ft): 1 swing — numbers: 2')
+    expect(message).toContain('- Swings on pitches low (height below 1.5ft): 2 swings — numbers: 3, 5')
+    expect(message).toContain('- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 5')
   })
 })
 
@@ -820,7 +858,7 @@ describe('the distance distribution both prompts describe', () => {
     // not just prove the prompt echoes whatever that function currently
     // returns — it proves the buckets are actually the ones the plan chose.
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 
@@ -832,7 +870,7 @@ describe('the distance distribution both prompts describe', () => {
       }),
     )
     expect(message).toContain(
-      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swings, 265-305ft: 3 swings, 305+ft: 3 swings',
+      'Distance distribution: Under 175ft: 5 swings, 175-225ft: 3 swings, 225-265ft: 1 swing, 265-305ft: 3 swings, 305+ft: 3 swings',
     )
   })
 
