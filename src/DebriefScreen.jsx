@@ -582,7 +582,12 @@ function BarDistance({ swings }) {
   return (
     <div style={{ flex: 1, minHeight: 0, width: '100%' }}>
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 10, right: 20, bottom: 30, left: 0 }}>
+        {/* top: 24, not 10. The YAxis has no explicit domain, so Recharts scales it to
+            the tallest bar, and that bar's LabelList count label (11px font, offset
+            about 5px above the bar) needs roughly 16px of headroom above the plot area.
+            10px clipped it. Raising the margin instead of setting a YAxis domain keeps
+            the axis ticks exactly as they were. */}
+        <BarChart data={data} margin={{ top: 24, right: 20, bottom: 30, left: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
           <XAxis
             dataKey="range"
