@@ -287,3 +287,124 @@ Only after tasks 1 to 3 are green and reviewed. This spends real money.
 3. **The QA script goes in the chat message, not the PR body**, ready to run:
    state seeded, server running, every link in place.
 4. **Open the PR and stop.** No local merge.
+
+---
+
+# Addendum, 20 August 2026: the browser QA gate rejected the slice
+
+Appended, not rewritten. Everything above records what was planned and what
+was measured before the product manager ran the QA script. This section
+records why that was not enough.
+
+## What the QA pass found
+
+Asked "which of my swings went to the pull side and which went the other
+way," the coach listed **six** pull-side swings on session 1. The spray chart
+on the same screen coloured **three**. Both were behaving correctly, and the
+app was the thing that was wrong: it holds two definitions of "pull" and had
+been handing the coach the one the screen does not use.
+
+- The line this slice shipped said "negative direction is pull side." By that
+  rule session 1 has six: swings 3, 4, 7, 10, 11, 15.
+- The spray chart, and the Hit to All Fields goal prose, call it pull only
+  below -15 degrees. That gives three: swings 3, 7, 15.
+
+So swings 4, 10 and 11 read as "pull side" in the prose and "Center" in the
+chart, at the same time, on the same screen.
+
+**This was a controller error, not an implementation error.** The wording was
+chosen deliberately over an option that named the -15 and +15 cutoffs, on the
+grounds that naming a threshold the prompt does not pre-count is what makes
+this coach invent counts. That reasoning was sound and incomplete: it never
+weighed the cost of leaving the coach with a *different* definition from the
+chart. The product manager's instinct in the original wording conversation
+pointed at this and was talked out of it.
+
+It also survived this slice's own verification. Task 3 ran the identical
+question, saw the coach list seven swings as pull side, recorded that its
+buckets contradicted **each other**, and never checked them against the chart.
+
+## What changes
+
+Approved by the product manager on 20 August 2026, before any code:
+
+1. `DIRECTION_KEY_LINE` becomes:
+   `- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.`
+2. Three pre-counted spray lines, per session, on **every** goal, naming the
+   swings, in the shape the existing zone lines already use.
+3. The grader's fact sheet gets matching rows, in the same change. A new count
+   with no matching stat is precisely what produced Slice 8b's false positives.
+4. The eval round is re-run. This change moves what the coach writes, which is
+   the case where a round is worth buying. The first round is kept, labelled as
+   measuring a prompt that did not ship.
+
+## Deliberately NOT done
+
+- **The coach is never told the spray chart exists.** It does not always
+  render, and a coach citing a chart that is not on screen would be a fresh
+  version of this same defect.
+- **`src/DebriefScreen.jsx` is not touched.** The chart keeps its own inline
+  -15 and +15. They agree with the new shared constant today. Consolidating the
+  chart's copy is recorded as remaining debt rather than done here, to keep this
+  fix out of the screen file entirely.
+
+---
+
+## Task 7: one definition of pull, and counts to go with it
+
+**Write the tests first and see them red.**
+
+1. The new `DIRECTION_KEY_LINE` value appears in both the debrief prompt and
+   the chat prompt, and the two cannot drift (mirror the existing trio at
+   `src/coachApi.test.js` that does this for the distance distribution).
+2. The three spray count lines appear in **both** prompts. The chat prompt
+   carries no count lines at all today; it must carry these, because the
+   observed defect was in a chat reply.
+3. Against session 1's real swings, the three lines read exactly:
+   - pull: 3 swings, numbers 3, 7, 15
+   - up the middle: 8 swings, numbers 1, 2, 4, 6, 10, 11, 13, 14
+   - opposite field: 4 swings, numbers 5, 8, 9, 12
+4. The three counts always sum to the session's swing count, on generated
+   sessions as well as session 1.
+5. A zero bucket ends cleanly with no dangling `— numbers:`, the same guard
+   Task 2 applied.
+6. The Hit to All Fields goal lines and the new universal lines report the
+   **same** pull and opposite-field numbers. This is the drift that caused the
+   defect; it must be impossible, not merely true today.
+
+**Then implement.**
+
+- Add `SPRAY_CUTOFFS` and `sprayBreakdown(swings)` to `src/sessionStats.js`,
+  beside `STRIKE_ZONE` and `pitchZoneBreakdown`, which are the exact precedent:
+  a classification convention that several places must agree on.
+- `GOAL_COUNT_SPECS.allfields` reads its `pullDirection` and `oppoDirection`
+  from `SPRAY_CUTOFFS` instead of writing -15 and +15 itself, the same way
+  `goalCountSpecs.js` already reads from `goalTargets.js`.
+- Add `sprayCountLines(swings)` in `src/coachApi.js` beside `zoneCountLines`,
+  and render it in both prompt builders.
+- `scripts/factSheet.js` gains one row per new count, from `sprayBreakdown`.
+
+## Task 8: re-run the round
+
+Same shape as Task 4: bench at seed 20260814, `BUILDER.txt` written before
+grading, grader `--dry-run` before the paid call, `--validate` on the real run,
+then hand-check every flagged claim. Output under
+`docs/eval-fixtures/slice10-direction-key/after-spray/`. Roughly $1.49.
+
+**Compare against the first round, not against Slice 9's after-a.** The first
+round is now the nearest neighbour: same data, same seed, one prompt
+generation apart. Say plainly that the null band was pre-registered against a
+different comparison and state whether it still applies.
+
+## Task 9: bring the records up to date
+
+The decision log entry, `CLAUDE.md`, and the fixture READMEs all describe the
+prompt that did not ship. Correct them by appending and annotating, never by
+rewriting. The first round's README must say what it measured and why that is
+not what shipped.
+
+## Task 10: re-review, then update the pull request
+
+Independent whole-branch review again, then update PR #32's body. The body must
+name the QA rejection, since a stranger reading the repo later learns more from
+a slice that was caught by its own gate than from one that was not.
