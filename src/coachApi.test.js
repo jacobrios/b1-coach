@@ -10,6 +10,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
   DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
+  DIRECTION_KEY_LINE,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 
@@ -169,7 +170,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
   const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
-  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -894,6 +895,90 @@ describe('the distance distribution both prompts describe', () => {
     // Also matches the function both prompts actually call, confirming the
     // request that left the browser is not some third, independent value.
     expect(extract(debriefMessage)).toBe(`Distance distribution: ${distanceDistributionLine(swings)}`)
+  })
+})
+
+// The coach is handed each swing's spray direction as a raw signed number and,
+// on five of the six goals, nothing tells it which sign means which way. A live
+// Power debrief called a +29 degree ball (opposite field) "driven to the pull
+// side." This line hands the coach the convention directly. Mirrors the
+// distance-distribution block above: a debrief assertion, a chat assertion, and
+// a cannot-drift-apart test, plus an adjacency check because the fact is only
+// useful sitting right next to the per-swing data it explains.
+describe('the direction key both prompts state', () => {
+  const swings = [{
+    plateLocHeight: 2.5,
+    plateLocSide: 0,
+    hit: {
+      launch: { exitSpeed: 80, angle: 15, direction: 0 },
+      landing: { distance: 200 },
+    },
+  }]
+  const session = {
+    sessionNumber: 1,
+    stats: { avgExitVelocity: 80, avgLaunchAngle: 15, inZoneCount: 1, totalSwings: 1 },
+    swings,
+  }
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  it('the debrief prompt states the exact direction key line', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(message).toContain(
+      '- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.',
+    )
+  })
+
+  it('the chat prompt — the copy that is easy to miss — states the identical direction key', async () => {
+    const message = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    expect(message).toContain(
+      '- Direction key: negative direction is pull side, positive direction is opposite field, near zero is up the middle.',
+    )
+  })
+
+  it('cannot drift apart: the debrief prompt and the chat prompt state the same direction key line, and both equal the exported constant', async () => {
+    const debriefMessage = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chatMessage = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    const extract = (text) => text.match(/- Direction key: [^\n]+/)[0]
+    expect(extract(debriefMessage)).toBe(extract(chatMessage))
+    expect(extract(debriefMessage)).toBe(DIRECTION_KEY_LINE)
+  })
+
+  it('sits immediately above the Individual swings line in both prompts', async () => {
+    const debriefMessage = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chatMessage = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    const adjacency = `${DIRECTION_KEY_LINE}\n- Individual swings:`
+    expect(debriefMessage).toContain(adjacency)
+    expect(chatMessage).toContain(adjacency)
   })
 })
 
