@@ -20,9 +20,33 @@
 // yourself, on demand:
 //
 //   node scripts/measure-swing-generation.mjs
+//   node scripts/measure-swing-generation.mjs --seed 12345
 //
-// It takes no arguments, replays 20,000 sessions per session-number/goal
-// combination, and prints a plain-text report. It takes a few seconds.
+// It replays 20,000 sessions per session-number/goal combination and prints a
+// plain-text report. It takes a few seconds.
+//
+// EVERY NUMBER IN THAT REPORT IS REPRODUCIBLE, AND IT DID NOT USE TO BE.
+// Until Slice 11 this script drew from Math.random, so nothing it printed
+// could be rerun to the same answer. The Power goal's empty-band figure read
+// 56.6% on one run and 57.3% on the next, from untouched code, and CLAUDE.md
+// carries that as a standing warning: no number this script or its sibling
+// has ever printed is a fixed measurement rather than one draw. It now draws
+// from a seeded generator instead, so the same command gives the same report
+// on any machine on any day, and a number quoted in a decision record or a
+// pull request can be checked rather than believed. That is the whole reason
+// the seed was added, and it is why Slice 11's entire evidence base is
+// allowed to be what this script prints.
+//
+// Pass --seed to see a different draw. Every finding here should survive
+// changing it; one that does not is sampling noise being read as a result.
+//
+// EACH MEASUREMENT GETS ITS OWN RANDOM STREAM, named after the thing it
+// measures rather than drawn in turn from one shared stream. That is what
+// stops adding a section to this file from silently moving every number
+// printed after it, which would quietly break any comparison between numbers
+// taken from two versions of this script. Sections can be added, removed or
+// reordered and the surviving ones still print exactly what they printed
+// before.
 //
 // WHAT IT COMPARES. Two versions of the generator, side by side, using the
 // SAME goal targets and the SAME session-1 baseline the real app uses:
@@ -116,6 +140,59 @@ const { generateSwings } = await import('../src/swingGenerator.js')
 const { hasTarget, meetsTarget } = await import('../src/goalTargets.js')
 const { distanceBucketCounts } = await import('../src/ballFlight.js')
 const { SESSION_ONE_SWINGS: mockSwings } = await import('../src/sessionOneSwings.js')
+
+// ---------------------------------------------------------------------------
+// The seed, and the named random streams every measurement below draws from.
+
+const DEFAULT_SEED = 20260821
+
+// A bad --seed is refused rather than shrugged off. `Number('banana') >>> 0`
+// is 0, so a typo would otherwise run happily on a seed nobody chose and
+// print a full page of official-looking numbers that no rerun of the command
+// as typed could ever reproduce.
+function parseSeed(argv) {
+  const eq = argv.find((a) => a.startsWith('--seed='))
+  const flagAt = argv.indexOf('--seed')
+  const raw = eq ? eq.slice('--seed='.length) : flagAt >= 0 ? argv[flagAt + 1] : null
+  if (raw === null || raw === undefined) return DEFAULT_SEED
+  const value = Number(raw)
+  if (!Number.isInteger(value) || value < 0) {
+    console.error(`--seed needs a whole number that is zero or more. Got: ${raw === undefined ? '(nothing)' : raw}`)
+    process.exit(1)
+  }
+  return value
+}
+
+const SEED = parseSeed(process.argv.slice(2))
+
+// The same small, fast, well-behaved generator scripts/grade-coach-accuracy.mjs
+// already uses to rebuild a graded session. Copied rather than imported for
+// the reason that file's own copy exists: these are hand-run scripts that must
+// keep working on their own, and this is nine lines of arithmetic with no
+// behaviour to keep in step.
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return function random() {
+    a = (a + 0x6d2b79f5) >>> 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// One independent stream per named measurement, derived from the seed and the
+// name together. Two measurements with different names get unrelated draws
+// from the same seed, and a measurement keeps its own draws no matter what
+// else is added to this file. The mixing is a plain FNV-1a hash of the name
+// folded into the seed; nothing here needs to be cryptographic, only stable.
+function streamFor(name) {
+  let h = (0x811c9dc5 ^ SEED) >>> 0
+  for (let i = 0; i < name.length; i++) {
+    h = (h ^ name.charCodeAt(i)) >>> 0
+    h = Math.imul(h, 0x01000193) >>> 0
+  }
+  return mulberry32(h)
+}
 
 const REPLAYS_PER_CELL = 20000
 const SESSIONS = [2, 3, 4]
@@ -220,13 +297,14 @@ function bucketPercentages(distances) {
 // it is measured separately for each goal.
 
 function measureBefore(sessionNum) {
+  const random = streamFor(`slice6-old-generator|session-${sessionNum}`)
   const distances = []
   const evs = []
   const las = []
   const emptyCounts = Object.fromEntries(TARGET_GOALS.map((g) => [g.id, 0]))
 
   for (let i = 0; i < REPLAYS_PER_CELL; i++) {
-    const swings = oldGenerateSwings(sessionNum, mockSwings, Math.random)
+    const swings = oldGenerateSwings(sessionNum, mockSwings, random)
     for (const w of swings) {
       distances.push(w.hit.landing.distance)
       evs.push(w.hit.launch.exitSpeed)
@@ -250,6 +328,7 @@ function measureBefore(sessionNum) {
 }
 
 function measureAfterForGoal(sessionNum, goalId) {
+  const random = streamFor(`slice6-today|session-${sessionNum}|${goalId}`)
   const distances = []
   const evs = []
   const las = []
@@ -260,7 +339,7 @@ function measureAfterForGoal(sessionNum, goalId) {
       sessionNum,
       goalId,
       baselineSwings: mockSwings,
-      random: Math.random,
+      random,
     })
     for (const w of swings) {
       distances.push(w.hit.landing.distance)
@@ -309,8 +388,14 @@ function printBucketLine(buckets) {
 console.log('='.repeat(78))
 console.log('SWING GENERATOR MEASUREMENT')
 console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per row below.`)
-console.log('"before" is the generator as it stood before this slice.')
-console.log('"after" is the generator as it stands right now in src/swingGenerator.js.')
+console.log(`Seed ${SEED}. Every number below is reproducible: run the same command again`)
+console.log('and it prints the same report. Pass --seed to draw a different sample.')
+console.log('')
+console.log('THE SLICE 6 COMPARISON. The two tables per session below compare the')
+console.log('generator BEFORE Slice 6 ("honest ball flight", 14 August 2026) with the')
+console.log('generator as it stands right now in src/swingGenerator.js. That pair of')
+console.log('words, before and after, means Slice 6 here and nothing else. Today\'s')
+console.log('numbers, item by item, are in the section above this one.')
 console.log('='.repeat(78))
 
 for (const sessionNum of SESSIONS) {
@@ -375,13 +460,14 @@ for (const sessionNum of SESSIONS) {
 // reimplemented, or reached around to get the number.
 
 function contactEmptyRateCorrelationOnly(sessionNum) {
+  const random = streamFor(`correlation-only|session-${sessionNum}`)
   let empty = 0
   for (let i = 0; i < REPLAYS_PER_CELL; i++) {
     const swings = generateSwings({
       sessionNum,
       goalId: 'open',
       baselineSwings: mockSwings,
-      random: Math.random,
+      random,
     })
     if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
   }
@@ -389,22 +475,24 @@ function contactEmptyRateCorrelationOnly(sessionNum) {
 }
 
 function contactEmptyRateBefore(sessionNum) {
+  const random = streamFor(`correlation-pre-slice6|session-${sessionNum}`)
   let empty = 0
   for (let i = 0; i < REPLAYS_PER_CELL; i++) {
-    const swings = oldGenerateSwings(sessionNum, mockSwings, Math.random)
+    const swings = oldGenerateSwings(sessionNum, mockSwings, random)
     if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
   }
   return empty / REPLAYS_PER_CELL
 }
 
 function contactEmptyRateShipped(sessionNum) {
+  const random = streamFor(`correlation-shipped|session-${sessionNum}`)
   let empty = 0
   for (let i = 0; i < REPLAYS_PER_CELL; i++) {
     const swings = generateSwings({
       sessionNum,
       goalId: 'contact',
       baselineSwings: mockSwings,
-      random: Math.random,
+      random,
     })
     if (!swings.some((w) => meetsTarget('contact', w.hit.launch))) empty++
   }
@@ -480,11 +568,13 @@ console.log('HOW SPREAD OUT A SESSION IS, BEFORE AND AFTER THE CORRELATION CHANG
 console.log('Session 2, re-roll switched off on the "after" row so the correlation')
 console.log('is the only thing that differs between them.')
 console.log('='.repeat(78))
+const SPREAD_BEFORE_RANDOM = streamFor('spread-pre-slice6|session-2')
+const SPREAD_AFTER_RANDOM = streamFor('spread-correlated|session-2')
 for (const [label, gen] of [
-  ['before (independent draws)', () => oldGenerateSwings(2, mockSwings, Math.random)],
+  ['before (independent draws)', () => oldGenerateSwings(2, mockSwings, SPREAD_BEFORE_RANDOM)],
   [
     'after (correlated, no re-roll)',
-    () => generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: mockSwings, random: Math.random }),
+    () => generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: mockSwings, random: SPREAD_AFTER_RANDOM }),
   ],
 ]) {
   const s = spreads(gen)
