@@ -540,16 +540,17 @@ const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
 // which is the property the whole app leans on: a chart axis, a coach count
 // line and a distance bucket all assume no swing can leave this range.
 //
-// AND ONE THING WAS LOST WITH THE COPY, NAMED HERE BECAUSE AN IMPORT CANNOT
-// ANNOUNCE IT. A copy is also a tripwire: it went off when the generator moved,
-// which is how anyone knew to come and look. An import simply follows the
-// generator wherever it goes and says nothing. The concrete exposure is in
-// section 5, which now prints unconditional prose saying these limits are
-// approached rather than parked on. Revert to hard clamps in a future task and
-// that sentence becomes false with nothing anywhere to notice, because the
-// numbers beside it would still be imported and still be right. The thing that
-// would catch it is the pile-up table underneath, which is measured rather than
-// asserted, so read the table before the prose if the two ever disagree.
+// ONE THING WAS LOST WITH THE COPY AND HAS SINCE BEEN CLOSED, recorded because
+// the reasoning generalises. A copy is also a tripwire: it goes off when the
+// generator moves, which is how anyone knows to come and look, and an import
+// simply follows the generator wherever it goes. The exposure that created was
+// in section 5, which printed unconditional prose saying these limits are
+// approached rather than parked on, and would have gone on printing it after a
+// future task restored hard clamps. It is conditional now, off the same measured
+// count the sentences beside it use, so the claim cannot outlive the thing it
+// describes. What is worth carrying: an imported constant removes a copy's
+// staleness and takes the copy's alarm with it, so any PROSE written around an
+// import has to be derived from a measurement rather than typed.
 const GENERATOR_CLAMPS = {
   exitVelocity: EXIT_VELOCITY_LIMITS,
   launchAngle: LAUNCH_ANGLE_LIMITS,
@@ -2068,9 +2069,39 @@ const deadLimits = declaredLimits.filter((w) => w.onIt === 0)
 console.log('')
 console.log(`  The generator also DECLARES four limits: a launch angle of ${GENERATOR_CLAMPS.launchAngle.min} to`)
 console.log(`  ${GENERATOR_CLAMPS.launchAngle.max} degrees and an exit velocity of ${GENERATOR_CLAMPS.exitVelocity.min} to ${GENERATOR_CLAMPS.exitVelocity.max} mph, imported from the`)
-console.log('  generator rather than copied here. Since Task 6 they are approached rather')
-console.log('  than parked on, so a limit holding nothing is the intended result and not a')
-console.log('  sign that this report is describing the wrong generator.')
+console.log('  generator rather than copied here.')
+// THE SENTENCE BELOW IS CONDITIONAL, AND IT USED TO BE UNCONDITIONAL. It said
+// "since Task 6 they are approached rather than parked on" whatever the run had
+// actually measured, which is a claim about the generator printed without
+// consulting it. Restore hard clamps in a future task and it would have gone on
+// saying so, in silence: tested rather than reasoned about, by restoring them in
+// an isolated copy and re-running this script. Nothing else in the report caught
+// it either. The pile-up table beneath does not, because it catches a clamp that
+// BINDS and today's limits sit so far outside this hitter that a clamp there
+// barely binds; both headline sentences still reported clean, and the only thing
+// that moved was the "4 of them hold nothing" count below becoming "1 of them
+// holds", which is legible only to a reader who already knew to expect 4.
+//
+// So it is printed off `deadLimits` now, and the condition is ALL FOUR of them
+// rather than at least one, which is not the obvious version and is the one that
+// works. Measured, by restoring hard clamps here and re-running: three of the
+// four limits start holding swings and the fourth, the launch angle ceiling of
+// 50, still holds nothing, because a hard clamp there binds at the top of the
+// pop-up band instead. So `deadLimits.length > 0` stays true and the false
+// sentence goes on printing. The claim is about all four limits, so it is
+// printed only when all four are dead. The disclosure that named this exposure
+// is deleted rather than reworded.
+//
+// Calibrate it honestly, though: restoring hard clamps at TODAY'S values would
+// be nearly harmless, because they hold almost nothing. The clamp this slice
+// removed was at 35 degrees, sitting on top of the distribution, and that one
+// lights the table up loudly. This is about a committed claim staying checkable,
+// not about a live hazard.
+if (deadLimits.length === declaredLimits.length) {
+  console.log('  Since Task 6 they are approached rather than parked on, so a limit holding')
+  console.log('  nothing is the intended result and not a sign that this report is describing')
+  console.log('  the wrong generator.')
+}
 if (deadLimits.length === 0) {
   console.log('  All four are reached, so all four are among the edges in the table above,')
   console.log('  and the table has already said what each of them holds.')

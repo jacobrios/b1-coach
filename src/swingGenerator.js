@@ -516,12 +516,22 @@ export const EXIT_VELOCITY_LIMITS = { min: 65, max: 97, soft: 3 }
 export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
 
 // The one way to set a soft zone that turns `withinLimits` into something worse
-// than the wall it replaced. Past half the range the two branches overlap, and
-// inside the overlap the curve does not merely compress, it INVERTS: at
-// { min: 65, max: 97, soft: 20 } a raw 66 comes back as 72.73 and a raw 96 as
-// 89.27, so the harder swing draws softer than the weak one, on every chart, with
-// nothing anywhere saying so. The threshold is half the range either way, which
-// is 16 mph and 27.5 degrees at today's limits.
+// than the wall it replaced. Past half the range the two branches below overlap,
+// and the value where they meet becomes a cliff the curve falls off: at
+// { min: 65, max: 97, soft: 20 } a raw 77.00 comes back as 78.41 and a raw 77.01
+// as 77.01, so a swing struck a hundredth of a mph harder draws nearly a mph and
+// a half softer, on every chart, with nothing anywhere saying so. The threshold
+// is half the range either way, which is 16 mph and 27.5 degrees at today's
+// limits, and the cliff always sits at `max - soft`.
+//
+// THE EXAMPLE HERE WAS WRONG FOR HALF A DAY AND THE CORRECTION IS WORTH KEEPING.
+// It first cited a raw 66 giving 72.73 against a raw 96 giving 89.27, and both
+// of those numbers are real, but 89.27 is the LARGER of the two: that pair shows
+// the harder swing still drawing harder, so it disproved the sentence it was
+// printed under. Scanning the whole range at a thousandth of a mph finds exactly
+// one descent, and it is the one now quoted. The guard and the threshold were
+// right all along; only the illustration was not, and an illustration a reader
+// can check is the entire reason for putting one here.
 //
 // It throws at module load rather than warning, because a generator that has
 // silently swapped hard contact for weak contact is not a degraded demo, it is a

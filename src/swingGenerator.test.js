@@ -256,8 +256,10 @@ describe('the shape of a generated session', () => {
   it('refuses a soft zone too wide for its own range, rather than inverting', () => {
     // THE FAILURE THIS GUARDS IS WORSE THAN THE WALL IT REPLACED, which is why
     // it throws at module load instead of being a sentence in a comment. Past
-    // half the range the two branches of the compression overlap, and inside
-    // the overlap the curve inverts: a hard swing draws softer than a weak one,
+    // half the range the two branches of the compression overlap, and the value
+    // where they meet becomes a cliff the curve falls off: at a 20 mph zone on a
+    // 65 to 97 range, a raw 77.00 draws 78.41 and a raw 77.01 draws 77.01, so a
+    // swing struck a hundredth harder comes out nearly a mph and a half softer,
     // on every chart, with nothing anywhere saying so. Task 9 is handed `soft`
     // by name as a constant to tune, so this is a live way to get it wrong.
     //
