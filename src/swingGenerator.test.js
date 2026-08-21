@@ -244,8 +244,10 @@ describe('a session that would render an empty target band is re-rolled', () => 
 //
 // Everything below is about where the ball was thrown, which until Slice 11 was
 // the least believable thing this file produced. Two separate complaints, both
-// measured across 180,000 generated swings by
-// `node scripts/measure-swing-generation.mjs` before anything was changed:
+// measured across 4,500,000 generated swings by
+// `node scripts/measure-swing-generation.mjs` before anything was changed, that
+// figure being the 20,000 sessions per goal per session number the script
+// samples and prints for itself:
 //
 //   1. Every single missed pitch was off on BOTH axes at once, 100% of them.
 //      There was no such thing here as a pitch that was simply low, because a

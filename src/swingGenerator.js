@@ -100,8 +100,10 @@ const POWER_LIFT_PER_SESSION = 2
 // that puts about two pitches in three where the hitter can reach them, and
 // whose misses are misses rather than wild ones: a ball just off the edge, on
 // one side of the zone at a time. Before Slice 11 it claimed neither of those
-// things, and both were measured rather than argued about, across 180,000
-// generated swings by `node scripts/measure-swing-generation.mjs`:
+// things, and both were measured rather than argued about, across 4,500,000
+// generated swings by `node scripts/measure-swing-generation.mjs`, which is
+// what that script's own sample of 20,000 sessions per goal per session number
+// comes to and what it prints for itself:
 //
 //   Every single missed pitch was off on BOTH axes at once, 100% of them.
 //   There was no such thing here as a pitch that was simply low, because a low
@@ -117,10 +119,14 @@ const POWER_LIFT_PER_SESSION = 2
 // READ THIS ONE THE RIGHT WAY ROUND, because a future reader will otherwise
 // get it backwards. IN_ZONE_RATE is a CHASE rate, not a command rate. It is
 // not how often the thrower finds the zone; it is how often the pitch the
-// hitter chose to go after turned out to be a strike, and in this app every
-// pitch is swung at. A hitter who lets the worst balls go by is why this
-// number sits well above any real thrower's strike percentage, and it is why
-// moving it says something about the hitter's discipline rather than about
+// hitter chose to go after turned out to be a strike. Every pitch this file
+// produces is swung at, because a session is fifteen SWINGS: the pitches he
+// let go by are not modelled here at all, so the arm threw some larger and
+// entirely unrecorded number of which these fifteen are the ones he offered
+// at. That is what resolves the next sentence, which otherwise reads as a flat
+// contradiction of this one. A hitter who lets the worst balls go by is why
+// this number sits well above any real thrower's strike percentage, and it is
+// why moving it says something about the hitter's discipline rather than about
 // the arm.
 //
 // 0.65 is a product judgment between two anchors, not a measurement. It
@@ -144,6 +150,23 @@ export const IN_ZONE_RATE = 0.65
 // session 1's 0.28, and can never exceed 0.80, which is a ball off the plate
 // rather than a ball in the dirt.
 //
+// ONE ARTIFACT THAT COMES WITH THAT SHAPE, named here because this file names
+// every other thing it does. Piling misses up against the floor leaves a
+// density spike on the zone edge: measured over 209,463 balls at seed 20260821,
+// exactly 1.45 feet accounts for 8.3% of every low miss and exactly 3.55 feet
+// for 8.1% of every high miss, with each side's 0.75 taking about 4.1% of the
+// wide ones. Either side of that sits a hard dead band, because a miss can
+// never be smaller than the floor: not one pitch anywhere lands strictly
+// between 1.45 and 1.50 feet, between 3.50 and 3.55, or between 0.70 and 0.75
+// sideways.
+//
+// This is NOT the launch angle clamp in a second costume, and the difference is
+// worth holding on to. A clamp piles values onto one extreme and nothing exists
+// beyond it; here the values fan out smoothly from the edge and the spike is
+// merely the nearest bin. It is still a boundary artifact on the pitch location
+// chart, which is the one screen this change alters, so it goes on the list for
+// this slice's browser gate rather than waiting for somebody to notice it.
+//
 // The maximum is exported for the same reason as the rate above: the test that
 // holds every generated pitch inside these walls reads the wall from here, so
 // a test carrying its own copy cannot quietly drift away from the limit it is
@@ -164,6 +187,18 @@ const PITCH_MISS_MIN_FEET = 0.05
 // hitter is most often talked into swinging at.
 const MISS_LOW_SHARE = 0.40
 const MISS_HIGH_SHARE = 0.30
+
+// AND THE JUDGMENT INSIDE THAT RULE, said out loud because this file
+// acknowledges its others. Choosing one axis makes a missed pitch off on
+// exactly one of them, always, so the both-axes share is now 0.000% against
+// session 1's own 16.7%: one of its six misses, swing 14, is a tenth of a foot
+// high AND a tenth wide. The brief asked for exactly this and it is what was
+// built, but it overshoots the calibration target rather than meeting it, and
+// a thrower who CANNOT miss two ways at once is a shade tidier than the session
+// this demo is calibrated against. The defect being removed was 100% of misses
+// off on both axes, so the overshoot buys a great deal and costs about one
+// pitch in six of one fifteen-swing session. If it is ever judged worth closing,
+// the change is a small chance of a second axis, not a different split.
 
 // The zone's own dimensions, derived rather than typed, so the in-zone draw
 // below covers exactly the zone `inStrikeZone` recognises and not a rectangle
@@ -229,7 +264,7 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
     // THE PITCH IS DRAWN FIRST, BEFORE ANYTHING ABOUT THE SWING, and the order
     // is the point rather than a tidy-up. A pitch drawn afterwards cannot
     // influence what the swing did, and until Slice 11 that is exactly what
-    // happened: measured across 180,000 generated swings, the difference in
+    // happened: measured across 4,500,000 generated swings, the difference in
     // exit velocity between swings at strikes and swings at balls was 0.00 mph,
     // while session 1's own gap is 8.78. Since Slice 8c the coach is handed
     // which pitches were outside the zone and reasons about them out loud, so
