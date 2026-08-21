@@ -83,6 +83,41 @@ import { STRIKE_ZONE } from './sessionStats'
 // after. A visitor sees a few more dots at the edges of the chart, which is
 // honest for a hitter and worth knowing before anyone reads a wider scatter as
 // a bug.
+//
+// EVERY NUMBER IN THE THREE PARAGRAPHS ABOVE IS A SLICE 6 MEASUREMENT AND TWO
+// OF THEM NO LONGER DESCRIBE THIS GENERATOR. Dated 21 August 2026 rather than
+// rewritten, because the argument they were quoted to make is still the right
+// one. The spread pair reads 6.30 mph and 7.54 degrees today, not 4.63 and
+// 6.36, because Task 7 widened EV_SPREAD_MPH; and the launch angle range no
+// longer stops at 35, because Task 3 replaced that wall with a soft limit at
+// 50 and Task 5 gave the hitter pop-ups to reach it with. Both figures come
+// off the "how spread out a session is" section of
+// `node scripts/measure-swing-generation.mjs`, which is what to rerun.
+//
+// THIS CONSTANT IS NOT THE CORRELATION IT IS NAMED FOR, and reading it as one
+// is how somebody ends up retuning it in the wrong direction. It is the WEIGHT
+// the shared contact-quality term carries into each of the two readings, and
+// it is applied to BOTH of them, so what actually comes out is roughly its
+// square. Set it to 0.5 expecting a correlation of 0.5 and the generator would
+// produce 0.25.
+//
+// Measured through this generator on 21 August 2026, 60,000 sessions across
+// five goals and sessions 2 to 4, seed 20260821:
+//
+//   as it ships                        0.23 median per session (0.17 pooled)
+//   setting the pop-ups aside          0.37 median per session (0.37 pooled)
+//
+// The second row is the blend on its own, and it lands where the arithmetic
+// says it should: 0.6 squared, plus a hundredth from the two pitch terms not
+// being quite independent of each other. The first row is what a visitor's
+// chart actually shows, and the gap between the two rows is the pop-up, which
+// by construction pairs a high launch angle with a soft exit velocity and so
+// pulls against the blend. Pop-ups are 2.7% of swings. (The second row is
+// measured by setting aside every swing at 38 degrees or above, the bottom of
+// POP_UP_BAND. That is the pop-ups plus a few of the very highest ordinary
+// swings on the Power goal, whose share of the band drifts from 2.6% at
+// session 2 to 3.1% at session 4; it is a close proxy rather than an exact
+// split.)
 const CONTACT_CORRELATION = 0.6
 const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
 
