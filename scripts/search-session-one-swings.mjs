@@ -137,6 +137,17 @@ const MAX_GAP_SHARE = 0.6
 //
 //   The clamps the generator obeys, so session 1 cannot contain a swing the
 //   rest of the app could never produce.
+//
+//   ANNOTATION, 21 AUGUST 2026, TASK 6: the launch angle line below is a
+//   hand-copy and it is now out of date, deliberately left that way. The
+//   generator's own range runs to 50 degrees since pop-ups exist, so 35 is no
+//   longer "the clamp the generator obeys" and the sentence above is only half
+//   true: a swing this search rejects for being too high is now producible.
+//   It is not updated because session 1 is hand-written, frozen, and has no
+//   pop-up in it on purpose, so a search allowed to reach 50 would be
+//   searching for a different session than the one that shipped. Read these two
+//   as "the range session 1 is allowed to occupy", which is what they have
+//   really been since this file was written, rather than as a copy of anything.
 const EV_CLAMP = { min: 65, max: 97 }
 const LA_CLAMP = { min: -5, max: 35 }
 //

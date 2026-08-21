@@ -165,7 +165,7 @@ const EXTENSIONLESS_RESOLVE_HOOK = `
 `
 register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK), import.meta.url)
 
-const { generateSwings } = await import('../src/swingGenerator.js')
+const { generateSwings, EXIT_VELOCITY_LIMITS, LAUNCH_ANGLE_LIMITS } = await import('../src/swingGenerator.js')
 const { hasTarget, meetsTarget } = await import('../src/goalTargets.js')
 const { distanceBucketCounts, DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { SESSION_ONE_SWINGS: mockSwings } = await import('../src/sessionOneSwings.js')
@@ -519,34 +519,29 @@ const SLICE11_GOALS = [
 
 const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
 
-// The four walls the generator squeezes every swing between. HAND-COPIED from
-// the two Math.max/Math.min lines in src/swingGenerator.js, which write them as
-// bare literals and export nothing, so there is no honest way to import them.
-// The same disclosed-copy situation as the goal labels above.
+// The four limits the generator holds every swing between.
 //
-// A copy of a shipped number is exactly what this project consolidates against
-// everywhere else, so it does not sit here unwatched: the check below refuses
-// to print a report if a swing ever came out beyond one of these, which is what
-// a stale copy would look like.
+// IMPORTED SINCE 21 AUGUST 2026, AND HAND-COPIED BEFORE THAT, which is the
+// whole of what changed here. This block used to carry its own copy of the four
+// numbers, because the generator wrote them as bare literals inside two
+// Math.max/Math.min lines and exported nothing, and the comment here said at
+// length which half of a drift that copy could catch: a limit that moved
+// OUTWARD stopped the run, a limit that moved INWARD was missed silently and
+// left this report describing a wall no swing could reach.
 //
-// WHICH HALF IT CATCHES, corrected 21 August 2026 after this comment stated it
-// backwards and the wrong version was repeated into a task report. Measured
-// both ways, not reasoned about:
+// Task 6 replaced both clamps with soft compression and had to export the
+// limits so the generator's own tests could read them, which retired the excuse
+// for the copy. They are imported now, so the asymmetry above is simply gone:
+// there is no second copy left to be stale in either direction.
 //
-//   A wall that moved further OUT than this copy IS caught. The generator
-//   produces a value beyond the copy, the check sees it, and the run stops
-//   with a message naming both ranges.
-//
-//   A wall that moved INWARD is MISSED. Every value the generator produces is
-//   still inside this copy, so nothing looks wrong, and the report goes on to
-//   describe a wall at a position no swing can now reach.
-//
-// So Slice 11's Task 6, which replaces both clamps with soft compression, has
-// to update this by hand. That instruction was always right; only the reason
-// printed beside it was inverted.
+// WHAT THE CHECK BELOW NOW PROVES IS A DIFFERENT AND BETTER THING. It used to
+// ask whether this file's copy still matched the generator. It now asks whether
+// the generator kept its own promise, across every swing this run generated,
+// which is the property the whole app leans on: a chart axis, a coach count
+// line and a distance bucket all assume no swing can leave this range.
 const GENERATOR_CLAMPS = {
-  exitVelocity: { min: 65, max: 97 },
-  launchAngle: { min: -5, max: 35 },
+  exitVelocity: EXIT_VELOCITY_LIMITS,
+  launchAngle: LAUNCH_ANGLE_LIMITS,
 }
 const SESSION_ONE_AVG_EV = average(mockSwings.map((w) => w.hit.launch.exitSpeed))
 
@@ -802,19 +797,21 @@ const cellsForSession = (sessionNum) => SLICE11_CELLS.filter((c) => c.sessionNum
 const allLaunchAngles = mergeCounters(SLICE11_CELLS.map((c) => c.laCounter))
 const allExitVelocities = mergeCounters(SLICE11_CELLS.map((c) => c.evCounter))
 
-// The stale-copy check the GENERATOR_CLAMPS comment promises. If a swing came
-// out beyond a wall this script believes exists, the wall has moved, section 5
-// is about to describe walls that are not there, and the safe thing is to stop
-// rather than print a page of confident nonsense.
+// The kept-promise check the GENERATOR_CLAMPS comment describes. Since Task 6
+// the limits are eased toward rather than parked on, so nothing here should
+// ever come near one; a swing outside them means the compression has a hole in
+// it, every chart axis and count line downstream is built on a range the
+// generator does not actually honour, and the safe thing is to stop rather than
+// print a page of confident nonsense.
 for (const [name, counter, clamp] of [
   ['launch angle', allLaunchAngles, GENERATOR_CLAMPS.launchAngle],
   ['exit velocity', allExitVelocities, GENERATOR_CLAMPS.exitVelocity],
 ]) {
   if (counterMin(counter) < clamp.min || counterMax(counter) > clamp.max) {
     console.error(
-      `This script's copy of the ${name} limits (${clamp.min} to ${clamp.max}) is out of date: ` +
-        `the generator produced ${counterMin(counter)} to ${counterMax(counter)}. ` +
-        'Update GENERATOR_CLAMPS in this file before trusting anything it prints.'
+      `The generator left its own declared ${name} limits (${clamp.min} to ${clamp.max}): ` +
+        `it produced ${counterMin(counter)} to ${counterMax(counter)}. ` +
+        'Fix that before trusting anything this script prints.'
     )
     process.exit(1)
   }
@@ -2058,9 +2055,11 @@ const declaredLimits = [
 }))
 const deadLimits = declaredLimits.filter((w) => w.onIt === 0)
 console.log('')
-console.log(`  The generator also DECLARES four hard limits: a launch angle of ${GENERATOR_CLAMPS.launchAngle.min} to`)
-console.log(`  ${GENERATOR_CLAMPS.launchAngle.max} degrees and an exit velocity of ${GENERATOR_CLAMPS.exitVelocity.min} to ${GENERATOR_CLAMPS.exitVelocity.max} mph, hand-copied into this`)
-console.log('  script from the generator itself.')
+console.log(`  The generator also DECLARES four limits: a launch angle of ${GENERATOR_CLAMPS.launchAngle.min} to`)
+console.log(`  ${GENERATOR_CLAMPS.launchAngle.max} degrees and an exit velocity of ${GENERATOR_CLAMPS.exitVelocity.min} to ${GENERATOR_CLAMPS.exitVelocity.max} mph, imported from the`)
+console.log('  generator rather than copied here. Since Task 6 they are approached rather')
+console.log('  than parked on, so a limit holding nothing is the intended result and not a')
+console.log('  sign that this report is describing the wrong generator.')
 if (deadLimits.length === 0) {
   console.log('  All four are reached, so all four are among the edges in the table above,')
   console.log('  and the table has already said what each of them holds.')
@@ -2939,7 +2938,7 @@ const THRESHOLDS_THAT_PICK_A_SENTENCE = [
 // is checked where it can be checked and disclosed where it cannot.
 const HAND_COPIES_FROM_THE_APP = [
   `the five goal labels, from GOALS in src/App.jsx, which a plain Node script cannot import because that file contains JSX. Renaming a goal on screen does not rename it here`,
-  `the generator's four declared limits, ${GENERATOR_CLAMPS.launchAngle.min} to ${GENERATOR_CLAMPS.launchAngle.max} degrees and ${GENERATOR_CLAMPS.exitVelocity.min} to ${GENERATOR_CLAMPS.exitVelocity.max} mph, written as bare literals in src/swingGenerator.js and exported nowhere. A limit that moves OUTWARD stops this run before it prints; a limit that moves INWARD is not caught, and section 5 would go on naming a value nothing reaches`,
+  `NO LONGER A COPY, as of 21 August 2026: the generator's four declared limits, ${GENERATOR_CLAMPS.launchAngle.min} to ${GENERATOR_CLAMPS.launchAngle.max} degrees and ${GENERATOR_CLAMPS.exitVelocity.min} to ${GENERATOR_CLAMPS.exitVelocity.max} mph, are imported from src/swingGenerator.js. They were bare literals there until Task 6 exported them, and the copy that stood here caught a limit moving outward and missed one moving inward. The line is kept rather than deleted so that nobody re-copies them on the strength of an old note`,
   'the Hit to All Fields bar of 3 and 3, from a sentence in src/coachApi.js rather than a constant',
 ]
 
