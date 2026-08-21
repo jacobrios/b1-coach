@@ -629,17 +629,54 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // factor is 1 and does not muddy the arithmetic; Open Session, so the
     // empty-band re-roll never fires and throws out the sessions it dislikes.
     //
-    // The band is 3% wide because two small effects sit inside it, both
-    // upward: rounding to whole numbers adds 1/12 of variance, worth about
-    // 0.2% on exit velocity, and 6,000 swings leave roughly half a percent of
-    // sampling noise on a standard deviation. An implementation that added
-    // the pitch on top rather than blending it would sit about 11% high, well
-    // outside.
+    // THIS ASSERTION WAS GREEN BY LUCK UNTIL 21 AUGUST 2026, AND THE STORY IS
+    // WORTH MORE THAN THE FIX. It read `toBeCloseTo(..., 1)` against both scale
+    // constants, which allows five hundredths either way, and it claimed in a
+    // comment to be a 3% band when on launch angle it was 0.79%. The launch
+    // angle this generator really produces is 6.4100 against the constant's
+    // 6.3509, which is 0.93% high and OUTSIDE that wall. The committed seed
+    // happened to draw 6.3329 at the 400 sessions this then ran, low by enough
+    // to cancel the bias exactly. Review swept 40 other seeds and 27 of them
+    // failed. Worse, `scripts/measure-swing-generation.mjs` prints the same
+    // quantity on the same convention as 6.41, so the repository was asserting
+    // one number and printing another.
+    //
+    // So this now asserts what the generator actually produces, as a RATIO to
+    // the scale constant, which is the form that says what the test is for.
+    // Measured through the shipped generator at 40,000 sessions: exit velocity
+    // comes out at 1.00098 of its constant and launch angle at 1.00931. Both
+    // are above 1 and neither is an accident:
+    //
+    //   Rounding to whole numbers adds 1/12 of variance to each reading, worth
+    //   about 0.10% on exit velocity and 0.05% on launch angle. The clamps pull
+    //   a little back the other way.
+    //
+    //   Launch angle carries the rest, about 0.88%, from the two pitch terms
+    //   being correlated at +0.058 rather than at 0, which is explained where
+    //   it happens in swingGenerator.js. Exit velocity has no second term and
+    //   so has no second effect.
+    //
+    // THE BAND IS 0.99 TO 1.025 AND IS SIZED FROM MEASUREMENT, not chosen.
+    // Across 60 seeds at the 4,000 sessions below, exit velocity ran 0.99542 to
+    // 1.00914 and launch angle 1.00298 to 1.01707, so every seed lands inside
+    // it with room. The sweep is 4,000 sessions rather than 400 for that
+    // reason: at 400 the same 60 seeds ran 0.98375 to 1.03256, which is wider
+    // than the effect being measured, and no honest band could have been drawn
+    // around it. The upper bound is the load-bearing one, because widening is
+    // the failure this test exists for: an implementation that added the pitch
+    // on top rather than blending it comes out at about 1.105.
+    //
+    // ONE DEVIATION FROM THE BRIEF, DECLARED. Task 5's brief asked for this
+    // assertion at FULL pitch weight, and it is made at the shipped weights
+    // instead, because the weights are module constants and nothing injects
+    // them. At full weight the deviation from the scale constant is about
+    // 1.12% rather than 0.93%, so the band above would still hold; what would
+    // not hold is the current one. Measured by review rather than here.
     const random = mulberry32(20260821)
     let evSquares = 0
     let laSquares = 0
     let degreesOfFreedom = 0
-    for (let i = 0; i < 400; i++) {
+    for (let i = 0; i < 4000; i++) {
       const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random })
       const evs = swings.map((w) => w.hit.launch.exitSpeed)
       const las = swings.map((w) => w.hit.launch.angle)
@@ -650,8 +687,12 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
       degreesOfFreedom += swings.length - 1
     }
     const uniformSd = Math.sqrt(1 / 12)
-    expect(Math.sqrt(evSquares / degreesOfFreedom)).toBeCloseTo(EV_SPREAD_MPH * uniformSd, 1)
-    expect(Math.sqrt(laSquares / degreesOfFreedom)).toBeCloseTo(LA_SPREAD_DEGREES * uniformSd, 1)
+    const evRatio = Math.sqrt(evSquares / degreesOfFreedom) / (EV_SPREAD_MPH * uniformSd)
+    const laRatio = Math.sqrt(laSquares / degreesOfFreedom) / (LA_SPREAD_DEGREES * uniformSd)
+    expect(evRatio).toBeGreaterThan(0.99)
+    expect(evRatio).toBeLessThan(1.025)
+    expect(laRatio).toBeGreaterThan(0.99)
+    expect(laRatio).toBeLessThan(1.025)
   })
 })
 
@@ -677,11 +718,21 @@ describe('the pitch terms are standardised against the pitches this file actuall
   const distances = NORMALISED.map((p) => p.distanceFromHeart)
   const heights = NORMALISED.map((p) => p.height)
 
-  // Two hundredths, which is four to eight times the sampling error on 6,000
-  // pitches and roughly half of what a five-point move in IN_ZONE_RATE does to
-  // the mean distance. Tight enough to fire on a real retune, loose enough
-  // that rerunning the same seed cannot trip it.
+  // Two hundredths, and THREE of these four rows have the margin that number
+  // suggests while the fourth does not. Corrected 21 August 2026 after review
+  // swept 300 alternative seeds through all four: the distance mean, the
+  // distance spread and the height spread failed on none of them, and the
+  // height mean failed on 16, which is about two sigma of headroom rather than
+  // the four to eight this comment used to claim for all four together.
+  //
+  // The reason is that the signed height is the widest of the four quantities
+  // and the one whose declared value sits nearest zero, so the same absolute
+  // tolerance buys it the least. It gets three hundredths of its own rather
+  // than a quiet promise it cannot keep. That is still well inside what a real
+  // retune moves: a five-point change to IN_ZONE_RATE shifts the mean distance
+  // by about five hundredths.
   const TOLERANCE = 0.02
+  const HEIGHT_MEAN_TOLERANCE = 0.03
 
   it('centres the distance term on the mean distance a pitch really sits from the heart', () => {
     expect(meanOf(distances)).toBeGreaterThan(PITCH_SCALING.distanceMean - TOLERANCE)
@@ -694,8 +745,8 @@ describe('the pitch terms are standardised against the pitches this file actuall
   })
 
   it('does the same for the signed height term', () => {
-    expect(meanOf(heights)).toBeGreaterThan(PITCH_SCALING.heightMean - TOLERANCE)
-    expect(meanOf(heights)).toBeLessThan(PITCH_SCALING.heightMean + TOLERANCE)
+    expect(meanOf(heights)).toBeGreaterThan(PITCH_SCALING.heightMean - HEIGHT_MEAN_TOLERANCE)
+    expect(meanOf(heights)).toBeLessThan(PITCH_SCALING.heightMean + HEIGHT_MEAN_TOLERANCE)
     expect(sdOf(heights)).toBeGreaterThan(PITCH_SCALING.heightSd - TOLERANCE)
     expect(sdOf(heights)).toBeLessThan(PITCH_SCALING.heightSd + TOLERANCE)
   })

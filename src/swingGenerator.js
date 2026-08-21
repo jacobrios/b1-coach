@@ -348,12 +348,20 @@ export const PITCH_SCALING = {
 // velocity is throttled twice over: once by this weight, and again by
 // CONTACT_CORRELATION, because the pitch reaches exit velocity only through
 // the shared term. Even at a weight of 1.0, where the pitch would BE the
-// contact quality and the swing's own quality draw would count for nothing,
-// the gap comes out at about 4.2 mph. Reaching 6 means raising
-// CONTACT_CORRELATION or EV_SPREAD_MPH, not this weight. That is Task 9's
-// call, and the report's own section 9 already says the generated hitter is
-// 30% tighter than the session he is derived from, so EV_SPREAD_MPH is the
-// likelier lever.
+// contact quality and the swing's own quality draw would count for exactly
+// nothing, the gap comes out at about 4.2 mph.
+//
+// AND WIDENING THE SPREAD DOES NOT GET THERE EITHER, which is the half a first
+// reading of this paragraph used to miss. Measured through this generator with
+// one constant changed at a time, 1,800,000 swings a row: widening
+// EV_SPREAD_MPH to 21.88, which is what it takes to match the hand-written
+// session's own spread, gives 4.61 at the shipped weight and 5.77 even at full
+// weight. Widening all the way to 28, a third wider than the session the target
+// is anchored to, still only gives 5.74. The one combination measured to clear
+// 6 was that widening plus CONTACT_CORRELATION at 0.81, which reads 6.20 and
+// moves a settled product decision to chase a number. So the honest reading is
+// that a 6 mph gap is not what this generator is, and the fuller version of
+// that argument, with the whole table, is in docs/slice-11-plan.md.
 const PITCH_QUALITY_WEIGHT = 0.8
 const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
 const PITCH_HEIGHT_WEIGHT = 0.4
@@ -382,15 +390,30 @@ const PITCH_HEIGHT_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_HEIGHT_WEIGHT ** 2)
 // whole report, exit velocity spread within a session came back identical to
 // the hundredth, 4.49 / 4.27 / 4.04 mph on sessions 2, 3 and 4 either side of
 // this change. Launch angle rose by about eight tenths of a percent, 6.15 to
-// 6.20 degrees on session 2 and the same shift on the other two. The reason is
-// that these two terms are not quite independent of each other: the thrower
-// misses low more often than high, so a pitch far from the heart of the zone
-// is slightly more likely to be a low one, which leaves the two terms
-// correlated at +0.055 rather than at 0. Feeding one into the shared half and
-// the other into the independent half then adds a little variance instead of
-// none, and 0.055 predicts a rise of 1.0% against the 0.8% measured. Not worth
-// correcting for: the fix would be to orthogonalise the two terms, which buys
-// eight hundredths of a degree at the cost of a step nobody could read.
+// 6.20 degrees on session 2 and the same shift on the other two.
+//
+// The reason is that these two terms are not quite independent of each other:
+// the thrower misses low more often than high, so a pitch far from the heart of
+// the zone is slightly more likely to be a low one, which leaves them
+// correlated rather than orthogonal. Measured through generateSwings itself at
+// three seeds of 2,100,000 swings each, it is +0.0576, +0.0577 and +0.0579.
+// Feeding one term into the shared half and the other into the independent half
+// then adds a little variance instead of none. The arithmetic, since a wrong
+// version of it stood here for part of a day: the covariance reaches the launch
+// angle offset through both weights on the way, so the term is
+// 2 * CONTACT_CORRELATION * INDEPENDENT_SHARE * PITCH_QUALITY_WEIGHT *
+// PITCH_HEIGHT_WEIGHT * rho, which is 0.3072 * rho. At 0.0576 that predicts a
+// rise of 0.88%.
+//
+// Against a measured 0.93% for the whole thing, of which rounding to whole
+// degrees accounts for about 0.05% and the clamps pull a little back. So the
+// prediction and the measurement agree, which the earlier version of this
+// comment could not say: it dropped the pitch-quality weight out of the
+// covariance, predicted 1.05%, and then shrugged at a 25% disagreement with its
+// own measurement.
+//
+// Not worth correcting for: the fix would be to orthogonalise the two terms,
+// which buys six hundredths of a degree at the cost of a step nobody could read.
 function pitchInfluence(pitch) {
   const { height, distanceFromHeart } = normalisedPitch(pitch)
   return {

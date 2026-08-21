@@ -282,6 +282,20 @@ const EXPECTED_SESSION_3 = [
   { plateLocHeight: 3.24, plateLocSide: 0.04, hit: { launch: { exitSpeed: 91, angle: 25, direction: -20 }, landing: { distance: 325 } } },
   { plateLocHeight: 3.12, plateLocSide: -0.41, hit: { launch: { exitSpeed: 84, angle: 29, direction: 3 }, landing: { distance: 287 } } },
   { plateLocHeight: 1.61, plateLocSide: -1.28, hit: { launch: { exitSpeed: 76, angle: 11, direction: 21 }, landing: { distance: 155 } } },
+  // That direction really is negative zero, and it is not a typo. Math.round
+  // of a small negative number returns -0, which this generator has always
+  // been able to produce; the reshuffled draws in Slice 11 are simply the
+  // first time one landed in this snapshot. It reaches the coach as the string
+  // "0" and reads as up the middle on every chart, so nothing a visitor sees
+  // is affected, and writing plain 0 here would fail this test rather than fix
+  // anything.
+  //
+  // DELETED AND RESTORED, 21 August 2026. Task 5 re-captured this snapshot with
+  // a script that rewrote the three arrays wholesale, which silently took this
+  // explanation with them and left the -0 sitting on its own. Caught by review.
+  // The swing it belongs to is the same one; only its exit velocity and angle
+  // moved. Anything that re-captures these arrays again has to carry this
+  // comment across by hand.
   { plateLocHeight: 4.05, plateLocSide: 0.47, hit: { launch: { exitSpeed: 83, angle: 19, direction: -0 }, landing: { distance: 235 } } },
   { plateLocHeight: 1.1, plateLocSide: 0.61, hit: { launch: { exitSpeed: 79, angle: 18, direction: -20 }, landing: { distance: 205 } } },
   { plateLocHeight: 1.54, plateLocSide: -0.58, hit: { launch: { exitSpeed: 85, angle: 24, direction: 29 }, landing: { distance: 277 } } },
