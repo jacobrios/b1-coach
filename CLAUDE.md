@@ -921,13 +921,23 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and after Slice 11's first task on 20 August 2026 it is 595 tests
+   vitest, and after Slice 11's first task on 20 August 2026 it is 596 tests
    across 23 files, up from the 573 across 22 at the close of Slice 10 the
-   same day. The 22 new tests are `scripts/frozenGenerator.test.js`, which
-   rebuilds every bench cell at every seed through the frozen pre-Slice-11
-   generator and holds the result against a committed digest, so a change to
-   that snapshot cannot quietly rewrite what five committed rounds of coach
-   debriefs were written about. It was 573
+   same day. The 23 new tests are `scripts/frozenGenerator.test.js`, and they
+   answer two different questions that a reader should not merge. Twenty-two
+   of them rebuild every bench cell at every seed through the frozen
+   pre-Slice-11 generator and hold the result against a committed digest, so
+   five committed rounds of coach debriefs cannot quietly start being graded
+   against swings their coaches never saw. The twenty-third hashes the
+   recovered half of the snapshot file itself. Both are needed, which was
+   measured rather than assumed: an independent review mutated the snapshot
+   five ways, one line each, and four of the five (all the clamps, and the
+   whole above-28-degrees branch of the carry formula) changed no swing in
+   any cell at either seed, so the data checks stayed green while the file
+   had plainly moved. The prose header above the marker line is deliberately
+   outside the hashed region so it stays correctable. If the hash test goes
+   red, the file is wrong; re-pinning the number turns the snapshot into a
+   copy of whatever the generator has become. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535

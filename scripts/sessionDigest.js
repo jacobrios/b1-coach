@@ -76,11 +76,18 @@ export const SWING_LINE_FORMAT =
 
 function fixed(value, places) {
   if (!Number.isFinite(value)) return 'NaN'
-  // Normalising a negative zero matters here: the generator can round a tiny
-  // negative to -0, which prints as "-0.00" and would make a digest differ
-  // from an identical one for no reason a reader could see.
-  const normalised = value === 0 ? 0 : value
-  return normalised.toFixed(places)
+  // No negative-zero normalisation here, and that is a checked decision
+  // rather than an oversight. An earlier version of this function carried
+  // one, with a comment claiming a -0 would print as "-0.00" and make two
+  // identical digests look different. That is wrong about the language:
+  // (-0).toFixed(2) is "0.00" and (-0).toFixed(0) is "0", measured in this
+  // project's own Node on 20 August 2026. The only value that would print
+  // "-0.00" is a tiny non-zero negative like -0.0001, and none can reach
+  // here, because the generator already rounds every number it produces to
+  // whole units or to two decimals. So the guard was doing nothing in both
+  // directions, and a line that does nothing while explaining why it matters
+  // is worse than no line.
+  return value.toFixed(places)
 }
 
 // One swing, one line. Every number the generator decides is on it, so a

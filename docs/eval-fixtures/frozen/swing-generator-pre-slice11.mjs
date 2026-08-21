@@ -55,11 +55,38 @@
 //
 // The export is named generateSwingsPreSlice11 rather than generateSwings on
 // purpose, so an import of this file can never be mistaken at a glance for
-// an import of the live module. Everything below the "recovered file begins
-// here" line is byte-identical to `git show 53315e5:src/swingGenerator.js`
-// apart from exactly two things: the two import lines replaced by a comment
-// saying where they went, and that one renamed function. `diff` the two and
-// those are the only hunks that come back.
+// an import of the live module.
+//
+// EVERYTHING BELOW THE SECTION RULE FURTHER DOWN IS THE RECOVERED FILE, and
+// it differs from `git show 53315e5:src/swingGenerator.js` in three places,
+// no more and no fewer. Check it without counting lines:
+//
+//   MARKER='^\/\/ The recovered file begins here$'
+//   diff <(git show 53315e5:src/swingGenerator.js) \
+//        <(sed -n "/$MARKER/,\$p" \
+//            docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs \
+//          | tail -n +3)
+//
+// The pattern is anchored to the whole line on purpose. An unanchored
+// /recovered file begins here/ also matches this very paragraph, which is
+// the sort of thing a file about not lying to its reader should not do.
+//
+// The three hunks that come back, and they are the whole list:
+//   1. `0a1`, a blank line at the top. That is the blank line following the
+//      section rule, so it is layout rather than content.
+//   2. The two import lines, replaced by a comment saying where they went.
+//   3. The renamed function.
+//
+// An earlier draft of this paragraph said two, and a commit exists purely to
+// make this sentence precise. In a file whose entire value is being exactly
+// what it says it is, a header that is approximately right is the one thing
+// it cannot afford, so it is worth over-correcting here.
+//
+// SEPARATELY FROM THAT PROSE, the recovered half is pinned by hash in
+// scripts/frozenGenerator.test.js and checked on every npm test. The prose
+// header above the rule is deliberately outside the hashed region, so it can
+// still be corrected (as it just was) without anybody being tempted to
+// re-pin the number.
 //
 // Read by scripts/grade-coach-accuracy.mjs's "slice11-before" and
 // "slice9-before" session builders, which are the only supported way to
