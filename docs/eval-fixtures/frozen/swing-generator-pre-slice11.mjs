@@ -57,8 +57,9 @@
 // purpose, so an import of this file can never be mistaken at a glance for
 // an import of the live module.
 //
-// EVERYTHING BELOW THE SECTION RULE FURTHER DOWN IS THE RECOVERED FILE, and
-// it differs from `git show 53315e5:src/swingGenerator.js` in three places,
+// EVERYTHING BELOW THE "recovered file begins here" RULE, WHICH IS THE
+// SECOND OF THE TWO SECTION RULES BELOW, IS THE RECOVERED FILE. It differs
+// from `git show 53315e5:src/swingGenerator.js` in three places,
 // no more and no fewer. Check it without counting lines:
 //
 //   MARKER='^\/\/ The recovered file begins here$'
@@ -82,16 +83,51 @@
 // what it says it is, a header that is approximately right is the one thing
 // it cannot afford, so it is worth over-correcting here.
 //
-// SEPARATELY FROM THAT PROSE, the recovered half is pinned by hash in
-// scripts/frozenGenerator.test.js and checked on every npm test. The prose
-// header above the rule is deliberately outside the hashed region, so it can
-// still be corrected (as it just was) without anybody being tempted to
-// re-pin the number.
+// THE FROZEN COPIES ABOVE THAT RULE CANNOT BE CHECKED THE SAME WAY, and it
+// is worth saying so plainly rather than letting the diff command above
+// stand for the whole file. Their own comments were trimmed when they were
+// copied, so they will never diff clean against their originals. What can be
+// checked is the code, with comments and blank lines stripped, and it was,
+// on 20 August 2026: carryDistance against `git show
+// 53315e5:src/ballFlight.js`, and goalTarget, hasTarget, meetsTarget and
+// GOAL_TARGETS against `git show 53315e5:src/goalTargets.js`. All five came
+// back identical. Anyone re-checking should strip comments and blanks from
+// both sides and compare, rather than expect a clean diff.
+//
+// SEPARATELY FROM THAT PROSE, EVERY LINE OF CODE IN THIS FILE IS PINNED BY
+// HASH in scripts/frozenGenerator.test.js and checked on every npm test.
+// That includes the frozen copies of carryDistance and the goal targets
+// below, not only the recovered generator further down. The rule the
+// boundary encodes, in one sentence: anything in this file that a future
+// edit could silently change the behaviour of is inside the hash, and the
+// only thing outside it is prose that carries no behaviour.
+//
+// The first version of that guard, earlier on this same day, started the
+// hashed region at the recovered-file marker instead, which left
+// carryDistance and the goal targets unprotected. It was caught by review
+// mutating carryDistance's high-angle floor from 0.55 to 0.40 and watching
+// every test stay green. Worth knowing about because that particular
+// constant is not idle: it is the coupling this project's CLAUDE.md says to
+// re-check if the pop-up ceiling is ever raised, which is one of the three
+// things Slice 11 is about to do.
+//
+// The prose header is outside the hashed region on purpose, so it can be
+// corrected (as it has been three times today) without anybody being tempted to
+// re-pin the number. The test defends that carve-out from the other side
+// too: it refuses any line above the boundary that is not blank or a
+// comment, so behaviour cannot be quietly moved out of the hash.
 //
 // Read by scripts/grade-coach-accuracy.mjs's "slice11-before" and
 // "slice9-before" session builders, which are the only supported way to
 // grade any of the five rounds listed above, and checked on every npm test
 // by scripts/frozenGenerator.test.js against the digest committed beside it.
+
+// ==== HASH BOUNDARY. EVERY LINE BELOW IS PINNED BY scripts/frozenGenerator.test.js ====
+//
+// Nothing below this line is prose-only. Every line is code, or a comment
+// attached to code, and an edit to any of it could change what this snapshot
+// produces without a word of warning. Do not move this boundary down to make
+// something editable; that is the defect it exists to close.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Frozen copies of what this file used to import from src/

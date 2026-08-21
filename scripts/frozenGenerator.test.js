@@ -56,28 +56,67 @@ const SNAPSHOT_PATH = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen/swing-gene
 
 const digest = JSON.parse(readFileSync(DIGEST_PATH, 'utf8'))
 
-// Where the recovered half of the snapshot starts. Everything from this line
-// to the end of the file is hashed; the prose header above it is not, so it
-// stays editable. That split is deliberate and this branch has already
-// needed it twice: the header has been corrected once for imprecision and
-// once for a self-matching search pattern, and neither correction should
-// have been able to force a re-pin of the number below.
-const RECOVERED_MARKER = '\n// The recovered file begins here\n'
+// WHERE THE HASHED REGION STARTS, AND THE ONE RULE THAT DECIDES IT.
+//
+// Everything in the snapshot that a future edit could silently change the
+// behaviour of is inside the hash. The only thing outside it is prose that
+// carries no behaviour. That is the whole rule, and the boundary line below
+// is where it is drawn.
+//
+// It was drawn in the wrong place first, earlier on this same day, at the
+// "recovered file begins here" marker further down the file. That left the
+// frozen copies of carryDistance, hasTarget, meetsTarget and GOAL_TARGETS
+// outside the hash, because they were recovered from ballFlight.js and
+// goalTargets.js rather than from swingGenerator.js and therefore sit above
+// that marker. Review proved the hole rather than arguing it: mutating
+// carryDistance's high-angle floor from 0.55 to 0.40 left all 23 tests
+// green. That constant is the coupling CLAUDE.md says to re-check if the
+// pop-up ceiling is raised, and raising the pop-up ceiling is one of the
+// three things Slice 11 is about to do.
+//
+// The prose header stays outside because it has needed correcting twice on
+// this branch already (once for imprecision, once for a search pattern that
+// matched its own paragraph) and no such correction should be able to force
+// a re-pin of the number below. That carve-out is defended from the other
+// side by PROSE_ONLY_ABOVE_BOUNDARY below: a line above the boundary that is
+// neither blank nor a comment fails the suite, so behaviour cannot be moved
+// out of the hashed region.
+//
+// Held as bare line text, and every check below counts and locates it by
+// whole line rather than by substring. That is not tidiness. An earlier draft
+// searched for the line wrapped in newlines, which silently under-counts two
+// ADJACENT copies of the boundary, because the two occurrences share the
+// newline between them and the split consumes it. Found by trying it.
+const HASH_BOUNDARY_LINE = '// ==== HASH BOUNDARY. EVERY LINE BELOW IS PINNED BY scripts/frozenGenerator.test.js ===='
 
-// Pinned 20 August 2026, from the file as recovered from commit 53315e5.
-// IF THIS NUMBER AND THE FILE DISAGREE, THE FILE IS WRONG. Re-pinning it to
-// make a test pass silently converts the snapshot into a copy of whatever
-// the generator has become, which is the exact outcome the whole task
-// exists to prevent.
-const RECOVERED_HALF_SHA256 = 'a07c006018226854cc2e94e0633260591b4b65c2b210f50afad00640ab49a649'
+// The second marker, kept because the snapshot's header offers a diff command
+// anchored to it and because it proves the hashed region spans both halves of
+// the file, the frozen imports and the recovered generator.
+const RECOVERED_MARKER_LINE = '// The recovered file begins here'
+
+// Pinned 20 August 2026, over every line of code in the snapshot.
+// IF THESE AND THE FILE DISAGREE, THE FILE IS WRONG. Re-pinning them to make
+// a test pass silently converts the snapshot into a copy of whatever the
+// generator has become, which is the exact outcome this whole task exists to
+// prevent.
+//
+// The byte count is pinned beside the hash on purpose. A hash alone says
+// "different" in the same breath for a one-character edit and for a region
+// that has been emptied or truncated to nothing, and those want different
+// reactions from whoever reads the failure. The length is checked first so
+// the shrunk-to-nothing case says so in words.
+const FROZEN_CODE_BYTES = 14093
+const FROZEN_CODE_SHA256 = 'b03a7c19412ecc470c66d94cb4a17d30e4a7eaab1718d906d3a3f285290202be'
 
 describe('the frozen pre-Slice-11 generator still produces what it produced', () => {
   // TWO DIFFERENT QUESTIONS ARE ASKED IN THIS FILE, AND MIXING THEM UP IS
   // HOW A SNAPSHOT STOPS BEING ONE.
   //
-  // This first test asks: HAS THE FILE MOVED? It hashes the recovered half
-  // and compares it to a pinned number, so any edit to the generator code
-  // fails, whether or not it changes a single swing.
+  // The first two tests ask: HAS THE FILE MOVED? They hash every line of
+  // code in the snapshot, the frozen copies of carryDistance and the goal
+  // targets as well as the recovered generator, and compare it to a pinned
+  // number. Any edit to any of it fails, whether or not it changes a single
+  // swing.
   //
   // Every other test in this file asks: HAS THE DATA MOVED? Those rebuild
   // the sessions five committed rounds were written about and compare them
@@ -103,13 +142,49 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
   // the three things Slice 11 is about to change, and this file is a
   // near-identical copy of the live generator sitting in the same
   // repository, so a repo-wide search and replace would hit both.
-  it('the recovered half of the snapshot is byte-for-byte what was recovered', () => {
-    const text = readFileSync(SNAPSHOT_PATH, 'utf8')
-    // Exactly one marker, anchored to a whole line. An unanchored search
-    // would also match the snapshot's own header, which explains the marker.
-    expect(text.split(RECOVERED_MARKER).length - 1, 'the snapshot must carry exactly one recovered-file marker').toBe(1)
-    const recovered = text.slice(text.indexOf(RECOVERED_MARKER) + 1)
-    expect(createHash('sha256').update(recovered, 'utf8').digest('hex')).toBe(RECOVERED_HALF_SHA256)
+  //
+  // Read the fourth row of that table against the boundary constants above.
+  // The first version of this hash started at the recovered-file marker, so
+  // it did not reach carryDistance either, and that row was green under BOTH
+  // checks. Widening the region is what closed it.
+  it('the snapshot carries one unambiguous hash boundary, with only prose above it', () => {
+    const lines = readFileSync(SNAPSHOT_PATH, 'utf8').split('\n')
+    // Exactly one of each marker, counted as whole lines. An unanchored
+    // substring search would also match the snapshot's own header, which
+    // explains both markers in prose.
+    expect(
+      lines.filter((line) => line === HASH_BOUNDARY_LINE).length,
+      'the snapshot must carry exactly one hash boundary line',
+    ).toBe(1)
+    expect(
+      lines.filter((line) => line === RECOVERED_MARKER_LINE).length,
+      'the snapshot must carry exactly one recovered-file marker',
+    ).toBe(1)
+    // The recovered generator must sit INSIDE the hashed region. If this ever
+    // reverses, the boundary has been moved down past half the file.
+    expect(
+      lines.indexOf(RECOVERED_MARKER_LINE),
+      'the recovered generator must sit inside the hashed region',
+    ).toBeGreaterThan(lines.indexOf(HASH_BOUNDARY_LINE))
+    // And the carve-out defended from the other side: nothing above the
+    // boundary may carry behaviour. Without this, the boundary could simply
+    // be walked downward, or a function pasted above it, and the hash would
+    // still pass while covering less and less.
+    const above = lines.slice(0, lines.indexOf(HASH_BOUNDARY_LINE))
+    const carriesBehaviour = above.filter((line) => line.trim() !== '' && !line.startsWith('//'))
+    expect(carriesBehaviour, 'every line above the hash boundary must be blank or a comment').toEqual([])
+  })
+
+  it('every line of frozen code in the snapshot is byte-for-byte what was recovered', () => {
+    const lines = readFileSync(SNAPSHOT_PATH, 'utf8').split('\n')
+    const frozen = lines.slice(lines.indexOf(HASH_BOUNDARY_LINE)).join('\n')
+    // Length first, so a region emptied or truncated to nothing reports that
+    // in words rather than as two unequal hex strings.
+    expect(
+      Buffer.byteLength(frozen, 'utf8'),
+      'the hashed region changed size; if it shrank, the boundary was moved or the file was truncated',
+    ).toBe(FROZEN_CODE_BYTES)
+    expect(createHash('sha256').update(frozen, 'utf8').digest('hex')).toBe(FROZEN_CODE_SHA256)
   })
 
   // THE COVERAGE TEST, AND IT IS COMPARED IN BOTH DIRECTIONS ON PURPOSE.
