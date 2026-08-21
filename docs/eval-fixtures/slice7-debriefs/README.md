@@ -117,10 +117,17 @@ app, and that sentence is what the note at the top of this file is about.** It
 now comes from a frozen copy kept in `../frozen/`, because the app's own version
 is being rewritten and this fixture must keep reconstructing what its coaches
 actually saw. `computeStats` and `carryDistance` still come from the app. The
-first of those is deliberate and harmless: it summarises swings that have
-already been decided, and nothing it produces is part of the record of what this
-fixture made. The second is a genuine loose end, explained where it lives, at the
-top of `rebuild.mjs`.
+first of those is deliberate: it summarises swings that have already been
+decided, and nothing it produces is part of the record of what this fixture
+made. Read "harmless" narrowly, though, because it is not the same as "cannot
+affect a verdict". Those session averages do reach the sheet of facts a debrief
+is graded against, so a change to how the app rounds them would change a grade.
+What covers that is a different test file, `src/sessionStats.test.js`, not
+anything built here: checked by hand on 20 August 2026 by making the app
+truncate an average instead of rounding it, which turned that file red and left
+this fixture's own guards green, correctly, since averages are not part of what
+this fixture records. The second import is a genuine loose end, explained where
+it lives, at the top of `rebuild.mjs`.
 
 Both were re-run from this directory on 17 August 2026 after their scratch-only
 absolute paths were made relative, and `regrade-results.json` came out

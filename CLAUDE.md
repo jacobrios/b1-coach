@@ -947,11 +947,15 @@ specific to this repo:
    across 23 files, up from the 599 that task first landed the same day and
    the 573 across 22 at the close of Slice 10. The 31 new tests are
    `scripts/frozenGenerator.test.js`, and they
-   answer three different questions that a reader should not merge. Twenty-five
-   of them rebuild every bench cell at every seed through the frozen
-   pre-Slice-11 generator and hold the result against a committed digest, so
-   six committed fixture directories cannot quietly start being graded
-   against swings their coaches never saw. Two more ask a different
+   answer three different questions that a reader should not merge. Twenty-four
+   of them rebuild one bench cell each through the frozen pre-Slice-11
+   generator and hold the result against a committed digest, so six committed
+   fixture directories cannot quietly start being graded against swings their
+   coaches never saw; a twenty-fifth rebuilds nothing and instead checks that
+   the list of cells being rebuilt has not silently shrunk. Fourteen of the
+   twenty-four are every cell at each of two seeds, seven are the same cells at
+   one seed for the pre-Slice-9 baseline, and three are the 96-debrief
+   fixture's own three cells at the one seed it runs itself at. Two more ask a different
    question, whether the snapshot FILE has moved, by hashing every line of
    code in it. The last four ask whether the guard itself still works: whether
    the rule about what may sit above the hash boundary still refuses every

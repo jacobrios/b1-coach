@@ -256,6 +256,31 @@ file's own header. Slice 11 does not currently plan to touch
 `src/ballFlight.js`; if that changes, the answer is a frozen carry formula, and
 never a new record of what the generator produced.
 
+**Dated correction to the paragraph directly above, 20 August 2026, and Task 4
+should read this rather than it.** That paragraph is carrying the version of the
+sentence that the task's own work disproved, which matters because this document
+is what Task 4 is pointed at. Three things in it are wrong:
+
+- **It is four tests, not three.** The three cells plus the seed-honesty test,
+  which is also a comparison against the same record. Measured.
+- **"Noise rather than prevention" undersells the cover.** The only carry
+  changes the record cannot see are ones this fixture never exercises: its first
+  session is built at a fixed seed, so the same fifteen balls forever, and none
+  of the 45 recorded ones is hit steeply enough to reach the part of the formula
+  that is uncovered. For this fixture the record catches every carry change that
+  can move a number it holds. The honest residual is that this cover comes from
+  the data rather than from the wiring, so it would quietly stop holding if
+  somebody changed how that stand-in first session is built.
+- **It was not impossible, only declined.** The pinning rule rules out exporting
+  the frozen copy from inside the snapshot. It does not rule out a second frozen
+  copy of the carry formula sitting beside it, which would need no re-pin at all.
+  That was declined because this project consolidates hard against duplicated
+  formulas and the fixture is covered today; it is a judgment call and Task 4 has
+  the option.
+
+The full measurements are in `rebuild.mjs`'s own header, which carries the
+corrected version.
+
 ## Task 2: grow the measurement script, and take the before numbers
 
 `scripts/measure-swing-generation.mjs` gains one section per item, each

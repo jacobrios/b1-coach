@@ -71,7 +71,14 @@ function parseArgs(argv) {
     } else if (argv[i] === '--overwrite') {
       args.overwrite = true
     } else if (argv[i] === '--add-group') {
+      // Checked here rather than left to fall through. Without it a bare
+      // --add-group sets this to undefined, drops into the full-write path,
+      // and reports that the digest already exists, which is true and is not
+      // the problem the caller has.
       args.addGroup = argv[++i]
+      if (!args.addGroup) {
+        throw new Error('--add-group needs a builder name after it, for example: --add-group frozen.')
+      }
     } else {
       throw new Error(
         `Unknown argument "${argv[i]}". Supported: --out <path>, --overwrite, --add-group <builder>.`,

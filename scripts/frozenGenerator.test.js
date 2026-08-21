@@ -75,7 +75,11 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
-import { resolveSessions, PRE_SLICE11_SNAPSHOT_PATH } from './grade-coach-accuracy.mjs'
+import {
+  resolveSessions,
+  PRE_SLICE11_SNAPSHOT_PATH,
+  FIXTURE_REBUILD_PATH,
+} from './grade-coach-accuracy.mjs'
 import { DIGEST_GROUPS, digestForCell, swingLine } from './sessionDigest.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -477,32 +481,78 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
   // This is a text check rather than a behaviour check, and that is a real
   // limitation rather than a shortcut: nothing rebuild.mjs exposes says which
   // generator it loaded. It is the same tripwire shape src/sessionStats.test.js
-  // uses on src/DebriefScreen.jsx's hardcoded cutoffs, and it catches the
-  // realistic regression, which is somebody pointing that import back at src/
-  // while tidying, or moving the snapshot without following it here.
+  // uses on src/DebriefScreen.jsx's hardcoded cutoffs.
   //
-  // The negative half deliberately looks only at import lines. The file's own
-  // header discusses src/swingGenerator.js in prose, and a whole-file search
-  // would fail on the sentence that explains why the import is not there.
+  // THE FIRST VERSION OF THIS TEST DID NOT BIND, AND THE TWO WAYS ROUND IT ARE
+  // WHY EACH ASSERTION BELOW IS SHAPED THE WAY IT IS. Both were measured at 604
+  // green, with the fixture rebuilding from the live generator the whole time.
+  //
+  //   It asserted that the snapshot's relative path appeared ANYWHERE in the
+  //   file, and that the identifier FROZEN_GENERATOR_PATH was USED on an import
+  //   line. Neither says what that identifier HOLDS. Changing its assignment to
+  //   the working-tree generator passed all three: the relative path still
+  //   appears in the file's own header prose, and the identifier was still used.
+  //   So the assignment line's VALUE is what is asserted now, matched as a whole
+  //   line, and the prose above it can say whatever it needs to.
+  //
+  //   It computed REBUILD_PATH itself while the grading script computed its own
+  //   path to import, so repointing FIXTURE_DIR at a copy of this directory left
+  //   the test reading the untouched original while the grader loaded the copy.
+  //   That is the identical "the hash was guarding a file nothing read" gap
+  //   closed one level down for the snapshot, reintroduced one level up. Hence
+  //   the first assertion below: the same one-liner, on the same principle, two
+  //   independent definitions held equal.
+  //
+  // The src/ check still looks only at import lines rather than the whole file,
+  // because the header discusses src/swingGenerator.js in prose and explains at
+  // length why it is not imported. That assertion is now the belt to the
+  // assignment-line brace rather than the load-bearing one.
   it('the 96-debrief fixture rebuilds through the frozen snapshot, not the working tree', () => {
+    expect(
+      FIXTURE_REBUILD_PATH,
+      'scripts/grade-coach-accuracy.mjs loads a different rebuild script from the one this test ' +
+        'reads, so this test is guarding a file nothing runs',
+    ).toBe(REBUILD_PATH)
+
     const source = readFileSync(REBUILD_PATH, 'utf8')
+    const lines = source.split('\n')
     const relativeSnapshot = path.relative(REPO_ROOT, PRE_SLICE11_SNAPSHOT_PATH)
+
+    // THREE THINGS DECIDE WHICH FILE THAT SCRIPT ACTUALLY LOADS, and all three
+    // are pinned below: the directory the grading script loads the script FROM
+    // (asserted above), the repo root the script resolves against, and the value
+    // it assigns to its own constant. Leave any one of them unpinned and the
+    // other two can be left untouched while a different generator is read.
+    //
+    // The repo-root line is the third, and it was added after the other two,
+    // when repointing it at a copy of this repository was tried and the suite
+    // did go red, but through import failures rather than through anything here.
+    // Being caught by accident is not being caught; this project has called that
+    // out twice already in guards of its own.
     expect(
-      source,
-      'rebuild.mjs no longer names the snapshot the grading script loads; if the snapshot moved, ' +
-        'this file has to move with it',
-    ).toContain(relativeSnapshot)
-    const importLines = source.split('\n').filter((line) => line.includes('await import('))
+      lines.filter((line) => line === "const REPO = new URL('../../..', import.meta.url).pathname.replace(/\\/$/, '')"),
+      'rebuild.mjs resolves its imports against a different repo root, so the two lines checked ' +
+        'below can be correct while a different generator is loaded',
+    ).toHaveLength(1)
+
+    // What the constant HOLDS, as a whole line. Not that the path appears
+    // somewhere in the file, and not that the identifier is used somewhere.
     expect(
-      importLines.filter((line) => line.includes('src/swingGenerator')),
+      lines.filter((line) => line === `const FROZEN_GENERATOR_PATH = \`\${REPO}/${relativeSnapshot}\``),
+      'rebuild.mjs must assign FROZEN_GENERATOR_PATH the snapshot the grading script loads, and ' +
+        'nothing else; check what that constant is set to, not whether the path appears in the file',
+    ).toHaveLength(1)
+
+    expect(
+      lines.filter((line) => line.includes('await import(') && line.includes('FROZEN_GENERATOR_PATH')),
+      'rebuild.mjs must load its generator through FROZEN_GENERATOR_PATH, exactly once',
+    ).toHaveLength(1)
+
+    expect(
+      lines.filter((line) => line.includes('await import(') && line.includes('src/swingGenerator')),
       'rebuild.mjs imports the working-tree generator again, so the 96-debrief fixture would be ' +
         'graded against swings no coach in it ever saw',
     ).toEqual([])
-    expect(
-      importLines.filter((line) => line.includes('FROZEN_GENERATOR_PATH')).length,
-      'rebuild.mjs must load its generator through its own FROZEN_GENERATOR_PATH constant, which is ' +
-        'what binds it to the path checked above',
-    ).toBe(1)
   })
 
   // WHY THE "frozen" DIGEST GROUP CARRIES ONE SEED, AND WHY THAT NUMBER IS NOT
