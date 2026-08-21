@@ -1057,6 +1057,12 @@ const rateNoiseFloor = (rate, n) =>
   n > 0 && rate > 0 && rate < 1 ? NOISE_SIGMAS * Math.sqrt((2 * rate * (1 - rate)) / n) : 0
 const floorForRate = (rate, n, productFloor) => Math.max(productFloor, rateNoiseFloor(rate, n))
 
+// The threshold below which a gap is nothing rather than something. A tenth of
+// a mile an hour is under the rounding the app shows anywhere, so a gap that
+// small cannot reach a visitor even in principle. It is a judgment, and it is
+// on the threshold list this report prints before the Slice 6 tables.
+const A_REAL_GAP_MPH = 0.1
+
 const SESSION_ONE_SHAPE_WITHIN = 1.25
 const againstSessionOne = (measured, sessionOne) =>
   ratioVerdict(measured, sessionOne, SESSION_ONE_SHAPE_WITHIN)
@@ -1095,6 +1101,11 @@ console.log('  ' + 'session'.padEnd(26) + 'exit velocity gap'.padStart(20) + 'la
 let widestEvGap = 0
 let widestLaGap = 0
 let cellsWithBothGroups = 0
+// The SIGNED per-goal gaps, not only the widest absolute one. Two goals with
+// strong links running opposite ways cancel in the pooled row, and the sentence
+// below used to say the pooled rows were "not hiding a goal where the link
+// exists" while printing a widest per-goal gap of 14.50 mph on the line above.
+const perGoalEvGaps = []
 for (const sessionNum of SESSIONS) {
   const cells = cellsForSession(sessionNum)
   const zoneEv = cells.reduce((s, c) => s + c.inZone.ev, 0) / cells.reduce((s, c) => s + c.inZone.n, 0)
@@ -1109,6 +1120,7 @@ for (const sessionNum of SESSIONS) {
   for (const c of cells) {
     if (c.inZone.n === 0 || c.outZone.n === 0) continue
     cellsWithBothGroups += 1
+    perGoalEvGaps.push({ cell: c, gap: c.inZone.ev / c.inZone.n - c.outZone.ev / c.outZone.n })
     widestEvGap = Math.max(widestEvGap, Math.abs(c.inZone.ev / c.inZone.n - c.outZone.ev / c.outZone.n))
     widestLaGap = Math.max(widestLaGap, Math.abs(c.inZone.la / c.inZone.n - c.outZone.la / c.outZone.n))
   }
@@ -1123,17 +1135,46 @@ if (cellsWithBothGroups === 0) {
   console.log('  Not one of the goal-and-session combinations produced swings on both sides')
   console.log('  of the zone edge, so there is no per-goal gap to report either.')
 } else {
-  console.log(`  Each row above pools all five goals, ${(REPLAYS_PER_CELL * SLICE11_GOALS.length).toLocaleString()} sessions. Taken one goal at a`)
-  console.log(`  time, across ${cellsWithBothGroups} of the ${SLICE11_CELLS.length} goal-and-session combinations, the largest gap`)
-  console.log(`  either way was ${widestEvGap.toFixed(2)} mph and ${widestLaGap.toFixed(2)} degrees, so the pooled rows are not hiding`)
-  console.log('  a goal where the link exists.')
+  // THE REASSURANCE IS ITSELF A VERDICT AND NEEDED THE SAME FLOOR AS THE GAP.
+  // Unreported, found by auditing the file rather than by review. Pointed at a
+  // generator whose link was wired with the sign keyed off the goal, so the
+  // goals cancelled, this printed "the largest gap either way was 14.50 mph, so
+  // the pooled rows are not hiding a goal where the link exists" on one line.
+  const lowestGap = perGoalEvGaps.slice().sort((a, b) => a.gap - b.gap)[0]
+  const highestGap = perGoalEvGaps.slice().sort((a, b) => b.gap - a.gap)[0]
+  const labelOf = (entry) =>
+    `${SLICE11_GOALS.find((g) => g.id === entry.cell.goalId).label} session ${entry.cell.sessionNum}`
+  say(
+    `Each row above pools all five goals, ${(REPLAYS_PER_CELL * SLICE11_GOALS.length).toLocaleString()} sessions. Taken one goal at a time, ` +
+      `across ${cellsWithBothGroups} of the ${SLICE11_CELLS.length} goal-and-session combinations, the largest gap either way was ` +
+      `${widestEvGap.toFixed(2)} mph and ${widestLaGap.toFixed(2)} degrees.`
+  )
+  // THE QUESTION IS AGREEMENT, NOT SIZE, and the first attempt at this floor got
+  // that wrong in the other direction: it flagged a generator whose every goal
+  // carried a consistent +9.6 to +9.8 mph link, which is the target state, as
+  // hiding something. What the pooled row can hide is a goal whose link points
+  // somewhere else, so each per-goal gap is put through the same three-way test
+  // the pooled gap gets, and they either all land in the same place or they do
+  // not. No new threshold: the floor is the one the verdict below already uses.
+  const gapVerdict = (gap) => (Math.abs(gap) < A_REAL_GAP_MPH ? 'none' : gap > 0 ? 'positive' : 'negative')
+  const perGoalVerdicts = new Set(perGoalEvGaps.map((e) => gapVerdict(e.gap)))
+  if (perGoalVerdicts.size === 1) {
+    say(
+      `Every one of them lands on the same side of the ${A_REAL_GAP_MPH} mph this report treats as a real ` +
+        'gap, so the pooled rows are not hiding a goal whose link points somewhere else.'
+    )
+  } else {
+    say(
+      'THE POOLED ROWS ARE HIDING SOMETHING: the goals do not agree with each other. The ' +
+        `extremes run from ${signed(lowestGap.gap)} mph on ${labelOf(lowestGap)} to ` +
+        `${signed(highestGap.gap)} mph on ${labelOf(highestGap)}` +
+        (gapVerdict(lowestGap.gap) === 'negative' && gapVerdict(highestGap.gap) === 'positive'
+          ? ', a link running in OPPOSITE directions on different goals. They cancel when pooled, so the pooled verdict below is about the cancellation rather than about the hitter.'
+          : ', so read the pooled verdict below as an average over goals that differ rather than as one number true of each.')
+    )
+  }
 }
 console.log('')
-// The threshold below which a gap is nothing rather than something. A tenth of
-// a mile an hour is under the rounding the app shows anywhere, so a gap that
-// small cannot reach a visitor even in principle. It is a judgment, and it is
-// on the threshold list this report prints before the Slice 6 tables.
-const A_REAL_GAP_MPH = 0.1
 const strikeSwings = SLICE11_CELLS.reduce((sum, c) => sum + c.inZone.n, 0)
 const ballSwings = SLICE11_CELLS.reduce((sum, c) => sum + c.outZone.n, 0)
 const pooledGap = SLICE11_CELLS.reduce((sum, c) => sum + c.inZone.ev, 0) / strikeSwings -
@@ -2604,10 +2645,13 @@ const JUDGMENTS_NOT_MEASUREMENTS = [
   [2, 'No real thrower misses on both axes at once; a pitch that misses low while staying plausible sideways is what a real thrower produces; and a share in between means the defect is reduced rather than removed. All three branches, because the rewrite is meant to move which one prints.'],
   [2, 'Missing by a good deal MORE than session 1 is wild, and missing by a good deal LESS is its own kind of wrong, because a pitcher that accurate gives the hitter nothing to lay off. Both halves.'],
   [2, 'A pitch low enough to bounce in front of the plate, or high enough to sail over it, is a defect rather than a hard pitch to hit. Both ends.'],
+  [2, 'How far out a missed pitch was is reported as the worse of its two axes rather than as a diagonal, on the grounds that this is how a person watching would describe it. It is also what reproduces session 1\'s own six misses exactly.'],
   [3, 'A pull lean is the right way round for a high school hitter, an opposite-field lean is backwards, and an even split is not the target either. All three branches of one opinion about baseball.'],
   [3, 'Spray narrowing toward the middle session by session is something no hitter does on his own, so it is a defect; widening is not called one, and a move under the floor is called neither. All three branches.'],
   [4, 'A pop-up is supposed to come off a high pitch, so pop-ups arriving no more often on high pitches than chance would give means the constants are wrong, and pop-ups AVOIDING high pitches means a sign error rather than a mis-tuning. Both halves of the same opinion about what a pop-up is.'],
   [4, 'Pop-ups a visitor would never meet are not a fixed defect, they are a mis-tuned mechanism. That the goal wants a failure the hitter can actually commit is what this slice decided, not something this run measured.'],
+  [6, 'Session 1\'s best ball is frozen, so a generated session that beats it is claiming the hitter got faster. That is what this demo decided session 1 is for, not something this run measured; the run only counts how often it is beaten.'],
+  [7, 'Every generated session is built off session 1 rather than off the session before it, so the step is the same step every time rather than a run of improvement. That is a fact about what onNewSession in src/App.jsx passes, read from the app rather than from this run.'],
   [7, 'The lift on the re-rolled goals is the re-roll discarding weak sessions. Which goals are lifted and which have an empty band often enough to be re-rolled are both measured here; that a re-roll happens at all, and that it keeps the second attempt whatever it holds, is a fact about src/swingGenerator.js.'],
   [8, 'The bar this section measures, at least 3 swings pull side and at least 3 opposite field, is a sentence hand-copied out of the Hit to All Fields coaching instructions in src/coachApi.js. Reword it there to ask for four and this section goes on measuring three, silently.'],
   [9, 'The eight sections above are the eight things Slice 11 sets out to change, and this one is the ground it must not lose. That is the slice\'s intent. It is not a property of this run, and it stays true whether or not the run still shows a defect.'],
@@ -2621,7 +2665,7 @@ const JUDGMENTS_NOT_MEASUREMENTS = [
 // retyped. A threshold printed from a second copy of itself is not a
 // disclosure, it is a second thing to keep in step.
 const THRESHOLDS_THAT_PICK_A_SENTENCE = [
-  [1, `a pooled gap smaller than ${A_REAL_GAP_MPH} mph is no gap at all`],
+  [1, `a gap smaller than ${A_REAL_GAP_MPH} mph is no gap at all. The same floor decides the pooled verdict AND whether the five goals agree with it, so the reassurance that the pooled rows hide nothing is tested rather than asserted`],
   [2, `a pitch below ${BOUNCES_BELOW_FEET.toFixed(2)} feet has bounced: the zone floor of ${STRIKE_ZONE.heightMin} less the ${PLAN_MISS_CAP_FEET.toFixed(2)} foot miss this slice's plan allows, so a generator sitting exactly on the plan's floor stays quiet`],
   [2, `a pitch above ${SAILS_ABOVE_FEET.toFixed(2)} feet has sailed: the same cap applied at the zone ceiling of ${STRIKE_ZONE.heightMax}, so both ends of the pitch are checked rather than only the floor`],
   [2, `a near miss is one at or inside session 1's own closest miss of ${SESSION_ONE.misses[0].toFixed(2)} feet`],
