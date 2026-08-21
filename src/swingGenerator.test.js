@@ -13,7 +13,15 @@
 // case the re-roll exists for.
 
 import { describe, it, expect } from 'vitest'
-import { generateSwings, IN_ZONE_RATE, PITCH_MISS_MAX_FEET } from './swingGenerator.js'
+import {
+  generateSwings,
+  IN_ZONE_RATE,
+  PITCH_MISS_MAX_FEET,
+  PITCH_SCALING,
+  normalisedPitch,
+  EV_SPREAD_MPH,
+  LA_SPREAD_DEGREES,
+} from './swingGenerator.js'
 import { meetsTarget } from './goalTargets.js'
 import { carryDistance } from './ballFlight.js'
 import { inStrikeZone, STRIKE_ZONE } from './sessionStats.js'
@@ -144,6 +152,16 @@ describe('exit velocity and launch angle come off the same swing', () => {
   //
   // Session averages for this baseline and this header, both computed by hand:
   // exit velocity 82 + (1 + 0.5*3) = 84.5, launch angle 16.5 + (0.5 + 0.5*2) = 18.
+  //
+  // BOTH EXPECTED PAIRS MOVED IN SLICE 11 AND BOTH NOW SIT ABOVE THOSE TWO
+  // AVERAGES, which reads as a contradiction of the second test's name until
+  // you see why. The scripted pitch below is 0.5 for the in-zone coin, the
+  // height and the side, which is a pitch dead in the middle of the strike
+  // zone: the single best pitch this file can throw. Since Task 5 that pitch
+  // is itself a large positive contribution to contact quality, and it is the
+  // same contribution in both tests, so it cannot be what separates them.
+  // What separates them is still only the quality draw, which is what these
+  // two are named for and what the third test below states outright.
   const HEADER = [0.5, 0.5, 0.5]
   const scripted = (q) => {
     // Three header draws, then seven per swing in the order the generator asks
@@ -164,52 +182,116 @@ describe('exit velocity and launch angle come off the same swing', () => {
     }
   }
 
-  it('lifts both numbers together when the contact was good', () => {
+  it('lifts both numbers together when the quality draw was good', () => {
     const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(1) })
-    // 0.6 * 0.5 of the spread: 84.5 + 4.8 and 18 + 6.6.
-    expect(swings[0].hit.launch.exitSpeed).toBe(89)
-    expect(swings[0].hit.launch.angle).toBe(25)
+    // Hand-computed from the formula, not read off a run. The pitch is dead
+    // centre, so its distance from the heart of the zone is 0 and its quality
+    // term is +(1.007 / 0.432) * sqrt(1/12) = +0.672907; its signed height
+    // term is (0 + 0.045) / 0.822 * sqrt(1/12) = +0.015803.
+    //   quality  = 0.8 * 0.672907 + 0.6 * 0.5           = +0.838302
+    //   evOffset = 0.6 * 0.838302 + 0.8 * 0             = +0.502981
+    //   laOffset = 0.502981 + 0.8 * 0.4 * 0.015803      = +0.508038
+    // 84.5 + 0.502981 * 16 = 92.55, and 18 + 0.508038 * 22 = 29.18.
+    expect(swings[0].hit.launch.exitSpeed).toBe(93)
+    expect(swings[0].hit.launch.angle).toBe(29)
   })
 
-  it('drops both numbers together when the contact was poor', () => {
+  it('drops both numbers together when the quality draw was poor', () => {
     const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(0) })
-    // The mirror image: 84.5 - 4.8 and 18 - 6.6.
-    expect(swings[0].hit.launch.exitSpeed).toBe(80)
-    expect(swings[0].hit.launch.angle).toBe(11)
+    // The same arithmetic with the quality draw at the other end: the shared
+    // term loses 0.6 of the spread, so 0.838302 becomes 0.238302.
+    // 84.5 + 0.6 * 0.238302 * 16 = 86.79, and 18 + 0.148036 * 22 = 21.26.
+    expect(swings[0].hit.launch.exitSpeed).toBe(87)
+    expect(swings[0].hit.launch.angle).toBe(21)
+  })
+
+  it('separates those two by the quality draw alone, on one identical pitch', () => {
+    // The claim the two tests above rest on, said once rather than inferred
+    // from four numbers. Both pitches are the same pitch, so whatever the
+    // pitch contributes it contributes equally, and every gap left is the
+    // draw's.
+    const good = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(1) })[0]
+    const poor = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(0) })[0]
+    expect(good.plateLocHeight).toBe(poor.plateLocHeight)
+    expect(good.plateLocSide).toBe(poor.plateLocSide)
+    expect(good.hit.launch.exitSpeed).toBeGreaterThan(poor.hit.launch.exitSpeed)
+    expect(good.hit.launch.angle).toBeGreaterThan(poor.hit.launch.angle)
   })
 })
 
 describe('the Power goal lifts launch angle on a ramp', () => {
-  // A neutral source, so the only thing separating these numbers is the lift.
-  // The session average launch angle is 18 for every session here; the variance
-  // factor cannot show up because the noise term is zero.
+  // A source stuck at 0.5, so the only thing separating these numbers is the
+  // lift.
+  //
+  // THIS BLOCK'S ARITHMETIC CHANGED IN SLICE 11 AND THE CLAIM DID NOT, which
+  // is worth a paragraph because the old comment here said something that has
+  // stopped being true. It read "the variance factor cannot show up because
+  // the noise term is zero", and at a source stuck at 0.5 that used to hold:
+  // every draw sat dead on the session average and nothing was left for the
+  // variance factor to scale. Since Task 5 a source stuck at 0.5 throws a
+  // pitch straight down the middle of the strike zone, which is the best
+  // pitch this file can throw and a real positive contribution to contact
+  // quality, so the offset is no longer zero and the variance factor does show
+  // up in it.
+  //
+  // So the ramp is asserted as a DIFFERENCE against the same session on a goal
+  // that gets no lift, rather than as an absolute angle. Everything the pitch
+  // contributes is identical on both sides and cancels exactly, which leaves
+  // the lift and nothing else, and it stays that way through Task 6 and Task 9
+  // however they move the swing arithmetic underneath it.
   const neutral = () => constantRandom(0.5).random
+  const angleFor = (sessionNum, goalId) =>
+    generateSwings({ sessionNum, goalId, baselineSwings: BASELINE, random: neutral() })[0].hit.launch.angle
 
   it.each([
-    [2, 20],
-    [3, 22],
-    [4, 24],
-  ])('session %s adds its share of the ramp', (sessionNum, expected) => {
-    const swings = generateSwings({ sessionNum, goalId: 'power', baselineSwings: BASELINE, random: neutral() })
-    expect(swings[0].hit.launch.angle).toBe(expected)
+    [2, 2],
+    [3, 4],
+    [4, 6],
+  ])('session %s adds its share of the ramp', (sessionNum, lift) => {
+    expect(angleFor(sessionNum, 'power') - angleFor(sessionNum, null)).toBe(lift)
   })
 
   it.each(['contact', 'popup', 'allfields', 'open', null, 'not-a-goal'])('leaves %s alone', (goalId) => {
-    const swings = generateSwings({ sessionNum: 4, goalId, baselineSwings: BASELINE, random: neutral() })
-    expect(swings[0].hit.launch.angle).toBe(18)
+    // Held to a hand-computed absolute as well as to each other, so this pair
+    // of tests cannot both drift somewhere new together and stay green.
+    // Session 4, variance factor 0.9, pitch dead centre so its quality term is
+    // +(1.007 / 0.432) * sqrt(1/12) = +0.672907 and its height term is
+    // +0.015803, every one of the swing's own three draws neutral:
+    //   quality  = 0.8 * 0.672907                        = +0.538326
+    //   laOffset = 0.6 * 0.538326 + 0.8 * 0.4 * 0.015803 = +0.328052
+    // 18 + 0.328052 * 22 * 0.9 = 24.50.
+    expect(angleFor(4, goalId)).toBe(24)
   })
 })
 
 describe('a session that would render an empty target band is re-rolled', () => {
   // A source stuck at 0 produces a session of 72 mph at 4 degrees, which meets
-  // no goal in the app. A source stuck at 1 produces 90 mph at 32 degrees,
-  // which meets Power.
+  // no goal in the app. The on-target partner is 0.64.
+  //
+  // IT USED TO BE 1, AND WHY IT COULD NOT STAY 1 IS A FACT ABOUT SLICE 11'S
+  // TASK 5 RATHER THAN A FIXTURE TWEAK. A source stuck at 1 does not only
+  // put every swing draw at its top end; since Task 4 it also throws the
+  // worst pitch this file can throw, 0.80 feet outside the far edge of the
+  // plate, on all fifteen swings. Since Task 5 that pitch is a real
+  // subtraction from contact quality, and it drags the exit velocity of a
+  // session stuck at 1 from 90 mph down to 81, under Power's ask of 88. A
+  // hitter who chased fifteen balls a foot and a half off the plate and still
+  // met the Power target is exactly the thing this task removed, so the fixture
+  // moved rather than the generator.
+  //
+  // 0.64 is the replacement because it sits just under IN_ZONE_RATE, so the
+  // pitch lands inside the zone and the swing draws stay comfortably above
+  // the middle: 91 mph at 29 degrees, which clears Power's 88 mph and sits
+  // inside its 25 to 35 degree band. The first assertion in each test below is
+  // what stops that going stale silently.
+  const ON_TARGET_SOURCE = 0.64
+
   it('generates a second session when nothing in the first met the goal', () => {
     const swings = generateSwings({
       sessionNum: 2,
       goalId: 'power',
       baselineSwings: BASELINE,
-      random: twoAttemptRandom(0, 1),
+      random: twoAttemptRandom(0, ON_TARGET_SOURCE),
     })
     for (const swing of swings) {
       expect(meetsTarget('power', swing.hit.launch)).toBe(true)
@@ -217,10 +299,10 @@ describe('a session that would render an empty target band is re-rolled', () => 
   })
 
   it('keeps the first session when something in it already met the goal', () => {
-    const source = constantRandom(1)
+    const source = constantRandom(ON_TARGET_SOURCE)
     const swings = generateSwings({ sessionNum: 2, goalId: 'power', baselineSwings: BASELINE, random: source.random })
-    expect(source.callCount()).toBe(callsPerAttempt(1))
     expect(meetsTarget('power', swings[0].hit.launch)).toBe(true)
+    expect(source.callCount()).toBe(callsPerAttempt(ON_TARGET_SOURCE))
   })
 
   it.each(['allfields', 'open', null, 'not-a-goal'])('never re-rolls %s, which has nothing to aim at', (goalId) => {
@@ -390,5 +472,231 @@ describe('how often the thrower puts one in the zone', () => {
     const share = SWEEP.filter(inStrikeZone).length / SWEEP.length
     expect(share).toBeGreaterThan(IN_ZONE_RATE - 0.02)
     expect(share).toBeLessThan(IN_ZONE_RATE + 0.02)
+  })
+})
+
+// ── The pitch predicts the contact ───────────────────────────────────────────
+//
+// Until Slice 11's Task 5 the pitch and the swing were drawn without reference
+// to each other, and the measurement is flat rather than close: across
+// 4,500,000 generated swings `node scripts/measure-swing-generation.mjs` put
+// the exit velocity difference between swings at strikes and swings at balls
+// at 0.00 mph, against session 1's own 8.78. Since Slice 8c the coach is handed
+// which pitches were outside the zone and reasons about them out loud, so on
+// every generated session that reasoning was a coincidence.
+//
+// Everything below drives the generator through a fully written-out sequence
+// rather than a constant or a seed, because these are statements about ONE
+// swing with everything except the pitch held still, and no seeded sweep can
+// hold anything still.
+
+// A random source spelled out draw by draw, then neutral forever. The tail
+// matters: a session is fifteen swings and only the first is under the
+// microscope, so the fourteen after it need a source that does not run out.
+function sequence(...values) {
+  let calls = 0
+  return () => (calls < values.length ? values[calls++] : 0.5)
+}
+
+// The three header draws every session starts with: the improve-or-decline
+// coin, then how far the exit velocity and the launch angle move. Held at
+// neutral so the session this swing sits in is always the same one: off
+// BASELINE that is 84.5 mph and 18 degrees, both computed by hand above.
+const NEUTRAL_HEADER = [0.5, 0.5, 0.5]
+
+// The four draws a swing spends after its pitch, in the order the generator
+// asks for them: the shared quality draw, the exit velocity noise, the launch
+// angle noise, and the spray direction. Neutral, so the pitch is the only
+// thing left that can move a number.
+const NEUTRAL_SWING = [0.5, 0.5, 0.5, 0.5]
+
+// The pitch draws for the four pitches these tests need, each written as the
+// generator consumes them. A pitch inside the zone costs three draws and one
+// outside costs four or five, which is exactly why these are spelled out per
+// pitch instead of being nudged from one shared array.
+const DEAD_CENTRE = [0.5, 0.5, 0.5] // in-zone coin, height 2.5 ft, side 0.0 ft
+const HIGH_IN_ZONE = [0.5, 0.9, 0.5] // height 1.5 + 0.9 * 2 = 3.3 ft
+const LOW_IN_ZONE = [0.5, 0.1, 0.5] // height 1.5 + 0.1 * 2 = 1.7 ft
+// Out of the zone: the coin misses, the squared miss draw at 1 gives the
+// full 0.80 feet, 0.9 picks the wide branch, the height is an ordinary 2.5,
+// and the last draw puts it 0.80 feet outside the far edge, at 1.5 feet.
+const WIDE_BY_THE_MAXIMUM = [0.99, 1, 0.9, 0.5, 0.9]
+
+const firstSwingOff = (pitchDraws) =>
+  generateSwings({
+    sessionNum: 2,
+    goalId: null,
+    baselineSwings: BASELINE,
+    random: sequence(...NEUTRAL_HEADER, ...pitchDraws, ...NEUTRAL_SWING),
+  })[0]
+
+describe('a pitch down the middle is hit better than one off the plate', () => {
+  const middle = firstSwingOff(DEAD_CENTRE)
+  const offThePlate = firstSwingOff(WIDE_BY_THE_MAXIMUM)
+
+  it('put the two pitches where this test says it did', () => {
+    // Without this the two tests below could both be satisfied by a sequence
+    // that quietly threw two pitches in the same place, which is precisely
+    // what would happen if the pitch draws ever changed order again.
+    expect(inStrikeZone(middle)).toBe(true)
+    expect(middle.plateLocHeight).toBe(2.5)
+    expect(middle.plateLocSide).toBe(0)
+    expect(inStrikeZone(offThePlate)).toBe(false)
+    expect(offThePlate.plateLocSide).toBe(STRIKE_ZONE.sideMax + PITCH_MISS_MAX_FEET)
+  })
+
+  it('comes out harder, with every other draw held identical', () => {
+    expect(middle.hit.launch.exitSpeed).toBeGreaterThan(offThePlate.hit.launch.exitSpeed)
+  })
+
+  it('comes out better angled too, because the two share one contact quality', () => {
+    // The pitch-quality term feeds the SHARED term rather than exit velocity
+    // alone, which is what makes a chased pitch come out soft and flat
+    // together, the way a real mis-hit does.
+    expect(middle.hit.launch.angle).toBeGreaterThan(offThePlate.hit.launch.angle)
+  })
+})
+
+describe('a high pitch is hit higher than a low one', () => {
+  const high = firstSwingOff(HIGH_IN_ZONE)
+  const low = firstSwingOff(LOW_IN_ZONE)
+
+  it('put the two pitches where this test says it did', () => {
+    expect(high.plateLocHeight).toBe(3.3)
+    expect(low.plateLocHeight).toBe(1.7)
+    expect(inStrikeZone(high)).toBe(true)
+    expect(inStrikeZone(low)).toBe(true)
+  })
+
+  it('produces a higher launch angle off the high pitch', () => {
+    expect(high.hit.launch.angle).toBeGreaterThan(low.hit.launch.angle)
+  })
+
+  it('leaves exit velocity alone, because these two miss the middle equally', () => {
+    // THE WHOLE REASON THERE ARE TWO PITCH TERMS RATHER THAN ONE, stated as a
+    // test. How FAR a pitch sits from the heart of the zone hurts contact
+    // quality and is symmetric: 3.3 feet and 1.7 feet are the same distance
+    // from the middle of the zone, so they are equally hard to square up.
+    // WHICH WAY it is off moves the launch angle and is not symmetric at all.
+    // Two different facts, two different terms.
+    //
+    // This one passes against a generator that links nothing at all, which is
+    // why it was also seen red on purpose: swapping the symmetric distance
+    // term for the signed height in the shared quality makes the high pitch
+    // come out harder as well as higher, and turns this red.
+    expect(high.hit.launch.exitSpeed).toBe(low.hit.launch.exitSpeed)
+  })
+})
+
+describe('the pitch is blended into the swing, not added on top of it', () => {
+  it('holds the exact pair a fully written-out sequence produces', () => {
+    // Hand-computed from the formula rather than read off a run. The pitch is
+    // the worst one this file throws, 0.80 feet outside the far edge at an
+    // ordinary height, and every one of the swing's own three draws is at its
+    // top end, so nothing here is neutral and nothing cancels.
+    //   normalised: height 0, side 1.5 / 0.7 = 2.142857, distance 2.142857
+    //   pitch quality = -(2.142857 - 1.007) / 0.432 * sqrt(1/12) = -0.759013
+    //   pitch height  =  (0 + 0.045) / 0.822 * sqrt(1/12)        = +0.015803
+    //   quality  = 0.8 * -0.759013 + 0.6 * 0.5                   = -0.307210
+    //   evOffset = 0.6 * -0.307210 + 0.8 * 0.5                   = +0.215674
+    //   laOffset = -0.184326 + 0.8 * (0.4 * 0.015803 + sqrt(0.84) * 0.5)
+    //                                                            = +0.187337
+    // 84.5 + 0.215674 * 16 = 87.95, and 18 + 0.187337 * 22 = 22.12.
+    //
+    // WHAT THIS PIN IS ACTUALLY FOR. The same numbers under an implementation
+    // that added the pitch on top of the existing draws instead of blending
+    // it in would be 90 and a different angle, because adding skips the
+    // sqrt(1 - w^2) factor on the draw beside it. That is the mistake the
+    // first prototype of this task made, and this is the test that catches
+    // its return.
+    const swing = generateSwings({
+      sessionNum: 2,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sequence(...NEUTRAL_HEADER, ...WIDE_BY_THE_MAXIMUM, 1, 1, 1, 0.5),
+    })[0]
+    expect(swing.hit.launch.exitSpeed).toBe(88)
+    expect(swing.hit.launch.angle).toBe(22)
+  })
+
+  it('leaves the spread governed by the scale constants, not by how many terms were added', () => {
+    // The claim the sqrt(1 - w^2) weights exist for, measured rather than
+    // asserted. A draw spread evenly over an interval of width 1 has a
+    // standard deviation of sqrt(1/12), and every term blended into an offset
+    // is standardised to exactly that, so the typical distance of a swing from
+    // its own session average has to come out at the scale constant times
+    // sqrt(1/12) whatever gets blended in. Session 2, where the variance
+    // factor is 1 and does not muddy the arithmetic; Open Session, so the
+    // empty-band re-roll never fires and throws out the sessions it dislikes.
+    //
+    // The band is 3% wide because two small effects sit inside it, both
+    // upward: rounding to whole numbers adds 1/12 of variance, worth about
+    // 0.2% on exit velocity, and 6,000 swings leave roughly half a percent of
+    // sampling noise on a standard deviation. An implementation that added
+    // the pitch on top rather than blending it would sit about 11% high, well
+    // outside.
+    const random = mulberry32(20260821)
+    let evSquares = 0
+    let laSquares = 0
+    let degreesOfFreedom = 0
+    for (let i = 0; i < 400; i++) {
+      const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random })
+      const evs = swings.map((w) => w.hit.launch.exitSpeed)
+      const las = swings.map((w) => w.hit.launch.angle)
+      const meanEv = evs.reduce((a, b) => a + b, 0) / evs.length
+      const meanLa = las.reduce((a, b) => a + b, 0) / las.length
+      evSquares += evs.reduce((s, x) => s + (x - meanEv) ** 2, 0)
+      laSquares += las.reduce((s, x) => s + (x - meanLa) ** 2, 0)
+      degreesOfFreedom += swings.length - 1
+    }
+    const uniformSd = Math.sqrt(1 / 12)
+    expect(Math.sqrt(evSquares / degreesOfFreedom)).toBeCloseTo(EV_SPREAD_MPH * uniformSd, 1)
+    expect(Math.sqrt(laSquares / degreesOfFreedom)).toBeCloseTo(LA_SPREAD_DEGREES * uniformSd, 1)
+  })
+})
+
+describe('the pitch terms are standardised against the pitches this file actually throws', () => {
+  // A SILENT COPY OF A MEASURED NUMBER, MADE LOUD. The four constants in
+  // PITCH_SCALING are what turn a pitch location into a term on the same scale
+  // as the generator's own uniform draws, and they were measured against the
+  // pitch distribution drawPitch produces today. Nothing about them is derived,
+  // so moving IN_ZONE_RATE, either miss constant or the low/high/wide split
+  // makes them stale, and a stale centre shifts every session's average exit
+  // velocity for a reason nobody chose.
+  //
+  // Task 9 is a tuning pass over every constant in this file at once, so that
+  // is not a hypothetical. This test re-measures the population through the
+  // generator's own normalisation and holds the declared constants to it, which
+  // turns a silent staleness into a named failure.
+  const NORMALISED = SWEEP.map((w) => normalisedPitch({ height: w.plateLocHeight, side: w.plateLocSide }))
+  const meanOf = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length
+  const sdOf = (xs) => {
+    const m = meanOf(xs)
+    return Math.sqrt(meanOf(xs.map((x) => (x - m) ** 2)))
+  }
+  const distances = NORMALISED.map((p) => p.distanceFromHeart)
+  const heights = NORMALISED.map((p) => p.height)
+
+  // Two hundredths, which is four to eight times the sampling error on 6,000
+  // pitches and roughly half of what a five-point move in IN_ZONE_RATE does to
+  // the mean distance. Tight enough to fire on a real retune, loose enough
+  // that rerunning the same seed cannot trip it.
+  const TOLERANCE = 0.02
+
+  it('centres the distance term on the mean distance a pitch really sits from the heart', () => {
+    expect(meanOf(distances)).toBeGreaterThan(PITCH_SCALING.distanceMean - TOLERANCE)
+    expect(meanOf(distances)).toBeLessThan(PITCH_SCALING.distanceMean + TOLERANCE)
+  })
+
+  it('scales it by the spread that population really has', () => {
+    expect(sdOf(distances)).toBeGreaterThan(PITCH_SCALING.distanceSd - TOLERANCE)
+    expect(sdOf(distances)).toBeLessThan(PITCH_SCALING.distanceSd + TOLERANCE)
+  })
+
+  it('does the same for the signed height term', () => {
+    expect(meanOf(heights)).toBeGreaterThan(PITCH_SCALING.heightMean - TOLERANCE)
+    expect(meanOf(heights)).toBeLessThan(PITCH_SCALING.heightMean + TOLERANCE)
+    expect(sdOf(heights)).toBeGreaterThan(PITCH_SCALING.heightSd - TOLERANCE)
+    expect(sdOf(heights)).toBeLessThan(PITCH_SCALING.heightSd + TOLERANCE)
   })
 })

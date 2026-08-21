@@ -36,6 +36,14 @@
 // a wild one off on both. Everything the header above says about the swing
 // itself still stands untouched. The section headed "The thrower", below the
 // Power lift, is where that change is explained.
+//
+// Second annotation, the same day, and this one does touch the swing. A FIFTH
+// thing now happens: where the pitch was thrown decides part of how well it was
+// struck. Until now it decided nothing at all, measured at a 0.00 mph
+// difference in exit velocity between swings at strikes and swings at balls
+// across 4,500,000 generated swings, against session 1's own 8.78. The section
+// headed "What the pitch does to the swing" is where that is explained, and it
+// is the section to read before changing any of the blending arithmetic below.
 
 import { carryDistance } from './ballFlight'
 import { hasTarget, meetsTarget } from './goalTargets'
@@ -77,6 +85,15 @@ import { STRIKE_ZONE } from './sessionStats'
 // a bug.
 const CONTACT_CORRELATION = 0.6
 const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
+
+// The standard deviation of one of this file's uniform draws, which are all
+// `random() - 0.5` and so spread evenly over an interval of width 1. Every
+// term blended into an offset is standardised to exactly this, which is what
+// lets the sqrt(1 - w**2) arithmetic above and below hold: two terms on the
+// same scale, blended at weights whose squares sum to 1, come out on that
+// scale again. Named rather than written as a literal because three separate
+// places lean on it meaning the same thing.
+const UNIFORM_DRAW_SD = Math.sqrt(1 / 12)
 
 // How much higher a Power player hits the ball, session by session. Power asks
 // for 25 to 35 degrees and the generator used to ignore the player's chosen
@@ -210,6 +227,177 @@ const MISS_HIGH_SHARE = 0.30
 // that merely resembles it.
 const ZONE_HEIGHT = STRIKE_ZONE.heightMax - STRIKE_ZONE.heightMin
 const ZONE_WIDTH = STRIKE_ZONE.sideMax - STRIKE_ZONE.sideMin
+const ZONE_HEIGHT_MIDDLE = (STRIKE_ZONE.heightMin + STRIKE_ZONE.heightMax) / 2
+const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
+
+// How wide a swing's two readings are spread, in the units each is reported
+// in. These were bare literals inside the swing arithmetic until Slice 11's
+// Task 5, and they are named and exported now for one reason: the test that
+// proves adding a pitch influence did not widen the distribution has to read
+// the scale from here rather than carry its own 16 and 22, or it would be
+// proving that two copies of a number agree rather than that the spread is
+// what the generator claims. Nothing about their values changed.
+export const EV_SPREAD_MPH = 16
+export const LA_SPREAD_DEGREES = 22
+
+// Where a pitch sits relative to the zone, in units of the zone's own half
+// height and half width, so that 1.0 means "at the edge" on either axis
+// despite the zone being wider than it is tall in feet. `distanceFromHeart`
+// is how far it sits from the middle, treating the two axes together: 0 is a
+// pitch straight down the middle and 1.41 is a corner.
+//
+// A judgment worth naming rather than leaving in the arithmetic: a foot off
+// the side counts for more than a foot off the top, because the zone is
+// narrower than it is tall and a pitch a foot outside is further out of the
+// hitter's reach than one a foot high. Measuring in feet on both axes instead
+// is the obvious alternative and would say the opposite.
+//
+// Exported so swingGenerator.test.js can measure the population of pitches
+// this file throws through the same normalisation the generator uses, and
+// hold PITCH_SCALING below to what it finds.
+export function normalisedPitch({ height, side }) {
+  const h = (height - ZONE_HEIGHT_MIDDLE) / (ZONE_HEIGHT / 2)
+  const s = (side - ZONE_SIDE_MIDDLE) / (ZONE_WIDTH / 2)
+  return { height: h, side: s, distanceFromHeart: Math.hypot(h, s) }
+}
+
+// What that population looks like, measured over 4,000,000 pitches drawn from
+// `drawPitch` on 21 August 2026, with the hundredth-of-a-foot rounding applied
+// first so these describe the pitches a visitor is actually shown: the
+// distance from the heart averages 1.007 with a spread of 0.432, and the
+// signed height averages -0.045 with a spread of 0.822. (The height mean is
+// slightly below the middle of the zone rather than exactly on it because the
+// thrower misses low more often than high.)
+//
+// THESE ARE MEASURED, NOT DERIVED, WHICH MAKES THEM STALE THE MOMENT THE
+// PITCH DISTRIBUTION MOVES. They exist to put the two pitch terms on the same
+// scale as the generator's own uniform draws, and centring is the half that
+// matters most: a term that is not centred shifts every session's average
+// exit velocity rather than merely re-weighting it. There is no closed form
+// for the mean of a distance over this mixture, so it is measured and then
+// guarded, by a test in swingGenerator.test.js that re-measures the population
+// and fails by name if these drift out of date.
+export const PITCH_SCALING = {
+  distanceMean: 1.007,
+  distanceSd: 0.432,
+  heightMean: -0.045,
+  heightSd: 0.822,
+}
+
+// ── What the pitch does to the swing ────────────────────────────────────────
+//
+// THE DEFECT THIS CLOSES, MEASURED BEFORE ANYTHING WAS CHANGED. Across
+// 4,500,000 generated swings, the difference in exit velocity between swings
+// at strikes and swings at balls off the plate was 0.00 mph. Session 1, the
+// fifteen hand-written swings this demo is calibrated against, has a gap of
+// 8.78. The pitch and the swing were simply drawn without reference to each
+// other, and since Slice 8c the coach has been handed which pitches were
+// outside the zone and has reasoned about them out loud, so on every generated
+// session that reasoning was a coincidence.
+//
+// TWO TERMS, NOT ONE, AND THEY ANSWER DIFFERENT QUESTIONS.
+//
+//   The pitch-quality term is how far the pitch sits from the heart of the
+//   zone, and it is SYMMETRIC: a ball badly missed high and a ball badly
+//   missed low are both hard to square up. It feeds the shared contact
+//   quality, which is what makes a chased pitch come out soft AND flat
+//   together, the way a real mis-hit does rather than one number at a time.
+//
+//   The pitch-height term is WHICH WAY the pitch is off, and it is
+//   directional: a high pitch produces a higher launch angle and a low pitch
+//   a lower one. That is ordinary baseball and it is visible in session 1's
+//   own data. It feeds launch angle only, and it must not feed exit velocity,
+//   or a high strike would come out harder than a low one for no reason.
+//
+// BLENDED IN, NEVER ADDED ON TOP, and this is the one line to read if you are
+// about to change any of it. The first prototype of this task added the pitch
+// term on top of the existing draws. It produced an 11 mph zone gap against a
+// 6 mph target and stacked 10 percent of every swing generated against the
+// exit velocity ceiling, because adding independent terms widens the
+// distribution. The sqrt(1 - w**2) weights below are the same arithmetic
+// CONTACT_CORRELATION already uses and are what keeps the total spread
+// governed by EV_SPREAD_MPH and LA_SPREAD_DEGREES rather than by how many
+// influences somebody has added since.
+//
+// WHERE THE HEIGHT TERM IS BLENDED IN IS A CHOICE, and it is not the obvious
+// one. It goes inside the independent half of the launch angle, beside
+// laNoise, rather than over the finished offset. Blending it over the finished
+// offset dilutes the shared contact term as well, which quietly re-tunes
+// CONTACT_CORRELATION, a settled product decision this task has no business
+// touching. Measured over 4,000 sessions per goal and session number: doing it
+// the obvious way took the Power goal's empty target band from 14.6% to 15.3%
+// at session 2 for that reason alone. Blended where it is, exit velocity and
+// launch angle still agree with each other exactly as much as 0.6 says they do.
+//
+// BOTH WEIGHTS ARE PROVISIONAL. Task 9 is a tuning pass that sets every
+// constant in this file at once, against nine targets that interact, and these
+// two are on its list. What they were chosen for here is the structure, not
+// the calibration:
+//
+//   0.8 on pitch quality puts the pitch behind roughly 23% of the variance in
+//   exit velocity (0.6 squared times 0.8 squared), and lands the strike-versus-
+//   ball gap at about 3.4 mph. It cannot be pushed to 6 by moving this number:
+//   see the ceiling note below.
+//
+//   0.4 on pitch height makes a pitch at the top of the zone come out about 5
+//   degrees higher than one at the bottom, which is a believable batting
+//   practice effect rather than a dramatic one.
+//
+// THE CEILING THIS STRUCTURE HAS, worth knowing before anybody tries to reach
+// a 6 mph gap by raising PITCH_QUALITY_WEIGHT. The pitch's effect on exit
+// velocity is throttled twice over: once by this weight, and again by
+// CONTACT_CORRELATION, because the pitch reaches exit velocity only through
+// the shared term. Even at a weight of 1.0, where the pitch would BE the
+// contact quality and the swing's own quality draw would count for nothing,
+// the gap comes out at about 4.2 mph. Reaching 6 means raising
+// CONTACT_CORRELATION or EV_SPREAD_MPH, not this weight. That is Task 9's
+// call, and the report's own section 9 already says the generated hitter is
+// 30% tighter than the session he is derived from, so EV_SPREAD_MPH is the
+// likelier lever.
+const PITCH_QUALITY_WEIGHT = 0.8
+const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
+const PITCH_HEIGHT_WEIGHT = 0.4
+const PITCH_HEIGHT_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_HEIGHT_WEIGHT ** 2)
+
+// The two terms one pitch contributes, each standardised to the same scale as
+// one of this file's uniform draws so they can be blended without changing
+// what the scale constants mean.
+//
+// The quality term is NEGATED: distance from the heart is a bad thing, so the
+// further out the pitch, the lower the contact quality. A sign error here is
+// the likeliest way this whole change goes wrong, and it would show up as a
+// hitter who strikes balls off the plate better than strikes down the middle;
+// section 1 of `node scripts/measure-swing-generation.mjs` reports it in those
+// words rather than as a number to squint at.
+//
+// WHAT IS NOT PRESERVED IS THE EXTREMES, the same caveat CONTACT_CORRELATION
+// carries above. The typical distance of a swing from its session average is
+// unchanged, but the best pitch this file can throw now reaches further than
+// any single draw could, so the occasional swing lands further out on the
+// chart. That is honest for a hitter and worth knowing before anyone reads a
+// wider scatter as a bug.
+//
+// AND ONE THING THAT IS PRESERVED ONLY ALMOST, measured rather than assumed
+// and named here because this file names its other overshoots. Across the
+// whole report, exit velocity spread within a session came back identical to
+// the hundredth, 4.49 / 4.27 / 4.04 mph on sessions 2, 3 and 4 either side of
+// this change. Launch angle rose by about eight tenths of a percent, 6.15 to
+// 6.20 degrees on session 2 and the same shift on the other two. The reason is
+// that these two terms are not quite independent of each other: the thrower
+// misses low more often than high, so a pitch far from the heart of the zone
+// is slightly more likely to be a low one, which leaves the two terms
+// correlated at +0.055 rather than at 0. Feeding one into the shared half and
+// the other into the independent half then adds a little variance instead of
+// none, and 0.055 predicts a rise of 1.0% against the 0.8% measured. Not worth
+// correcting for: the fix would be to orthogonalise the two terms, which buys
+// eight hundredths of a degree at the cost of a step nobody could read.
+function pitchInfluence(pitch) {
+  const { height, distanceFromHeart } = normalisedPitch(pitch)
+  return {
+    quality: -((distanceFromHeart - PITCH_SCALING.distanceMean) / PITCH_SCALING.distanceSd) * UNIFORM_DRAW_SD,
+    height: ((height - PITCH_SCALING.heightMean) / PITCH_SCALING.heightSd) * UNIFORM_DRAW_SD,
+  }
+}
 
 // Where one pitch was thrown, in feet: height off the ground, and sideways
 // from the middle of the plate.
@@ -280,28 +468,52 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
     // That was expected and is why the pre-Slice-11 generator was snapshotted
     // under docs/eval-fixtures/frozen/ first, so every committed round of coach
     // evaluations still describes the swings its coach actually saw.
-    const pitch = drawPitch(random)
-
-    // One draw for how well this particular ball was struck, then one apiece
-    // for everything else that separates the two numbers. Both readings carry
-    // the same quality term, so a barrelled ball comes out fast and well
-    // angled together and a mis-hit comes out slow and flat together.
-    const quality = random() - 0.5
-    const evNoise = random() - 0.5
-    const laNoise = random() - 0.5
-    const evOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * evNoise
-    const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laNoise
-
-    const ev = Math.round(Math.max(65, Math.min(97, sessionEV + evOffset * 16 * varianceFactor)))
-    const la = Math.round(Math.max(-5, Math.min(35, sessionLA + laOffset * 22 * varianceFactor)))
-    const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
-    const dist = carryDistance({ exitSpeed: ev, angle: la })
     // Both readings are rounded to the hundredth of a foot, which is how
     // TrackMan reports them and how every chart and count line in this app
     // reads them. The rounding can never move a pitch across the zone edge:
     // the smallest miss this file throws is 0.05 feet, ten times the most a
     // hundredth-of-a-foot rounding can shift a number.
-    return { plateLocHeight: Math.round(pitch.height * 100) / 100, plateLocSide: Math.round(pitch.side * 100) / 100, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
+    //
+    // ROUNDED HERE, BEFORE THE SWING READS IT, rather than on the way out.
+    // Since Task 5 the pitch decides part of how well the ball was struck, and
+    // it should decide that from the number the visitor is shown and the coach
+    // is handed, not from an unrounded one nothing else in the app ever sees.
+    const drawn = drawPitch(random)
+    const pitch = {
+      height: Math.round(drawn.height * 100) / 100,
+      side: Math.round(drawn.side * 100) / 100,
+    }
+    const fromPitch = pitchInfluence(pitch)
+
+    // One draw for how well this particular ball was struck, then one apiece
+    // for everything else that separates the two numbers. Both readings carry
+    // the same quality term, so a barrelled ball comes out fast and well
+    // angled together and a mis-hit comes out slow and flat together.
+    //
+    // How well the ball was struck is now part the pitch and part the hitter:
+    // the accident share is what is left of a swing once the pitch has had its
+    // say, and squaring the two weights and adding them still gives 1, so this
+    // blend cannot widen the distribution however the weights are retuned.
+    const qualityDraw = random() - 0.5
+    const evNoise = random() - 0.5
+    const laNoise = random() - 0.5
+    const quality = PITCH_QUALITY_WEIGHT * fromPitch.quality + PITCH_QUALITY_ACCIDENT_SHARE * qualityDraw
+    const evOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * evNoise
+    // The signed height sits inside the independent half, beside laNoise,
+    // which is the half this file already describes as "everything else that
+    // separates the two numbers". That is exactly what a high pitch is: a
+    // reason for the launch angle to differ from the exit velocity on the same
+    // swing. Blending it over the finished offset instead would water down the
+    // shared term too and quietly re-tune CONTACT_CORRELATION; see the note
+    // above the weights for the measurement that ruled that out.
+    const laAccident = PITCH_HEIGHT_WEIGHT * fromPitch.height + PITCH_HEIGHT_ACCIDENT_SHARE * laNoise
+    const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laAccident
+
+    const ev = Math.round(Math.max(65, Math.min(97, sessionEV + evOffset * EV_SPREAD_MPH * varianceFactor)))
+    const la = Math.round(Math.max(-5, Math.min(35, sessionLA + laOffset * LA_SPREAD_DEGREES * varianceFactor)))
+    const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
+    const dist = carryDistance({ exitSpeed: ev, angle: la })
+    return { plateLocHeight: pitch.height, plateLocSide: pitch.side, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
   })
 }
 
