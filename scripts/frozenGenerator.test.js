@@ -8,6 +8,21 @@
 // docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs, instead of the
 // working tree.
 //
+// DATED CORRECTION, 20 August 2026, from a review pass after everything above
+// was written, reviewed and committed. FIVE IS THE WRONG NUMBER. There is a
+// sixth exposed directory, docs/eval-fixtures/slice7-debriefs, and it is the
+// one with the most riding on it: the 96 debriefs in it are what the grading
+// tool's ability to catch a real coach error was established against, and the
+// tool forces that builder for every --validate run. It hid because it freezes
+// its own session 1 and looked, to five review passes, like a directory that
+// had already solved this problem. It had solved half of it. It is repaired
+// and covered now, and the digest group that covers it is the third one.
+//
+// Say "six committed fixture directories" rather than "six rounds" if the
+// number is being written down again. The five are rounds of 64 debriefs each;
+// this sixth one is a 96-debrief fixture in two files and was never called a
+// round.
+//
 // WHAT THIS TEST IS FOR, IN ONE SENTENCE: the snapshot is only worth
 // anything for as long as it keeps producing exactly what it produced on
 // 20 August 2026, and nothing else in this repository would notice if it
@@ -35,6 +50,20 @@
 // see. A change to the spray bias, which touches every swing, turns 15 of
 // these red immediately.
 //
+// DATED CORRECTION, 20 August 2026. Two numbers in the paragraph above are
+// now stale, and both were re-measured rather than adjusted by arithmetic.
+// It is six directories, not five (see the correction at the top of this
+// file). And the spray-bias figure was taken when this file held 22 tests and
+// the mutation was applied to a scratch COPY of the snapshot, which left the
+// hash intact; re-run today by moving this snapshot's own spray bias from 0.45
+// to 0.55 in place, it turns 20 of 31 red. Eighteen of those are the per-cell
+// data checks (the fifteen it always caught, plus the three cells of the new
+// frozen group), one is the seed-honesty test, which is also a data
+// comparison, and one is the hash, which the older technique deliberately did
+// not disturb. The substantive point is unchanged: a change that touches
+// every swing is caught loudly, and a change that touches none of the swings
+// any committed round contains is caught only by the hash.
+//
 // IF THIS TEST GOES RED, the answer is never to regenerate the digest. The
 // digest is a record of a day that has passed. Something has changed the
 // snapshot, or changed which generator a builder reaches for, and the change
@@ -43,16 +72,17 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
 import { resolveSessions, PRE_SLICE11_SNAPSHOT_PATH } from './grade-coach-accuracy.mjs'
-import { DIGEST_GROUPS, digestForCell } from './sessionDigest.js'
+import { DIGEST_GROUPS, digestForCell, swingLine } from './sessionDigest.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const DIGEST_PATH = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json')
 const SNAPSHOT_PATH = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs')
+const REBUILD_PATH = path.join(REPO_ROOT, 'docs/eval-fixtures/slice7-debriefs/rebuild.mjs')
 
 const digest = JSON.parse(readFileSync(DIGEST_PATH, 'utf8'))
 
@@ -131,21 +161,54 @@ export function isProseOnlyLine(line) {
 }
 
 describe('the frozen pre-Slice-11 generator still produces what it produced', () => {
-  // TWO DIFFERENT QUESTIONS ARE ASKED IN THIS FILE, AND MIXING THEM UP IS
+  // THREE DIFFERENT QUESTIONS ARE ASKED IN THIS FILE, AND MIXING THEM UP IS
   // HOW A SNAPSHOT STOPS BEING ONE.
   //
-  // The first two tests ask: HAS THE FILE MOVED? They hash every line of
-  // code in the snapshot, the frozen copies of carryDistance and the goal
-  // targets as well as the recovered generator, and compare it to a pinned
-  // number. Any edit to any of it fails, whether or not it changes a single
-  // swing.
+  // DATED CORRECTION, 20 August 2026. This block said TWO questions, and
+  // pointed at tests by position: "the first two tests" were said to be the
+  // pair asking whether the file had moved. Checked against a real run rather
+  // than read off the source order, that was wrong on both halves. The pair is
+  // the boundary test and the hash test, which are not adjacent and never were;
+  // the second test in the file asks neither question. A third question had
+  // also been added by then and this block never mentioned it.
   //
-  // Every other test in this file asks: HAS THE DATA MOVED? Those rebuild
-  // the sessions five committed rounds were written about and compare them
-  // to the digest, so they fail when those rounds would be graded against
-  // swings their coaches never saw.
+  // Tests are named below rather than numbered, deliberately, and that is the
+  // real repair. A positional reference in a file that grows is wrong the next
+  // time somebody inserts a test, which is exactly how the sentence above came
+  // to be wrong; this same defect has now been recorded four separate times on
+  // this branch, always a count or a position written down beside the thing it
+  // counts. Search for the quoted name.
   //
-  // Neither subsumes the other, which was measured rather than assumed. On
+  //   HAS THE FILE MOVED?
+  //     "every line of frozen code in the snapshot is byte-for-byte what was
+  //     recovered" hashes every line of code in the snapshot, the frozen copies
+  //     of carryDistance and the goal targets as well as the recovered
+  //     generator, and compares it to a pinned number. Any edit to any of it
+  //     fails, whether or not it changes a single swing.
+  //     "the snapshot carries one unambiguous hash boundary, with only prose
+  //     above it" is the other half of the same question: it stops the hashed
+  //     region being quietly shrunk instead of edited.
+  //
+  //   HAS THE DATA MOVED?
+  //     Every "<builder> @ seed <n> :: <cell>" test rebuilds the sessions six
+  //     committed fixture directories were written about and compares them to
+  //     the digest, so they fail when those rounds would be graded against
+  //     swings their coaches never saw. "reads a digest covering every builder,
+  //     seed and cell it claims to" stops that set silently shrinking.
+  //
+  //   DOES THE GUARD ITSELF STILL WORK?
+  //     "the prose rule accepts prose and refuses every line terminator" drives
+  //     the boundary rule with hand-built strings, because the snapshot must
+  //     never contain the thing that rule exists to refuse.
+  //     "the grading script imports the same snapshot this test hashes" and
+  //     "the 96-debrief fixture rebuilds through the frozen snapshot, not the
+  //     working tree" ask whether the files being protected are the files
+  //     anything actually reads.
+  //     "the frozen group's one seed is the seed its fixture actually runs at"
+  //     asks whether the digest's own coverage claim is honest.
+  //
+  // Neither of the first two subsumes the other, which was measured rather than
+  // assumed. On
   // 20 August 2026 the reviewer mutated the snapshot five ways, one line
   // each, and rebuilt all 21 cell-and-seed combinations against each:
   //
@@ -393,6 +456,97 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
       'scripts/grade-coach-accuracy.mjs imports a different file from the one this test ' +
         'hashes, so the hash is guarding a file nothing reads',
     ).toBe(SNAPSHOT_PATH)
+  })
+
+  // AND SO MUST THE THIRD READER, WHICH NOBODY KNEW WAS A READER UNTIL
+  // 20 AUGUST 2026.
+  //
+  // docs/eval-fixtures/slice7-debriefs/rebuild.mjs is the "frozen" builder. It
+  // froze its own stand-in for session 1 back in August and then generated
+  // sessions 2 and later by importing the generator out of the working tree,
+  // so it was frozen in its own code and nowhere else. All three of its cells
+  // are session 2 or later.
+  //
+  // That directory matters more than the five this task's predecessor
+  // repaired. grade-coach-accuracy.mjs FORCES the frozen builder whenever
+  // --validate runs, and --validate against those 96 debriefs is the entire
+  // basis on which this project ever established that its grading tool catches
+  // a real coach error. A generator rewrite would have re-graded it against a
+  // complete, plausible fact sheet no coach in it ever saw.
+  //
+  // This is a text check rather than a behaviour check, and that is a real
+  // limitation rather than a shortcut: nothing rebuild.mjs exposes says which
+  // generator it loaded. It is the same tripwire shape src/sessionStats.test.js
+  // uses on src/DebriefScreen.jsx's hardcoded cutoffs, and it catches the
+  // realistic regression, which is somebody pointing that import back at src/
+  // while tidying, or moving the snapshot without following it here.
+  //
+  // The negative half deliberately looks only at import lines. The file's own
+  // header discusses src/swingGenerator.js in prose, and a whole-file search
+  // would fail on the sentence that explains why the import is not there.
+  it('the 96-debrief fixture rebuilds through the frozen snapshot, not the working tree', () => {
+    const source = readFileSync(REBUILD_PATH, 'utf8')
+    const relativeSnapshot = path.relative(REPO_ROOT, PRE_SLICE11_SNAPSHOT_PATH)
+    expect(
+      source,
+      'rebuild.mjs no longer names the snapshot the grading script loads; if the snapshot moved, ' +
+        'this file has to move with it',
+    ).toContain(relativeSnapshot)
+    const importLines = source.split('\n').filter((line) => line.includes('await import('))
+    expect(
+      importLines.filter((line) => line.includes('src/swingGenerator')),
+      'rebuild.mjs imports the working-tree generator again, so the 96-debrief fixture would be ' +
+        'graded against swings no coach in it ever saw',
+    ).toEqual([])
+    expect(
+      importLines.filter((line) => line.includes('FROZEN_GENERATOR_PATH')).length,
+      'rebuild.mjs must load its generator through its own FROZEN_GENERATOR_PATH constant, which is ' +
+        'what binds it to the path checked above',
+    ).toBe(1)
+  })
+
+  // WHY THE "frozen" DIGEST GROUP CARRIES ONE SEED, AND WHY THAT NUMBER IS NOT
+  // A HALF-COVERAGE CLAIM.
+  //
+  // The other two groups pass their seed into the builder, so a group listing
+  // one seed genuinely covers one of several possible worlds. This builder does
+  // not work that way: resolveSessions hands it a seed and it ignores it, going
+  // to rebuild.mjs's own exported SEED instead. Writing 20260814 into the group
+  // is therefore a statement about where the data came from, not a choice.
+  //
+  // A reader has no way to see that from the group definition, and the risk if
+  // they assume the shape matches the rows above it is that they add a second
+  // seed, watch it produce identical data, and conclude the generator is
+  // seed-independent. So the three things that make the single seed honest are
+  // pinned here instead of asserted in a comment.
+  //
+  // One limit, stated rather than glossed: sessionsForCell caches by cell key
+  // alone, so the third assertion would still pass if some future change
+  // plumbed the seed through without also keying the cache by it. The second
+  // assertion is what stops the set being vacuous, by showing the seed is not
+  // inert in the underlying builder.
+  it('the frozen group\'s one seed is the seed its fixture actually runs at', async () => {
+    const { SEED, buildSessions } = await import(pathToFileURL(REBUILD_PATH).href)
+
+    expect(SEED, 'the digest keys the frozen group by this number').toBe(20260814)
+
+    const ownSeed = buildSessions({ goalId: 'power', upTo: 2, seed: SEED })
+    const otherSeed = buildSessions({ goalId: 'power', upTo: 2, seed: 20260819 })
+    expect(
+      otherSeed[1].swings.map(swingLine),
+      'the seed is inert in rebuild.mjs, which would make the assertion below meaningless',
+    ).not.toEqual(ownSeed[1].swings.map(swingLine))
+
+    const handedAnotherSeed = await resolveSessions({
+      builder: 'frozen',
+      cellKey: 'power-s2',
+      seed: 20260819,
+    })
+    expect(
+      digestForCell(handedAnotherSeed),
+      'the frozen builder started honouring the seed it is handed, so the digest now covers one of ' +
+        'several worlds rather than the only one',
+    ).toEqual(digest.groups.frozen.seeds['20260814']['power-s2'])
   })
 
   it('every line of frozen code in the snapshot is byte-for-byte what was recovered', () => {

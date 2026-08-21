@@ -66,6 +66,33 @@
 //     three named tests red instead of passing silently. Slice 11 does not
 //     currently plan to touch src/ballFlight.js. If it does, the red is the
 //     signal, and the fix is a frozen carry formula, never a new digest.
+//
+// DATED CORRECTION, 20 August 2026, HOURS AFTER THE PARAGRAPH ABOVE WAS
+// COMMITTED. "A change to carryDistance turns three named tests red" is too
+// strong, and it was caught by running the mutation rather than trusting the
+// sentence. What is true is narrower, and the difference matters to whoever
+// picks up the generator work:
+//
+//   A carryDistance change that reaches this fixture's session-1 swings does
+//   turn the three cells red. Measured, by moving the potential term from
+//   (exitSpeed - 45) * 7.5 to * 7.6: four tests red, the three cells plus the
+//   seed-honesty test, which is also a comparison against the digest.
+//
+//   A carryDistance change confined to the ABOVE-28-DEGREES branch is
+//   invisible here. Measured, by moving that branch's floor from 0.55 to 0.40,
+//   which is the exact mutation this project's review used once before: all 31
+//   tests in the guard file stayed green. The reason is in the data. The
+//   working-tree carryDistance is called only for session 1, and this
+//   fixture's 45 session-1 swings top out at 25 degrees, so nothing reaches
+//   that branch. The 11 swings above 28 degrees in the digest are all in
+//   sessions 2 and later, which come from the snapshot's own frozen copy and
+//   are immune.
+//
+// That is the same blind spot the guard test's own header already records for
+// the snapshot: this digest watches the swings six committed fixture
+// directories were written about, and is silent about a formula change those
+// swings never exercise. So carryDistance here is a real residual rather than
+// a covered one, which is an argument for a frozen carry formula, not against.
 
 import { register } from 'node:module'
 

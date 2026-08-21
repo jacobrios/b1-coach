@@ -47,6 +47,12 @@ export const DIGEST_CELL_KEYS = [
   'popup-s4',
 ]
 
+// The 96-debrief fixture measures three cells and no others, so it gets its
+// own list rather than borrowing the one above. Added 20 August 2026; see the
+// dated third row of DIGEST_GROUPS below for why that fixture is in here at
+// all, which was not known when this module was written.
+export const FROZEN_CELL_KEYS = ['power-s2', 'contact-s4', 'open-s4']
+
 // Which builder gets digested at which seeds, and which builder produced the
 // numbers in the first place.
 //
@@ -68,6 +74,44 @@ export const DIGEST_GROUPS = [
     producedByBuilder: 'slice9-before',
     seeds: [20260814],
     cellKeys: DIGEST_CELL_KEYS,
+  },
+  // DATED ADDITION, 20 August 2026, AFTER THE TWO ROWS ABOVE WERE ALREADY
+  // WRITTEN, REVIEWED AND COMMITTED. Left as an append rather than folded in
+  // above, so the history of what was known when stays readable.
+  //
+  // The two rows above cover the five committed rounds that were known to be
+  // exposed. Review afterwards found a sixth directory with the same problem
+  // and a worse consequence: docs/eval-fixtures/slice7-debriefs, the 96-debrief
+  // fixture, which the grading tool forces this builder on for every --validate
+  // run. That is the run the tool's whole claim to catch real coach errors
+  // rests on. Nothing was watching it.
+  //
+  // THIS ROW IS NOT SHAPED LIKE THE TWO ABOVE, AND THE DIFFERENCES ARE REAL
+  // RATHER THAN COSMETIC. Check them before copying this row as a template.
+  //
+  //   Three cells, not seven. docs/eval-fixtures/slice7-debriefs/rebuild.mjs
+  //   carries its own frozen CELLS list, and it holds three entries.
+  //
+  //   One seed, and the seed number below does NOT choose anything. The two
+  //   rows above pass their seed into the builder. This builder ignores the
+  //   seed it is handed entirely: rebuild.mjs seeds itself from its own
+  //   exported SEED constant, which is 20260814. The number is written here so
+  //   the digest's key names the seed the data actually came from, and so a
+  //   change to that constant turns this group red. It is not a claim that a
+  //   second seed exists and is being skipped. A test in
+  //   scripts/frozenGenerator.test.js pins exactly that, so nobody has to take
+  //   this paragraph on trust.
+  //
+  //   producedByBuilder and builder are the same name, which is true of no
+  //   other row. That is because this builder was already frozen against the
+  //   working tree's session 1 from the day it was written; what it was not
+  //   frozen against was the generator, which is what changed on 20 August
+  //   2026.
+  {
+    builder: 'frozen',
+    producedByBuilder: 'frozen',
+    seeds: [20260814],
+    cellKeys: FROZEN_CELL_KEYS,
   },
 ]
 

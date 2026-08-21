@@ -18,15 +18,41 @@
 // these same numbers through the frozen generator snapshot on every single
 // `npm test` and fails if one of them moves.
 //
+// ADDING A GROUP THAT WAS NEVER CAPTURED IS NOT THE SAME ACT, AND HAS ITS OWN
+// FLAG. Added 20 August 2026, hours after the file above was first written,
+// when review found a sixth exposed fixture directory nothing had recorded.
+//
+// The refusal above is there to stop the committed numbers being REPLACED. It
+// is not a reason to leave a newly discovered builder unrecorded forever, and
+// the only alternatives were re-running the whole thing with --overwrite (which
+// would rewrite every existing group from a working tree that has since moved,
+// and stamp a new commit id over the old one) or hand-editing an 84 KB JSON
+// record. Both are worse than a flag that can only append.
+//
+//   --add-group <builder>   computes exactly one group and inserts it, refuses
+//                           if that group is already in the file, and touches
+//                           no byte of any group already there. It also writes
+//                           a dated line into the file saying the group was
+//                           added later and by what, so a reader is never left
+//                           guessing why one group has a different provenance
+//                           from the rest.
+//
+// This is still only honest while the working tree holds the pre-Slice-11
+// generator. After that it records what the new generator makes, under a name
+// claiming otherwise, which is the exact failure everything here exists to
+// stop. It refuses nothing on that front, because it cannot tell; the ordering
+// is the human's to get right, and it is provable from git history afterwards.
+//
 // HOW TO RUN
 //   node scripts/write-frozen-session-digest.mjs
 //   node scripts/write-frozen-session-digest.mjs --out <path>
 //   node scripts/write-frozen-session-digest.mjs --overwrite   (see above)
+//   node scripts/write-frozen-session-digest.mjs --add-group <builder>
 //
 // No API key, no network call, no spend. It only runs the generator.
 
 import { execFileSync } from 'node:child_process'
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
@@ -38,17 +64,44 @@ const REPO_ROOT = path.resolve(__dirname, '..')
 const DEFAULT_OUT = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json')
 
 function parseArgs(argv) {
-  const args = { out: DEFAULT_OUT, overwrite: false }
+  const args = { out: DEFAULT_OUT, overwrite: false, addGroup: null }
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--out') {
       args.out = path.resolve(REPO_ROOT, argv[++i])
     } else if (argv[i] === '--overwrite') {
       args.overwrite = true
+    } else if (argv[i] === '--add-group') {
+      args.addGroup = argv[++i]
     } else {
-      throw new Error(`Unknown argument "${argv[i]}". Supported: --out <path>, --overwrite.`)
+      throw new Error(
+        `Unknown argument "${argv[i]}". Supported: --out <path>, --overwrite, --add-group <builder>.`,
+      )
     }
   }
+  // The two are opposites: one refuses to touch an existing file, the other
+  // only works on one. Taking both would leave it ambiguous which refusal was
+  // meant to apply, so it is refused rather than resolved in favour of either.
+  if (args.addGroup && args.overwrite) {
+    throw new Error('--add-group appends one group to an existing digest. --overwrite replaces the whole file. Pick one.')
+  }
   return args
+}
+
+// The calendar day where this repository's author is standing, not UTC.
+//
+// Written the long way rather than with toISOString().slice(0, 10), and it is
+// not a style preference. Measured on the machine that wrote this, at 22:45 on
+// 20 August 2026 in CDT: toISOString() reports 2026-08-21, because it converts
+// to UTC first. Every dated record in this project (CLAUDE.md, the decision
+// log, every BUILDER.txt annotation) is stamped with the author's own local
+// day, so a UTC stamp would have quietly filed this evening's work under
+// tomorrow, in the one file whose entire job is saying which day something
+// happened on. Caught by reading the output instead of trusting it.
+function localDay() {
+  const d = new Date()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${month}-${day}`
 }
 
 function currentCommit() {
@@ -61,8 +114,91 @@ function currentCommit() {
   }
 }
 
+// One group's worth of work, shared by the full write and by --add-group, so
+// a group appended later cannot be built by a second, subtly different loop
+// from the ones already in the file.
+async function buildGroupEntry(group) {
+  const entry = {
+    // Read these two together. producedByBuilder is what was run to write
+    // the file, on the one day the working tree still held the old
+    // generator. The group name is what must reproduce it from now on.
+    producedByBuilder: group.producedByBuilder,
+    mustBeReproducedByBuilder: group.builder,
+    seeds: {},
+  }
+  for (const seed of group.seeds) {
+    const cells = {}
+    for (const cellKey of group.cellKeys) {
+      const resolved = await resolveSessions({
+        builder: group.producedByBuilder,
+        cellKey,
+        seed,
+      })
+      cells[cellKey] = digestForCell(resolved)
+      const sessionCount = resolved.sessions.length
+      console.log(`  ${group.builder} @ ${seed} :: ${cellKey} (${sessionCount} session(s))`)
+    }
+    entry.seeds[String(seed)] = cells
+  }
+  return entry
+}
+
+// Appends one group to a digest that already exists, and refuses everything
+// else. Every refusal here is guarding the same thing: that this file records
+// what happened rather than what somebody wanted it to say.
+async function addGroup(args) {
+  const group = DIGEST_GROUPS.find((g) => g.builder === args.addGroup)
+  if (!group) {
+    throw new Error(
+      `Unknown group "${args.addGroup}". It must first exist in DIGEST_GROUPS in ` +
+        `scripts/sessionDigest.js, so the writer and the permanent test agree on what is covered. ` +
+        `Known: ${DIGEST_GROUPS.map((g) => g.builder).join(', ')}.`,
+    )
+  }
+  if (!existsSync(args.out)) {
+    throw new Error(
+      `${path.relative(REPO_ROOT, args.out)} does not exist. --add-group appends to a digest that is ` +
+        'already committed. Run this script with no flags to write one from scratch.',
+    )
+  }
+  const digest = JSON.parse(readFileSync(args.out, 'utf8'))
+  if (digest.groups[group.builder]) {
+    throw new Error(
+      `${path.relative(REPO_ROOT, args.out)} already records the "${group.builder}" group. This flag only ` +
+        'ever appends. Replacing a group that is already committed destroys the only evidence of what the ' +
+        'old generator produced, which is the one thing this file is for.',
+    )
+  }
+
+  digest.groups[group.builder] = await buildGroupEntry(group)
+  // Written into the record itself rather than left to the commit message,
+  // because a reader opening this JSON in a year will not have the commit in
+  // front of them and would otherwise have no way to tell why one group has a
+  // later provenance than the rest.
+  digest.laterAdditions = [
+    ...(digest.laterAdditions ?? []),
+    {
+      group: group.builder,
+      addedOn: localDay(),
+      fromWorkingTreeAtCommit: currentCommit(),
+      by: `node scripts/write-frozen-session-digest.mjs --add-group ${group.builder}`,
+      why:
+        'Not captured in the original write because nobody had noticed this fixture was exposed. ' +
+        'Every group already in this file was left untouched.',
+    },
+  ]
+  writeFileSync(args.out, `${JSON.stringify(digest, null, 2)}\n`, 'utf8')
+  console.log('')
+  console.log(`Appended the "${group.builder}" group to ${path.relative(REPO_ROOT, args.out)}`)
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2))
+
+  if (args.addGroup) {
+    await addGroup(args)
+    return
+  }
 
   if (existsSync(args.out) && !args.overwrite) {
     throw new Error(
@@ -94,29 +230,7 @@ async function main() {
   }
 
   for (const group of DIGEST_GROUPS) {
-    const entry = {
-      // Read these two together. producedByBuilder is what was run to write
-      // the file, on the one day the working tree still held the old
-      // generator. The group name is what must reproduce it from now on.
-      producedByBuilder: group.producedByBuilder,
-      mustBeReproducedByBuilder: group.builder,
-      seeds: {},
-    }
-    for (const seed of group.seeds) {
-      const cells = {}
-      for (const cellKey of group.cellKeys) {
-        const resolved = await resolveSessions({
-          builder: group.producedByBuilder,
-          cellKey,
-          seed,
-        })
-        cells[cellKey] = digestForCell(resolved)
-        const sessionCount = resolved.sessions.length
-        console.log(`  ${group.builder} @ ${seed} :: ${cellKey} (${sessionCount} session(s))`)
-      }
-      entry.seeds[String(seed)] = cells
-    }
-    digest.groups[group.builder] = entry
+    digest.groups[group.builder] = await buildGroupEntry(group)
   }
 
   mkdirSync(path.dirname(args.out), { recursive: true })
