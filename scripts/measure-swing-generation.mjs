@@ -136,6 +136,8 @@
 // behaviour is touched or reimplemented by this hook; it only helps Node find
 // the file.
 import { register } from 'node:module'
+import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 
 const EXTENSIONLESS_RESOLVE_HOOK = `
   export async function resolve(specifier, context, nextResolve) {
@@ -177,17 +179,41 @@ const DEFAULT_SEED = 20260821
 function parseSeed(argv) {
   const eq = argv.find((a) => a.startsWith('--seed='))
   const flagAt = argv.indexOf('--seed')
-  const raw = eq ? eq.slice('--seed='.length) : flagAt >= 0 ? argv[flagAt + 1] : null
-  if (raw === null || raw === undefined) return DEFAULT_SEED
+  if (!eq && flagAt < 0) return DEFAULT_SEED
+
+  // Asking for a seed and not supplying one is a mistake, not a request for
+  // the default. Both spellings of an empty seed are refused: `--seed` with
+  // nothing after it used to fall through to the default, and `--seed=` used
+  // to become seed 0, since Number('') is 0. Either way the command as typed
+  // would not have reproduced the report it printed, which is the one thing
+  // this flag exists to guarantee.
+  const raw = eq ? eq.slice('--seed='.length) : argv[flagAt + 1]
   const value = Number(raw)
-  if (!Number.isInteger(value) || value < 0) {
-    console.error(`--seed needs a whole number that is zero or more. Got: ${raw === undefined ? '(nothing)' : raw}`)
+  if (raw === undefined || raw.trim() === '' || !Number.isInteger(value) || value < 0) {
+    console.error(
+      `--seed needs a whole number that is zero or more. Got: ${raw === undefined || raw.trim() === '' ? '(nothing)' : raw}`
+    )
     process.exit(1)
   }
   return value
 }
 
 const SEED = parseSeed(process.argv.slice(2))
+
+// WHICH GENERATOR THIS RUN MEASURED, printed at the top of the report.
+//
+// The seed says which sample was drawn. It does not say what was drawn FROM,
+// and this script's whole job right now is to be run once before the generator
+// is rewritten and again after. Two saved runs both headed "baseline" would be
+// exactly the confusion this file has already worked hard to design out of the
+// word "before".
+//
+// A fingerprint of the generator's own source is used rather than a git commit
+// because it identifies the file that actually ran. A commit stamp says nothing
+// about uncommitted edits, and a run taken mid-rewrite is precisely when
+// somebody would be tempted to save the output.
+const GENERATOR_SOURCE = readFileSync(new URL('../src/swingGenerator.js', import.meta.url), 'utf8')
+const GENERATOR_FINGERPRINT = createHash('sha256').update(GENERATOR_SOURCE).digest('hex').slice(0, 12)
 
 // The same small, fast, well-behaved generator scripts/grade-coach-accuracy.mjs
 // already uses to rebuild a graded session. Copied rather than imported for
@@ -457,6 +483,22 @@ const SLICE11_GOALS = [
 ]
 
 const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
+
+// The four walls the generator squeezes every swing between. HAND-COPIED from
+// the two Math.max/Math.min lines in src/swingGenerator.js, which write them as
+// bare literals and export nothing, so there is no honest way to import them.
+// The same disclosed-copy situation as the goal labels above.
+//
+// A copy of a shipped number is exactly what this project consolidates against
+// everywhere else, so it does not sit here unwatched: the check below refuses
+// to print a report if a swing ever came out beyond one of these, which is what
+// a stale copy would look like. It cannot catch a wall that has moved further
+// out, so Slice 11's Task 6, which replaces both clamps with soft compression,
+// has to update this by hand and the comment in that task says so.
+const GENERATOR_CLAMPS = {
+  exitVelocity: { min: 65, max: 97 },
+  launchAngle: { min: -5, max: 35 },
+}
 const SESSION_ONE_AVG_EV = average(mockSwings.map((w) => w.hit.launch.exitSpeed))
 
 function round2(x) {
@@ -573,6 +615,10 @@ function measureSlice11Cell(sessionNum, goalId) {
   const topEvCounter = new Map()
   const sessionAvgEvCounter = new Map()
   const bucketTotals = DISTANCE_BUCKETS.map(() => 0)
+  // Counted per column rather than only as "this session had an empty column
+  // somewhere", because two goals turn out to fail at opposite ends of the
+  // chart and a single pooled rate hides that completely.
+  const bucketEmptySessions = DISTANCE_BUCKETS.map(() => 0)
   const spray = { pull: 0, middle: 0, oppo: 0 }
 
   let popUps = 0
@@ -637,7 +683,10 @@ function measureSlice11Cell(sessionNum, goalId) {
     let emptyColumns = 0
     buckets.forEach(({ count }, idx) => {
       bucketTotals[idx] += count
-      if (count === 0) emptyColumns += 1
+      if (count === 0) {
+        emptyColumns += 1
+        bucketEmptySessions[idx] += 1
+      }
     })
     emptyColumnTotal += emptyColumns
     if (emptyColumns > 0) sessionsWithAnEmptyColumn += 1
@@ -649,7 +698,6 @@ function measureSlice11Cell(sessionNum, goalId) {
   return {
     sessionNum,
     goalId,
-    sessions: REPLAYS_PER_CELL,
     swingsSeen,
     inZone,
     outZone,
@@ -663,7 +711,12 @@ function measureSlice11Cell(sessionNum, goalId) {
     laCounter,
     topEvCounter,
     sessionAvgEvCounter,
-    bucketShares: bucketTotals.map((n) => n / swingsSeen),
+    // Two different things, and the difference is the point. The first is how
+    // full a column is on a typical session, out of fifteen swings. The second
+    // is how often that column renders with nothing in it at all, which is what
+    // a visitor actually sees as a gap in the chart.
+    bucketFillPerSession: bucketTotals.map((n) => (n / swingsSeen) * 15),
+    bucketEmptyRates: bucketEmptySessions.map((n) => n / REPLAYS_PER_CELL),
     spray: {
       pull: spray.pull / REPLAYS_PER_CELL,
       middle: spray.middle / REPLAYS_PER_CELL,
@@ -693,6 +746,30 @@ for (const sessionNum of SESSIONS) {
 const cell = (sessionNum, goalId) =>
   SLICE11_CELLS.find((c) => c.sessionNum === sessionNum && c.goalId === goalId)
 const cellsForSession = (sessionNum) => SLICE11_CELLS.filter((c) => c.sessionNum === sessionNum)
+
+// Every launch angle and every exit velocity the generator produced, pooled.
+// Built here rather than where they are first printed so the stale-copy check
+// below can run before a single line of the report is written.
+const allLaunchAngles = mergeCounters(SLICE11_CELLS.map((c) => c.laCounter))
+const allExitVelocities = mergeCounters(SLICE11_CELLS.map((c) => c.evCounter))
+
+// The stale-copy check the GENERATOR_CLAMPS comment promises. If a swing came
+// out beyond a wall this script believes exists, the wall has moved, section 5
+// is about to describe walls that are not there, and the safe thing is to stop
+// rather than print a page of confident nonsense.
+for (const [name, counter, clamp] of [
+  ['launch angle', allLaunchAngles, GENERATOR_CLAMPS.launchAngle],
+  ['exit velocity', allExitVelocities, GENERATOR_CLAMPS.exitVelocity],
+]) {
+  if (counterMin(counter) < clamp.min || counterMax(counter) > clamp.max) {
+    console.error(
+      `This script's copy of the ${name} limits (${clamp.min} to ${clamp.max}) is out of date: ` +
+        `the generator produced ${counterMin(counter)} to ${counterMax(counter)}. ` +
+        'Update GENERATOR_CLAMPS in this file before trusting anything it prints.'
+    )
+    process.exit(1)
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Session 1, the fifteen hand-written swings every visitor sees first, measured
@@ -737,17 +814,34 @@ function sessionRowLabel(sessionNum) {
   return `session ${sessionNum}`.padEnd(26)
 }
 
+// For a row that pools all five goals rather than describing one. The banner
+// says 20,000 sessions per goal per session number, so a row labelled only
+// "session 2" invites a reader to think 20,000 when the row is built on
+// 100,000. Sections that pool say so on every row.
+function pooledRowLabel(sessionNum) {
+  return `session ${sessionNum}, all goals`.padEnd(26)
+}
+
 function signed(x) {
   return `${x >= 0 ? '+' : ''}${x.toFixed(2)}`
 }
 
 console.log('='.repeat(78))
-console.log('SWING GENERATOR MEASUREMENT, SLICE 11 BASELINE')
-console.log(`Seed ${SEED}. Rerun the same command and every number below comes back the same.`)
-console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per goal, per session number.`)
-console.log('This half of the report is today\'s generator, one section per defect')
-console.log('Slice 11 sets out to fix, plus the numbers the slice must not break.')
-console.log('The Slice 6 before-and-after tables follow it, under their own banner.')
+console.log('SWING GENERATOR MEASUREMENT: THE GENERATOR IN THE WORKING TREE')
+console.log('')
+console.log(`Generator: src/swingGenerator.js as it stands in the working tree right now,`)
+console.log(`           fingerprint ${GENERATOR_FINGERPRINT}, ${GENERATOR_SOURCE.length.toLocaleString()} bytes.`)
+console.log(`Seed:      ${SEED}. Rerun the same command and every number comes back the same.`)
+console.log(`Sample:    ${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per goal, per session number.`)
+console.log('')
+console.log('Two saved runs of this report are only comparable if the fingerprints')
+console.log('differ and the seed matches. The fingerprint is what says which version of')
+console.log('the generator a saved report describes, so quote it alongside any number')
+console.log('taken from here.')
+console.log('')
+console.log('This half of the report is one section per defect Slice 11 sets out to fix,')
+console.log('plus the numbers the slice must not break. The Slice 6 before-and-after')
+console.log('tables follow it, under their own banner.')
 console.log('='.repeat(78))
 
 // --- 1. The zone gap -------------------------------------------------------
@@ -758,7 +852,8 @@ console.log('well as one down the middle. The number to watch is the gap: how mu
 console.log('better a swing at a strike comes out than a swing at a ball.')
 console.log('')
 console.log('  ' + 'session'.padEnd(26) + 'exit velocity gap'.padStart(20) + 'launch angle gap'.padStart(20))
-let widestGap = 0
+let widestEvGap = 0
+let widestLaGap = 0
 for (const sessionNum of SESSIONS) {
   const cells = cellsForSession(sessionNum)
   const zoneEv = cells.reduce((s, c) => s + c.inZone.ev, 0) / cells.reduce((s, c) => s + c.inZone.n, 0)
@@ -766,13 +861,13 @@ for (const sessionNum of SESSIONS) {
   const zoneLa = cells.reduce((s, c) => s + c.inZone.la, 0) / cells.reduce((s, c) => s + c.inZone.n, 0)
   const ballLa = cells.reduce((s, c) => s + c.outZone.la, 0) / cells.reduce((s, c) => s + c.outZone.n, 0)
   console.log(
-    '  ' + sessionRowLabel(sessionNum) +
+    '  ' + pooledRowLabel(sessionNum) +
       `${signed(zoneEv - ballEv)} mph`.padStart(20) +
       `${signed(zoneLa - ballLa)} deg`.padStart(20)
   )
   for (const c of cells) {
-    const gap = c.inZone.ev / c.inZone.n - c.outZone.ev / c.outZone.n
-    widestGap = Math.max(widestGap, Math.abs(gap))
+    widestEvGap = Math.max(widestEvGap, Math.abs(c.inZone.ev / c.inZone.n - c.outZone.ev / c.outZone.n))
+    widestLaGap = Math.max(widestLaGap, Math.abs(c.inZone.la / c.inZone.n - c.outZone.la / c.outZone.n))
   }
 }
 console.log(
@@ -781,9 +876,10 @@ console.log(
     `${signed(SESSION_ONE.zoneGapLa)} deg`.padStart(20)
 )
 console.log('')
-console.log(`  Across all ${SLICE11_CELLS.length} goal-and-session combinations measured, the largest exit`)
-console.log(`  velocity gap either way was ${widestGap.toFixed(2)} mph, so the pooled rows above are not`)
-console.log('  hiding a goal where the link exists.')
+console.log(`  Each row above pools all five goals, ${(REPLAYS_PER_CELL * SLICE11_GOALS.length).toLocaleString()} sessions. Taken one goal at a`)
+console.log(`  time, across all ${SLICE11_CELLS.length} goal-and-session combinations, the largest gap either way`)
+console.log(`  was ${widestEvGap.toFixed(2)} mph and ${widestLaGap.toFixed(2)} degrees, so the pooled rows are not hiding a goal`)
+console.log('  where the link exists.')
 console.log('')
 console.log('  The pitch and the swing are drawn independently of each other, so there is')
 console.log('  no link to find. Since Slice 8c the coach is handed which pitches were')
@@ -845,10 +941,16 @@ console.log(
   `    height misses average ${counterMean(allHeightMisses).toFixed(2)} feet, side misses average ${counterMean(allSideMisses).toFixed(2)} feet`
 )
 console.log('')
-console.log('  Two things to read off that. A missed pitch is never a near miss: the')
-console.log('  closest one is a tenth of a foot outside only because the zone edge is')
-console.log('  where it is, and a low miss can be a ball that bounces. And every single')
-console.log('  missed pitch is off on both axes at once, which no real thrower does.')
+console.log('  Two things to read off that. The first is that a typical miss is nowhere')
+const worstSessionOneMiss = SESSION_ONE.misses[SESSION_ONE.misses.length - 1]
+console.log(`  near the zone: ${counterMean(allMisses).toFixed(2)} feet outside on average against session 1's ${average(SESSION_ONE.misses).toFixed(2)}, and`)
+console.log(`  ${pct(counterShare(allMisses, (v) => v > worstSessionOneMiss))} of them are further out than session 1's worst miss of ${worstSessionOneMiss.toFixed(2)}. Near`)
+console.log('  misses do happen, the closest being a tenth of a foot, but the low ones run')
+console.log('  all the way down to a ball that bounces in front of the plate.')
+console.log('')
+console.log('  The second is that every single missed pitch is off on both axes at once:')
+console.log('  there is no such thing today as a pitch that is simply low, because a low')
+console.log('  pitch is always wide as well. No real thrower misses that way.')
 
 // --- 3. Spray --------------------------------------------------------------
 
@@ -862,7 +964,7 @@ for (const sessionNum of SESSIONS) {
   const cells = cellsForSession(sessionNum)
   const mean = (key) => average(cells.map((c) => c.spray[key]))
   console.log(
-    '  ' + sessionRowLabel(sessionNum) +
+    '  ' + pooledRowLabel(sessionNum) +
       mean('pull').toFixed(2).padStart(12) +
       mean('middle').toFixed(2).padStart(16) +
       mean('oppo').toFixed(2).padStart(12)
@@ -903,7 +1005,6 @@ for (const goal of SLICE11_GOALS) {
 console.log('  ' + 'session 1 (hand-written)'.padEnd(26) + String(SESSION_ONE.popUps).padStart(10))
 const totalPopUps = SLICE11_CELLS.reduce((s, c) => s + c.popUps, 0)
 const totalPopUpsHigh = SLICE11_CELLS.reduce((s, c) => s + c.popUpsOnHighPitch, 0)
-const allLaunchAngles = mergeCounters(SLICE11_CELLS.map((c) => c.laCounter))
 console.log('')
 console.log(`  Pop-ups seen in all ${swingsTotal.toLocaleString()} generated swings: ${totalPopUps.toLocaleString()}.`)
 console.log(
@@ -921,11 +1022,7 @@ console.log('  and says so.')
 // --- 5. Ceiling pile-ups ---------------------------------------------------
 
 banner('5. SWINGS STACKED AGAINST A CEILING')
-const allExitVelocities = mergeCounters(SLICE11_CELLS.map((c) => c.evCounter))
 const laCeiling = counterMax(allLaunchAngles)
-const laFloor = counterMin(allLaunchAngles)
-const evCeiling = counterMax(allExitVelocities)
-const evFloor = counterMin(allExitVelocities)
 console.log('  A clamp does not throw a swing away, it parks it exactly on the limit. Every')
 console.log('  swing that would have gone past the ceiling is drawn at the ceiling instead,')
 console.log('  as a flat row of dots pinned to the top edge of a chart a visitor reads.')
@@ -945,41 +1042,87 @@ for (const goal of SLICE11_GOALS) {
 console.log('  ' + 'every goal pooled'.padEnd(26) + ''.padStart(30) +
   pct2(counterShare(allLaunchAngles, (v) => v === laCeiling)).padStart(12))
 console.log('')
-console.log('  Only Power reaches it, because Power is the one goal whose hitter is lifted')
-console.log('  toward the ceiling session by session. On Power session 4 one swing in')
-console.log('  twenty-five is drawn on the top line of the chart.')
+console.log('  Only Power reaches it in any quantity, because Power is the one goal whose')
+console.log('  hitter is lifted toward the ceiling session by session. The other four do')
+console.log('  touch it, at a hundredth of a percent on session 2 and not at all after')
+console.log('  that, as their spread tightens. On Power session 4 one swing in twenty-five')
+console.log('  is drawn on the top line of the chart.')
 console.log('')
-console.log('  What a wall looks like, next to the three limits that are not being reached.')
-console.log('  A limit that binds carries more swings than the value just inside it, because')
-console.log('  it is holding everything that would have gone past. A limit nothing reaches')
-console.log('  carries fewer, like any other value out in the tail.')
-console.log('')
-console.log('  ' + 'limit'.padEnd(34) + 'on the limit'.padStart(16) + 'one step inside'.padStart(18))
-const limitRows = [
-  [`highest launch angle seen, ${laCeiling} deg`, allLaunchAngles, laCeiling, laCeiling - 1],
-  [`lowest launch angle seen, ${laFloor} deg`, allLaunchAngles, laFloor, laFloor + 1],
-  [`highest exit velocity seen, ${evCeiling} mph`, allExitVelocities, evCeiling, evCeiling - 1],
-  [`lowest exit velocity seen, ${evFloor} mph`, allExitVelocities, evFloor, evFloor + 1],
-]
-for (const [label, counter, edge, inside] of limitRows) {
-  console.log(
-    '  ' + label.padEnd(34) +
-      pct2(counterShare(counter, (v) => v === edge)).padStart(16) +
-      pct2(counterShare(counter, (v) => v === inside)).padStart(18)
-  )
-}
-const powerS4Angles = cell(4, 'power').laCounter
+console.log('  The generator has four of these walls, not one. Every swing is squeezed')
+console.log(`  into a launch angle of ${GENERATOR_CLAMPS.launchAngle.min} to ${GENERATOR_CLAMPS.launchAngle.max} degrees and an exit velocity of ${GENERATOR_CLAMPS.exitVelocity.min} to`)
+console.log(`  ${GENERATOR_CLAMPS.exitVelocity.max} mph. Here is how many swings each of the four is actually holding.`)
 console.log('')
 console.log(
-  `  On Power session 4, where that ceiling really bites: ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling))} of swings sit` +
-    ` exactly on ${laCeiling},`
+  '  ' + 'the wall'.padEnd(34) + 'swings on it'.padStart(16) + 'share'.padStart(10) + 'one step inside'.padStart(18)
+)
+
+// Built as data first and described afterwards, so the sentences under the
+// table are generated from the same counts the table prints and cannot come to
+// disagree with it. An earlier draft of this section asserted in prose that
+// three of these four walls were untouched; the table beneath it showed the
+// exit velocity ceiling holding fourteen swings.
+const walls = [
+  ['launch angle ceiling', 'degrees', allLaunchAngles, GENERATOR_CLAMPS.launchAngle.max, -1],
+  ['launch angle floor', 'degrees', allLaunchAngles, GENERATOR_CLAMPS.launchAngle.min, +1],
+  ['exit velocity ceiling', 'mph', allExitVelocities, GENERATOR_CLAMPS.exitVelocity.max, -1],
+  ['exit velocity floor', 'mph', allExitVelocities, GENERATOR_CLAMPS.exitVelocity.min, +1],
+].map(([name, unit, counter, wall, step]) => ({
+  name,
+  unit,
+  where: `${wall} ${unit === 'degrees' ? 'deg' : unit}`,
+  onIt: Math.round(counterShare(counter, (v) => v === wall) * counterTotal(counter)),
+  share: counterShare(counter, (v) => v === wall),
+  insideShare: counterShare(counter, (v) => v === wall + step),
+  nearest: step < 0 ? counterMax(counter) : counterMin(counter),
+}))
+
+// A share that rounds to 0.00% next to a count that is not zero reads as a
+// contradiction, so a nonzero count that small says so in words instead.
+const shareCell = (share, count) => (count > 0 && share < 0.00005 ? '<0.01%' : pct2(share))
+
+for (const w of walls) {
+  console.log(
+    '  ' + `${w.name}, ${w.where}`.padEnd(34) +
+      w.onIt.toLocaleString().padStart(16) +
+      shareCell(w.share, w.onIt).padStart(10) +
+      pct2(w.insideShare).padStart(18)
+  )
+}
+
+const untouchedWalls = walls.filter((w) => w.onIt === 0)
+const touchedWalls = walls.filter((w) => w.onIt > 0).sort((a, b) => b.onIt - a.onIt)
+
+if (untouchedWalls.length > 0) {
+  console.log('')
+  console.log(`  ${untouchedWalls.length} of the ${walls.length} hold nothing whatsoever. Across ${swingsTotal.toLocaleString()} generated swings not one`)
+  console.log('  landed on:')
+  for (const w of untouchedWalls) {
+    console.log(`    the ${w.name} of ${w.where}, the closest being ${w.nearest} ${w.unit}`)
+  }
+  console.log('  Those walls are set outside this hitter and are doing nothing at all.')
+}
+
+for (const w of touchedWalls.slice(1)) {
+  const perMillion = Math.round((w.onIt / swingsTotal) * 1000000)
+  console.log('')
+  console.log(`  The ${w.name} of ${w.where} holds ${w.onIt.toLocaleString()} swings, which is ${perMillion} in a`)
+  console.log('  million. Reachable rather than reached, far too rare to see on a chart, but')
+  console.log('  not zero, and this report will not round it to zero.')
+}
+
+const bindingWall = touchedWalls[0]
+console.log('')
+console.log(`  The ${bindingWall.name} is the one actually holding swings, and holding them is`)
+console.log(`  what a wall does. Everything that would have gone past ${bindingWall.where} is parked on it`)
+console.log(`  instead, so that single value carries ${pct2(bindingWall.share)} of every swing against ${pct2(bindingWall.insideShare)} on`)
+console.log('  the value just inside it, where an unwalled tail would carry fewer, not more.')
+console.log('')
+const powerS4Angles = cell(4, 'power').laCounter
+console.log(
+  `  On Power session 4, where it bites hardest: ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling))} of swings sit exactly on ${laCeiling},`
 )
 console.log(`  against ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling - 1))} on ${laCeiling - 1}. That is the flat row of dots, on a chart every`)
 console.log('  visitor who picks that goal can see.')
-console.log('')
-console.log('  So one wall is being hit and three are not. The generator limits launch')
-console.log('  angle and exit velocity at both ends; only the launch angle ceiling is close')
-console.log('  enough to this hitter to catch anything, and it catches enough to see.')
 
 // --- 6. Top exit velocity --------------------------------------------------
 
@@ -994,7 +1137,7 @@ console.log(
 for (const sessionNum of SESSIONS) {
   const merged = mergeCounters(cellsForSession(sessionNum).map((c) => c.topEvCounter))
   console.log(
-    '  ' + sessionRowLabel(sessionNum) +
+    '  ' + pooledRowLabel(sessionNum) +
       String(counterMin(merged)).padStart(9) +
       counterPercentile(merged, 10).toFixed(0).padStart(9) +
       counterPercentile(merged, 50).toFixed(0).padStart(9) +
@@ -1040,17 +1183,32 @@ console.log(
 )
 console.log(`    mean ${signed(counterMean(allSessionAvgEvs) - SESSION_ONE_AVG_EV)} mph, and ${pct(counterShare(allSessionAvgEvs, (v) => v < SESSION_ONE_AVG_EV))} of sessions came out below session 1`)
 console.log('')
-console.log('  Read the goal column, not just the pooled row. The three goals with a target')
-console.log('  band come out higher because a session that would draw an empty band is')
-console.log('  re-rolled, and the sessions thrown away are the weak ones. Open Session,')
-console.log('  which is never re-rolled, is the step the dice actually produce.')
+console.log('  Read the goal column, not just the pooled row. Two goals sit well above the')
+console.log('  rest, and they are the two whose target band actually comes up empty often')
+console.log('  enough for the re-roll to fire: a session that would draw an empty band is')
+console.log('  thrown away and rolled again, and the sessions thrown away are the weak')
+console.log('  ones, so the survivors average higher.')
+console.log('')
+console.log('  The other three all land near +0.93 and that is the step the dice really')
+console.log('  produce. Hit to All Fields and Open Session have no target band to be')
+console.log('  empty. Reduce Pop-Ups has one, but it is never empty (see section 9), so')
+console.log('  its re-roll has nothing to fire on. Having a target band is not what lifts')
+console.log('  the number; having an empty one sometimes is.')
 
 // --- 8. Hit to All Fields against its own bar ------------------------------
 
+// THE BAR ITSELF IS A HAND-COPY, and this is the disclosure. "At least 3
+// swings pull side, at least 3 swings opposite field" is a sentence inside the
+// Hit to All Fields goal context in src/coachApi.js, not a constant anywhere.
+// The two CUTOFFS that decide what counts as pull or opposite are imported
+// (SPRAY_CUTOFFS, through sprayBreakdown), so those cannot drift. The two
+// counts of 3 are typed here. If that sentence is ever reworded to ask for
+// four, this section goes on measuring the old bar and says nothing.
 banner('8. HIT TO ALL FIELDS, AGAINST THE BAR THAT GOAL SETS ITSELF')
 console.log('  That goal asks the player for at least 3 pull side and at least 3 opposite')
-console.log('  field. Share of sessions that actually deliver it, on the Hit to All Fields')
-console.log('  goal a visitor would have picked:')
+console.log('  field, in the coaching instructions the model is handed. Share of sessions')
+console.log('  that actually deliver it, on the Hit to All Fields goal a visitor would')
+console.log('  have picked:')
 console.log('')
 console.log('  ' + 'session'.padEnd(26) + 'on that goal'.padStart(20) + 'every goal pooled'.padStart(22))
 for (const sessionNum of SESSIONS) {
@@ -1085,23 +1243,87 @@ for (const goal of SLICE11_GOALS) {
 console.log('  (Hit to All Fields and Open Session have no target, so there is no band to')
 console.log('  leave empty.)')
 console.log('')
-console.log('  Empty columns on the five-column distance chart, averaged per session, with')
-console.log('  the share of sessions showing at least one in brackets:')
-console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(16)).join(''))
+console.log('  These will not match the Slice 6 tables at the foot of the report to the')
+console.log('  last decimal, and should not: the two halves draw from separate random')
+console.log('  streams, so they are two independent samples of the same quantity. Power')
+console.log('  session 2 reads 14.0% here and 13.8% there. Both are right, and a gap of')
+console.log('  that size is what 20,000 sessions buys.')
+console.log('')
+console.log('  The five-column distance chart, column by column. A pooled "how many columns')
+console.log('  came up empty" number hides the thing that matters here, which is that the')
+console.log('  goals fail at OPPOSITE ENDS of the chart, so both tables below are per')
+console.log('  column.')
+console.log('')
+const bucketHeaders = DISTANCE_BUCKETS.map((b) => b.label)
+const bucketHeaderRow = bucketHeaders.map((label) => label.padStart(12)).join('')
+console.log('  How many of the fifteen swings land in each column on a typical session:')
+console.log('  ' + 'goal'.padEnd(26) + 'session'.padStart(9) + bucketHeaderRow)
 for (const goal of SLICE11_GOALS) {
-  console.log(
-    '  ' + goal.label.padEnd(26) +
-      SESSIONS.map((s) => {
-        const c = cell(s, goal.id)
-        return `${c.emptyColumnsPerSession.toFixed(2)} (${pct(c.anyEmptyColumnRate)})`.padStart(16)
-      }).join('')
-  )
+  for (const sessionNum of SESSIONS) {
+    console.log(
+      '  ' + (sessionNum === SESSIONS[0] ? goal.label : '').padEnd(26) +
+        String(sessionNum).padStart(9) +
+        cell(sessionNum, goal.id).bucketFillPerSession.map((n) => n.toFixed(2).padStart(12)).join('')
+    )
+  }
 }
 console.log(
-  '  ' + 'session 1 (hand-written)'.padEnd(26) +
-    `${SESSION_ONE.buckets.filter((b) => b.count === 0).length.toFixed(2)}`.padStart(16) +
-    `   bars: ${SESSION_ONE.buckets.map((b) => b.count).join(', ')}`
+  '  ' + 'session 1 (hand-written)'.padEnd(26) + '1'.padStart(9) +
+    SESSION_ONE.buckets.map((b) => b.count.toFixed(2).padStart(12)).join('')
 )
+console.log('')
+console.log('  How often each column renders completely empty, which is what a visitor')
+console.log('  sees as a gap in the chart:')
+console.log('  ' + 'goal'.padEnd(26) + 'session'.padStart(9) + bucketHeaderRow + 'any column'.padStart(13))
+for (const goal of SLICE11_GOALS) {
+  for (const sessionNum of SESSIONS) {
+    const c = cell(sessionNum, goal.id)
+    console.log(
+      '  ' + (sessionNum === SESSIONS[0] ? goal.label : '').padEnd(26) +
+        String(sessionNum).padStart(9) +
+        c.bucketEmptyRates.map((r) => pct(r).padStart(12)).join('') +
+        pct(c.anyEmptyColumnRate).padStart(13)
+    )
+  }
+}
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) + '1'.padStart(9) +
+    SESSION_ONE.buckets.map((b) => (b.count === 0 ? 'empty' : 'filled').padStart(12)).join('') +
+    'no'.padStart(13)
+)
+console.log('')
+console.log('  Two different failures, in opposite directions, and neither is visible in a')
+console.log('  pooled number.')
+console.log('')
+console.log(`  Power runs out of SHORT balls. Its "${bucketHeaders[0]}" column is empty on`)
+console.log(
+  `  ${pct(cell(2, 'power').bucketEmptyRates[0])}, ${pct(cell(3, 'power').bucketEmptyRates[0])} and ${pct(cell(4, 'power').bucketEmptyRates[0])} of sessions, and by session 4 holds just ` +
+    `${cell(4, 'power').bucketFillPerSession[0].toFixed(2)} of`
+)
+console.log('  fifteen swings. That is a Power hitter producing about one weakly struck')
+console.log('  ball every other session, and showing none at all seven times in ten.')
+console.log('')
+console.log(`  The other four run out of LONG balls. Their "${bucketHeaders[4]}" column is empty on`)
+const longEndRates = SLICE11_CELLS.filter((c) => c.goalId !== 'power').map((c) => c.bucketEmptyRates[4])
+console.log(
+  `  ${pct(Math.min(...longEndRates))} to ${pct(Math.max(...longEndRates))} of sessions, while Power's is empty on ` +
+    `${pct(Math.min(...SESSIONS.map((s) => cell(s, 'power').bucketEmptyRates[4])))} to ` +
+    `${pct(Math.max(...SESSIONS.map((s) => cell(s, 'power').bucketEmptyRates[4])))}.`
+)
+console.log('  Each set of goals barely has the other\'s problem.')
+console.log('')
+console.log('  Session 1, the hand-written one, fills all five. That is the shape the')
+console.log('  generated sessions are being measured against, and none of them holds it')
+console.log('  reliably today, so this row is a target the generator currently misses')
+console.log('  rather than ground it currently holds.')
+console.log('')
+console.log('  Note the "any column" column before reading this as a Power problem. Every')
+const anyEmptyRates = SLICE11_CELLS.map((c) => c.anyEmptyColumnRate)
+console.log(`  goal shows at least one empty column on between ${pct(Math.min(...anyEmptyRates))} and ${pct(Math.max(...anyEmptyRates))} of sessions.`)
+console.log('  What differs is WHICH column, and that is the whole reason this is reported')
+console.log('  per column: the guard Slice 11 has to hold is that the "305+" column on the')
+console.log('  four non-Power goals does not get materially emptier than it already is,')
+console.log('  and a pooled figure cannot answer that question at all.')
 console.log('')
 console.log('  How far one swing sits from its own session average. Dividing by n, which')
 console.log('  is the convention session 1\'s own numbers below are calculated on.')
@@ -1109,7 +1331,7 @@ console.log('  ' + 'session'.padEnd(26) + 'exit velocity'.padStart(16) + 'launch
 for (const sessionNum of SESSIONS) {
   const cells = cellsForSession(sessionNum)
   console.log(
-    '  ' + sessionRowLabel(sessionNum) +
+    '  ' + pooledRowLabel(sessionNum) +
       `${average(cells.map((c) => c.evSpreadPopulation)).toFixed(2)} mph`.padStart(16) +
       `${average(cells.map((c) => c.laSpreadPopulation)).toFixed(2)} deg`.padStart(16) +
       `${counterMean(mergeCounters(cells.map((c) => c.sessionAvgEvCounter))).toFixed(2)} mph`.padStart(18)
