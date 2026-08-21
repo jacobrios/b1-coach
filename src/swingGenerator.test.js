@@ -256,17 +256,38 @@ describe('the shape of a generated session', () => {
     // below the point where the curve flattens onto it: above 94 and below
     // 96.38 mph, above 50 and below 56.51 degrees. Inside it a wall says "the
     // limit" and the curve says something under the limit. So one fixture sits
-    // inside that window and the other beyond it:
+    // inside that window and the other beyond it.
     //
-    //   topOf(87, 42) is raw 94.97 mph and 50.72 degrees. Both bust a limit.
-    //     The curve draws 93 and 48; a wall would draw 94 and 50.
-    //   topOf(89, 48) is raw 96.97 mph and 56.72 degrees. Both bust a limit,
-    //     by enough that the curve has flattened. It draws 94 and 50, which is
-    //     what a wall would draw too.
+    // THEY MOVED AGAIN IN TASK 9, 21 AUGUST 2026, AND THE REASON IS THE ONE
+    // THIS PARAGRAPH ALREADY WARNS ABOUT. That task took PITCH_QUALITY_WEIGHT
+    // from 0.8 to 0.74, which lowers every raw value here by about half a mph
+    // and two degrees, and 89/48 fell back inside the launch angle window: it
+    // drew 49 where the assertion below wants the limit itself. This one at
+    // least turned RED rather than going quietly green, because the second
+    // fixture is asserted against the limit by name.
+    //
+    // The replacements are chosen for MARGIN rather than for being the nearest
+    // pair that works, since the last two sets were each broken by the next
+    // change to land. Raw values, and how far each sits from the nearest edge
+    // of the window it has to be on the right side of:
+    //
+    //   topOf(88, 45) is raw 95.44 mph and 53.18 degrees. Both bust a limit
+    //     and both are short of the flattening: 1.44 mph above 94 with 0.94 to
+    //     spare below 96.38, and 3.18 degrees above 50 with 3.33 to spare
+    //     below 56.51. The curve draws 93 and 49; a wall would draw 94 and 50.
+    //   topOf(90, 52) is raw 97.44 mph and 60.18 degrees. Both bust a limit by
+    //     enough that the curve has flattened, 1.06 mph and 3.67 degrees past
+    //     the point where it does. It draws 94 and 50, which is what a wall
+    //     would draw too.
+    //
+    // The exit velocity window is only 2.38 mph wide in total, so 1.44 above
+    // and 0.94 below is close to the most margin the first fixture can have.
+    // The launch angle one is 6.51 degrees wide and this pair sits near its
+    // middle.
     //
     // Under a wall the two fixtures collapse onto each other, 94/50 against
     // 94/50, and every assertion below fails. That was executed rather than
-    // predicted.
+    // predicted, for this pair as well as for the one it replaced.
     //
     // AND THIS GUARD IS ASYMMETRIC, which nobody should find out by accident.
     // Restoring a wall on exit velocity alone turns three tests red across the
@@ -277,8 +298,8 @@ describe('the shape of a generated session', () => {
     // only protection against a returning wall rests on a single line. That is
     // not a reason to widen it today, and it is a reason to think twice before
     // deleting or weakening that one assertion.
-    const hard = topOf(87, 42)
-    const harder = topOf(89, 48)
+    const hard = topOf(88, 45)
+    const harder = topOf(90, 52)
 
     expect(harder.exitSpeed).not.toBe(hard.exitSpeed)
     expect(harder.angle).not.toBe(hard.angle)
@@ -380,19 +401,27 @@ describe('exit velocity and launch angle come off the same swing', () => {
     // centre, so its distance from the heart of the zone is 0 and its quality
     // term is +(1.007 / 0.432) * sqrt(1/12) = +0.672907; its signed height
     // term is (0 + 0.045) / 0.822 * sqrt(1/12) = +0.015803.
-    //   quality  = 0.8 * 0.672907 + 0.6 * 0.5           = +0.838302
-    //   evOffset = 0.6 * 0.838302 + 0.8 * 0             = +0.502981
-    //   laOffset = 0.502981 + 0.8 * 0.4 * 0.015803      = +0.508038
-    // 18 + 0.508038 * 22 = 29.18, so the angle draws 29.
+    //   quality  = 0.74 * 0.672907 + 0.672607 * 0.5     = +0.834255
+    //   evOffset = 0.6 * 0.834255 + 0.8 * 0             = +0.500553
+    //   laOffset = 0.500553 + 0.8 * 0.4 * 0.015803      = +0.505610
+    // 18 + 0.505610 * 22 = 29.12, so the angle draws 29.
     //
     // THE EXIT VELOCITY REACHES 93 BY A DIFFERENT ROUTE AFTER TASK 7, AND THE
     // COINCIDENCE IS WORTH SAYING OUT LOUD. It was 84.5 + 0.502981 * 16 =
     // 92.55, an ordinary swing well inside the range. It is now
-    // 82.9 + 0.502981 * 21.88 = 93.91, which is past the soft ceiling's knee at
-    // 91, so the compression eases it back to 92.86 and it draws 93 again. The
+    // 82.9 + 0.500553 * 21.88 = 93.85, which is past the soft ceiling's knee at
+    // 91, so the compression eases it back to 92.84 and it draws 93 again. The
     // assertion did not move and neither did its meaning, but the arithmetic
     // behind it did, and a comment showing the old sum against the new answer
     // would be the sort of thing this file exists to stop.
+    //
+    // THE WEIGHT IN THAT FIRST LINE FELL FROM 0.8 TO 0.74 IN TASK 9, and this
+    // is the one of the three pins in this file that survived it unmoved. The
+    // pitch here is dead centre, so a smaller weight takes a little off a
+    // large positive, and the swing's own draw is at its top, so the accident
+    // share hands most of it straight back: 0.838302 became 0.834255, four
+    // thousandths, which is nowhere near a whole mph or a whole degree. The
+    // other two pins below and the limit pair further up all moved.
     expect(swings[0].hit.launch.exitSpeed).toBe(93)
     expect(swings[0].hit.launch.angle).toBe(29)
   })
@@ -400,12 +429,21 @@ describe('exit velocity and launch angle come off the same swing', () => {
   it('drops both numbers together when the quality draw was poor', () => {
     const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(0) })
     // The same arithmetic with the quality draw at the other end: the shared
-    // term loses 0.6 of the spread, so 0.838302 becomes 0.238302.
-    // 82.9 + 0.6 * 0.238302 * 21.88 = 86.03, and 18 + 0.148038 * 22 = 21.26.
+    // term loses a whole accident share, so 0.834255 becomes 0.161648.
+    // 82.9 + 0.6 * 0.161648 * 21.88 = 85.02, and 18 + 0.102046 * 22 = 20.25.
     // Nothing here is near a limit, so this pair is the plain arithmetic with
     // no compression in it, unlike the good-quality pair above.
-    expect(swings[0].hit.launch.exitSpeed).toBe(86)
-    expect(swings[0].hit.launch.angle).toBe(21)
+    //
+    // BOTH NUMBERS FELL BY ONE IN TASK 9, from 86 and 21, when
+    // PITCH_QUALITY_WEIGHT went from 0.8 to 0.74. This is the mirror of the
+    // pin above and it is why that one held while this one did not: the pitch
+    // is the same dead-centre pitch in both, but here the swing's own draw is
+    // at its BOTTOM, so the larger accident share a smaller weight leaves
+    // behind subtracts more instead of adding more. The two effects add up
+    // rather than cancelling, and a swing already near the bottom of its
+    // range has no compression to absorb them.
+    expect(swings[0].hit.launch.exitSpeed).toBe(85)
+    expect(swings[0].hit.launch.angle).toBe(20)
   })
 
   it('separates those two by the quality draw alone, on one identical pitch', () => {
@@ -809,19 +847,27 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     //   normalised: height 0, side 1.5 / 0.7 = 2.142857, distance 2.142857
     //   pitch quality = -(2.142857 - 1.007) / 0.432 * sqrt(1/12) = -0.759013
     //   pitch height  =  (0 + 0.045) / 0.822 * sqrt(1/12)        = +0.015803
-    //   quality  = 0.8 * -0.759013 + 0.6 * 0.5                   = -0.307210
-    //   evOffset = 0.6 * -0.307210 + 0.8 * 0.5                   = +0.215674
-    //   laOffset = -0.184326 + 0.8 * (0.4 * 0.015803 + sqrt(0.84) * 0.5)
-    //                                                            = +0.187337
-    // 82.9 + 0.215674 * 21.88 = 87.62, and 18 + 0.187337 * 22 = 22.12.
+    //   quality  = 0.74 * -0.759013 + 0.672607 * 0.5             = -0.225366
+    //   evOffset = 0.6 * -0.225366 + 0.8 * 0.5                   = +0.264780
+    //   laOffset = -0.135220 + 0.8 * (0.4 * 0.015803 + sqrt(0.84) * 0.5)
+    //                                                            = +0.236443
+    // 82.9 + 0.264780 * 21.88 = 88.69, and 18 + 0.236443 * 22 = 23.20.
     //
-    // BOTH HALVES OF THAT SUM MOVED IN TASK 7 AND THE ANSWER DID NOT, which is
-    // the second time in this file the same coincidence has come up; the other
-    // is the 93 pinned further up, which has its own note. It read
-    // `84.5 + 0.215674 * 16 = 87.95` before, and 87.95 and 87.62 both round to
-    // 88. Nothing here is near a limit, so unlike that other case there is no
-    // compression in this one: the session average simply fell by 1.6 and the
-    // scale widened by enough to give it back.
+    // THIS IS THE PIN THAT MOVES FURTHEST WHEN THE PITCH WEIGHT MOVES, and it
+    // should be: it is the only one of the three whose pitch is a bad one. The
+    // pitch here is 0.80 feet off the far edge, so its quality term is a large
+    // NEGATIVE, and taking the weight from 0.8 to 0.74 in Task 9 shrinks a
+    // penalty rather than a reward. The pair went from 88 and 22 to 89 and 23:
+    // the ball comes off better and higher because the generator now blames
+    // the pitch a little less.
+    //
+    // Before Task 9 this same sum read
+    // `quality = 0.8 * -0.759013 + 0.6 * 0.5 = -0.307210`, giving 87.62 and
+    // 22.12. And before Task 7 it read `84.5 + 0.215674 * 16 = 87.95`, which
+    // also drew 88 for a completely different reason, the session average
+    // having fallen by 1.6 while the scale widened by enough to give it back.
+    // Both of those are kept because this file's whole habit is showing the
+    // arithmetic a reader can check rather than a number read off a run.
     //
     // WHAT THIS PIN IS ACTUALLY FOR. The same numbers under an implementation
     // that added the pitch on top of the existing draws instead of blending
@@ -835,8 +881,8 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
       baselineSwings: BASELINE,
       random: sequence(...NEUTRAL_HEADER, ...WIDE_BY_THE_MAXIMUM, 1, 1, 1, 0.5),
     })[0]
-    expect(swing.hit.launch.exitSpeed).toBe(88)
-    expect(swing.hit.launch.angle).toBe(22)
+    expect(swing.hit.launch.exitSpeed).toBe(89)
+    expect(swing.hit.launch.angle).toBe(23)
   })
 
   it('leaves the spread governed by the scale constants, not by how many terms were added', () => {

@@ -586,19 +586,53 @@ export const PITCH_SCALING = {
 // at session 2 for that reason alone. Blended where it is, exit velocity and
 // launch angle still agree with each other exactly as much as 0.6 says they do.
 //
-// BOTH WEIGHTS ARE PROVISIONAL. Task 9 is a tuning pass that sets every
-// constant in this file at once, against nine targets that interact, and these
-// two are on its list. What they were chosen for here is the structure, not
-// the calibration:
+// BOTH WEIGHTS WERE PROVISIONAL UNTIL 21 AUGUST 2026, when Task 9, the tuning
+// pass, set every constant in this file at once against targets that interact.
+// What they had been chosen for before that was the structure, not the
+// calibration, and the two halves of that sentence ended differently:
 //
-//   0.8 on pitch quality puts the pitch behind roughly 23% of the variance in
-//   exit velocity (0.6 squared times 0.8 squared), and lands the strike-versus-
-//   ball gap at about 3.4 mph. It cannot be pushed to 6 by moving this number:
-//   see the ceiling note below.
+//   0.8 on pitch quality was structural. It put the pitch behind roughly 23%
+//   of the variance in exit velocity (0.6 squared times 0.8 squared) and
+//   landed the strike-versus-ball gap at about 3.4 mph, before the exit
+//   velocity spread widened and before pop-ups existed. IT IS NOW 0.74, AND
+//   THE PARAGRAPH BELOW IS WHY.
 //
 //   0.4 on pitch height makes a pitch at the top of the zone come out about 5
 //   degrees higher than one at the bottom, which is a believable batting
-//   practice effect rather than a dramatic one.
+//   practice effect rather than a dramatic one. Task 9 swept it at 0.3 and
+//   0.55 and left it here: neither moved the gap, neither moved any target,
+//   and 0.55 cost Line Drives & Contact two or three tenths of a point of
+//   empty target band for nothing in return.
+//
+// WHY 0.74, WHICH IS NOT A ROUND NUMBER AND IS NOT MEANT TO BE. This constant's
+// whole job is setting how much better a swing at a strike comes out than a
+// swing at a ball, and on 21 August 2026 the product manager adopted about 4.5
+// mph for that gap. 0.74 is the value at which the gap actually lands there.
+// Measured through this generator at 8,000 sessions a cell, sessions 2, 3 and
+// 4, seed 20260821 with seed 7 in brackets where it differs:
+//
+//   weight 0.72   4.56 / 4.38 / 4.20   pooled 4.38 (4.39)
+//   weight 0.74   4.68 / 4.49 / 4.30   pooled 4.49 (4.50)
+//   weight 0.76   4.79 / 4.60 / 4.41   pooled 4.60 (4.62)
+//   weight 0.80   5.03 / 4.83 / 4.62   pooled 4.82 (4.84)
+//
+// AND IT COSTS NOTHING MEASURABLE ANYWHERE ELSE, which is the reason this is
+// the lever rather than the pop-up drop or the exit velocity spread, both of
+// which also move the gap and both of which move three other things with it.
+// Across the same runs, every other quantity this file is judged on came back
+// inside its own sampling noise: both empty target bands, pop-ups per session
+// and their share on high pitches, the per-swing spreads, the Hit to All
+// Fields bar, all four distribution edges, and every distance column at both
+// ends. The gap is the only thing that moved.
+//
+// WHAT DID CHANGE, SAID PLAINLY RATHER THAN LEFT TO BE NOTICED. The pitch now
+// sits behind about 20% of the variance in exit velocity rather than 23%, and
+// the LAUNCH ANGLE gap, which no target names, falls with it: it read
+// 4.10 / 3.87 / 3.62 degrees at 0.8 against session 1's own 3.89, so it
+// bracketed the hand-written session, and at 0.74 it sits a little under it.
+// That was weighed and accepted. The exit velocity gap is the one the product
+// manager took a decision on; the launch angle gap is reported by section 1 of
+// `node scripts/measure-swing-generation.mjs` and has never had a target.
 //
 // THE CEILING THIS STRUCTURE HAS, worth knowing before anybody tries to reach
 // a 6 mph gap by raising PITCH_QUALITY_WEIGHT. The pitch's effect on exit
@@ -641,13 +675,18 @@ export const PITCH_SCALING = {
 // hundredth or two apart on the pre-task one. Read the differences down the
 // column rather than any single figure.
 //
-// Three things Task 9 should take from that. The entire movement is the exit
-// velocity spread; the ceiling contributes a hundredth and is effectively
-// inert. Pop-ups add between +0.27 and +0.28 of it, which is real but is not
-// the whole overshoot above 4.5. And the gap FALLS across sessions because the
-// variance factor shrinks the spread, so session 4 is the session nearest the
-// target and, with pop-ups off, would sit below it at 4.35.
-const PITCH_QUALITY_WEIGHT = 0.8
+// Three things Task 9 took from that. The entire movement is the exit velocity
+// spread; the ceiling contributes a hundredth and is effectively inert. Pop-ups
+// add between +0.27 and +0.28 of it, which is real but was not the whole
+// overshoot above 4.5. And the gap FALLS across sessions because the variance
+// factor shrinks the spread, so session 4 is the session nearest the target
+// and, with pop-ups off, would sit below it at 4.35.
+//
+// THE OVERSHOOT THOSE ROWS DESCRIBE IS THE ONE TASK 9 CLOSED, by taking this
+// weight to 0.74 rather than by touching the spread or the pop-up drop. Read
+// the rows above as the state before that, at a weight of 0.8, and the table
+// under "WHY 0.74" for what replaced it. Nothing else about them changed.
+const PITCH_QUALITY_WEIGHT = 0.74
 const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
 const PITCH_HEIGHT_WEIGHT = 0.4
 const PITCH_HEIGHT_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_HEIGHT_WEIGHT ** 2)
