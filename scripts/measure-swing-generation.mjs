@@ -1999,10 +1999,22 @@ if (columnGroups.length === 1) {
     const aRange = { own: rangeOf(groupCells(a), a.column), other: rangeOf(groupCells(a), b.column) }
     const bRange = { own: rangeOf(groupCells(b), b.column), other: rangeOf(groupCells(b), a.column) }
     console.log('')
+    // "NEITHER SET IS FREE OF THE OTHER'S PROBLEM" IS ITSELF A CLAIM, and on a
+    // fixture where each set never once left the other's column empty it was
+    // printed straight over two rates of 0.0%. The lead clause is now picked
+    // from the same two cross-rates the sentence goes on to quote.
+    const aFree = aRange.other.hi < FILLS_RELIABLY_BELOW
+    const bFree = bRange.other.hi < FILLS_RELIABLY_BELOW
+    const lead =
+      aFree && bFree
+        ? 'Each set is clean at the other end, which is worth saying because it usually is not:'
+        : aFree || bFree
+          ? 'One set is clean at the other end and one is not:'
+          : "Neither set is free of the other's problem, and it would be wrong to say otherwise:"
     say(
-      'Neither set is free of the other\'s problem, and it would be wrong to say otherwise: ' +
+      `${lead} ` +
         `${groupNames(a)} ${groupVerb(a, 'leaves', 'leave')} "${bucketHeaders[b.column]}" empty on ` +
-        `${pct(aRange.other.lo)} to ${pct(aRange.other.hi)} of sessions too, and ${groupNames(b)} ` +
+        `${pct(aRange.other.lo)} to ${pct(aRange.other.hi)} of sessions${aFree && bFree ? '' : ' too'}, and ${groupNames(b)} ` +
         `${groupVerb(b, 'leaves', 'leave')} "${bucketHeaders[a.column]}" empty on ` +
         `${pct(bRange.other.lo)} to ${pct(bRange.other.hi)}.`
     )
