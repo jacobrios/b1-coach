@@ -78,9 +78,10 @@ const digest = JSON.parse(readFileSync(DIGEST_PATH, 'utf8'))
 // this branch already (once for imprecision, once for a search pattern that
 // matched its own paragraph) and no such correction should be able to force
 // a re-pin of the number below. That carve-out is defended from the other
-// side by PROSE_ONLY_ABOVE_BOUNDARY below: a line above the boundary that is
-// neither blank nor a comment fails the suite, so behaviour cannot be moved
-// out of the hashed region.
+// side inside the boundary-integrity test below, which fails the suite on any
+// line above the boundary that is not blank and not a single-line comment, so
+// behaviour cannot be moved out of the hashed region. Read that test's own
+// comment for what the pattern is fussy about and why.
 //
 // Held as bare line text, and every check below counts and locates it by
 // whole line rather than by substring. That is not tidiness. An earlier draft
@@ -170,9 +171,45 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
     // boundary may carry behaviour. Without this, the boundary could simply
     // be walked downward, or a function pasted above it, and the hash would
     // still pass while covering less and less.
+    //
+    // THE PATTERN IS FUSSIER THAN IT LOOKS AND EVERY PART OF IT IS PAYING
+    // FOR SOMETHING.
+    //
+    // `\s*` up front: an indented comment is a comment. The first version of
+    // this check anchored `//` at column 0, so it would have called an
+    // indented line behaviour and failed the suite with a message telling the
+    // author their comment was not a comment. The header above this boundary
+    // is actively edited (three times in one day so far), so that was a live
+    // false-red trap rather than a hypothetical one.
+    //
+    // The excluded characters are U+2028 LINE SEPARATOR and U+2029 PARAGRAPH
+    // SEPARATOR, written as escapes rather than pasted in, because the entire
+    // point of them is that they are invisible in a source file. JavaScript
+    // ends a `//` comment at either of them; String.split('\n') does not. So
+    // one physical line starting with `//` and containing a U+2028 is prose
+    // to a newline-based check and a comment followed by a live statement to
+    // Node. Review demonstrated it with a line reading as a formatting note
+    // that patched Math.min when not running under vitest: 597 tests green,
+    // and the frozen generator's exit velocity ceiling reading 90 instead of
+    // 97 when loaded by scripts/grade-coach-accuracy.mjs, which is how it is
+    // actually loaded. Reproduced here before the fix, and measured after.
+    //
+    // CALIBRATE THIS HONESTLY, because the fix is cheap and the threat is
+    // not the reason to take it. Nobody types U+2028 by accident and no
+    // search and replace produces one. This was a hole in the
+    // TAMPER-EVIDENCE claim, not in the drift protection that is the guard's
+    // day job. It was worth closing because three committed documents assert
+    // the stronger claim, and a claim this project cannot back is exactly
+    // what this whole task exists to stamp out.
     const above = lines.slice(0, lines.indexOf(HASH_BOUNDARY_LINE))
-    const carriesBehaviour = above.filter((line) => line.trim() !== '' && !line.startsWith('//'))
-    expect(carriesBehaviour, 'every line above the hash boundary must be blank or a comment').toEqual([])
+    const carriesBehaviour = above.filter(
+      (line) => line.trim() !== '' && !/^\s*\/\/[^\u2028\u2029]*$/.test(line),
+    )
+    expect(
+      carriesBehaviour,
+      'every line above the hash boundary must be blank, or a single-line // comment ' +
+        'carrying no unicode line separator',
+    ).toEqual([])
   })
 
   it('every line of frozen code in the snapshot is byte-for-byte what was recovered', () => {

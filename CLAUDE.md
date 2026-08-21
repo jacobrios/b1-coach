@@ -947,12 +947,32 @@ specific to this repo:
    this file names further up as the thing to re-check if the pop-up ceiling
    is raised, and raising the pop-up ceiling is one of the three things Slice
    11 does. The boundary is now a marked line with only prose above it, and
-   the test refuses any line above it that is not blank or a comment, so
-   behaviour cannot be walked back out of the hash. The prose header stays
-   outside on purpose, so it can be corrected without tempting anybody to
-   re-pin the number. If a hash test goes red, the file is wrong;
+   the test refuses any line above it that is not blank or a single-line
+   comment, so behaviour cannot be walked back out of the hash. The prose
+   header stays outside on purpose, so it can be corrected without tempting
+   anybody to re-pin the number. If a hash test goes red, the file is wrong;
    re-pinning turns the snapshot into a copy of whatever the generator has
-   become. It was 573
+   become.
+
+   **One more round of review found the "not blank or a comment" half of that
+   sentence was still cheatable, and the fix is worth knowing about because
+   the reasoning generalises.** The check split the file on newlines and
+   accepted any line starting with `//`. JavaScript also ends a `//` comment
+   at U+2028 LINE SEPARATOR, which `split('\n')` does not, so a single
+   physical line reading as a harmless note could carry a live statement
+   after an invisible character: prose to the guard, code to Node. Review
+   demonstrated it with a line that patched `Math.min` only when not running
+   under vitest, and got a fully green suite while the frozen generator's
+   exit velocity ceiling read 90 instead of 97 everywhere else, which is how
+   the grading script actually loads it. **Calibrate it honestly, though:
+   nobody types U+2028 by accident and no search and replace produces one.
+   That was a hole in the tamper-evidence claim, not in the drift protection
+   the guard does for a living.** It was worth a one-line fix because three
+   committed documents assert the stronger claim, and an assertion this
+   project cannot back is the exact thing the whole task exists to remove.
+   The same fix stopped the check calling an indented comment "behaviour",
+   which was a live false-red trap in a header that had already been edited
+   three times in a day. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535

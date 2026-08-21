@@ -91,8 +91,28 @@
 // on 20 August 2026: carryDistance against `git show
 // 53315e5:src/ballFlight.js`, and goalTarget, hasTarget, meetsTarget and
 // GOAL_TARGETS against `git show 53315e5:src/goalTargets.js`. All five came
-// back identical. Anyone re-checking should strip comments and blanks from
-// both sides and compare, rather than expect a clean diff.
+// back identical IN THEIR BODIES. Not in their lines: the `export` keyword is
+// dropped from all five, since nothing outside this file may import them. So
+// the honest statement is that the code is identical once `export` and the
+// comments are set aside, which is what a re-checker should compare. Do not
+// expect a clean diff.
+//
+// DATED ANNOTATION, 20 August 2026, LATER THE SAME DAY. The comment heading
+// the frozen-copies section below opens "All four are ...", and there are
+// five: it omits goalTarget, which meetsTarget calls. Five is the right
+// count and this paragraph is the correct one.
+//
+// That line is not being edited, and the reason is worth more than the fix
+// would have been. It sits BELOW the hash boundary, so correcting it means
+// re-pinning the hash in the same commit. This file's own guard says in
+// capital letters that a disagreement between the pinned number and the file
+// means the file is wrong, and a reviewer cannot tell a re-pin made for a
+// typo from a re-pin made to bury a changed constant. The first live
+// temptation to re-pin arrived within hours of the pin being set, over a
+// miscounted word in a comment, which is exactly the shape of the thing that
+// erodes a guard. Declined on purpose. If the count below is ever corrected,
+// it should ride along with some other change that legitimately re-pins the
+// region, and the commit should say so out loud.
 //
 // SEPARATELY FROM THAT PROSE, EVERY LINE OF CODE IN THIS FILE IS PINNED BY
 // HASH in scripts/frozenGenerator.test.js and checked on every npm test.
