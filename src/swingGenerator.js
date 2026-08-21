@@ -302,17 +302,38 @@ const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
 // convenience. A popped-up ball does not come out of this scale constant at
 // all: the hitter got under it, so its exit velocity is drawn off the session
 // average by POP_UP_EV_DROP_MPH below. Counting them would be asking this
-// constant to account for a spread it does not govern. It does mean the spread
-// a visitor actually sees is a little wider than session 1's, because the
-// pop-ups sit on top of it; that is stated where it can be measured, in
-// section 9 of `node scripts/measure-swing-generation.mjs`, rather than
-// tuned away here.
+// constant to account for a spread it does not govern.
+//
+// WHAT IT ACTUALLY DELIVERED, MEASURED AFTER THE CHANGE RATHER THAN PREDICTED,
+// and the two halves of it very nearly cancel. Session 2, 40,000 sessions,
+// dividing by n-1 throughout:
+//
+//   6.1598 counting only ordinary swings, which is 2.6% SHORT of session 1's
+//   6.3223 rather than level with it. The derivation above does not know about
+//   the soft ceiling three sections down, and at this width swings reach it,
+//   so some of the widening is eased straight back off.
+//
+//   6.2989 counting every swing, which is within four thousandths of session
+//   1. The pop-ups sit outside this constant and add back almost exactly what
+//   the ceiling takes off.
+//
+// The second of those is the number a visitor sees, because a visitor is shown
+// every swing. So the hitter's spread now matches the session he is derived
+// from, and it matches for two reasons pulling against each other rather than
+// for the one this constant was set by. Task 9 should know that before it moves
+// either the ceiling or the pop-up rate, because moving one alone breaks the
+// cancellation.
 //
 // PROVISIONAL, LIKE EVERYTHING ELSE IN THIS FILE. Task 9 sets every constant
-// at once against targets that interact, and this one interacts with two of
-// them: it is what takes the strike-versus-ball exit velocity gap from 3.4 mph
-// to about 4.6, which is the target the product manager adopted, and it pushes
-// swings into the soft ceiling below, which pulls some of the widening back.
+// at once against targets that interact, and this one interacts with three of
+// them. It takes the strike-versus-ball exit velocity gap from 3.4 mph to
+// between 4.6 and 5.1, a little above the 4.5 the product manager adopted. It
+// halves both empty-band rates, Power from 14.7 / 12.2 / 11.9 percent to
+// 8.1 / 4.8 / 3.5 and Contact from 3.2 / 3.9 / 4.2 to 1.4 / 1.6 / 1.7, because
+// more extremes means more chances to land inside a band. And it is most of
+// why a generated session now beats Bill's frozen best of 92 mph far more
+// often than it used to; the ceiling comment below carries that one, because
+// it is the one number in this task that moved the wrong way.
 export const EV_SPREAD_MPH = 21.88
 export const LA_SPREAD_DEGREES = 22
 
@@ -660,6 +681,27 @@ function pitchInfluence(pitch) {
 // product manager settled that at the start of Slice 11 and session 1's own
 // numbers, an 81.6 average with a best of 92, ARE that hitter. A generator
 // allowed to reach 97 was quietly claiming a different one.
+//
+// AND THE ONE NUMBER IN TASK 7 THAT MOVED THE WRONG WAY, RECORDED HERE RATHER
+// THAN IN THE REPORT ALONE, because it is a property of this constant sitting
+// beside the widened spread and Task 9 owns both. Section 6 of
+// `node scripts/measure-swing-generation.mjs` asks how often a visitor is
+// shown a session whose hardest ball beats Bill's frozen 92. Before this task
+// that ran 47.6% to 59.6% of visitors depending on the goal. After it, 70.5%
+// to 77.4%.
+//
+// It is arithmetic rather than a bug, and that is what makes it worth writing
+// down. Session 1's own best ball sits 1.64 of its own standard deviations
+// above its own average. Ask the generator to match that spread, and give it a
+// session average at or a little above 81.6, and its best of fifteen beats 92
+// more often than not, whatever the ceiling is: lowering the ceiling from 97
+// to 94 caps how far past it can go and does nothing about how often. The two
+// settled decisions this slice carries, match session 1's spread and keep 92 a
+// rare peak, are in tension, and this task honoured the first.
+//
+// WHAT WOULD ACTUALLY MOVE IT, so Task 9 does not spend a pass on the ceiling:
+// the session average, or the spread, or accepting that 92 is a good ball for
+// this hitter rather than an unbeatable one. Not this constant.
 export const EXIT_VELOCITY_LIMITS = { min: 65, max: 94, soft: 3 }
 export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
 
