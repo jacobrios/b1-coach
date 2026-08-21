@@ -21,7 +21,7 @@
 // project.
 
 import { GOAL_COUNT_SPECS, goalCountValues } from '../src/goalCountSpecs.js'
-import { SPRAY_CUTOFFS } from '../src/sessionStats.js'
+import { SPRAY_CUTOFFS, STRIKE_ZONE } from '../src/sessionStats.js'
 import { goalExtraThresholds } from './factSheet.js'
 
 // Every era hands the coach these five numbers, regardless of goal.
@@ -53,9 +53,17 @@ const SPRAY_THRESHOLDS = [
 // The pitch-height thresholds the current era's zone lines name. Pitch side
 // (wide) has no single-sided threshold in the prompt prose, only the
 // widePitchCount stat, so it is not listed here.
+//
+// Read from STRIKE_ZONE since 21 August 2026, for exactly the reason
+// SPRAY_CUTOFFS is read above and GOAL_COUNT_SPECS below: two numbers typed
+// out here were a copy of the zone the prompt actually describes, and this
+// module's whole job is to say which numbers the coach was handed. A copy
+// that drifted would make it claim the coach was handed a threshold nobody
+// ever sent. It was the cheapest of the strike zone's remaining copies to
+// close, because this file already imported the module the bounds live in.
 const ZONE_HEIGHT_THRESHOLDS = [
-  { metric: 'pitchHeight', threshold: 3.5, comparison: 'above' },
-  { metric: 'pitchHeight', threshold: 1.5, comparison: 'below' },
+  { metric: 'pitchHeight', threshold: STRIKE_ZONE.heightMax, comparison: 'above' },
+  { metric: 'pitchHeight', threshold: STRIKE_ZONE.heightMin, comparison: 'below' },
 ]
 
 // The threshold and range lines a goal's own prose hands, independent of

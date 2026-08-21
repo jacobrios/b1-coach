@@ -34,7 +34,9 @@
 // WHAT `--raw` IS FOR, AND WHY IT IS NOT DEAD CODE. The numeric constraints
 // below are necessary and nowhere near sufficient. A search that satisfies
 // every one of them still produces sets containing a 66 mph swing or a swing
-// at -1 degrees: legal, inside the same clamps the generator obeys, and still
+// at -1 degrees: legal, inside this file's own frozen EV_CLAMP and LA_CLAMP
+// (which were the generator's clamps when this was written, and are neither
+// its numbers nor its mechanism now; see the annotation there), and still
 // reading as noise rather than as one hitter taking fifteen cuts. `--raw`
 // turns off the believability filters and prints exactly that, so the claim
 // "the taste filters are doing work" is something a reader can check in five
@@ -148,6 +150,31 @@ const MAX_GAP_SHARE = 0.6
 //   searching for a different session than the one that shipped. Read these two
 //   as "the range session 1 is allowed to occupy", which is what they have
 //   really been since this file was written, rather than as a copy of anything.
+//
+//   ANNOTATION, 21 AUGUST 2026, TASK 8: BOTH LINES ARE NOW FROZEN COPIES, NOT
+//   ONE, AND THE THING THEY ARE COPIES OF NO LONGER EXISTS. Three corrections
+//   to the sentence at the top of this block and the one at line 37, both of
+//   which still say "the clamps the generator obeys".
+//
+//   The exit velocity line is stale too. Task 7 took the generator's ceiling
+//   from 97 to 94, because 97 is a near-elite number and this hitter is a
+//   varsity high school junior; the 97 below is what it was before that.
+//
+//   And the generator has no clamps at all any more. Task 3 replaced both
+//   walls with soft limits: a swing near the top is eased toward the limit on
+//   a curve rather than stopped dead on it, so nothing exceeds a limit but
+//   nothing piles up on one either. `EV_CLAMP` and `LA_CLAMP` are hard cutoffs
+//   and describe a mechanism this app no longer has.
+//
+//   NONE OF THAT IS FIXED HERE, ON PURPOSE, AND NOT MERELY BY INHERITING THE
+//   REASONING ABOVE. This script is hand-run and its job is to reproduce one
+//   historical search, the Slice 9 search that chose the fifteen swings that
+//   shipped. Pointed at today's generator it would search a different space
+//   and could not reproduce that result, which would cost the one thing it
+//   exists to provide. So read both lines as a frozen record of the
+//   pre-Slice-11 rules, in the same spirit as the generator snapshot under
+//   docs/eval-fixtures/frozen/, and do not make either of them track the live
+//   generator.
 const EV_CLAMP = { min: 65, max: 97 }
 const LA_CLAMP = { min: -5, max: 35 }
 //

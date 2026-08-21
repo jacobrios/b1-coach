@@ -1480,7 +1480,19 @@ if (bothAxesShare > BOTH_AXES_IS_EVERY) {
     `The second is that ${pct(1 - bothAxesShare)} of missed pitches are off on ONE axis only, with ` +
       `${pct(bothAxesShare)} off on both height and side at once, against ${pct(sessionOneBothAxesShare)} of session 1's ` +
       'own six. A pitch that misses low while staying plausible sideways is what a real ' +
-      'thrower produces, and that is now what this one mostly does.'
+      `thrower produces, and that is what this one does ${bothAxesShare === 0 ? 'on every single miss' : 'most of the time'}.` +
+      // "Mostly" was the only tail this branch had, and since Task 2 the
+      // generator misses on one axis at a time by construction, so the branch
+      // fired at a measured 0.0% and printed "mostly" beside it. That reads as
+      // a defect half-fixed when what it is describing is a defect that cannot
+      // occur, which is the wrong way for a report to be wrong. The branch
+      // still covers everything from nothing up to session 1's own share, so
+      // the tail is chosen from the reading rather than replaced outright.
+      (bothAxesShare === 0
+        ? ' Not a share that came out low: this generator draws a miss on one axis at a time, ' +
+          "so there is no draw that could produce one. Session 1's own six do contain one, which " +
+          'is why the comparison is not a match.'
+        : '')
   )
 }
 }
