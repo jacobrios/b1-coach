@@ -234,25 +234,52 @@ describe('the shape of a generated session', () => {
         random: constantRandom(0.5).random,
       })[0].hit.launch
 
-    // THESE TWO BASELINES MOVED IN TASK 7 AND THE REASON IS THE TEST'S OWN
-    // SUBJECT. They were 90/40 and 95/60, chosen against an exit velocity
-    // ceiling of 97. At a ceiling of 94 both of those sit so far out that the
-    // curve has flattened under half a mph and they both draw 94, which is the
-    // very thing this test exists to catch: the assertion was right and the
-    // fixture had walked off the end of the range it was measuring. Picked
-    // instead to land inside the soft zone rather than beyond it, which is
-    // where a real overshoot from this generator actually lands.
-    const hard = topOf(85, 38)
-    const harder = topOf(87, 42)
+    // THESE TWO BASELINES MOVED IN TASK 7, AND THE FIRST ATTEMPT AT MOVING THEM
+    // BROKE THE TEST WITHOUT TURNING IT RED. That story is the reason for the
+    // paragraph, because it is the only guard this codebase has against a
+    // restored wall.
+    //
+    // They were 90/40 and 95/60, chosen against an exit velocity ceiling of 97.
+    // At a ceiling of 94 both sit past where the curve has flattened under half
+    // a mph, so both drew 94 and the test failed for a fixture reason rather
+    // than a generator one. They were then moved to 85/38 and 87/42, and that
+    // was WRONG in a way a green run could not show: 85/38 produces a raw 92.97
+    // mph and 46.72 degrees, which busts NEITHER limit, so this describe's own
+    // title was false of its first fixture. Worse, a hard clamp separates those
+    // two as happily as the curve does, so the test passed against the exact
+    // mutation it exists to catch. Measured, not reasoned about: with
+    // withinLimits replaced by Math.max(min, Math.min(max, value)), 85/38 draws
+    // 93/47 and 87/42 draws 94/50, which are different, and the test was green
+    // against a wall.
+    //
+    // THE WINDOW THAT ACTUALLY DISCRIMINATES is a raw value above the limit but
+    // below the point where the curve flattens onto it: above 94 and below
+    // 96.38 mph, above 50 and below 56.51 degrees. Inside it a wall says "the
+    // limit" and the curve says something under the limit. So one fixture sits
+    // inside that window and the other beyond it:
+    //
+    //   topOf(87, 42) is raw 94.97 mph and 50.72 degrees. Both bust a limit.
+    //     The curve draws 93 and 48; a wall would draw 94 and 50.
+    //   topOf(89, 48) is raw 96.97 mph and 56.72 degrees. Both bust a limit,
+    //     by enough that the curve has flattened. It draws 94 and 50, which is
+    //     what a wall would draw too.
+    //
+    // Under a wall the two fixtures collapse onto each other, 94/50 against
+    // 94/50, and every assertion below fails. That was executed rather than
+    // predicted.
+    const hard = topOf(87, 42)
+    const harder = topOf(89, 48)
 
     expect(harder.exitSpeed).not.toBe(hard.exitSpeed)
     expect(harder.angle).not.toBe(hard.angle)
-    // Both really are being compressed, which is what makes the assertions
-    // above about compression rather than about two ordinary swings. Read from
-    // the limits rather than typed, so moving a ceiling cannot leave this
-    // quietly checking a number that has stopped meaning anything.
-    expect(hard.exitSpeed).toBeGreaterThan(EXIT_VELOCITY_LIMITS.max - EXIT_VELOCITY_LIMITS.soft)
-    expect(hard.angle).toBeGreaterThan(LAUNCH_ANGLE_LIMITS.max - LAUNCH_ANGLE_LIMITS.soft)
+    // Said the other way round, which is the form a wall cannot satisfy: the
+    // further overshoot reaches the limit and the nearer one stops short of it.
+    // A wall hands both of them the limit. Read from the limits rather than
+    // typed, so moving a ceiling cannot leave this checking a stale number.
+    expect(harder.exitSpeed).toBe(EXIT_VELOCITY_LIMITS.max)
+    expect(harder.angle).toBe(LAUNCH_ANGLE_LIMITS.max)
+    expect(hard.exitSpeed).toBeLessThan(EXIT_VELOCITY_LIMITS.max)
+    expect(hard.angle).toBeLessThan(LAUNCH_ANGLE_LIMITS.max)
 
     // AND IT IS NOT A PROMISE THAT HOLDS TO INFINITY, which the comment beside
     // the limits now says as well. The drawn number is a whole one, so far
@@ -667,7 +694,11 @@ function sequence(...values) {
 // The three header draws every session starts with: the improve-or-decline
 // coin, then how far the exit velocity and the launch angle move. Held at
 // neutral so the session this swing sits in is always the same one: off
-// BASELINE that is 84.5 mph and 18 degrees, both computed by hand above.
+// BASELINE that is 82.9 mph and 18 degrees, both computed by hand above.
+// (The exit velocity half of that read 84.5 until Task 7 shrank the session
+// step and nobody moved it. It is the same drift the describe above this one
+// carries a whole paragraph about, one screen away, which is how easily this
+// kind of comment survives the change it describes.)
 const NEUTRAL_HEADER = [0.5, 0.5, 0.5]
 
 // The four draws a swing spends after its pitch, in the order the generator
@@ -772,7 +803,15 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     //   evOffset = 0.6 * -0.307210 + 0.8 * 0.5                   = +0.215674
     //   laOffset = -0.184326 + 0.8 * (0.4 * 0.015803 + sqrt(0.84) * 0.5)
     //                                                            = +0.187337
-    // 84.5 + 0.215674 * 16 = 87.95, and 18 + 0.187337 * 22 = 22.12.
+    // 82.9 + 0.215674 * 21.88 = 87.62, and 18 + 0.187337 * 22 = 22.12.
+    //
+    // BOTH HALVES OF THAT SUM MOVED IN TASK 7 AND THE ANSWER DID NOT, which is
+    // the second time in this file the same coincidence has come up; the other
+    // is the 93 pinned further up, which has its own note. It read
+    // `84.5 + 0.215674 * 16 = 87.95` before, and 87.95 and 87.62 both round to
+    // 88. Nothing here is near a limit, so unlike that other case there is no
+    // compression in this one: the session average simply fell by 1.6 and the
+    // scale widened by enough to give it back.
     //
     // WHAT THIS PIN IS ACTUALLY FOR. The same numbers under an implementation
     // that added the pitch on top of the existing draws instead of blending
@@ -918,10 +957,14 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // Read it as a band on the realised spread rather than as a statement
     // about the arithmetic alone.
     //
-    // AND IT IS NOW COUPLED TO THE CEILING, which the old band was not. Task 9
-    // moves both of these constants. If it does, this band has to be re-swept
-    // the way it was here, not widened until the new number fits: a bound
-    // stretched to admit a measurement proves nothing about the next one.
+    // AND IT IS NOW COUPLED TO BOTH EXIT_VELOCITY_LIMITS AND EV_SPREAD_MPH,
+    // where the old band was coupled to neither, so name both when Task 9 moves
+    // one. The spread coupling is not theoretical: putting EV_SPREAD_MPH back
+    // to 16 gives 0.99699 and turns this red, while 19 and 24 both pass, so the
+    // band admits a window around the shipped value rather than any value. If
+    // either constant moves, this band has to be re-swept the way it was here,
+    // not widened until the new number fits: a bound stretched to admit a
+    // measurement proves nothing about the next one.
     const random = mulberry32(20260821)
     let evSquares = 0
     let laSquares = 0
@@ -1281,15 +1324,32 @@ describe('the variance factor reaches the swings, and a test can see how far', (
   // taking spray direction out from under it, so this is the task that owes
   // the test.
   //
-  // LAUNCH ANGLE CARRIES THE ASSERTION AND EXIT VELOCITY CANNOT, which is a
-  // fact about the ranges rather than a preference. The factor steps by 0.05
-  // between consecutive sessions, so for three session numbers to round to
-  // three distinct whole numbers the swing has to sit at least twenty units
-  // from its session average. Launch angle has room for that between -5 and
-  // 50; exit velocity does not, because twenty mph above a session average of
-  // 83 is inside the soft ceiling and comes back compressed. The factor
-  // multiplies both readings on one line each, so proving it on the reading
-  // that can resolve it proves the constant's reach.
+  // TWO CONFIGURATIONS, BECAUSE ONE OF THEM COVERS ONE READING ONLY. The first
+  // drives the swing ABOVE its session average off the BASELINE fixture, where
+  // only launch angle has room to resolve a step of 0.05: twenty mph above a
+  // session average of 83 is inside the soft ceiling and comes back compressed,
+  // while twenty degrees above 19 is not. The second drives it far BELOW the
+  // average off a harder-hitting baseline, where exit velocity has the room and
+  // both readings resolve.
+  //
+  // THE COMMENT HERE USED TO CLAIM THE FIRST ONE WAS ENOUGH, on the grounds
+  // that "the factor multiplies both readings on one line each, so proving it
+  // on the reading that can resolve it proves the constant's reach." That is an
+  // argument from construction and it is false, which was settled by running
+  // it rather than by rereading it. Delete `* varianceFactor` from the exit
+  // velocity line in swingGenerator.js and the first configuration stays GREEN,
+  // with only the re-capturable session snapshot going red; delete it from the
+  // launch angle line and six tests go red. So the blind spot was closed for
+  // the constant's value and for its reach into launch angle, and left open for
+  // its reach into exit velocity. The second configuration is what closes it,
+  // and it catches either deletion on its own.
+  //
+  // WHAT NEITHER OF THEM COVERS, stated rather than implied. Both read whole
+  // numbers, so a change to the 0.05 small enough to be absorbed by rounding
+  // passes. At the magnitudes driven here that blind band is roughly 0.055 to
+  // 0.07, a change of ten to forty percent. The six-fold change these tests
+  // were written for is far outside it; a fine retune of that constant by Task
+  // 9 would not be seen here and is not meant to be.
   const anglesAt = (sessionNum) =>
     generateSwings({
       sessionNum,
@@ -1334,5 +1394,38 @@ describe('the variance factor reaches the swings, and a test can see how far', (
     // asserted the structure above stays green through exactly the change this
     // one exists to catch.
     expect([s2, s3, s4]).toEqual([38, 37, 36])
+  })
+
+  it('carries the factor into exit velocity too, which the configuration above cannot see', () => {
+    // THE SECOND CONFIGURATION, and the one that closes the half the first
+    // leaves open. The pitch is the worst this file throws, 0.80 feet outside
+    // the far edge, and all three of the swing's own draws are at the bottom,
+    // so the swing lands about twenty mph BELOW its session average instead of
+    // above it. The baseline is 90 mph rather than BASELINE's 82 for one
+    // reason: twenty below a session average of 90.9 is 70, which clears the
+    // soft floor's knee at 68, where twenty below 82.9 would not.
+    //
+    // Both readings resolve here, and each one catches its own deletion.
+    // Executed, not predicted: dropping `* varianceFactor` from the exit
+    // velocity line gives 70 / 70 / 70, and dropping it from the launch angle
+    // line gives 12 / 12 / 12. Either turns this red.
+    //
+    // The steps run upward rather than downward because the offset is negative:
+    // shrinking a swing's distance from its session average moves a weak swing
+    // UP toward it. That is the same fact as the describe above, seen from the
+    // other side, and it is worth having both because a sign error in the
+    // factor would show in only one of them.
+    const WORST_PITCH = [0.99, 1, 0.9, 0.5, 0.9] // wide by the maximum, ordinary height
+    const readingsAt = (sessionNum) =>
+      generateSwings({
+        sessionNum,
+        goalId: null,
+        baselineSwings: [{ hit: { launch: { exitSpeed: 90, angle: 30 } } }],
+        random: sessionDrivenBy([0.5, 0.5, 0.5], [...WORST_PITCH, 0, 0, 0, 0.5, 0.99, 0.5, 0.5]),
+      })[0].hit.launch
+
+    const [s2, s3, s4] = [2, 3, 4].map(readingsAt)
+    expect([s2.exitSpeed, s3.exitSpeed, s4.exitSpeed]).toEqual([70, 71, 72])
+    expect([s2.angle, s3.angle, s4.angle]).toEqual([12, 13, 14])
   })
 })

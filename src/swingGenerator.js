@@ -141,6 +141,26 @@ const POWER_LIFT_PER_SESSION = 2
 // cannot go on agreeing with a number that has stopped being true. That test
 // also asserts the 1.5 separately as a plain number, so a tuning pass cannot
 // widen the constant and the test that guards it in one move.
+//
+// TASK 9 MUST READ THIS BEFORE IT TOUCHES EITHER THIS CONSTANT OR THE EXIT
+// VELOCITY SPREAD, because the two of them pull Power's empty target band in
+// opposite directions and only their sum is safe. Measured on 21 August 2026,
+// one constant at a time off the pre-task generator, 20,000 sessions a cell at
+// seed 20260821, Power's empty-band rate on sessions 2, 3 and 4:
+//
+//   pre-task, all three constants old        14.7 / 12.6 / 11.9
+//   the new ceiling alone                    14.7 / 12.6 / 11.9   (inert)
+//   THIS SHRUNKEN STEP alone                 17.5 / 15.1 / 14.4   (worse)
+//   the widened spread alone                  7.4 /  4.9 /  3.8   (better)
+//   shipped, all three new                    8.1 /  5.1 /  3.6
+//
+// So shrinking the step COSTS Power about three points of empty band, because a
+// lower session average makes that goal's demanding exit velocity harder to
+// reach, and the widened spread pays for it several times over. Shrink this
+// step further without widening the spread and Power ends up worse than the
+// slice found it. The ceiling is not part of this at all: it is inert here at
+// both spreads, so a tuning pass reaching for it to fix an empty band is
+// reaching for the wrong constant.
 export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2 }
 
 // ── The thrower ─────────────────────────────────────────────────────────────
@@ -326,8 +346,13 @@ const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
 //
 // PROVISIONAL, LIKE EVERYTHING ELSE IN THIS FILE. Task 9 sets every constant
 // at once against targets that interact, and this one interacts with three of
-// them. It takes the strike-versus-ball exit velocity gap from 3.4 mph to
-// between 4.6 and 5.1, a little above the 4.5 the product manager adopted. It
+// them. It takes the strike-versus-ball exit velocity gap from 3.91 / 3.72 /
+// 3.54 to 5.05 / 4.85 / 4.63 across sessions 2, 3 and 4, a little above the
+// 4.5 the product manager adopted. (Those before-numbers are this task's own
+// run at seed 20260821. A 3.4 stood here briefly, carried over from Task 5's
+// comment and measured before pop-ups existed, which is exactly the sort of
+// untraceable number a block headed "measured after the change" must not
+// hold.) It
 // halves both empty-band rates, Power from 14.7 / 12.2 / 11.9 percent to
 // 8.1 / 4.8 / 3.5 and Contact from 3.2 / 3.9 / 4.2 to 1.4 / 1.6 / 1.7, because
 // more extremes means more chances to land inside a band. And it is most of
@@ -381,6 +406,18 @@ export const LA_SPREAD_DEGREES = 22
 // Taking the variance factor out closes the "gets worse every session" defect
 // on its own, and Power's lift exists because its band was empty 56% of the
 // time, which was a defect. A flat rate is not.
+//
+// NEITHER OF THESE TWO IS HELD BY A TEST, and Task 9 should know that before it
+// moves one. swingGenerator.test.js proves what this pair is FOR, that a
+// session 4 sprays exactly as wide as a session 2 and that the middle of the
+// draw is a pull-side ball, and both of those survive any width above zero and
+// any bias above 0.5001. The values themselves are pinned only by the
+// re-capturable session snapshot in sessionOneSwings.test.js, which is
+// re-captured whenever the generator moves and so is a record rather than a
+// guard. That is deliberate rather than an oversight: Task 9 owns tuning these,
+// and a test pinning a number a tuning pass is about to change would be
+// re-pinned rather than consulted. What holds them honest is section 3 and
+// section 8 of the measurement script, which are read rather than asserted.
 const SPRAY_PULL_BIAS = 0.55
 const SPRAY_SPREAD_DEGREES = 80
 
@@ -511,6 +548,22 @@ export const PITCH_SCALING = {
 // target of about 4.5 mph, which is what the widened configuration above
 // actually produces. So read the two paragraphs here as the record of why the
 // target moved rather than as an open argument against one.
+//
+// WHERE THE SHIPPED GAP ACTUALLY COMES FROM, ISOLATED ON 21 AUGUST 2026 IN
+// TASK 7, one constant at a time at 20,000 sessions a cell. Sessions 2, 3, 4:
+//
+//   shipped                              5.05 / 4.85 / 4.63
+//   shipped with pop-ups switched off    4.78 / 4.57 / 4.35
+//   the widened spread alone             5.14 / 4.92 / 4.68
+//   the new ceiling alone                3.90 / 3.73 / 3.56
+//   pre-task                             3.91 / 3.73 / 3.56
+//
+// Three things Task 9 should take from that. The entire movement is the exit
+// velocity spread; the ceiling contributes a hundredth and is effectively
+// inert. Pop-ups add between +0.27 and +0.28 of it, which is real but is not
+// the whole overshoot above 4.5. And the gap FALLS across sessions because the
+// variance factor shrinks the spread, so session 4 is the session nearest the
+// target and, with pop-ups off, would sit below it at 4.35.
 const PITCH_QUALITY_WEIGHT = 0.8
 const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
 const PITCH_HEIGHT_WEIGHT = 0.4
@@ -682,26 +735,51 @@ function pitchInfluence(pitch) {
 // numbers, an 81.6 average with a best of 92, ARE that hitter. A generator
 // allowed to reach 97 was quietly claiming a different one.
 //
-// AND THE ONE NUMBER IN TASK 7 THAT MOVED THE WRONG WAY, RECORDED HERE RATHER
-// THAN IN THE REPORT ALONE, because it is a property of this constant sitting
-// beside the widened spread and Task 9 owns both. Section 6 of
+// HOW OFTEN A SESSION BEATS 92 WENT UP, HOW FAR PAST IT ANY SESSION CAN GO
+// WENT DOWN, AND THE SECOND IS THE ONE THAT MATTERS. Section 6 of
 // `node scripts/measure-swing-generation.mjs` asks how often a visitor is
-// shown a session whose hardest ball beats Bill's frozen 92. Before this task
-// that ran 47.6% to 59.6% of visitors depending on the goal. After it, 70.5%
-// to 77.4%.
+// shown a session whose hardest ball beats Bill's frozen 92, and that number
+// rose from 48.0% to 59.1% of visitors before this task to 70.7% to 77.0%
+// after it. Read alone, that looks like the demo claiming harder that he got
+// faster. It is not, and the control is what settles it rather than an
+// argument.
 //
-// It is arithmetic rather than a bug, and that is what makes it worth writing
-// down. Session 1's own best ball sits 1.64 of its own standard deviations
-// above its own average. Ask the generator to match that spread, and give it a
-// session average at or a little above 81.6, and its best of fifteen beats 92
-// more often than not, whatever the ceiling is: lowering the ceiling from 97
-// to 94 caps how far past it can go and does nothing about how often. The two
-// settled decisions this slice carries, match session 1's spread and keep 92 a
-// rare peak, are in tension, and this task honoured the first.
+// THE CONTROL: A HITTER WHO DOES NOT CHANGE AT ALL. Take the shipped
+// generator, set the session step to zero and hold the variance factor at 1,
+// so nothing about him improves or settles, and leave everything else
+// including this ceiling alone. Measured over 100,000 visitors per goal, that
+// stationary hitter is shown a session beating 92 on 74.0% to 78.9% of
+// visitors. The shipped generator is UNDER that, not over it.
 //
-// WHAT WOULD ACTUALLY MOVE IT, so Task 9 does not spend a pass on the ceiling:
-// the session average, or the spread, or accepting that 92 is a good ball for
-// this hitter rather than an unbeatable one. Not this constant.
+// The reason is that 92 was never a rare peak for this hitter. Session 1's
+// best ball sits 1.703 population standard deviations above session 1's own
+// mean, and the expected maximum of fifteen draws sits a little above that, so
+// 92 is a hair BELOW a typical fifteen-swing best for him. Beating it about
+// three visitors in four is what an honest hitter with his spread does. The
+// pre-task 48% was the artefact: that generator was too tight, and it was
+// hitting its own honest rate for a hitter nobody chose.
+//
+// SO SECTION 6 ASKS THE WRONG QUESTION AT THE PER-VISITOR SCOPE, and a future
+// reader should not tune against it. The question that matters is whether the
+// demo shows him getting faster, and that is the TOP EXIT VELO tile a visitor
+// actually reads across the four sessions. Measured over 500,000 visitors:
+//
+//   The tile reads 92.0 / 91.7 / 91.3 / 91.0. Noisy and gently falling, which
+//   is a hitter having ordinary sessions.
+//
+//   It reads strictly rising across all four on 0 of 500,000 visitors. Not
+//   rare, impossible: rising from a frozen 92 needs 93, then 94, then 95, and
+//   this ceiling is 94. Before this task it was possible, and 89 visitors in
+//   500,000 saw it.
+//
+//   Session 4 is the outright best of the three generated sessions on 16.2% of
+//   visitors and the outright worst on 34.1%.
+//
+// AND THE MAGNITUDE IMPROVED, which is what this constant actually bought. The
+// highest session maximum the generator can produce anywhere fell from 96 to
+// 94, and the mean overshoot when a session does beat 92 fell from +1.78 to
+// +1.15. Before this task a visitor could be shown a ball four mph above the
+// hitter's frozen best; now nothing can exceed it by more than two.
 export const EXIT_VELOCITY_LIMITS = { min: 65, max: 94, soft: 3 }
 export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
 
