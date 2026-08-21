@@ -751,3 +751,69 @@ through `docs/eval-fixtures/slice7-debriefs/rebuild.mjs` and not through the
 loader that was repointed. **That binding has never been demonstrated to bite.**
 Proving it needs its own experiment against that file's own loader. Cheap, and
 worth doing the next time anything opens that directory.
+
+## 6. Task 9 cannot reach a 6 mph zone gap by moving the pitch weight, and the arithmetic says so before it spends a run
+
+Task 5 shipped the strike-versus-ball gap at **+3.40 mph pooled** across sessions
+2 to 4, inside the 3 to 8 band it was given and short of the roughly 6 mph Task 9
+is aiming at. The obvious next move is to raise `PITCH_QUALITY_WEIGHT`, and that
+move cannot get there.
+
+The pitch reaches exit velocity through two multiplications, not one. It is
+weighted into the shared contact quality by `PITCH_QUALITY_WEIGHT`, and the
+shared quality is then weighted into exit velocity by `CONTACT_CORRELATION`,
+which is 0.6. So the whole term arrives at about six tenths of its size. Measured
+by sweeping the weight through a standalone prototype of the same structure at
+4,000 sessions per goal per session number: 0.6 gives 2.55 mph, 0.7 gives 2.97,
+0.8 gives 3.39, 0.9 gives 3.82, and **1.0 gives 4.24**, which is the ceiling. A
+weight of 1.0 means the pitch IS the contact quality and the hitter's own quality
+draw counts for nothing, which is not a state anybody wants, and it still lands
+under 4.3.
+
+**So reaching 6 mph is a decision about a different constant.** Two candidates,
+and one is already wanted for its own reasons:
+
+- **`EV_SPREAD_MPH`, today 16.** The gap scales with it directly, so 22 would put
+  today's structure at roughly 4.7 mph without touching the pitch weight at all.
+  Section 9 of the measurement report separately says the generated hitter is
+  **30% tighter** than the hand-written session he is derived from, "which nobody
+  chose", so widening this is on the table regardless of the zone gap. That makes
+  it the cheaper of the two: one change, two targets.
+- **`CONTACT_CORRELATION`, today 0.6.** Raising it lifts the gap proportionally
+  and also tightens how much exit velocity and launch angle agree with each
+  other, which is a settled product decision with its own recorded reasoning.
+  Do not move it as a side effect of chasing this number.
+
+The third possibility, and it deserves saying so nobody re-derives it: the target
+itself may be too high. The 8.78 mph gap the target is anchored to is session 1's,
+and session 1 is fifteen hand-written swings chosen to read legibly, not a sample
+anybody fitted a rate to. Six may simply be more than a believable generator
+should produce.
+
+## 7. Both empty-band guards moved slightly, in the direction the task predicted, and Task 9 owns whether that is paid back
+
+Measured at seed 20260821, 20,000 sessions per goal per session number, before
+and after Task 5:
+
+| goal | S2 | S3 | S4 |
+| --- | --- | --- | --- |
+| Power & Distance, before | 13.9% | 12.1% | 11.1% |
+| Power & Distance, after | 14.5% | 11.8% | 10.8% |
+| Line Drives & Contact, before | 2.8% | 3.5% | 3.5% |
+| Line Drives & Contact, after | 3.0% | 3.8% | 4.0% |
+
+**Power is a wash and Contact is a small real cost.** Power gains six tenths of a
+point on session 2 and gives back three tenths on each of the other two, which is
+noise at this sample size rather than a direction. Contact rises on all three,
+by two, three and five tenths, and the rise is a mechanism rather than sampling:
+improving the contact quality on a good pitch pushes launch angle up through that
+goal's 18 degree ceiling, which is the same interaction the empty-band re-roll
+was written for every goal to catch. It is caught, and the residual is what the
+re-roll does not reach.
+
+**Recorded rather than tuned away**, because Contact's ceiling is one of the
+numbers Task 9 sets and pulling on it here would be tuning against one target in
+a task whose whole point was structure. The number to hold it against is the one
+this slice inherited, roughly 2.8 / 3.1 / 3.6 across eight independent seeds.
+Nothing here is near a level a visitor would notice; what would be worth noticing
+is the same shift happening again in Task 6 and Task 7 and nobody adding them up.
