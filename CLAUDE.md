@@ -528,7 +528,39 @@ the way past if you open the file for another reason.
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
     scripts/*.test.js       1599 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Eight directories:
+                             *(Slice 11, 20 August 2026: an eighth file,
+                             `frozenGenerator.test.js`, which is not a module
+                             test at all. It rebuilds every bench cell at every
+                             seed through the frozen pre-Slice-11 generator and
+                             holds the result against
+                             `docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json`.
+                             Read its header before touching anything under
+                             `docs/eval-fixtures/frozen/`; if it goes red the
+                             answer is never to regenerate the digest.)*
+                             Two more untested modules landed in the same task
+                             and belong with the row above rather than here:
+                             `sessionDigest.js`, the one definition of what a
+                             digest of a session is, shared by the writer and
+                             the guard so the two cannot drift; and the hand-run
+                             `write-frozen-session-digest.mjs`, an eighth script
+                             that produced the digest once, from live code,
+                             before the snapshot existed, and refuses to
+                             overwrite it.
+    docs/eval-fixtures/      Committed ground truth, not code. Nine directories.
+                             The ninth is `frozen/` (92 KB), added in Slice 11
+                             and belonging to no single round because more than
+                             one round depends on it: a snapshot of the swing
+                             generator as it stood at commit 53315e5, plus a
+                             record of exactly what it produced for every bench
+                             cell at every seed. It is what stops the five
+                             rounds listed below being silently re-graded
+                             against swings their coaches never saw once the
+                             generator is rewritten. The snapshot imports
+                             nothing from `src/`, carrying its own frozen copies
+                             of the carry formula and the goal targets, because
+                             a half-frozen snapshot drifts the first time a
+                             target band moves by a degree. The eight that
+                             predate it:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
@@ -889,7 +921,13 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of the close of Slice 10 on 20 August 2026 it is 573
+   vitest, and after Slice 11's first task on 20 August 2026 it is 595 tests
+   across 23 files, up from the 573 across 22 at the close of Slice 10 the
+   same day. The 22 new tests are `scripts/frozenGenerator.test.js`, which
+   rebuilds every bench cell at every seed through the frozen pre-Slice-11
+   generator and holds the result against a committed digest, so a change to
+   that snapshot cannot quietly rewrite what five committed rounds of coach
+   debriefs were written about. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535
@@ -2432,6 +2470,19 @@ own self-checks, not the coach.*
   the Slice 10 round a frozen generator snapshot at the same time. The full
   statement of the trap is in
   `docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt`.
+
+  **Closed 20 August 2026, in Slice 11's first task, before the generator was
+  touched.** All five markers repaired as dated annotations, with the old
+  `builder = current` line left struck through above the new one on the four
+  that changed. The generator itself is now snapshotted at
+  `docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs`, and a builder
+  names a pair (which fifteen session-1 swings, which generator) instead of
+  just a baseline. What makes this stick rather than rely on somebody
+  remembering: a record of exactly what the old generator produced, for every
+  cell at every seed, was written from the live code and committed on its own
+  first, and `npm test` now rebuilds all of it and fails if a single swing
+  moves. The trap is not closed by a comment; it is closed by a test that
+  cannot be green and wrong at the same time.
 - ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice
