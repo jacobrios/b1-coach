@@ -8,6 +8,10 @@
 import { describe, it, expect } from 'vitest'
 import { carryDistance, DISTANCE_BUCKETS, distanceBucketCounts, distanceDistributionLine, sprayRadius, SPRAY_RINGS, SPRAY_PLATE_RADIUS, SPRAY_FAIR_RADIUS } from './ballFlight.js'
 import { generateSwings } from './swingGenerator.js'
+// Imported for ONE assertion only, the cross-check below that the hardcoded
+// fifteen distances are still session 1's own. Everything else in this file
+// deliberately runs against literals; see that block's comment for why.
+import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
 
 describe('the reference points the shape is built from', () => {
   // These numbers come straight from the slice plan. They pin the curve so a
@@ -181,8 +185,22 @@ describe('the exact fifteen distances the app opens on', () => {
   // fifteen specific numbers still sort into the right buckets and still
   // write the right sentence, not merely that the module re-exports whatever
   // it happens to hold today.
+  //
+  // AND ONE CROSS-CHECK, ADDED 21 AUGUST 2026, WHICH IS THE PRICE OF KEEPING
+  // THE LITERAL. The paragraph above is the reason this array is not an
+  // import, and it stays. What it did not cover is the failure that actually
+  // happened: when Slice 9 replaced all fifteen swings, this file kept its old
+  // numbers and stayed green, so for a while it was proving that fifteen
+  // distances nobody's app held sorted correctly. The single assertion below
+  // holds the literal against what SESSION_ONE_SWINGS really contains, so the
+  // next rewrite of session 1 turns this file red instead of quietly making it
+  // meaningless. The two tests under it still run off the literal.
   const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map(swingAt)
+
+  it('is still the fifteen distances session 1 actually holds', () => {
+    expect(mockDistances).toEqual(SESSION_ONE_SWINGS.map((w) => w.hit.landing.distance))
+  })
 
   it('gives every column real fill: 4, 4, 3, 2, 2', () => {
     expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([4, 4, 3, 2, 2])

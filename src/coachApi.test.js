@@ -893,6 +893,16 @@ describe('the distance distribution both prompts describe', () => {
   // rather than an import, proving these specific numbers still write the
   // right sentence rather than proving only that the module re-exports
   // whatever it currently holds.
+  //
+  // AND ONE CROSS-CHECK, ADDED 21 AUGUST 2026, WHICH IS THE PRICE OF KEEPING
+  // THE LITERAL. The reasoning above stands and this array stays a literal.
+  // What it did not cover is the failure that actually happened: when Slice 9
+  // replaced all fifteen swings, this block kept its old numbers and stayed
+  // green, so for a while it was pinning the sentence the coach reads about a
+  // session the app no longer had. The single assertion below holds the
+  // literal against what SESSION_ONE_SWINGS really contains, so the next
+  // rewrite of session 1 turns this file red rather than quietly making it
+  // meaningless. Everything under it still runs off the literal.
   const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map((distance) => ({
     plateLocHeight: 2.5,
@@ -909,6 +919,10 @@ describe('the distance distribution both prompts describe', () => {
   }
   const goal = { id: 'open', label: 'Open Session' }
   const player = { firstName: 'Test' }
+
+  it('is still the fifteen distances session 1 actually holds', () => {
+    expect(mockDistances).toEqual(SESSION_ONE_SWINGS.map((w) => w.hit.landing.distance))
+  })
 
   // Runs a real call through callApi with fetch stubbed, and hands back the
   // exact user-message text that was about to leave the browser.
