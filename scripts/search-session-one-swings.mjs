@@ -34,7 +34,7 @@
 // WHAT `--raw` IS FOR, AND WHY IT IS NOT DEAD CODE. The numeric constraints
 // below are necessary and nowhere near sufficient. A search that satisfies
 // every one of them still produces sets containing a 66 mph swing or a swing
-// at -1 degrees: legal, inside this file's own frozen EV_CLAMP and LA_CLAMP
+// at -1 degrees: legal, inside this file's own frozen FROZEN_EV_CLAMP and FROZEN_LA_CLAMP
 // (which were the generator's clamps when this was written, and are neither
 // its numbers nor its mechanism now; see the annotation there), and still
 // reading as noise rather than as one hitter taking fifteen cuts. `--raw`
@@ -153,8 +153,11 @@ const MAX_GAP_SHARE = 0.6
 //
 //   ANNOTATION, 21 AUGUST 2026, TASK 8: BOTH LINES ARE NOW FROZEN COPIES, NOT
 //   ONE, AND THE THING THEY ARE COPIES OF NO LONGER EXISTS. Three corrections
-//   to the sentence at the top of this block and the one at line 37, both of
-//   which still say "the clamps the generator obeys".
+//   to the sentence four lines above this one, which still says "the clamps
+//   the generator obeys". A second sentence in the `--raw` header near the top
+//   of the file said the same thing and was corrected in the same commit;
+//   this annotation named it as outstanding for a few minutes, which was
+//   wrong about its own commit's work and is fixed here.
 //
 //   The exit velocity line is stale too. Task 7 took the generator's ceiling
 //   from 97 to 94, because 97 is a near-elite number and this hitter is a
@@ -163,7 +166,7 @@ const MAX_GAP_SHARE = 0.6
 //   And the generator has no clamps at all any more. Task 3 replaced both
 //   walls with soft limits: a swing near the top is eased toward the limit on
 //   a curve rather than stopped dead on it, so nothing exceeds a limit but
-//   nothing piles up on one either. `EV_CLAMP` and `LA_CLAMP` are hard cutoffs
+//   nothing piles up on one either. The two constants below are hard cutoffs
 //   and describe a mechanism this app no longer has.
 //
 //   NONE OF THAT IS FIXED HERE, ON PURPOSE, AND NOT MERELY BY INHERITING THE
@@ -175,8 +178,20 @@ const MAX_GAP_SHARE = 0.6
 //   pre-Slice-11 rules, in the same spirit as the generator snapshot under
 //   docs/eval-fixtures/frozen/, and do not make either of them track the live
 //   generator.
-const EV_CLAMP = { min: 65, max: 97 }
-const LA_CLAMP = { min: -5, max: 35 }
+//
+//   AND THEY ARE NAMED FOR IT NOW, which is the part that does not depend on
+//   anybody reading this. They were `EV_CLAMP` and `LA_CLAMP` until the same
+//   day; every one of the six places that uses them says "frozen" in the
+//   identifier itself, so the warning travels with the value instead of
+//   living in a comment somebody has to find first. That is the whole
+//   available strengthening: importing the real thing is not an option.
+//   Checked rather than assumed, on 21 August 2026: the snapshot exports one
+//   thing, `generateSwingsPreSlice11`, and its clamps are bare numbers inside
+//   an expression (`Math.max(65, Math.min(97, ...))`), not even named
+//   constants, so there is nothing there to import. Reaching them would mean
+//   editing a file whose hash this project forbids re-pinning.
+const FROZEN_EV_CLAMP = { min: 65, max: 97 }
+const FROZEN_LA_CLAMP = { min: -5, max: 35 }
 //
 //   The TOP EXIT VELO tile reads 92 today. Holding it means the three stat
 //   tiles on the first screen read exactly as they do now (82 mph, 17
@@ -384,8 +399,8 @@ function penalty(pairs, { taste }) {
   p += Math.max(0, maxGapShare(las) - (taste ? TASTE.maxGapShare : MAX_GAP_SHARE)) * 120
 
   p += Math.abs(Math.max(...evs) - TOP_EXIT_VELOCITY) * 6
-  for (const ev of evs) p += Math.max(0, EV_CLAMP.min - ev) + Math.max(0, ev - EV_CLAMP.max)
-  for (const la of las) p += Math.max(0, LA_CLAMP.min - la) + Math.max(0, la - LA_CLAMP.max)
+  for (const ev of evs) p += Math.max(0, FROZEN_EV_CLAMP.min - ev) + Math.max(0, ev - FROZEN_EV_CLAMP.max)
+  for (const la of las) p += Math.max(0, FROZEN_LA_CLAMP.min - la) + Math.max(0, la - FROZEN_LA_CLAMP.max)
 
   if (taste) {
     for (const ev of evs) p += Math.max(0, TASTE.minExitVelocity - ev) * 4
@@ -422,8 +437,8 @@ function seedCandidate(rand) {
     const ev = 81.6 + 5.6 * (rho * quality + Math.sqrt(1 - rho * rho) * normal(rand))
     const la = 17.3 + 7.0 * (rho * quality + Math.sqrt(1 - rho * rho) * normal(rand))
     pairs.push([
-      clamp(Math.round(ev), EV_CLAMP.min, TOP_EXIT_VELOCITY),
-      clamp(Math.round(la), LA_CLAMP.min, LA_CLAMP.max),
+      clamp(Math.round(ev), FROZEN_EV_CLAMP.min, TOP_EXIT_VELOCITY),
+      clamp(Math.round(la), FROZEN_LA_CLAMP.min, FROZEN_LA_CLAMP.max),
     ])
   }
   return pairs
@@ -709,14 +724,14 @@ function report(swings, label) {
   check(
     'exit velocity range',
     `${Math.min(...evs)} to ${Math.max(...evs)}`,
-    Math.min(...evs) >= EV_CLAMP.min && Math.max(...evs) <= EV_CLAMP.max,
-    `inside ${EV_CLAMP.min} to ${EV_CLAMP.max}`,
+    Math.min(...evs) >= FROZEN_EV_CLAMP.min && Math.max(...evs) <= FROZEN_EV_CLAMP.max,
+    `inside ${FROZEN_EV_CLAMP.min} to ${FROZEN_EV_CLAMP.max}`,
   )
   check(
     'launch angle range',
     `${Math.min(...las)} to ${Math.max(...las)}`,
-    Math.min(...las) >= LA_CLAMP.min && Math.max(...las) <= LA_CLAMP.max,
-    `inside ${LA_CLAMP.min} to ${LA_CLAMP.max}`,
+    Math.min(...las) >= FROZEN_LA_CLAMP.min && Math.max(...las) <= FROZEN_LA_CLAMP.max,
+    `inside ${FROZEN_LA_CLAMP.min} to ${FROZEN_LA_CLAMP.max}`,
   )
   say('')
   say(`  distance chart:  ${buckets.map((b) => `${b.label} ${b.count}`).join(' | ')}`)

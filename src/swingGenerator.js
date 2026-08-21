@@ -84,15 +84,30 @@ import { STRIKE_ZONE } from './sessionStats'
 // honest for a hitter and worth knowing before anyone reads a wider scatter as
 // a bug.
 //
-// EVERY NUMBER IN THE THREE PARAGRAPHS ABOVE IS A SLICE 6 MEASUREMENT AND TWO
-// OF THEM NO LONGER DESCRIBE THIS GENERATOR. Dated 21 August 2026 rather than
-// rewritten, because the argument they were quoted to make is still the right
-// one. The spread pair reads 6.30 mph and 7.54 degrees today, not 4.63 and
-// 6.36, because Task 7 widened EV_SPREAD_MPH; and the launch angle range no
-// longer stops at 35, because Task 3 replaced that wall with a soft limit at
-// 50 and Task 5 gave the hitter pop-ups to reach it with. Both figures come
-// off the "how spread out a session is" section of
+// EVERY NUMBER IN THE THREE PARAGRAPHS ABOVE IS A SLICE 6 MEASUREMENT AND
+// THREE OF THEM NO LONGER DESCRIBE THIS GENERATOR. Dated 21 August 2026 rather
+// than rewritten, because the argument they were quoted to make is still the
+// right one. All three come off the "how spread out a session is" section of
 // `node scripts/measure-swing-generation.mjs`, which is what to rerun.
+//
+//   The within-session pair reads 6.30 mph and 7.54 degrees today, not 4.63
+//   and 6.36, because Task 7 widened EV_SPREAD_MPH.
+//
+//   The pooled pair in the parenthetical reads 6.36 mph and 7.67 degrees on
+//   that section's after row, not 5.2 and 6.5. Worth one extra sentence
+//   because this is the one figure of the three a reader could still see on
+//   screen and take as current: 5.16 and 6.53 is what the BEFORE row prints,
+//   and the before row is the pre-Slice-6 generator rather than this one. The
+//   distinction the parenthetical draws, pooled against within-session, is
+//   unaffected and is still the thing to read it for.
+//
+//   The launch angle range no longer stops at 35, because Task 3 replaced that
+//   wall with a soft limit at 50 and Task 5 gave the hitter pop-ups to reach
+//   it with.
+//
+// This annotation itself said "two of them" until later the same day, having
+// enumerated the two and left the third un-enumerated, which in a comment that
+// lists what moved reads as a claim that the rest did not.
 //
 // THIS CONSTANT IS NOT THE CORRELATION IT IS NAMED FOR, and reading it as one
 // is how somebody ends up retuning it in the wrong direction. It is the WEIGHT
