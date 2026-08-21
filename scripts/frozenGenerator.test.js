@@ -503,10 +503,51 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
   //   the first assertion below: the same one-liner, on the same principle, two
   //   independent definitions held equal.
   //
-  // The src/ check still looks only at import lines rather than the whole file,
-  // because the header discusses src/swingGenerator.js in prose and explains at
-  // length why it is not imported. That assertion is now the belt to the
-  // assignment-line brace rather than the load-bearing one.
+  // WHAT "AN IMPORT LINE" MEANS HERE, spelled out because the loose version of
+  // this sentence is what let a fifth evasion through.
+  //
+  // It first filtered on `await import(` alone, and called that "import lines".
+  // So a plain static import was invisible to it:
+  //
+  //   import { generateSwings } from '../../../src/swingGenerator.js'
+  //
+  // Add that line, leave all three pinned lines untouched, and every test in
+  // this file passed, the suite reported 604 and the dry run exited 0, while
+  // the fixture rebuilt from the live generator for real. Proven rather than
+  // argued: with that line in place, moving the live generator's spray bias
+  // turned the three frozen cells red, which is exactly what they must never
+  // do. A static import is not an exotic edit either, it is the ordinary way to
+  // import in this codebase; the dynamic form exists in that file only to
+  // defeat an extensionless-resolve problem.
+  //
+  // MATCHING ON A LINE'S SHAPE WAS THE WRONG IDEA AND IS GONE. Widening the
+  // filter to cover static imports as well was tried first, and hunting it
+  // immediately produced two more shapes that walked round it, both ordinary
+  // JavaScript and both measured at 31 green:
+  //
+  //   import{generateSwings}from'../../../src/swingGenerator.js'
+  //
+  //   import {
+  //     generateSwings,
+  //   } from '../../../src/swingGenerator.js'
+  //
+  // The first has no whitespace after `import`. The second puts the path on a
+  // line that does not begin with `import` at all. There was no reason to
+  // believe a third shape did not exist, and enumerating syntax is a losing
+  // game against a language with this much of it.
+  //
+  // So the check stops classifying lines and instead removes the prose, then
+  // searches everything left. The only reason the prose ever needed special
+  // handling is that this file's header discusses src/swingGenerator.js in
+  // words at length, and that header is made entirely of whole-line comments.
+  // Drop those and what remains is code, whatever shape it is written in.
+  //
+  // Measured against the file as it stands rather than assumed safe: 176 of its
+  // 271 lines are whole-line comments, none of the remaining 95 contains `//`
+  // at all, and the file has no block comments, so nothing prose-like survives
+  // the strip and no code is lost to it. If a future edit puts a trailing
+  // comment mentioning that path after real code, this goes red; that is the
+  // safe direction and is worth a false red about once never.
   it('the 96-debrief fixture rebuilds through the frozen snapshot, not the working tree', () => {
     expect(
       FIXTURE_REBUILD_PATH,
@@ -543,15 +584,17 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
         'nothing else; check what that constant is set to, not whether the path appears in the file',
     ).toHaveLength(1)
 
+    const codeLines = lines.filter((line) => !/^\s*\/\//.test(line))
+
     expect(
-      lines.filter((line) => line.includes('await import(') && line.includes('FROZEN_GENERATOR_PATH')),
+      codeLines.filter((line) => line.includes('await import(') && line.includes('FROZEN_GENERATOR_PATH')),
       'rebuild.mjs must load its generator through FROZEN_GENERATOR_PATH, exactly once',
     ).toHaveLength(1)
 
     expect(
-      lines.filter((line) => line.includes('await import(') && line.includes('src/swingGenerator')),
-      'rebuild.mjs imports the working-tree generator again, so the 96-debrief fixture would be ' +
-        'graded against swings no coach in it ever saw',
+      codeLines.filter((line) => line.includes('src/swingGenerator')),
+      'rebuild.mjs reaches for the working-tree generator somewhere in its code, in whatever ' +
+        'syntax, so the 96-debrief fixture would be graded against swings no coach in it ever saw',
     ).toEqual([])
   })
 

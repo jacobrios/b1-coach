@@ -951,22 +951,24 @@ specific to this repo:
    of them rebuild one bench cell each through the frozen pre-Slice-11
    generator and hold the result against a committed digest, so six committed
    fixture directories cannot quietly start being graded against swings their
-   coaches never saw; a twenty-fifth rebuilds nothing and instead checks that
-   the list of cells being rebuilt has not silently shrunk. Fourteen of the
-   twenty-four are every cell at each of two seeds, seven are the same cells at
-   one seed for the pre-Slice-9 baseline, and three are the 96-debrief
-   fixture's own three cells at the one seed it runs itself at. Two more ask a different
-   question, whether the snapshot FILE has moved, by hashing every line of
-   code in it. The last four ask whether the guard itself still works: whether
-   the rule about what may sit above the hash boundary still refuses every
-   line terminator, whether the two scripts that load the snapshot are reading
-   the file this test is hashing, and whether the digest's own claim about
-   which seed it covers is honest. *(Those counts read 22, 5 and 2 until a
-   review pass late on 20 August 2026 found a sixth exposed directory; see the
-   "six, not five" correction on the `docs/eval-fixtures/` row further up.)*
-   The first two questions are both needed, which was measured rather than assumed: an
-   independent review mutated the snapshot five ways, one line each, and four
-   of the five (all the clamps, and the whole above-28-degrees branch of the
+   coaches never saw; a twenty-fifth rebuilds nothing and instead checks
+   that the list of cells being rebuilt has not silently shrunk. Fourteen
+   of the twenty-four are every cell at each of two seeds, seven are the
+   same cells at one seed for the pre-Slice-9 baseline, and three are the
+   96-debrief fixture's own three cells at the one seed it runs itself at.
+   Two more ask a different question, whether the snapshot FILE has moved,
+   by hashing every line of code in it. The last four ask whether the guard
+   itself still works: whether the rule about what may sit above the hash
+   boundary still refuses every line terminator, whether the two scripts that
+   load the snapshot are reading the file this test is hashing, and whether
+   the digest's own claim about which seed it covers is honest. *(Those counts
+   read 22, 2 and 2 until a review pass late on 20 August 2026 found a sixth
+   exposed directory; see the "six, not five" correction on the
+   `docs/eval-fixtures/` row further up.)*
+   The first two questions are both needed, which was measured rather than
+   assumed: an independent review mutated the snapshot five ways, one line
+   each, and four of the five (all the clamps, and the whole
+   above-28-degrees branch of the
    carry formula) changed no swing in any cell at either seed, so the data
    checks stayed green while the file had plainly moved.
 
@@ -2644,6 +2646,30 @@ own self-checks, not the coach.*
   rather than prevented, and exactly what the watch does and does not catch is
   measured in that file's own header. If Slice 11 ends up touching
   `src/ballFlight.js`, freeze the carry formula; never adjust the record.
+
+  **Corrected later the same day, and the corrected version is the one Task 4
+  needs.** Two things above are wrong in the reassuring direction. "Cannot be
+  reached without weakening a different guard" was a decision, not a
+  constraint: what the pinning rule blocks is reaching into the frozen file
+  itself, and a separate frozen copy of the carry formula beside it would need
+  no such weakening. It was declined because this project consolidates hard
+  against a second copy of a live formula and the fixture is covered today, and
+  that is a judgment Task 4 may revisit. And "watched rather than prevented"
+  undersells the watch: measured both ways, the only carry changes the record
+  cannot see are ones this fixture never exercises, because its first session is
+  built at a fixed seed and none of its forty-five balls is hit steeply enough
+  to reach the uncovered part of the formula.
+
+- **A carry-formula cover that comes from the data, not from the wiring, and
+  nothing would announce it going away.** Added 20 August 2026, from the item
+  above. The 96-debrief fixture's protection against a change to how far a ball
+  carries holds only because its stand-in first session is built at a fixed seed
+  and happens to contain no steeply hit ball. Change how that stand-in session
+  is built, its seed, or its limits, and the cover quietly stops applying with
+  every test still green. Nothing guards that today. The fix, if it is ever
+  wanted, is a frozen copy of the carry formula for that fixture to read, which
+  turns an accident into a guarantee. Small, and only worth doing if
+  `src/ballFlight.js` is being opened anyway.
 - ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice

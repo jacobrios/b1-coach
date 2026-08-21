@@ -94,7 +94,7 @@
 // collected.
 
 import { register } from 'node:module'
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
@@ -186,8 +186,8 @@ const MAX_PLANNED_CALLS = 100
 // it called, which it imported from the working tree until today. See the
 // section headed "A BUILDER IS A PAIR NOW", and the dated correction inside
 // it naming the fourth builder.) Grading them against anything else,
-// including today's real
-// session-1 swings, would silently invalidate every verdict: the swing
+// including today's real session-1 swings, would silently invalidate every
+// verdict: the swing
 // numbers and values in the coach's own prose would no longer match the
 // "current" fact sheet's per-swing table at all.
 //
@@ -212,7 +212,7 @@ const MAX_PLANNED_CALLS = 100
 // starts from.
 //
 // *** AND IT RECURRED AGAIN, IN A NEW PLACE, 20 AUGUST 2026. ***
-// See the fourth section below, "A builder is a pair now." Everything above
+// See the section headed "A BUILDER IS A PAIR NOW". Everything above
 // this line is about WHICH FIFTEEN SWINGS a round started from. That turned
 // out to be only half of what the working tree contributes.
 //
@@ -836,13 +836,44 @@ function reconcileWithMarker({ dir, args, missingBuilderMessage }) {
 // Both are kept. The marker still carries the provenance a reader wants and
 // answers when no --builder is passed. This is what survives its deletion.
 //
+// CALLED TWICE PER BRANCH, ON THE FLAG AND THEN ON THE RESOLVED ANSWER, AND THE
+// SECOND CALL IS NOT BELT AND BRACES.
+//
+// The first version was called only on args.builder, which meant it returned
+// early whenever no --builder was passed and left reconcileWithMarker free to
+// adopt whatever the marker said. So the marker was a second door into the same
+// fixture: changing one word in its committed BUILDER.txt to "current" and
+// passing no flag at all was accepted, printed "builder: current", and exited 0,
+// with the whole suite green and the dry run's own self-check passing. That is
+// this fixture graded through the working-tree generator from a one-word edit,
+// which is the outcome this entire task exists to prevent.
+//
+// The marker being deletable and the marker being editable are two different
+// doors, and closing only the first was worse than it looked: this directory is
+// also the one marker the dry run's markerCases list does not check, so nothing
+// anywhere was watching the value in that file. Checking the RESOLVED builder is
+// what makes the code the authority regardless of which door is used.
+//
 // Why the stakes here are unlike any other directory: those 96 debriefs are the
 // only evidence this project has that its grading tool catches a real coach
 // error, so a run graded through the wrong builder does not merely produce a
 // wrong answer, it produces a wrong answer about whether the instrument works.
 function assertFixtureBuilder(dir, builder) {
   if (!builder || builder === 'frozen') return
-  const relative = path.relative(FIXTURE_DIR, path.resolve(REPO_ROOT, dir))
+  // Real paths, not logical ones, so a symlink pointing into the fixture from
+  // outside it does not walk round this. realpathSync throws on a path that does
+  // not exist, and the dry run below deliberately passes made-up paths, so a
+  // failure falls back to the logical answer rather than becoming an error of
+  // its own; a path that does not exist cannot be a symlink into anything.
+  const resolveReal = (p) => {
+    const logical = path.resolve(REPO_ROOT, p)
+    try {
+      return realpathSync(logical)
+    } catch {
+      return logical
+    }
+  }
+  const relative = path.relative(resolveReal(FIXTURE_DIR), resolveReal(dir))
   const insideFixture = relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
   if (!insideFixture) return
   throw new Error(
@@ -877,6 +908,10 @@ function resolveRecordsAndBuilder(args) {
         '--builder slice9-before for Slice 9\'s pre-rewrite round, or --builder frozen only if the directory ' +
         'holds records generated against the old stand-in session 1 (rare, and you should know why).',
     })
+    // AND AGAIN ON WHAT CAME OUT. The call above checks the FLAG; this one
+    // checks the answer. See assertFixtureBuilder's own comment for the door
+    // this closes, which is a one-word edit to a committed marker.
+    assertFixtureBuilder(args.input, reconciled.builder)
     const { records, skippedFailed, skippedFiles } = loadInputDirectory(args.input)
     return {
       records,
@@ -921,6 +956,9 @@ function resolveRecordsAndBuilder(args) {
       'for a round committed before the Slice 11 generator rewrite, or --builder current for ' +
       'anything produced by the bench against today\'s working tree.',
   })
+  // AND AGAIN ON WHAT CAME OUT. The call above checks the FLAG; this one checks
+  // the answer. See assertFixtureBuilder's own comment for the door this closes.
+  assertFixtureBuilder(path.dirname(args.records), reconciled.builder)
   const records = JSON.parse(readFileSync(args.records, 'utf8'))
   if (!Array.isArray(records)) throw new Error(`${args.records} did not parse to a JSON array of records.`)
   return {
@@ -1587,6 +1625,25 @@ async function dryRun(args) {
       )
     }
   }
+  // The sixth, and it watches a VALUE rather than a refusal.
+  //
+  // The code now refuses the wrong builder for this fixture whether it arrives
+  // from a flag or from the marker, so a marker edited to say "current" can no
+  // longer produce a wrong grade. It can still produce a wrong SENTENCE: that
+  // file is read by people as the record of what these debriefs were written
+  // against, and nothing was checking what it says. This directory is also the
+  // one marker markerCases below does not cover, so without this line nothing
+  // anywhere watches that value.
+  const fixtureMarker = readBuilderMarker(FIXTURE_DIR)
+  if (fixtureMarker && fixtureMarker.builder === 'frozen') {
+    guardOk++
+    console.log(`  ok: ${path.relative(REPO_ROOT, FIXTURE_DIR)} is marked "frozen"`)
+  } else {
+    console.log(
+      `  FAILED: ${path.relative(REPO_ROOT, FIXTURE_DIR)} should carry a ${BUILDER_MARKER_FILENAME} ` +
+      `reading "builder = frozen", and reads ${fixtureMarker ? `"${fixtureMarker.builder}"` : 'nothing'}`,
+    )
+  }
   // The provenance marker, exercised against the real committed fixtures
   // rather than a made-up directory, so a marker that goes missing or gets
   // edited to the wrong value fails a free dry run.
@@ -1611,6 +1668,24 @@ async function dryRun(args) {
   //   covers that directory instead is the fifth flag-shape guard above, which
   //   is stronger for the purpose anyway, since it survives the marker being
   //   deleted.
+  //
+  //   DATED CORRECTION, 20 August 2026, and the reasoning above was wrong in a
+  //   way worth keeping visible. "Stronger for the purpose anyway" was not true
+  //   when it was written. That guard covered the FLAG door. The marker door was
+  //   the one left unwatched, and because this is also the one marker this list
+  //   does not check, those two gaps COMPOSED: editing one word of that
+  //   committed marker to "current" and passing no flag was accepted and exited
+  //   0, with the suite green and this self-check passing, which is the fixture
+  //   graded through the working-tree generator from a one-word edit.
+  //
+  //   Two things closed it, both above. assertFixtureBuilder is now called on
+  //   the RESOLVED builder as well as on the flag, so the code is the authority
+  //   whichever door is used. And the sixth guard asserts what that marker
+  //   actually says, so its value is watched even though this list does not
+  //   cover it. With both in place, leaving this directory out of the list is
+  //   defensible on its own terms rather than by the argument above. The general
+  //   lesson is the one worth carrying: two gaps each dismissed as narrow can
+  //   compose into one that is not.
   //
   //   Seven further directories under docs/eval-fixtures hold records and carry
   //   no marker at all, among them the Slice 8b, 8c and 8d rounds, several of
@@ -1703,16 +1778,17 @@ async function dryRun(args) {
       console.log(`  ok: ${rel} resolved seed ${c.seed} with no --seed passed (from ${adopted.seedSource})`)
     }
   }
-  // Five flag-shape guards, plus three checks on each committed round's
-  // marker. (Four until 20 August 2026, when the fixture-directory refusal
-  // was added; it is a flag-shape guard rather than a marker case, because it
-  // must pass with the marker deleted.) Derived from markerCases rather
-  // than written out as a number,
+  // Six guards before the marker cases, plus three checks on each committed
+  // round's marker. (Four until 20 August 2026, when the fixture-directory
+  // refusal and then the fixture-marker value check were added. Neither is a
+  // marker case: the first must pass with the marker DELETED, and the second
+  // asserts only a builder, because that marker deliberately carries no seed.)
+  // Derived from markerCases rather than written out as a number,
   // since Slice 11 grew that list from three rounds to five and a hand-typed
   // total is one more thing to forget. It still bites for the failure it was
   // put here to catch: a guard that prints FAILED instead of throwing does
   // not increment, so the total comes up short and the dry run stops.
-  const expectedGuards = 5 + markerCases.length * 3
+  const expectedGuards = 6 + markerCases.length * 3
   if (guardOk !== expectedGuards) {
     throw new Error(
       `Builder-selection guardrail self-check failed: ${guardOk} of ${expectedGuards} passed. ` +
