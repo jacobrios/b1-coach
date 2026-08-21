@@ -544,10 +544,21 @@ Targets, in priority order:
    and the constants are wrong.
 5. Nothing stacked at either ceiling above 0.5%.
 6. Per-swing exit velocity spread near 6.11, launch angle spread near 7.23.
+   *(Added 21 August 2026, Task 8: those two are session 1's own spreads,
+   measured as population standard deviations. Naming that matters, because
+   the sample convention gives 6.32 and 7.48 for the same fifteen swings and
+   a tuning pass comparing across conventions would chase a 3 percent error
+   that is not there.)*
 7. Session average exit velocity step near +0.9 off session 1's 81.6.
 8. Hit to All Fields meets its own bar at a rate that does not fall across
    sessions.
 9. Distance bucket fill: no empty column on a typical session.
+10. *(Added 21 August 2026, Task 8.)* Per-session exit velocity to launch angle
+    correlation near session 1's 0.361. It is 0.23 today against 0.36 before
+    this slice, and target 6 above is the reason to take this one seriously:
+    the plan already asks the generated hitter to match session 1's spread and
+    has never asked him to match its correlation, which is the half nobody
+    checked. Full statement and measurements in finding 9 below.
 
 Re-run Task 2's script and put the full before-and-after table in the task
 report. **If a target and a guard cannot both be met, stop and bring it to the
@@ -666,6 +677,11 @@ which is right, so this is flagged rather than fixed. One word, for whoever open
 it next, and it should be conditional on the measured share rather than typed
 flat, the way the rest of that section's prose already is.
 
+**Closed 21 August 2026, in Task 8, and conditional as this item asked.** The
+tail is now chosen from the reading, so a share of zero prints "on every single
+miss" and says the generator draws a miss on one axis at a time, which was
+checked against `drawPitch` rather than assumed.
+
 ## 2. `scripts/handedCounts.js` is the cheapest strike-zone copy left to close
 
 That file imports `SPRAY_CUTOFFS` from `src/sessionStats.js` at line 24 and uses
@@ -678,6 +694,10 @@ same line, so closing this is an import change and two field reads. It is the
 only one of the six remaining copies where the module is already in scope and the
 file already argues in its own comment for doing it. Not done in Task 4 because
 that task had no reason to open the file.
+
+**Closed 21 August 2026, in Task 8**, exactly as described: one import change
+and two field reads. Values confirmed unchanged by calling the module directly,
+since no test in the suite pins them.
 
 ## 3. The strike-zone copy census, hand-enumerated
 
@@ -702,6 +722,16 @@ remaining site was then opened by hand rather than counted from memory.
 
 **So: four in shipped code, six counting tooling, seven sites including the
 definition.** Say which is meant when quoting the number.
+
+**Re-enumerated by hand on 21 August 2026, at the close of Task 8, and the
+census above held exactly as written.** It is now one site shorter, because item
+2 was closed: `scripts/handedCounts.js` reads `STRIKE_ZONE`, leaving
+`scripts/bench-coach-brevity.mjs:326` as the only tooling copy. **So the current
+count is four in shipped code, five counting tooling, six sites including the
+definition.** Two hits a future grep will turn up are not copies and were
+checked: `scripts/factSheet.js:65` names the bounds inside a comment while the
+file imports `STRIKE_ZONE` at line 36, and `scripts/measure-swing-generation.mjs`
+holds an unrelated 1.5 in a threshold test.
 
 **The census deliberately EXCLUDES the frozen snapshots**, meaning
 `docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs` and
@@ -957,3 +987,76 @@ launch angle clamp will produce pop-ups drawn from everywhere except the pitches
 that should cause them, and the coach will be handed a pop-up count with no
 relationship to the pitch location it sits beside. Whoever takes Task 6 should
 decide whether that matters for what the coach says, before tuning a clamp.
+
+## 9. The generated hitter is now half as correlated as the first screen, and Slice 9 put session 1 where it is on purpose
+
+*Added 21 August 2026, at the close of Task 8. This is the finding with the most
+consequence in that task, and it is a target for Task 9 rather than a defect to
+fix on the way past.*
+
+**The mismatch.** Measured through `generateSwings` itself, 60,000 sessions
+across five goals and sessions 2 to 4 at seed 20260821, against the fifteen
+frozen swings of `src/sessionOneSwings.js`:
+
+    session 1 (hand-written)      correlation 0.361
+    generated, median             correlation 0.228
+
+**Why that is not merely a number drifting.** CLAUDE.md records that Slice 9
+rewrote all fifteen of session 1's swings and landed the relationship at "0.36,
+which is the generator's own median". The match was the point: it is why that
+number was chosen rather than any other. This slice moved the generator's own
+median to 0.23 and nothing moved session 1, so a match somebody deliberately
+made has come apart without anybody deciding to break it.
+
+**What a visitor sees.** Session 1's scatter has visible structure; a generated
+one is a looser cloud. Only 35.1 percent of generated sessions are at least as
+correlated as the first screen. So clicking from session 1 into session 2 walks
+a visitor from more structure to less, which is backwards for a demo whose whole
+story is a hitter improving.
+
+**The spread half is the control, and it is what makes this a real finding
+rather than an observation.** Task 7 went and matched session 1's exit velocity
+spread deliberately, and it worked: 6.11 for session 1 against a generated
+median of 5.79, about 5 percent apart. Correlation was never checked and is 58
+percent apart. Same family of mismatch, one half fixed on purpose and the other
+left.
+
+**One statistic that does NOT support this, named so nobody cites it.** The
+"share of generated sessions at least as extreme as session 1" figure is 35.1
+percent for correlation and 36.9 percent for spread, which is essentially the
+same. Session 1 sits at about the same percentile of the generated distribution
+on both, so that statistic cannot tell the two halves apart and must not be
+quoted as showing correlation is uniquely mismatched. The evidence is the size
+of the gap in the statistic itself, 58 percent against 5 percent, not the
+percentile.
+
+**Where it came from, for whoever tunes it.** `CONTACT_CORRELATION` is unchanged
+at 0.6 and the blend it drives still produces 0.37, which is what its arithmetic
+predicts. What pulled the shipped figure down to 0.23 is Task 5's pop-up, which
+by construction pairs a high launch angle with a soft exit velocity and so pulls
+against the shared contact term. That makes this a coupling rather than a
+property of one constant: move `POP_UP_MAX_CHANCE` or the pop-up band and this
+number moves with them. Do not reach for `CONTACT_CORRELATION` first.
+
+## 10. The app never chains sessions, and the difference is large enough to mislead a tuning pass
+
+*Added 21 August 2026, Task 8, after a reviewer reasoned about this before
+checking it. Recorded because the wrong assumption is the natural one.*
+
+`src/App.jsx:1002` passes `baselineSwings: mockSwings` on every new session, and
+`mockSwings` is `SESSION_ONE_SWINGS`. So sessions 2, 3 and 4 are each built from
+session 1 independently. Session 3 is not built from session 2, and a visitor's
+fourth session is not the end of a chain.
+
+**Why it matters to Task 9 specifically.** Measured this way, 20,000 visitors per
+mode on the Power goal, seed 20260821, counting swings at or above 38 degrees:
+
+    as the app runs it     session 2  2.6%   session 3  2.7%   session 4  3.1%
+    chained                session 2  2.6%   session 3  5.5%   session 4  25.1%
+
+The Power launch angle lift is applied to the baseline it is handed, so chaining
+compounds it and a quarter of session 4 ends up in the pop-up band. That is not
+what ships. It is recorded because it shows how sensitive that band is to the
+lift, which is one of the constants Task 9 sets, and because a tuning harness
+that chains sessions for convenience would report a defect the app does not
+have.
