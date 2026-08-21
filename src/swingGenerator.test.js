@@ -267,6 +267,16 @@ describe('the shape of a generated session', () => {
     // Under a wall the two fixtures collapse onto each other, 94/50 against
     // 94/50, and every assertion below fails. That was executed rather than
     // predicted.
+    //
+    // AND THIS GUARD IS ASYMMETRIC, which nobody should find out by accident.
+    // Restoring a wall on exit velocity alone turns three tests red across the
+    // suite: this one, the good-quality pin further down this file, and the
+    // seeded session snapshot. Restoring a wall on launch angle alone turns
+    // exactly ONE red in all 643, and it is the first assertion below. The
+    // snapshot does not even move. So the launch angle half of this project's
+    // only protection against a returning wall rests on a single line. That is
+    // not a reason to widen it today, and it is a reason to think twice before
+    // deleting or weakening that one assertion.
     const hard = topOf(87, 42)
     const harder = topOf(89, 48)
 
@@ -1346,10 +1356,18 @@ describe('the variance factor reaches the swings, and a test can see how far', (
   //
   // WHAT NEITHER OF THEM COVERS, stated rather than implied. Both read whole
   // numbers, so a change to the 0.05 small enough to be absorbed by rounding
-  // passes. At the magnitudes driven here that blind band is roughly 0.055 to
-  // 0.07, a change of ten to forty percent. The six-fold change these tests
-  // were written for is far outside it; a fine retune of that constant by Task
-  // 9 would not be seen here and is not meant to be.
+  // passes. SWEPT RATHER THAN DERIVED, because the derived figure first written
+  // here was wrong: all three tests stay green only from about 0.049 to 0.054,
+  // and at 0.047, 0.048 and every value from 0.055 to 0.070 one of them goes
+  // red. So the blind band is roughly minus 2 to plus 8 percent of the shipped
+  // constant, not the "0.055 to 0.07, ten to forty percent" that stood here
+  // first. These tests are TIGHTER than that comment claimed, which is the safe
+  // direction to be wrong in and still worth correcting, because a future
+  // reader deciding whether a retune is covered would have believed it.
+  //
+  // The six-fold change these tests were written for is far outside that band.
+  // A fine retune of the constant by Task 9 is inside it, would not be seen
+  // here, and is not meant to be.
   const anglesAt = (sessionNum) =>
     generateSwings({
       sessionNum,

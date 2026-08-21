@@ -154,13 +154,34 @@ const POWER_LIFT_PER_SESSION = 2
 //   the widened spread alone                  7.4 /  4.9 /  3.8   (better)
 //   shipped, all three new                    8.1 /  5.1 /  3.6
 //
+// WHICH HARNESS THESE CAME FROM, because the EV_SPREAD_MPH block above quotes
+// the same quantity as 14.7 / 12.2 / 11.9 going to 8.1 / 4.8 / 3.5 and a
+// tuning pass reading two answers for one number will otherwise pick one at
+// random. Those come from `node scripts/measure-swing-generation.mjs`, which
+// cannot vary a constant, so this table had to be built by patching one
+// constant at a time in a separate harness. The two draw from different random
+// streams, so they land a few tenths apart at sessions 3 and 4 and agree at
+// session 2. Neither is wrong and neither is more authoritative; the script is
+// the one to quote outside this file, and the value of this table is the
+// DIFFERENCES down its column, which are all measured the same way.
+//
 // So shrinking the step COSTS Power about three points of empty band, because a
 // lower session average makes that goal's demanding exit velocity harder to
 // reach, and the widened spread pays for it several times over. Shrink this
 // step further without widening the spread and Power ends up worse than the
-// slice found it. The ceiling is not part of this at all: it is inert here at
-// both spreads, so a tuning pass reaching for it to fix an empty band is
-// reaching for the wrong constant.
+// slice found it.
+//
+// AND THE CEILING CANNOT BE PART OF THIS AT ALL, which is worth having as a
+// proof rather than as a row in a table, because a proof survives Task 9
+// retuning everything and a measurement does not. Lowering the ceiling from 97
+// to 94 moves the soft zone's knee from 94 to 91, and `withinLimits` maps
+// everything above the knee into the open interval between the knee and the
+// ceiling. So every swing the ceiling can touch comes out above 91 either way.
+// Power's bar is 88 mph and Contact's is 85, both below 91, so no swing can
+// cross either goal's exit velocity threshold because of the ceiling, and it
+// cannot move either empty-band rate whatever the other constants are doing.
+// A tuning pass reaching for the ceiling to fix an empty band is reaching for
+// the wrong constant, and that is true by construction rather than by sample.
 export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2 }
 
 // ── The thrower ─────────────────────────────────────────────────────────────
@@ -355,10 +376,15 @@ const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
 // hold.) It
 // halves both empty-band rates, Power from 14.7 / 12.2 / 11.9 percent to
 // 8.1 / 4.8 / 3.5 and Contact from 3.2 / 3.9 / 4.2 to 1.4 / 1.6 / 1.7, because
-// more extremes means more chances to land inside a band. And it is most of
-// why a generated session now beats Bill's frozen best of 92 mph far more
-// often than it used to; the ceiling comment below carries that one, because
-// it is the one number in this task that moved the wrong way.
+// more extremes means more chances to land inside a band. (Those six figures
+// come from `node scripts/measure-swing-generation.mjs`. The table beside
+// EV_SESSION_STEP measures the same quantity on a separate harness and reads a
+// few tenths apart at sessions 3 and 4; see the note there, which says which
+// is which and why neither is wrong.) And it is most of why a generated
+// session now beats Bill's frozen best of 92 mph more often than it used to,
+// which is NOT a number that moved the wrong way: the ceiling comment below
+// carries that one, with the control showing this generator sits under what a
+// hitter who never improves would produce.
 export const EV_SPREAD_MPH = 21.88
 export const LA_SPREAD_DEGREES = 22
 
@@ -557,6 +583,13 @@ export const PITCH_SCALING = {
 //   the widened spread alone             5.14 / 4.92 / 4.68
 //   the new ceiling alone                3.90 / 3.73 / 3.56
 //   pre-task                             3.91 / 3.73 / 3.56
+//
+// Same harness caveat as the table beside EV_SESSION_STEP, and the same reason:
+// varying one constant at a time is not something the measurement script can
+// do. Its own before and after rows for this quantity read 3.91 / 3.72 / 3.54
+// and 5.05 / 4.85 / 4.63, so the two agree on the shipped generator and sit a
+// hundredth or two apart on the pre-task one. Read the differences down the
+// column rather than any single figure.
 //
 // Three things Task 9 should take from that. The entire movement is the exit
 // velocity spread; the ceiling contributes a hundredth and is effectively
