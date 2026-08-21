@@ -464,6 +464,18 @@ function pitchInfluence(pitch) {
 //   still says which swing was the harder one. A wall cannot do that, and that
 //   is exactly what its flat row of dots means.
 //
+//   QUALIFIED 21 AUGUST 2026, BY REVIEW, because that sentence is
+//   unconditional and the drawn number is rounded to a whole one. Far enough
+//   out the curve flattens under half a unit and two overshoots do draw the
+//   same: measured, every raw launch angle at or above 56.51 draws as 50 and
+//   every raw exit velocity at or above 99.38 draws as 97. What makes that a
+//   headroom figure rather than a live defect is that the highest angle this
+//   generator produced across 4,500,000 swings is 47, nine and a half degrees
+//   short of it, and that it degrades gradually rather than at a cliff: driven
+//   off baselines of 40, 50, 60, 80, 300 and 1000 degrees the drawn angles are
+//   48, 50, 50, 50, 50, 50. Read the claim as true across the range this
+//   generator reaches, which is the range the charts draw.
+//
 //   Nothing can exceed a limit, which is what the charts and the coach's count
 //   lines assume, so the guarantee the wall was there for is kept.
 //
@@ -475,15 +487,56 @@ function pitchInfluence(pitch) {
 // provisional for Task 9. Too wide and the compression reaches into the body
 // of the distribution and quietly shrinks an honest tail; too narrow and it
 // crushes the overshoots back together, which is a wall again by another name.
-// 5 degrees and 3 mph put the knees at 45 degrees and 94 mph, where the pop-up
-// band below passes through untouched and roughly one exit velocity in seventy
-// is moved at all.
+// 5 degrees and 3 mph put the knees at 45 degrees and 94 mph.
+//
+// WHAT THAT COSTS, COUNTED RATHER THAN ESTIMATED, and corrected on 21 August
+// 2026 the same day it was written: this paragraph first said "the pop-up band
+// passes through untouched and roughly one exit velocity in seventy is moved at
+// all", and neither half held. Measured by counting the branch taken, over
+// 900,000 swings off session 1:
+//
+//   Exit velocity is eased at all on 0.85% of swings, one in 118, of which one
+//   in 200 is at the top end and the rest at the floor. The old "one in
+//   seventy" overstated it by nearly a factor of two.
+//
+//   The pop-up band is NOT untouched. It runs to 48 and the knee is at 45, so
+//   30% of pop-up draws land in the soft zone and the worst of them moves 0.74
+//   of a degree. That is exactly why the realised band tops out at 47.26 rather
+//   than 48, and it is most of why launch angle is eased on 0.98% of swings
+//   against exit velocity's 0.85%.
+//
+// A SOFT ZONE WIDER THAN HALF THE RANGE BREAKS THIS OUTRIGHT, and the guard
+// below rather than this sentence is what stops it, because Task 9 is handed
+// `soft` by name as a constant to tune and a sentence relies on being read.
 //
 // Exported for the reason PITCH_MISS_MAX_FEET is exported: the test that holds
 // every generated swing inside these limits reads them from here, so it cannot
 // go on agreeing with a number that has stopped being true.
 export const EXIT_VELOCITY_LIMITS = { min: 65, max: 97, soft: 3 }
 export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
+
+// The one way to set a soft zone that turns `withinLimits` into something worse
+// than the wall it replaced. Past half the range the two branches overlap, and
+// inside the overlap the curve does not merely compress, it INVERTS: at
+// { min: 65, max: 97, soft: 20 } a raw 66 comes back as 72.73 and a raw 96 as
+// 89.27, so the harder swing draws softer than the weak one, on every chart, with
+// nothing anywhere saying so. The threshold is half the range either way, which
+// is 16 mph and 27.5 degrees at today's limits.
+//
+// It throws at module load rather than warning, because a generator that has
+// silently swapped hard contact for weak contact is not a degraded demo, it is a
+// demo saying the opposite of what happened. Exported so its own test can drive
+// the broken case directly; nothing else has any reason to call it.
+export function assertSoftZoneFits(name, { min, max, soft }) {
+  if (!(soft > 0) || soft > (max - min) / 2) {
+    throw new Error(
+      `The ${name} soft zone of ${soft} does not fit inside its own range of ${min} to ${max}: ` +
+        `it has to be above 0 and at most ${(max - min) / 2}, or the two ends of the compression overlap and the curve inverts.`
+    )
+  }
+}
+assertSoftZoneFits('exit velocity', EXIT_VELOCITY_LIMITS)
+assertSoftZoneFits('launch angle', LAUNCH_ANGLE_LIMITS)
 
 // THE TOP OF THE LAUNCH ANGLE RANGE IS COUPLED TO src/ballFlight.js AND THE
 // COUPLING WAS CHECKED RATHER THAN ASSUMED. `carryDistance`'s shape term reads

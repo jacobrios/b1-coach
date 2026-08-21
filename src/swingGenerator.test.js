@@ -24,6 +24,7 @@ import {
   EXIT_VELOCITY_LIMITS,
   LAUNCH_ANGLE_LIMITS,
   POP_UP_BAND,
+  assertSoftZoneFits,
 } from './swingGenerator.js'
 import { meetsTarget } from './goalTargets.js'
 import { carryDistance } from './ballFlight.js'
@@ -241,6 +242,39 @@ describe('the shape of a generated session', () => {
     // above about compression rather than about two ordinary swings.
     expect(hard.exitSpeed).toBeGreaterThan(94)
     expect(hard.angle).toBeGreaterThan(35)
+
+    // AND IT IS NOT A PROMISE THAT HOLDS TO INFINITY, which the comment beside
+    // the limits now says as well. The drawn number is a whole one, so far
+    // enough out the curve flattens under half a unit and two overshoots do
+    // draw the same. Pinned here rather than left as prose: this is where that
+    // starts, nine and a half degrees above the highest angle the generator has
+    // ever been measured producing.
+    expect(topOf(90, 200).angle).toBe(LAUNCH_ANGLE_LIMITS.max)
+    expect(topOf(90, 1000).angle).toBe(LAUNCH_ANGLE_LIMITS.max)
+  })
+
+  it('refuses a soft zone too wide for its own range, rather than inverting', () => {
+    // THE FAILURE THIS GUARDS IS WORSE THAN THE WALL IT REPLACED, which is why
+    // it throws at module load instead of being a sentence in a comment. Past
+    // half the range the two branches of the compression overlap, and inside
+    // the overlap the curve inverts: a hard swing draws softer than a weak one,
+    // on every chart, with nothing anywhere saying so. Task 9 is handed `soft`
+    // by name as a constant to tune, so this is a live way to get it wrong.
+    //
+    // Seen red on purpose, not merely written: dropping the upper half of the
+    // condition in swingGenerator.js turns this test red with
+    // "expected function to throw an error". Both directions are covered,
+    // because a guard that refuses everything would pass a one-sided test.
+    expect(() => assertSoftZoneFits('exit velocity', { min: 65, max: 97, soft: 20 })).toThrow(/inverts/)
+    expect(() => assertSoftZoneFits('launch angle', { min: -5, max: 50, soft: 30 })).toThrow(/inverts/)
+    expect(() => assertSoftZoneFits('exit velocity', { min: 65, max: 97, soft: 0 })).toThrow(/inverts/)
+
+    // Exactly half the range is the widest that still works, and the shipped
+    // pair are far inside it. Read from the constants rather than typed, so a
+    // retune moves this test with it.
+    expect(() => assertSoftZoneFits('exit velocity', { min: 65, max: 97, soft: 16 })).not.toThrow()
+    expect(() => assertSoftZoneFits('exit velocity', EXIT_VELOCITY_LIMITS)).not.toThrow()
+    expect(() => assertSoftZoneFits('launch angle', LAUNCH_ANGLE_LIMITS)).not.toThrow()
   })
 })
 
@@ -806,8 +840,13 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // 1.00931 before Task 6. Both moves are the removal of the two walls
     // showing up. Launch angle rose because a wall at 35 degrees used to squash
     // its upper tail into one value, and exit velocity fell because the soft
-    // zone now eases the top 1.4% of swings in from 94 mph where the old wall
-    // only touched the 0.03% that reached 97.
+    // zone now eases swings in from 94 mph where the old wall only touched the
+    // 0.03% that reached 97. (That last figure read "the top 1.4% of swings"
+    // until 21 August 2026, when review asked where it came from and the answer
+    // was nowhere. Counted properly, by tallying which branch of the
+    // compression each swing took across 900,000 of them: 0.50% at the top end,
+    // one swing in 200, and 0.85% at either end together. The direction of the
+    // argument is unchanged and the size of it is smaller than was claimed.)
     //
     // The band still holds on all 60 seeds, which was re-swept rather than
     // assumed: exit velocity 0.99241 to 1.00710 and launch angle 1.00733 to

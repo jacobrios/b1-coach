@@ -539,6 +539,17 @@ const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
 // the generator kept its own promise, across every swing this run generated,
 // which is the property the whole app leans on: a chart axis, a coach count
 // line and a distance bucket all assume no swing can leave this range.
+//
+// AND ONE THING WAS LOST WITH THE COPY, NAMED HERE BECAUSE AN IMPORT CANNOT
+// ANNOUNCE IT. A copy is also a tripwire: it went off when the generator moved,
+// which is how anyone knew to come and look. An import simply follows the
+// generator wherever it goes and says nothing. The concrete exposure is in
+// section 5, which now prints unconditional prose saying these limits are
+// approached rather than parked on. Revert to hard clamps in a future task and
+// that sentence becomes false with nothing anywhere to notice, because the
+// numbers beside it would still be imported and still be right. The thing that
+// would catch it is the pile-up table underneath, which is measured rather than
+// asserted, so read the table before the prose if the two ever disagree.
 const GENERATOR_CLAMPS = {
   exitVelocity: EXIT_VELOCITY_LIMITS,
   launchAngle: LAUNCH_ANGLE_LIMITS,
@@ -1929,7 +1940,7 @@ if (pileUpEdges.length === 0) {
     `NOT ONE of the ${edges.length} edges carries a pile-up. ` +
       (levelEdges.length === 0
         ? 'On every one of them materially fewer swings sit on the last value than on the value just inside it, which is what an ordinary tail does,'
-        : `${thinningEdges.length} of them thin out into the last value and ${levelEdges.length} sit level with the value beside it, neither of which is a stack,`) +
+        : `${thinningEdges.length} of them ${thinningEdges.length === 1 ? 'thins' : 'thin'} out into the last value and ${levelEdges.length} ${levelEdges.length === 1 ? 'sits' : 'sit'} level with the value beside it, neither of which is a stack,`) +
       ` and none of them holds as much as ${pct(A_FLAT_ROW_SHARE)} of every swing on its own. That is ` +
       'the result this section exists to check for, not a missing table. It is a ' +
       'statement about the pooled heap, though. How a pile is spread across the ' +
