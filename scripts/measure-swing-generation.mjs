@@ -1057,19 +1057,31 @@ const A_PILE_UP_RATIO = MATERIAL_RATIO
 // row of dots.
 //
 // HOW THE THRESHOLD IS ARRIVED AT, and it is a derivation rather than a pick,
-// with one judgment in it that is named rather than hidden. The unit is a
-// chart, which is one session of SWINGS_PER_SESSION swings. howOftenSeen
-// already treats about one swing on every session as the point where a value
-// stops being occasional. Half of that, one swing on every other chart a
-// visitor opens, is where this report will call a single value a flat row on
-// its own merits. The judgment is the half; everything else follows from the
-// chart.
+// with TWO judgments in it rather than one. The unit is a chart, which is one
+// session of SWINGS_PER_SESSION swings, and that part is not a judgment at all.
+// Then:
+//
+//   The ANCHOR. howOftenSeen's middle band runs from roughly 0.67 to 1.5 swings
+//   a session, and taking one swing a session as the point where a value stops
+//   being occasional is a choice INSIDE that band rather than a constant
+//   inherited from it.
+//
+//   The HALF. One swing on every other chart a visitor opens, rather than every
+//   chart, is where this report will call a single value a flat row on its own
+//   merits.
+//
+// An earlier draft of this comment presented only the half as a judgment and
+// called the anchor inherited. It is not, and the difference is not academic:
+// take the TOP of the same band, 1.5 a session, and the line lands at 5.0%,
+// above the 4.2% precedent below, and the precedent check fails.
 //
 // CHECKED AGAINST THIS PROJECT'S OWN RECORDED PRECEDENT, which is what makes it
 // more than an opinion. CLAUDE.md records 4.2% of Power session-4 swings
 // sitting on exactly 35.0 degrees as a first-screen credibility defect worth
 // its own slice. That is above the line below, so the precedent fires. The
-// precedent is a check on the derivation, not its source.
+// precedent is a check on the derivation, not its source, and since the anchor
+// was free enough to have failed that check, the check is doing real work
+// rather than confirming a foregone conclusion.
 const A_FLAT_ROW_PER_SESSION = 0.5
 const A_FLAT_ROW_SHARE = A_FLAT_ROW_PER_SESSION / SWINGS_PER_SESSION
 
@@ -1883,27 +1895,46 @@ for (const e of edges) {
 //
 // There is no group for an edge holding nothing: an edge is by definition a
 // value the generator reached, so it can never hold nothing.
-const edgeVerdict = (e) => ratioVerdict(e.share, e.insideShare, A_PILE_UP_RATIO)
-const stackingEdges = edges.filter((e) => edgeVerdict(e) === 'above').sort((a, b) => b.share - a.share)
-const levelEdges = edges.filter((e) => edgeVerdict(e) === 'level').sort((a, b) => b.share - a.share)
-const thinningEdges = edges.filter((e) => edgeVerdict(e) === 'below').sort((a, b) => b.share - a.share)
+// THE POOLED HALF GETS THE ABSOLUTE PARTNER TOO, one scope up from the per-cell
+// half. It had the relative test only, so on a curve saturating at 28.4 degrees
+// it printed "NOT ONE of the 4 edges carries a pile-up ... that is the result
+// this section exists to check for" while 11.62% of every swing generated sat
+// on one launch angle, with the paragraph immediately beneath it finding 15 of
+// 15 cells carrying a flat row.
+//
+// The absolute test transfers cleanly because the pooled distribution is a
+// mixture of charts, so a pooled share still converts to swings on a chart:
+// 11.62% is 1.7 swings on a typical chart drawn from that mixture. What a
+// pooled share cannot say is how those are spread ACROSS charts, which is
+// exactly what the per-cell paragraph beneath answers, and the prose now points
+// at it rather than leaving the two scopes to be reconciled by the reader.
+const edgeFlatRow = (e) => flatRowVerdict(e.share, e.insideShare)
+const pileUpEdges = edges.filter((e) => edgeFlatRow(e).flatRow).sort((a, b) => b.share - a.share)
+const quietEdges = edges.filter((e) => !edgeFlatRow(e).flatRow)
+const levelEdges = quietEdges.filter((e) => edgeFlatRow(e).relative === 'level').sort((a, b) => b.share - a.share)
+const thinningEdges = quietEdges.filter((e) => edgeFlatRow(e).relative === 'below').sort((a, b) => b.share - a.share)
 
 console.log('')
 console.log('  Pooled across every goal and session number:')
-if (stackingEdges.length === 0) {
+if (pileUpEdges.length === 0) {
   say(
     `NOT ONE of the ${edges.length} edges carries a pile-up. ` +
       (levelEdges.length === 0
-        ? 'On every one of them materially fewer swings sit on the last value than on the value just inside it, which is what an ordinary tail does.'
-        : `${thinningEdges.length} of them thin out into the last value and ${levelEdges.length} sit level with the value beside it, and neither shape is a stack.`) +
-      ' That is the result this section exists to check for, not a missing table.'
+        ? 'On every one of them materially fewer swings sit on the last value than on the value just inside it, which is what an ordinary tail does,'
+        : `${thinningEdges.length} of them thin out into the last value and ${levelEdges.length} sit level with the value beside it, neither of which is a stack,`) +
+      ` and none of them holds as much as ${pct(A_FLAT_ROW_SHARE)} of every swing on its own. That is ` +
+      'the result this section exists to check for, not a missing table. It is a ' +
+      'statement about the pooled heap, though. How a pile is spread across the ' +
+      'individual charts is the paragraph below, and the two scopes can disagree.'
   )
 } else {
-  for (const e of stackingEdges) {
+  for (const e of pileUpEdges) {
+    const relativeHalf = edgeFlatRow(e).stacksRelative
+      ? `${shareCell(e.share, e.onIt)} of every swing on that one value against ${shareCell(e.insideShare, e.insideOnIt)} just inside it, so something is parking there whatever would have gone ${e.beyond} it`
+      : `${shareCell(e.share, e.onIt)} of every swing on that one value, which is ${(e.share * SWINGS_PER_SESSION).toFixed(1)} on a typical chart. It does not beat the ${shareCell(e.insideShare, e.insideOnIt)} just inside it, so this is a pile spread across the top few values rather than parked against one`
     say(
-      `The ${e.name} reached, ${e.where}, carries a pile-up: ${shareCell(e.share, e.onIt)} of every swing ` +
-        `on that one value against ${shareCell(e.insideShare, e.insideOnIt)} just inside it, so something is ` +
-        `parking there whatever would have gone ${e.beyond} it. A visitor would see one ${howOftenSeen(e.share)}.`
+      `The ${e.name} reached, ${e.where}, carries a pile-up: ${relativeHalf}. A visitor would see ` +
+        `one ${howOftenSeen(e.share)}.`
     )
   }
   if (thinningEdges.length > 0) {
@@ -2151,31 +2182,71 @@ console.log('')
 // The boundary is a half, because a majority of visitors seeing it or not
 // seeing it is the split a person can act on; the low end reuses the same one
 // in twenty this report already calls reliable elsewhere.
-const beatsBySession = SESSIONS.map((sessionNum) =>
-  counterShare(mergeCounters(cellsForSession(sessionNum).map((c) => c.topEvCounter)), (v) => v > SESSION_ONE.topEv)
-)
-const visitorSeesFaster = 1 - beatsBySession.reduce((chance, rate) => chance * (1 - rate), 1)
+// PER GOAL, NOT POOLED, because a visitor holds one goal for all three
+// sessions and never sees the pooled mixture at all. The pooled figure of
+// 51.8% carried a verdict, "More visitors than not are therefore shown", that
+// was false for three of the five goals a visitor can actually pick: 48.3% on
+// Open Session, 48.7% on Reduce Pop-Ups and 49.0% on Hit to All Fields against
+// 53.4% on Contact and 59.0% on Power. It also dropped the condition the
+// measurement sentence above it correctly carries, since a visitor who opens
+// one session rather than all three sits far lower.
+//
+// THE UNIT IS A VISITOR, AND THAT IS WHAT MAKES THE THRESHOLD A DERIVATION
+// RATHER THAN A PICK. The app offers a visitor exactly the sessions in
+// SESSIONS, all on the one goal they chose, so the question the share answers
+// is how likely that visitor is to be shown at least one session claiming the
+// hitter got faster: one minus the chance every one of their sessions stays
+// inside the frozen number. The boundary is a half, because a majority of
+// visitors seeing it or not is the split a person can act on; the low end
+// reuses the same one in twenty this report already calls reliable elsewhere.
 const A_MAJORITY_OF_VISITORS = 0.5
-say(
-  `A visitor clicking through all ${SESSIONS.length} generated sessions is shown at least one that beats ` +
-    `${SESSION_ONE.topEv} mph ${pct(visitorSeesFaster)} of the time, from the three rates above.`
-)
-if (visitorSeesFaster >= A_MAJORITY_OF_VISITORS) {
-  say(
-    'More visitors than not are therefore shown a session claiming this hitter got ' +
-      'faster than the fifteen swings the whole demo is built off, which is a number ' +
-      'session 1 freezes on purpose.'
+const visitorSeesFasterOn = (goalId) =>
+  1 -
+  SESSIONS.reduce(
+    (chance, sessionNum) =>
+      chance * (1 - counterShare(cell(sessionNum, goalId).topEvCounter, (v) => v > SESSION_ONE.topEv)),
+    1
   )
-} else if (visitorSeesFaster < FILLS_RELIABLY_BELOW) {
+const visitorByGoal = SLICE11_GOALS.map((goal) => ({ goal, rate: visitorSeesFasterOn(goal.id) })).sort(
+  (a, b) => b.rate - a.rate
+)
+const visitorHigh = visitorByGoal[0]
+const visitorLow = visitorByGoal[visitorByGoal.length - 1]
+const goalsOverHalf = visitorByGoal.filter((g) => g.rate >= A_MAJORITY_OF_VISITORS)
+// A range with no width is not a range, the same guard section 9 already
+// carries for its any-column rates.
+const visitorRangePhrase =
+  visitorHigh.rate - visitorLow.rate < A_REAL_SPREAD
+    ? `${pct(visitorHigh.rate)} of the time, within half a point of that on every one of the ${SLICE11_GOALS.length} goals`
+    : `between ${pct(visitorLow.rate)} of the time on ${visitorLow.goal.label} and ${pct(visitorHigh.rate)} on ${visitorHigh.goal.label}`
+say(
+  `A visitor holds one goal for all three sessions, so the number that matters is per goal ` +
+    `rather than pooled. Clicking through all ${SESSIONS.length} generated sessions on one goal, a visitor ` +
+    `is shown at least one that beats ${SESSION_ONE.topEv} mph ${visitorRangePhrase}.`
+)
+if (goalsOverHalf.length === SLICE11_GOALS.length) {
   say(
-    `That is under the ${pct(FILLS_RELIABLY_BELOW)} this report treats as reliable ground, so a session ` +
-      'claiming he got faster is something a visitor essentially never meets.'
+    `On every one of the ${SLICE11_GOALS.length} goals a visitor can pick, more of them than not are shown a ` +
+      'session claiming this hitter got faster than the fifteen swings the whole demo is ' +
+      'built off, which is a number session 1 freezes on purpose.'
+  )
+} else if (goalsOverHalf.length > 0) {
+  say(
+    `On ${goalsOverHalf.length} of the ${SLICE11_GOALS.length} goals, more visitors than not are shown a session claiming this ` +
+      `hitter got faster than the number session 1 freezes: ${goalsOverHalf.map((g) => g.goal.label).join(', ')}. ` +
+      `On the other ${SLICE11_GOALS.length - goalsOverHalf.length} it is a large minority rather than a majority. Read the range, not one ` +
+      'figure: pooling the five gives a number no visitor is ever exposed to.'
+  )
+} else if (visitorHigh.rate < FILLS_RELIABLY_BELOW) {
+  say(
+    `Even on the worst goal that is under the ${pct(FILLS_RELIABLY_BELOW)} this report treats as reliable ground, so ` +
+      'a session claiming he got faster is something a visitor essentially never meets.'
   )
 } else {
   say(
-    `That is under the ${pct(A_MAJORITY_OF_VISITORS)} that would make it more visitors than not, and over the ` +
-      `${pct(FILLS_RELIABLY_BELOW)} that would make it essentially never, so it happens to a minority of ` +
-      'visitors and this report draws no stronger conclusion than that.'
+    `On no goal does that reach the ${pct(A_MAJORITY_OF_VISITORS)} that would make it more visitors than not, and on ` +
+      `none is it under the ${pct(FILLS_RELIABLY_BELOW)} that would make it essentially never, so it happens to a ` +
+      'minority of visitors on every goal and this report draws no stronger conclusion.'
   )
 }
 
@@ -2810,6 +2881,7 @@ const JUDGMENTS_NOT_MEASUREMENTS = [
   [3, 'Spray narrowing toward the middle session by session is something no hitter does on his own, so it is a defect; widening is not called one, and a move under the floor is called neither. All three branches.'],
   [4, 'A pop-up is supposed to come off a high pitch, so pop-ups arriving no more often on high pitches than chance would give means the constants are wrong, and pop-ups AVOIDING high pitches means a sign error rather than a mis-tuning. Both halves of the same opinion about what a pop-up is.'],
   [4, 'Pop-ups a visitor would never meet are not a fixed defect, they are a mis-tuned mechanism. That the goal wants a failure the hitter can actually commit is what this slice decided, not something this run measured.'],
+  [5, `The flat-row threshold of ${pct(A_FLAT_ROW_SHARE)} rests on two judgments, not one: the anchor, one swing a session, which is a choice inside howOftenSeen's 0.67-to-1.5 band rather than a constant inherited from it, and the half. Both are free. Taking the top of the same band puts the line at 5.0%, above this project's recorded 4.2% first-screen defect, and the precedent check would then fail.`],
   [5, 'Where an edge holds a pile-up, this report says something is parking there whatever would have gone past it. That is a clamp mechanism inferred from a shape, and it is the wrong story for a mis-hit mode that spikes at one isolated value, where nothing would have gone past it at all. The counts are measured; the mechanism behind them is not.'],
   [6, 'Session 1\'s best ball is frozen, so a generated session that beats it is claiming the hitter got faster. That is what this demo decided session 1 is for, not something this run measured; the run only counts how often it is beaten.'],
   [7, 'Every generated session is built off session 1 rather than off the session before it, so the step is the same step every time rather than a run of improvement. That is a fact about what onNewSession in src/App.jsx passes, read from the app rather than from this run.'],
@@ -2839,7 +2911,7 @@ const THRESHOLDS_THAT_PICK_A_SENTENCE = [
   [4, `the high-pitch link is real at ${POP_UP_LIFT_FACTOR} times the rate chance alone would give, and BACKWARDS at the same factor the other way`],
   [4, `pop-ups are split by goal and by pitch height only above ${POP_UP_SAMPLE_FLOOR.toLocaleString()} of them; below that the breakdowns are skipped rather than quoted off a handful of events`],
   [5, `a value nobody meets is one a visitor would see less than once in ${MEETS_IT_ONCE_IN} sessions`],
-  [5, `a single value is a flat row on its own merits at ${pct(A_FLAT_ROW_SHARE)} of a cell, which is ${A_FLAT_ROW_PER_SESSION} of a swing on every chart of ${SWINGS_PER_SESSION}. Derived from the chart rather than picked, with the half named as the judgment in it, and checked against this project's own recorded 4.2% first-screen defect, which is above the line and therefore fires. It exists because the relative test cannot see a pile spread across the top few values by soft compression`],
+  [5, `a single value is a flat row on its own merits at ${pct(A_FLAT_ROW_SHARE)} of a cell, which is ${A_FLAT_ROW_PER_SESSION} of a swing on every chart of ${SWINGS_PER_SESSION}. Derived from the chart rather than picked, with TWO judgments inside it named on the list above, and checked against this project's own recorded 4.2% first-screen defect, which is above the line and therefore fires. It exists because the relative test cannot see a pile spread across the top few values by soft compression`],
   [5, `an edge is a pile-up when it holds ${A_PILE_UP_RATIO} times the value just inside it, a tail when the value inside holds ${A_PILE_UP_RATIO} times the edge, and level in between; a bare "more than" called 5.00% against 4.99% a pile-up`],
   [5, `the Power lift is "session by session" only when its share climbs on every step AND climbs by ${pct(A_REAL_SPREAD)} across the three`],
   [6, `a session beating session 1's frozen top ball is reported against the visitor rather than the session: ${pct(A_MAJORITY_OF_VISITORS)} of visitors makes it more of them than not, and under ${pct(FILLS_RELIABLY_BELOW)} makes it something they essentially never meet`],
