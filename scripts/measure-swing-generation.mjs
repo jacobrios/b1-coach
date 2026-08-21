@@ -48,8 +48,24 @@
 // reordered and the surviving ones still print exactly what they printed
 // before.
 //
-// WHAT IT COMPARES. Two versions of the generator, side by side, using the
-// SAME goal targets and the SAME session-1 baseline the real app uses:
+// WHAT THE REPORT CONTAINS, IN THE ORDER IT PRINTS. Two halves, and they are
+// about two different slices. Read the banner before quoting a number.
+//
+//   1. THE SLICE 11 BASELINE, nine sections, added 21 August 2026. One per
+//      defect Slice 11 sets out to fix in the generator, plus a last section
+//      of the numbers that are working today and must survive the rewrite.
+//      These describe the generator as it stands in the working tree. They
+//      never use the words "before" and "after", because this file already
+//      spends that pair of words on something else.
+//
+//   2. THE SLICE 6 COMPARISON, which is where that pair of words is spent:
+//      the generator before honest ball flight landed in August 2026, against
+//      the generator today. Everything below its banner, including the two
+//      correlation sections that close the report, belongs to it.
+//
+// WHAT THE SECOND HALF COMPARES. Two versions of the generator, side by side,
+// using the SAME goal targets and the SAME session-1 baseline the real app
+// uses:
 //
 //   "before" — the generator as it stood before this slice touched it.
 //     Exit velocity and launch angle drawn independently of each other, no
@@ -138,8 +154,16 @@ register('data:text/javascript,' + encodeURIComponent(EXTENSIONLESS_RESOLVE_HOOK
 
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { hasTarget, meetsTarget } = await import('../src/goalTargets.js')
-const { distanceBucketCounts } = await import('../src/ballFlight.js')
+const { distanceBucketCounts, DISTANCE_BUCKETS } = await import('../src/ballFlight.js')
 const { SESSION_ONE_SWINGS: mockSwings } = await import('../src/sessionOneSwings.js')
+
+// Added for the Slice 11 baseline sections further down. Same discipline the
+// distance buckets already get here: the strike zone, the pull/opposite-field
+// cutoffs and the pop-up angle are all read from the one place the app itself
+// reads them, so this script cannot end up measuring a different strike zone
+// or a different pull side than the coach is told about.
+const { STRIKE_ZONE, inStrikeZone, sprayBreakdown } = await import('../src/sessionStats.js')
+const { GOAL_COUNT_SPECS } = await import('../src/goalCountSpecs.js')
 
 // ---------------------------------------------------------------------------
 // The seed, and the named random streams every measurement below draws from.
@@ -366,6 +390,14 @@ function pct(x) {
   return `${(x * 100).toFixed(1)}%`
 }
 
+// A second decimal, for the shares that are meant to be compared with each
+// other rather than read on their own: a pile-up against a ceiling is a
+// fraction of a percent, and rounding it to one decimal turns three different
+// answers into "0.0%".
+function pct2(x) {
+  return `${(x * 100).toFixed(2)}%`
+}
+
 function printDistributionLine(label, dist) {
   console.log(
     `      ${label.padEnd(22)} shortest ${String(dist.min).padStart(4)} ft` +
@@ -385,17 +417,736 @@ function printBucketLine(buckets) {
   )
 }
 
+// ===========================================================================
+// THE SLICE 11 BASELINE: TODAY'S GENERATOR, MEASURED ITEM BY ITEM
+//
+// Slice 11 rewrites the generator because the data it produces lies about the
+// hitter and about the pitcher in eight measured ways. Everything from here to
+// the "SLICE 6 COMPARISON" banner is one section per item, each printing what
+// the generator in the working tree does TODAY, so that when the same command
+// is run again after the rewrite there is something honest to sit the new
+// numbers against.
+//
+// A WORD ABOUT THE WORD "BEFORE", WHICH IS WHY IT IS NOT USED HERE. This file
+// already had a before-and-after pair in it, and it means Slice 6: "before" is
+// a hand-copied reimplementation of the generator as it stood in August 2026
+// before honest ball flight landed, kept so that slice's claims stay
+// rerunnable. Slice 11's own "before" is today's generator, which that older
+// pair calls "after". Two different meanings for one word in one report is how
+// a number ends up quoted against the wrong thing months later, so these
+// sections say "today" and never "before", and the older pair says Slice 6 in
+// its own banner.
+//
+// One measurement pass produces all nine sections. Every session-number and
+// goal combination is replayed once, and everything each section needs is
+// counted off that same set of sessions, so the numbers in different sections
+// describe the same practice rather than nine independent samples that would
+// each disagree with the others by a little.
+//
+// The goal labels below are hand-copied from GOALS in src/App.jsx, which a
+// plain Node script cannot import because it contains JSX. This is the same
+// disclosed copy scripts/bench-coach-brevity.mjs carries for the same reason,
+// and TARGET_GOALS above already carries three of the five. Renaming a goal on
+// screen does not rename it here; that has to be done by hand.
+const SLICE11_GOALS = [
+  { id: 'power', label: 'Power & Distance' },
+  { id: 'contact', label: 'Line Drives & Contact' },
+  { id: 'allfields', label: 'Hit to All Fields' },
+  { id: 'popup', label: 'Reduce Pop-Ups' },
+  { id: 'open', label: 'Open Session' },
+]
+
+const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
+const SESSION_ONE_AVG_EV = average(mockSwings.map((w) => w.hit.launch.exitSpeed))
+
+function round2(x) {
+  return Math.round(x * 100) / 100
+}
+
+// The spread of one number around its own average, dividing by n rather than
+// by n-1. That choice matters and is not arbitrary: session 1's spread of 6.11
+// mph, which this slice is aiming the generator at, is a population figure, and
+// mixing the two conventions on a fifteen-swing session moves a number by about
+// three and a half percent, which is enough to make a target look met when it
+// is not. The older Slice 6 section at the bottom of this report uses n-1 and
+// says so, so both are here and both are labelled.
+function populationSd(xs) {
+  const m = average(xs)
+  return Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length)
+}
+
+// How far outside the strike zone a pitch was, in feet, per axis and overall.
+// "Overall" is the larger of the two axes rather than a diagonal, which is the
+// measure that reproduces session 1's own six misses exactly: its swing 14 is
+// a tenth of a foot high AND a tenth wide, and reads as a one-tenth miss the
+// way a person watching would describe it, not as 0.14.
+function pitchMiss(w) {
+  const heightMiss = Math.max(0, STRIKE_ZONE.heightMin - w.plateLocHeight, w.plateLocHeight - STRIKE_ZONE.heightMax)
+  const sideMiss = Math.max(0, STRIKE_ZONE.sideMin - w.plateLocSide, w.plateLocSide - STRIKE_ZONE.sideMax)
+  return { heightMiss: round2(heightMiss), sideMiss: round2(sideMiss), miss: round2(Math.max(heightMiss, sideMiss)) }
+}
+
+// Counting helpers. Millions of swings go through this pass, so anything
+// measured per swing is tallied into a small map of value-to-count rather than
+// pushed onto an array of four million numbers. The percentiles come out of
+// the tally the same way they would out of the array.
+function bump(counter, key, by = 1) {
+  counter.set(key, (counter.get(key) ?? 0) + by)
+}
+
+function counterTotal(counter) {
+  let total = 0
+  for (const n of counter.values()) total += n
+  return total
+}
+
+function counterMean(counter) {
+  let sum = 0
+  let total = 0
+  for (const [value, n] of counter) {
+    sum += value * n
+    total += n
+  }
+  return total ? sum / total : NaN
+}
+
+function counterPercentile(counter, p) {
+  const total = counterTotal(counter)
+  if (total === 0) return NaN
+  const keys = [...counter.keys()].sort((a, b) => a - b)
+  const valueAt = (rank) => {
+    let seen = 0
+    for (const k of keys) {
+      seen += counter.get(k)
+      if (rank < seen) return k
+    }
+    return keys[keys.length - 1]
+  }
+  const idx = (p / 100) * (total - 1)
+  const lo = Math.floor(idx)
+  const hi = Math.ceil(idx)
+  if (lo === hi) return valueAt(lo)
+  const a = valueAt(lo)
+  const b = valueAt(hi)
+  return a + (b - a) * (idx - lo)
+}
+
+function counterShare(counter, predicate) {
+  const total = counterTotal(counter)
+  if (total === 0) return NaN
+  let hit = 0
+  for (const [value, n] of counter) if (predicate(value)) hit += n
+  return hit / total
+}
+
+function counterMin(counter) {
+  return Math.min(...counter.keys())
+}
+
+function counterMax(counter) {
+  return Math.max(...counter.keys())
+}
+
+function mergeCounters(counters) {
+  const out = new Map()
+  for (const c of counters) for (const [value, n] of c) bump(out, value, n)
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// One replayed cell: one session number, one goal, REPLAYS_PER_CELL sessions,
+// everything the nine sections need counted in a single pass.
+
+function measureSlice11Cell(sessionNum, goalId) {
+  const random = streamFor(`slice11-baseline|session-${sessionNum}|${goalId}`)
+
+  const inZone = { n: 0, ev: 0, la: 0 }
+  const outZone = { n: 0, ev: 0, la: 0 }
+  const missCounter = new Map()
+  const heightMissCounter = new Map()
+  const sideMissCounter = new Map()
+  const missAxes = { low: 0, high: 0, wide: 0, bothAxes: 0 }
+  const pitchHeightCounter = new Map()
+  const pitchSideCounter = new Map()
+  const evCounter = new Map()
+  const laCounter = new Map()
+  const topEvCounter = new Map()
+  const sessionAvgEvCounter = new Map()
+  const bucketTotals = DISTANCE_BUCKETS.map(() => 0)
+  const spray = { pull: 0, middle: 0, oppo: 0 }
+
+  let popUps = 0
+  let popUpsOnHighPitch = 0
+  let allFieldsBarMet = 0
+  let emptyBand = 0
+  let emptyColumnTotal = 0
+  let sessionsWithAnEmptyColumn = 0
+  let withinEvSquares = 0
+  let withinLaSquares = 0
+
+  for (let i = 0; i < REPLAYS_PER_CELL; i++) {
+    const swings = generateSwings({ sessionNum, goalId, baselineSwings: mockSwings, random })
+
+    const evs = []
+    const las = []
+    for (const w of swings) {
+      const { exitSpeed: ev, angle: la } = w.hit.launch
+      evs.push(ev)
+      las.push(la)
+      bump(evCounter, ev)
+      bump(laCounter, la)
+      bump(pitchHeightCounter, w.plateLocHeight)
+      bump(pitchSideCounter, w.plateLocSide)
+
+      const side = inStrikeZone(w) ? inZone : outZone
+      side.n += 1
+      side.ev += ev
+      side.la += la
+
+      if (!inStrikeZone(w)) {
+        const { heightMiss, sideMiss, miss } = pitchMiss(w)
+        bump(missCounter, miss)
+        if (heightMiss > 0) bump(heightMissCounter, heightMiss)
+        if (sideMiss > 0) bump(sideMissCounter, sideMiss)
+        if (w.plateLocHeight < STRIKE_ZONE.heightMin) missAxes.low += 1
+        if (w.plateLocHeight > STRIKE_ZONE.heightMax) missAxes.high += 1
+        if (sideMiss > 0) missAxes.wide += 1
+        if (heightMiss > 0 && sideMiss > 0) missAxes.bothAxes += 1
+      }
+
+      if (la > POP_UP_ANGLE) {
+        popUps += 1
+        if (w.plateLocHeight >= STRIKE_ZONE.heightMax) popUpsOnHighPitch += 1
+      }
+    }
+
+    const meanEv = average(evs)
+    const meanLa = average(las)
+    withinEvSquares += evs.reduce((s, x) => s + (x - meanEv) ** 2, 0)
+    withinLaSquares += las.reduce((s, x) => s + (x - meanLa) ** 2, 0)
+    bump(sessionAvgEvCounter, Math.round(meanEv * 10) / 10)
+    bump(topEvCounter, Math.max(...evs))
+
+    const sessionSpray = sprayBreakdown(swings)
+    spray.pull += sessionSpray.pull.count
+    spray.middle += sessionSpray.middle.count
+    spray.oppo += sessionSpray.oppo.count
+    if (sessionSpray.pull.count >= 3 && sessionSpray.oppo.count >= 3) allFieldsBarMet += 1
+
+    const buckets = distanceBucketCounts(swings)
+    let emptyColumns = 0
+    buckets.forEach(({ count }, idx) => {
+      bucketTotals[idx] += count
+      if (count === 0) emptyColumns += 1
+    })
+    emptyColumnTotal += emptyColumns
+    if (emptyColumns > 0) sessionsWithAnEmptyColumn += 1
+
+    if (hasTarget(goalId) && !swings.some((w) => meetsTarget(goalId, w.hit.launch))) emptyBand += 1
+  }
+
+  const swingsSeen = REPLAYS_PER_CELL * 15
+  return {
+    sessionNum,
+    goalId,
+    sessions: REPLAYS_PER_CELL,
+    swingsSeen,
+    inZone,
+    outZone,
+    missCounter,
+    heightMissCounter,
+    sideMissCounter,
+    missAxes,
+    pitchHeightCounter,
+    pitchSideCounter,
+    evCounter,
+    laCounter,
+    topEvCounter,
+    sessionAvgEvCounter,
+    bucketShares: bucketTotals.map((n) => n / swingsSeen),
+    spray: {
+      pull: spray.pull / REPLAYS_PER_CELL,
+      middle: spray.middle / REPLAYS_PER_CELL,
+      oppo: spray.oppo / REPLAYS_PER_CELL,
+    },
+    popUpsPerSession: popUps / REPLAYS_PER_CELL,
+    popUps,
+    popUpsOnHighPitch,
+    allFieldsBarRate: allFieldsBarMet / REPLAYS_PER_CELL,
+    emptyBandRate: hasTarget(goalId) ? emptyBand / REPLAYS_PER_CELL : null,
+    emptyColumnsPerSession: emptyColumnTotal / REPLAYS_PER_CELL,
+    anyEmptyColumnRate: sessionsWithAnEmptyColumn / REPLAYS_PER_CELL,
+    evSpreadPopulation: Math.sqrt(withinEvSquares / (REPLAYS_PER_CELL * 15)),
+    laSpreadPopulation: Math.sqrt(withinLaSquares / (REPLAYS_PER_CELL * 15)),
+    evSpreadSample: Math.sqrt(withinEvSquares / (REPLAYS_PER_CELL * 14)),
+    laSpreadSample: Math.sqrt(withinLaSquares / (REPLAYS_PER_CELL * 14)),
+  }
+}
+
+const SLICE11_CELLS = []
+for (const sessionNum of SESSIONS) {
+  for (const goal of SLICE11_GOALS) {
+    SLICE11_CELLS.push(measureSlice11Cell(sessionNum, goal.id))
+  }
+}
+
+const cell = (sessionNum, goalId) =>
+  SLICE11_CELLS.find((c) => c.sessionNum === sessionNum && c.goalId === goalId)
+const cellsForSession = (sessionNum) => SLICE11_CELLS.filter((c) => c.sessionNum === sessionNum)
+
+// ---------------------------------------------------------------------------
+// Session 1, the fifteen hand-written swings every visitor sees first, measured
+// the same way. It is the target shape for most of what follows: the generator
+// derives every later session from it, so where the two disagree, session 1 is
+// the hitter this app already claims to have.
+
+const SESSION_ONE = (() => {
+  const evs = mockSwings.map((w) => w.hit.launch.exitSpeed)
+  const las = mockSwings.map((w) => w.hit.launch.angle)
+  const inside = mockSwings.filter(inStrikeZone)
+  const outside = mockSwings.filter((w) => !inStrikeZone(w))
+  const spray = sprayBreakdown(mockSwings)
+  return {
+    avgEv: average(evs),
+    topEv: Math.max(...evs),
+    evSpread: populationSd(evs),
+    laSpread: populationSd(las),
+    inZoneShare: inside.length / mockSwings.length,
+    zoneGapEv: average(inside.map((w) => w.hit.launch.exitSpeed)) - average(outside.map((w) => w.hit.launch.exitSpeed)),
+    zoneGapLa: average(inside.map((w) => w.hit.launch.angle)) - average(outside.map((w) => w.hit.launch.angle)),
+    misses: outside.map((w) => pitchMiss(w).miss).sort((a, b) => a - b),
+    pitchHeights: mockSwings.map((w) => w.plateLocHeight),
+    spray,
+    popUps: las.filter((la) => la > POP_UP_ANGLE).length,
+    allFieldsBarMet: spray.pull.count >= 3 && spray.oppo.count >= 3,
+    buckets: distanceBucketCounts(mockSwings),
+  }
+})()
+
+// ---------------------------------------------------------------------------
+// The nine sections.
+
+function banner(title) {
+  console.log('')
+  console.log('='.repeat(78))
+  console.log(title)
+  console.log('='.repeat(78))
+}
+
+function sessionRowLabel(sessionNum) {
+  return `session ${sessionNum}`.padEnd(26)
+}
+
+function signed(x) {
+  return `${x >= 0 ? '+' : ''}${x.toFixed(2)}`
+}
+
 console.log('='.repeat(78))
-console.log('SWING GENERATOR MEASUREMENT')
-console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per row below.`)
-console.log(`Seed ${SEED}. Every number below is reproducible: run the same command again`)
-console.log('and it prints the same report. Pass --seed to draw a different sample.')
+console.log('SWING GENERATOR MEASUREMENT, SLICE 11 BASELINE')
+console.log(`Seed ${SEED}. Rerun the same command and every number below comes back the same.`)
+console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per goal, per session number.`)
+console.log('This half of the report is today\'s generator, one section per defect')
+console.log('Slice 11 sets out to fix, plus the numbers the slice must not break.')
+console.log('The Slice 6 before-and-after tables follow it, under their own banner.')
+console.log('='.repeat(78))
+
+// --- 1. The zone gap -------------------------------------------------------
+
+banner('1. DOES THE PITCH PREDICT THE CONTACT?')
+console.log('A hitter swinging at a pitch outside the strike zone should not hit it as')
+console.log('well as one down the middle. The number to watch is the gap: how much')
+console.log('better a swing at a strike comes out than a swing at a ball.')
 console.log('')
-console.log('THE SLICE 6 COMPARISON. The two tables per session below compare the')
-console.log('generator BEFORE Slice 6 ("honest ball flight", 14 August 2026) with the')
-console.log('generator as it stands right now in src/swingGenerator.js. That pair of')
-console.log('words, before and after, means Slice 6 here and nothing else. Today\'s')
-console.log('numbers, item by item, are in the section above this one.')
+console.log('  ' + 'session'.padEnd(26) + 'exit velocity gap'.padStart(20) + 'launch angle gap'.padStart(20))
+let widestGap = 0
+for (const sessionNum of SESSIONS) {
+  const cells = cellsForSession(sessionNum)
+  const zoneEv = cells.reduce((s, c) => s + c.inZone.ev, 0) / cells.reduce((s, c) => s + c.inZone.n, 0)
+  const ballEv = cells.reduce((s, c) => s + c.outZone.ev, 0) / cells.reduce((s, c) => s + c.outZone.n, 0)
+  const zoneLa = cells.reduce((s, c) => s + c.inZone.la, 0) / cells.reduce((s, c) => s + c.inZone.n, 0)
+  const ballLa = cells.reduce((s, c) => s + c.outZone.la, 0) / cells.reduce((s, c) => s + c.outZone.n, 0)
+  console.log(
+    '  ' + sessionRowLabel(sessionNum) +
+      `${signed(zoneEv - ballEv)} mph`.padStart(20) +
+      `${signed(zoneLa - ballLa)} deg`.padStart(20)
+  )
+  for (const c of cells) {
+    const gap = c.inZone.ev / c.inZone.n - c.outZone.ev / c.outZone.n
+    widestGap = Math.max(widestGap, Math.abs(gap))
+  }
+}
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) +
+    `${signed(SESSION_ONE.zoneGapEv)} mph`.padStart(20) +
+    `${signed(SESSION_ONE.zoneGapLa)} deg`.padStart(20)
+)
+console.log('')
+console.log(`  Across all ${SLICE11_CELLS.length} goal-and-session combinations measured, the largest exit`)
+console.log(`  velocity gap either way was ${widestGap.toFixed(2)} mph, so the pooled rows above are not`)
+console.log('  hiding a goal where the link exists.')
+console.log('')
+console.log('  The pitch and the swing are drawn independently of each other, so there is')
+console.log('  no link to find. Since Slice 8c the coach is handed which pitches were')
+console.log('  outside the zone and reasons about them out loud, which means that on every')
+console.log('  generated session that reasoning is a coincidence.')
+
+// --- 2. Miss geometry ------------------------------------------------------
+
+banner('2. WHEN THE PITCH MISSES, HOW BADLY DOES IT MISS?')
+const allMisses = mergeCounters(SLICE11_CELLS.map((c) => c.missCounter))
+const allHeights = mergeCounters(SLICE11_CELLS.map((c) => c.pitchHeightCounter))
+const allSides = mergeCounters(SLICE11_CELLS.map((c) => c.pitchSideCounter))
+const allHeightMisses = mergeCounters(SLICE11_CELLS.map((c) => c.heightMissCounter))
+const allSideMisses = mergeCounters(SLICE11_CELLS.map((c) => c.sideMissCounter))
+const missTotal = counterTotal(allMisses)
+const swingsTotal = SLICE11_CELLS.reduce((s, c) => s + c.swingsSeen, 0)
+const axes = SLICE11_CELLS.reduce(
+  (s, c) => ({
+    low: s.low + c.missAxes.low,
+    high: s.high + c.missAxes.high,
+    wide: s.wide + c.missAxes.wide,
+    bothAxes: s.bothAxes + c.missAxes.bothAxes,
+  }),
+  { low: 0, high: 0, wide: 0, bothAxes: 0 }
+)
+console.log(`  Pitches inside the strike zone: ${pct(1 - missTotal / swingsTotal)} of every swing generated.`)
+console.log(`  Session 1's own answer: ${pct(SESSION_ONE.inZoneShare)}.`)
+console.log('')
+console.log('  How far outside the zone a missed pitch was, in feet (the worse of its two')
+console.log('  axes, which is how a person watching would describe it):')
+console.log(
+  `    closest ${counterMin(allMisses).toFixed(2)}  |  10th pct ${counterPercentile(allMisses, 10).toFixed(2)}` +
+    `  |  25th pct ${counterPercentile(allMisses, 25).toFixed(2)}  |  middle ${counterPercentile(allMisses, 50).toFixed(2)}` +
+    `  |  75th pct ${counterPercentile(allMisses, 75).toFixed(2)}  |  90th pct ${counterPercentile(allMisses, 90).toFixed(2)}` +
+    `  |  worst ${counterMax(allMisses).toFixed(2)}`
+)
+console.log(`    average ${counterMean(allMisses).toFixed(2)} feet`)
+console.log('')
+console.log('  Session 1\'s own six missed pitches, the shape this is aiming at:')
+console.log(`    ${SESSION_ONE.misses.map((m) => m.toFixed(2)).join(', ')}   (average ${average(SESSION_ONE.misses).toFixed(2)} feet)`)
+console.log('')
+console.log('  Highest and lowest a pitch was thrown, in feet off the ground:')
+console.log(
+  `    generated: ${counterMin(allHeights).toFixed(2)} to ${counterMax(allHeights).toFixed(2)}` +
+    `   |   session 1: ${Math.min(...SESSION_ONE.pitchHeights).toFixed(2)} to ${Math.max(...SESSION_ONE.pitchHeights).toFixed(2)}` +
+    `   |   the zone is ${STRIKE_ZONE.heightMin} to ${STRIKE_ZONE.heightMax}`
+)
+console.log(
+  `    sideways: ${counterMin(allSides).toFixed(2)} to ${counterMax(allSides).toFixed(2)}` +
+    `   |   the zone is ${STRIKE_ZONE.sideMin} to ${STRIKE_ZONE.sideMax}`
+)
+console.log('')
+console.log('  Which way a missed pitch was off, as a share of missed pitches:')
+console.log(
+  `    low ${pct(axes.low / missTotal)}  |  high ${pct(axes.high / missTotal)}  |  wide ${pct(axes.wide / missTotal)}` +
+    `  |  off on BOTH height and side at once ${pct(axes.bothAxes / missTotal)}`
+)
+console.log(
+  `    height misses average ${counterMean(allHeightMisses).toFixed(2)} feet, side misses average ${counterMean(allSideMisses).toFixed(2)} feet`
+)
+console.log('')
+console.log('  Two things to read off that. A missed pitch is never a near miss: the')
+console.log('  closest one is a tenth of a foot outside only because the zone edge is')
+console.log('  where it is, and a low miss can be a ball that bounces. And every single')
+console.log('  missed pitch is off on both axes at once, which no real thrower does.')
+
+// --- 3. Spray --------------------------------------------------------------
+
+banner('3. WHERE THE BALLS WENT: PULL, UP THE MIDDLE, OPPOSITE FIELD')
+console.log(`  Counted with sprayBreakdown from src/sessionStats.js, so these are the same`)
+console.log(`  three groups the coach is handed and the same cutoffs the spray chart draws.`)
+console.log('  Average number of the fifteen swings in each group.')
+console.log('')
+console.log('  ' + 'session'.padEnd(26) + 'pull'.padStart(12) + 'up the middle'.padStart(16) + 'opposite'.padStart(12))
+for (const sessionNum of SESSIONS) {
+  const cells = cellsForSession(sessionNum)
+  const mean = (key) => average(cells.map((c) => c.spray[key]))
+  console.log(
+    '  ' + sessionRowLabel(sessionNum) +
+      mean('pull').toFixed(2).padStart(12) +
+      mean('middle').toFixed(2).padStart(16) +
+      mean('oppo').toFixed(2).padStart(12)
+  )
+}
+console.log(
+  '  ' + 'sessions 2 to 4 mean'.padEnd(26) +
+    average(SLICE11_CELLS.map((c) => c.spray.pull)).toFixed(2).padStart(12) +
+    average(SLICE11_CELLS.map((c) => c.spray.middle)).toFixed(2).padStart(16) +
+    average(SLICE11_CELLS.map((c) => c.spray.oppo)).toFixed(2).padStart(12)
+)
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) +
+    String(SESSION_ONE.spray.pull.count).padStart(12) +
+    String(SESSION_ONE.spray.middle.count).padStart(16) +
+    String(SESSION_ONE.spray.oppo.count).padStart(12)
+)
+console.log('')
+console.log('  The generated hitter goes the other way more often than he pulls, which is')
+console.log('  backwards for a high school hitter, and the spread narrows toward the middle')
+console.log('  every session because spray direction is multiplied by the same shrinking')
+console.log('  variance factor that tightens everything else.')
+
+// --- 4. Pop-ups ------------------------------------------------------------
+
+banner('4. POP-UPS')
+console.log(`  A pop-up is a launch angle above ${POP_UP_ANGLE} degrees, which is the number the`)
+console.log('  Reduce Pop-Ups goal names in its own coaching prose (GOAL_COUNT_SPECS).')
+console.log('  Average pop-ups per fifteen-swing session:')
+console.log('')
+console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(10)).join(''))
+for (const goal of SLICE11_GOALS) {
+  console.log(
+    '  ' + goal.label.padEnd(26) +
+      SESSIONS.map((s) => cell(s, goal.id).popUpsPerSession.toFixed(2).padStart(10)).join('')
+  )
+}
+console.log('  ' + 'session 1 (hand-written)'.padEnd(26) + String(SESSION_ONE.popUps).padStart(10))
+const totalPopUps = SLICE11_CELLS.reduce((s, c) => s + c.popUps, 0)
+const totalPopUpsHigh = SLICE11_CELLS.reduce((s, c) => s + c.popUpsOnHighPitch, 0)
+const allLaunchAngles = mergeCounters(SLICE11_CELLS.map((c) => c.laCounter))
+console.log('')
+console.log(`  Pop-ups seen in all ${swingsTotal.toLocaleString()} generated swings: ${totalPopUps.toLocaleString()}.`)
+console.log(
+  totalPopUps === 0
+    ? '  None, so there is no share on high pitches to report.'
+    : `  On pitches at or above the top of the zone: ${pct(totalPopUpsHigh / totalPopUps)}.`
+)
+console.log(`  The highest launch angle the generator produced at all: ${counterMax(allLaunchAngles)} degrees.`)
+console.log('')
+console.log(`  The goal names a failure that cannot happen. The highest launch angle this`)
+console.log(`  generator will produce is ${counterMax(allLaunchAngles)} degrees and a pop-up needs more than ${POP_UP_ANGLE},`)
+console.log('  so the coach is handed a count of zero pop-ups on every session forever,')
+console.log('  and says so.')
+
+// --- 5. Ceiling pile-ups ---------------------------------------------------
+
+banner('5. SWINGS STACKED AGAINST A CEILING')
+const allExitVelocities = mergeCounters(SLICE11_CELLS.map((c) => c.evCounter))
+const laCeiling = counterMax(allLaunchAngles)
+const laFloor = counterMin(allLaunchAngles)
+const evCeiling = counterMax(allExitVelocities)
+const evFloor = counterMin(allExitVelocities)
+console.log('  A clamp does not throw a swing away, it parks it exactly on the limit. Every')
+console.log('  swing that would have gone past the ceiling is drawn at the ceiling instead,')
+console.log('  as a flat row of dots pinned to the top edge of a chart a visitor reads.')
+console.log('')
+console.log(`  Share of swings sitting exactly on the highest launch angle the generator`)
+console.log(`  produced, ${laCeiling} degrees:`)
+console.log('')
+console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(10)).join('') + 'S2 to S4'.padStart(12))
+for (const goal of SLICE11_GOALS) {
+  const merged = mergeCounters(SESSIONS.map((s) => cell(s, goal.id).laCounter))
+  console.log(
+    '  ' + goal.label.padEnd(26) +
+      SESSIONS.map((s) => pct2(counterShare(cell(s, goal.id).laCounter, (v) => v === laCeiling)).padStart(10)).join('') +
+      pct2(counterShare(merged, (v) => v === laCeiling)).padStart(12)
+  )
+}
+console.log('  ' + 'every goal pooled'.padEnd(26) + ''.padStart(30) +
+  pct2(counterShare(allLaunchAngles, (v) => v === laCeiling)).padStart(12))
+console.log('')
+console.log('  Only Power reaches it, because Power is the one goal whose hitter is lifted')
+console.log('  toward the ceiling session by session. On Power session 4 one swing in')
+console.log('  twenty-five is drawn on the top line of the chart.')
+console.log('')
+console.log('  What a wall looks like, next to the three limits that are not being reached.')
+console.log('  A limit that binds carries more swings than the value just inside it, because')
+console.log('  it is holding everything that would have gone past. A limit nothing reaches')
+console.log('  carries fewer, like any other value out in the tail.')
+console.log('')
+console.log('  ' + 'limit'.padEnd(34) + 'on the limit'.padStart(16) + 'one step inside'.padStart(18))
+const limitRows = [
+  [`highest launch angle seen, ${laCeiling} deg`, allLaunchAngles, laCeiling, laCeiling - 1],
+  [`lowest launch angle seen, ${laFloor} deg`, allLaunchAngles, laFloor, laFloor + 1],
+  [`highest exit velocity seen, ${evCeiling} mph`, allExitVelocities, evCeiling, evCeiling - 1],
+  [`lowest exit velocity seen, ${evFloor} mph`, allExitVelocities, evFloor, evFloor + 1],
+]
+for (const [label, counter, edge, inside] of limitRows) {
+  console.log(
+    '  ' + label.padEnd(34) +
+      pct2(counterShare(counter, (v) => v === edge)).padStart(16) +
+      pct2(counterShare(counter, (v) => v === inside)).padStart(18)
+  )
+}
+const powerS4Angles = cell(4, 'power').laCounter
+console.log('')
+console.log(
+  `  On Power session 4, where that ceiling really bites: ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling))} of swings sit` +
+    ` exactly on ${laCeiling},`
+)
+console.log(`  against ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling - 1))} on ${laCeiling - 1}. That is the flat row of dots, on a chart every`)
+console.log('  visitor who picks that goal can see.')
+console.log('')
+console.log('  So one wall is being hit and three are not. The generator limits launch')
+console.log('  angle and exit velocity at both ends; only the launch angle ceiling is close')
+console.log('  enough to this hitter to catch anything, and it catches enough to see.')
+
+// --- 6. Top exit velocity --------------------------------------------------
+
+banner('6. THE HARDEST SWING OF A SESSION')
+console.log(`  Session 1 has this hitter's best ball at ${SESSION_ONE.topEv} mph, and that number is`)
+console.log('  frozen. A generated session that beats it is claiming he got faster.')
+console.log('')
+console.log(
+  '  ' + 'session'.padEnd(26) + 'lowest'.padStart(9) + '10th'.padStart(9) + 'median'.padStart(9) +
+    '90th'.padStart(9) + 'highest'.padStart(9) + `over ${SESSION_ONE.topEv}`.padStart(12)
+)
+for (const sessionNum of SESSIONS) {
+  const merged = mergeCounters(cellsForSession(sessionNum).map((c) => c.topEvCounter))
+  console.log(
+    '  ' + sessionRowLabel(sessionNum) +
+      String(counterMin(merged)).padStart(9) +
+      counterPercentile(merged, 10).toFixed(0).padStart(9) +
+      counterPercentile(merged, 50).toFixed(0).padStart(9) +
+      counterPercentile(merged, 90).toFixed(0).padStart(9) +
+      String(counterMax(merged)).padStart(9) +
+      pct(counterShare(merged, (v) => v > SESSION_ONE.topEv)).padStart(12)
+  )
+}
+const allTopEvs = mergeCounters(SLICE11_CELLS.map((c) => c.topEvCounter))
+console.log(
+  '  ' + 'sessions 2 to 4 pooled'.padEnd(26) +
+    String(counterMin(allTopEvs)).padStart(9) +
+    counterPercentile(allTopEvs, 10).toFixed(0).padStart(9) +
+    counterPercentile(allTopEvs, 50).toFixed(0).padStart(9) +
+    counterPercentile(allTopEvs, 90).toFixed(0).padStart(9) +
+    String(counterMax(allTopEvs)).padStart(9) +
+    pct(counterShare(allTopEvs, (v) => v > SESSION_ONE.topEv)).padStart(12)
+)
+
+// --- 7. The step off session 1 ---------------------------------------------
+
+banner('7. HOW MUCH BETTER THE NEXT SESSION IS')
+console.log(`  A session's average exit velocity against session 1's ${SESSION_ONE_AVG_EV.toFixed(1)} mph. Every`)
+console.log('  generated session is built off session 1, not off the session before it, so')
+console.log('  this is the same step every time rather than a run of improvement.')
+console.log('')
+console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(10)).join(''))
+for (const goal of SLICE11_GOALS) {
+  console.log(
+    '  ' + goal.label.padEnd(26) +
+      SESSIONS.map((s) => signed(counterMean(cell(s, goal.id).sessionAvgEvCounter) - SESSION_ONE_AVG_EV).padStart(10)).join('')
+  )
+}
+const allSessionAvgEvs = mergeCounters(SLICE11_CELLS.map((c) => c.sessionAvgEvCounter))
+console.log('  ' + 'all goals pooled'.padEnd(26) +
+  SESSIONS.map((s) => signed(counterMean(mergeCounters(cellsForSession(s).map((c) => c.sessionAvgEvCounter))) - SESSION_ONE_AVG_EV).padStart(10)).join(''))
+console.log('')
+console.log('  The whole distribution of that step, every goal and session pooled:')
+console.log(
+  `    worst ${signed(counterMin(allSessionAvgEvs) - SESSION_ONE_AVG_EV)}  |  10th pct ${signed(counterPercentile(allSessionAvgEvs, 10) - SESSION_ONE_AVG_EV)}` +
+    `  |  median ${signed(counterPercentile(allSessionAvgEvs, 50) - SESSION_ONE_AVG_EV)}` +
+    `  |  90th pct ${signed(counterPercentile(allSessionAvgEvs, 90) - SESSION_ONE_AVG_EV)}  |  best ${signed(counterMax(allSessionAvgEvs) - SESSION_ONE_AVG_EV)}`
+)
+console.log(`    mean ${signed(counterMean(allSessionAvgEvs) - SESSION_ONE_AVG_EV)} mph, and ${pct(counterShare(allSessionAvgEvs, (v) => v < SESSION_ONE_AVG_EV))} of sessions came out below session 1`)
+console.log('')
+console.log('  Read the goal column, not just the pooled row. The three goals with a target')
+console.log('  band come out higher because a session that would draw an empty band is')
+console.log('  re-rolled, and the sessions thrown away are the weak ones. Open Session,')
+console.log('  which is never re-rolled, is the step the dice actually produce.')
+
+// --- 8. Hit to All Fields against its own bar ------------------------------
+
+banner('8. HIT TO ALL FIELDS, AGAINST THE BAR THAT GOAL SETS ITSELF')
+console.log('  That goal asks the player for at least 3 pull side and at least 3 opposite')
+console.log('  field. Share of sessions that actually deliver it, on the Hit to All Fields')
+console.log('  goal a visitor would have picked:')
+console.log('')
+console.log('  ' + 'session'.padEnd(26) + 'on that goal'.padStart(20) + 'every goal pooled'.padStart(22))
+for (const sessionNum of SESSIONS) {
+  console.log(
+    '  ' + sessionRowLabel(sessionNum) +
+      pct(cell(sessionNum, 'allfields').allFieldsBarRate).padStart(20) +
+      pct(average(cellsForSession(sessionNum).map((c) => c.allFieldsBarRate))).padStart(22)
+  )
+}
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) +
+    (SESSION_ONE.allFieldsBarMet ? 'yes' : 'no').padStart(20) +
+    `   (${SESSION_ONE.spray.pull.count} pull, ${SESSION_ONE.spray.oppo.count} opposite)`
+)
+console.log('')
+console.log('  A visitor who picks this goal and clicks through the sessions watches the')
+console.log('  demo get worse at the very thing the goal asks for.')
+
+// --- 9. The regression guards ----------------------------------------------
+
+banner('9. THE NUMBERS THIS SLICE MUST NOT BREAK')
+console.log('  Everything above is a defect. Everything here is working today and has to')
+console.log('  still be working afterwards.')
+console.log('')
+console.log('  How often a goal\'s target band renders with nothing inside it:')
+console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(10)).join(''))
+for (const goal of SLICE11_GOALS) {
+  const rates = SESSIONS.map((s) => cell(s, goal.id).emptyBandRate)
+  if (rates[0] === null) continue
+  console.log('  ' + goal.label.padEnd(26) + rates.map((r) => pct(r).padStart(10)).join(''))
+}
+console.log('  (Hit to All Fields and Open Session have no target, so there is no band to')
+console.log('  leave empty.)')
+console.log('')
+console.log('  Empty columns on the five-column distance chart, averaged per session, with')
+console.log('  the share of sessions showing at least one in brackets:')
+console.log('  ' + 'goal'.padEnd(26) + SESSIONS.map((s) => `S${s}`.padStart(16)).join(''))
+for (const goal of SLICE11_GOALS) {
+  console.log(
+    '  ' + goal.label.padEnd(26) +
+      SESSIONS.map((s) => {
+        const c = cell(s, goal.id)
+        return `${c.emptyColumnsPerSession.toFixed(2)} (${pct(c.anyEmptyColumnRate)})`.padStart(16)
+      }).join('')
+  )
+}
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) +
+    `${SESSION_ONE.buckets.filter((b) => b.count === 0).length.toFixed(2)}`.padStart(16) +
+    `   bars: ${SESSION_ONE.buckets.map((b) => b.count).join(', ')}`
+)
+console.log('')
+console.log('  How far one swing sits from its own session average. Dividing by n, which')
+console.log('  is the convention session 1\'s own numbers below are calculated on.')
+console.log('  ' + 'session'.padEnd(26) + 'exit velocity'.padStart(16) + 'launch angle'.padStart(16) + 'session avg EV'.padStart(18))
+for (const sessionNum of SESSIONS) {
+  const cells = cellsForSession(sessionNum)
+  console.log(
+    '  ' + sessionRowLabel(sessionNum) +
+      `${average(cells.map((c) => c.evSpreadPopulation)).toFixed(2)} mph`.padStart(16) +
+      `${average(cells.map((c) => c.laSpreadPopulation)).toFixed(2)} deg`.padStart(16) +
+      `${counterMean(mergeCounters(cells.map((c) => c.sessionAvgEvCounter))).toFixed(2)} mph`.padStart(18)
+  )
+}
+console.log(
+  '  ' + 'sessions 2 to 4 mean'.padEnd(26) +
+    `${average(SLICE11_CELLS.map((c) => c.evSpreadPopulation)).toFixed(2)} mph`.padStart(16) +
+    `${average(SLICE11_CELLS.map((c) => c.laSpreadPopulation)).toFixed(2)} deg`.padStart(16) +
+    `${counterMean(allSessionAvgEvs).toFixed(2)} mph`.padStart(18)
+)
+console.log(
+  '  ' + 'session 1 (hand-written)'.padEnd(26) +
+    `${SESSION_ONE.evSpread.toFixed(2)} mph`.padStart(16) +
+    `${SESSION_ONE.laSpread.toFixed(2)} deg`.padStart(16) +
+    `${SESSION_ONE.avgEv.toFixed(2)} mph`.padStart(18)
+)
+console.log('')
+console.log('  The generated hitter is a tighter hitter than the session he is derived')
+console.log('  from, which nobody chose. Dividing by n-1 instead, which is what the older')
+console.log('  Slice 6 section at the foot of this report does, reads about 3.5% higher:')
+console.log(
+  `    sessions 2 to 4 mean ${average(SLICE11_CELLS.map((c) => c.evSpreadSample)).toFixed(2)} mph / ` +
+    `${average(SLICE11_CELLS.map((c) => c.laSpreadSample)).toFixed(2)} deg. Both conventions are correct; they`
+)
+console.log('    answer slightly different questions, and mixing them moves a target.')
+
+console.log('')
+console.log('='.repeat(78))
+console.log('THE SLICE 6 COMPARISON, WHICH IS A DIFFERENT BEFORE AND AFTER')
+console.log(`${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per row below. Same seed, ${SEED}.`)
+console.log('')
+console.log('Everything from here down compares the generator BEFORE Slice 6 ("honest')
+console.log('ball flight", 14 August 2026) with the generator as it stands right now in')
+console.log('src/swingGenerator.js. That pair of words, before and after, means Slice 6')
+console.log('here and nothing else. Slice 11\'s own starting point is the nine sections')
+console.log('above, which never use the word.')
 console.log('='.repeat(78))
 
 for (const sessionNum of SESSIONS) {
