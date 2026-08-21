@@ -558,6 +558,18 @@ function sprayCountLines(swings) {
 // answer "which ones did I pull?" the same way.
 export const DIRECTION_KEY_LINE = '- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.'
 
+// Slice 11 Task 3. Replaces the old `Note: All sessions shown here...`
+// paragraph below, and for the first time reaches the chat prompt too, which
+// carried no setting note at all before this. Two lines because they answer
+// two different questions the coach needs settled before it reasons about
+// the data: who is throwing (so a pitch outside the zone reads as a live
+// thrower varying his location, not a mistake to analyze), and what a
+// session is (so the coach stops guessing at "today" or "yesterday" and
+// stops implying a session is the last one when it is not). Approved word
+// for word by the product manager; do not reword, not even punctuation.
+export const SETTING_LINE = '- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player\'s swing decisions; never guess at the thrower\'s intent.'
+export const SESSIONS_LINE = '- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.'
+
 // The user half of the debrief prompt: every session the player has seen so far,
 // with the current one named at the end. Split out of generateDebrief and
 // exported for the bench, for the reason given on DEBRIEF_SYSTEM above.
@@ -569,7 +581,8 @@ export function buildDebriefUserMessage({ goal, player, sessions, viewingSession
 Goal: ${goal.label}
 ${goalContext(goal)}
 
-Note: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.
+${SETTING_LINE}
+${SESSIONS_LINE}
 
 ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph
@@ -602,6 +615,9 @@ export async function sendChatMessage({ goal, player, sessions, viewingSessionNu
   const userMessage = `Player: ${player.firstName}
 Goal: ${goal.label}
 ${goalContext(goal)}
+
+${SETTING_LINE}
+${SESSIONS_LINE}
 
 ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph

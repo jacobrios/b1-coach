@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
   DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
-  DIRECTION_KEY_LINE,
+  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 // Imported rather than hand-copied, unlike the distances the block below pins
@@ -175,7 +175,9 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     swings: pinSwings,
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
-  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
+  // Slice 11 Task 3 replaced the old Note paragraph with the two approved
+  // setting and sessions lines.
+  const pinTop = `\n\n${SETTING_LINE}\n${SESSIONS_LINE}\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
   // Slice 10 added the three spray count lines here and reworded the direction
   // key. Swing 1 is -12 degrees (up the middle under the screen's own rule,
   // which is exactly the case the old "negative is pull side" wording got
@@ -1237,5 +1239,93 @@ describe('the JSON-first instruction that fixed the session-1 MAX_TOKENS bug', (
 
   it('tells the model its reply must start with the JSON object, not analysis first', () => {
     expect(DEBRIEF_SYSTEM_BASE).toContain('Do not write any analysis, reasoning, or commentary before it')
+  })
+})
+
+// Slice 11 Task 3. The old Note paragraph told the coach these were
+// consecutive practice rounds, but said nothing about who is throwing, so a
+// pitch that misses the zone reads to the coach as a mistake worth reasoning
+// about rather than a live thrower varying his location. The two approved
+// lines below replace that paragraph in the debrief prompt and, for the
+// first time, reach the chat prompt too, closing a gap where the chat coach
+// could say "yesterday" with nothing stopping it. Same three-part shape as
+// the direction key block above (debrief, chat, cannot drift), plus a fourth
+// check that the old paragraph is actually gone, since this change can
+// half-land and leave both versions in the prompt at once.
+describe('the setting and sessions lines both prompts state', () => {
+  const swings = [{
+    plateLocHeight: 2.5,
+    plateLocSide: 0,
+    hit: {
+      launch: { exitSpeed: 80, angle: 15, direction: 0 },
+      landing: { distance: 200 },
+    },
+  }]
+  const session = {
+    sessionNumber: 1,
+    stats: { avgExitVelocity: 80, avgLaunchAngle: 15, inZoneCount: 1, totalSwings: 1 },
+    swings,
+  }
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  it('the debrief prompt states both exact lines', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(message).toContain(
+      '- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player\'s swing decisions; never guess at the thrower\'s intent.',
+    )
+    expect(message).toContain(
+      '- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.',
+    )
+  })
+
+  it('the chat prompt (which carries no setting note at all today) states both exact lines too', async () => {
+    const message = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    expect(message).toContain(
+      '- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player\'s swing decisions; never guess at the thrower\'s intent.',
+    )
+    expect(message).toContain(
+      '- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.',
+    )
+  })
+
+  it('cannot drift apart: the debrief prompt and the chat prompt state the same two lines, and both equal the exported constants', async () => {
+    const debriefMessage = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chatMessage = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    const extractSetting = (text) => text.match(/- Setting: [^\n]+/)[0]
+    const extractSessions = (text) => text.match(/- Sessions: [^\n]+/)[0]
+    expect(extractSetting(debriefMessage)).toBe(extractSetting(chatMessage))
+    expect(extractSessions(debriefMessage)).toBe(extractSessions(chatMessage))
+    expect(extractSetting(debriefMessage)).toBe(SETTING_LINE)
+    expect(extractSessions(debriefMessage)).toBe(SESSIONS_LINE)
+  })
+
+  it('the debrief prompt no longer carries the old Note paragraph the two lines replaced', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(message).not.toContain('Note: All sessions shown here are consecutive rounds of batting practice')
   })
 })
