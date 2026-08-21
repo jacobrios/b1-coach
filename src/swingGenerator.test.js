@@ -24,6 +24,7 @@ import {
   EXIT_VELOCITY_LIMITS,
   LAUNCH_ANGLE_LIMITS,
   POP_UP_BAND,
+  EV_SESSION_STEP,
   assertSoftZoneFits,
 } from './swingGenerator.js'
 import { meetsTarget } from './goalTargets.js'
@@ -233,15 +234,25 @@ describe('the shape of a generated session', () => {
         random: constantRandom(0.5).random,
       })[0].hit.launch
 
-    const hard = topOf(90, 40)
-    const harder = topOf(95, 60)
+    // THESE TWO BASELINES MOVED IN TASK 7 AND THE REASON IS THE TEST'S OWN
+    // SUBJECT. They were 90/40 and 95/60, chosen against an exit velocity
+    // ceiling of 97. At a ceiling of 94 both of those sit so far out that the
+    // curve has flattened under half a mph and they both draw 94, which is the
+    // very thing this test exists to catch: the assertion was right and the
+    // fixture had walked off the end of the range it was measuring. Picked
+    // instead to land inside the soft zone rather than beyond it, which is
+    // where a real overshoot from this generator actually lands.
+    const hard = topOf(85, 38)
+    const harder = topOf(87, 42)
 
     expect(harder.exitSpeed).not.toBe(hard.exitSpeed)
     expect(harder.angle).not.toBe(hard.angle)
-    // Both really are past the old walls, which is what makes the assertions
-    // above about compression rather than about two ordinary swings.
-    expect(hard.exitSpeed).toBeGreaterThan(94)
-    expect(hard.angle).toBeGreaterThan(35)
+    // Both really are being compressed, which is what makes the assertions
+    // above about compression rather than about two ordinary swings. Read from
+    // the limits rather than typed, so moving a ceiling cannot leave this
+    // quietly checking a number that has stopped meaning anything.
+    expect(hard.exitSpeed).toBeGreaterThan(EXIT_VELOCITY_LIMITS.max - EXIT_VELOCITY_LIMITS.soft)
+    expect(hard.angle).toBeGreaterThan(LAUNCH_ANGLE_LIMITS.max - LAUNCH_ANGLE_LIMITS.soft)
 
     // AND IT IS NOT A PROMISE THAT HOLDS TO INFINITY, which the comment beside
     // the limits now says as well. The drawn number is a whole one, so far
@@ -289,7 +300,13 @@ describe('exit velocity and launch angle come off the same swing', () => {
   // against the new one.
   //
   // Session averages for this baseline and this header, both computed by hand:
-  // exit velocity 82 + (1 + 0.5*3) = 84.5, launch angle 16.5 + (0.5 + 0.5*2) = 18.
+  // exit velocity 82 + (0.3 + 0.5*1.2) = 82.9, launch angle
+  // 16.5 + (0.5 + 0.5*2) = 18.
+  //
+  // THE EXIT VELOCITY AVERAGE FELL FROM 84.5 TO 82.9 IN TASK 7, and the launch
+  // angle one did not move, which is the session step's whole point rather
+  // than an inconsistency: a hitter can change his launch angle inside one
+  // practice and cannot change his bat speed.
   //
   // BOTH EXPECTED PAIRS MOVED IN SLICE 11 AND BOTH NOW SIT ABOVE THOSE TWO
   // AVERAGES, which reads as a contradiction of the second test's name until
@@ -329,7 +346,16 @@ describe('exit velocity and launch angle come off the same swing', () => {
     //   quality  = 0.8 * 0.672907 + 0.6 * 0.5           = +0.838302
     //   evOffset = 0.6 * 0.838302 + 0.8 * 0             = +0.502981
     //   laOffset = 0.502981 + 0.8 * 0.4 * 0.015803      = +0.508038
-    // 84.5 + 0.502981 * 16 = 92.55, and 18 + 0.508038 * 22 = 29.18.
+    // 18 + 0.508038 * 22 = 29.18, so the angle draws 29.
+    //
+    // THE EXIT VELOCITY REACHES 93 BY A DIFFERENT ROUTE AFTER TASK 7, AND THE
+    // COINCIDENCE IS WORTH SAYING OUT LOUD. It was 84.5 + 0.502981 * 16 =
+    // 92.55, an ordinary swing well inside the range. It is now
+    // 82.9 + 0.502981 * 21.88 = 93.91, which is past the soft ceiling's knee at
+    // 91, so the compression eases it back to 92.86 and it draws 93 again. The
+    // assertion did not move and neither did its meaning, but the arithmetic
+    // behind it did, and a comment showing the old sum against the new answer
+    // would be the sort of thing this file exists to stop.
     expect(swings[0].hit.launch.exitSpeed).toBe(93)
     expect(swings[0].hit.launch.angle).toBe(29)
   })
@@ -338,8 +364,10 @@ describe('exit velocity and launch angle come off the same swing', () => {
     const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random: scripted(0) })
     // The same arithmetic with the quality draw at the other end: the shared
     // term loses 0.6 of the spread, so 0.838302 becomes 0.238302.
-    // 84.5 + 0.6 * 0.238302 * 16 = 86.79, and 18 + 0.148036 * 22 = 21.26.
-    expect(swings[0].hit.launch.exitSpeed).toBe(87)
+    // 82.9 + 0.6 * 0.238302 * 21.88 = 86.03, and 18 + 0.148038 * 22 = 21.26.
+    // Nothing here is near a limit, so this pair is the plain arithmetic with
+    // no compression in it, unlike the good-quality pair above.
+    expect(swings[0].hit.launch.exitSpeed).toBe(86)
     expect(swings[0].hit.launch.angle).toBe(21)
   })
 
@@ -858,6 +886,42 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // are deliberately not widened to restore that headroom, because nothing
     // needs them widened today and a band moved to fit a measurement stops
     // being evidence.
+    //
+    // ── TASK 7, 21 AUGUST 2026: EXIT VELOCITY NOW HAS ITS OWN BAND AND IT
+    // SITS ENTIRELY BELOW 1. LAUNCH ANGLE IS UNTOUCHED. ─────────────────────
+    //
+    // The paragraph above says a band moved to fit a measurement stops being
+    // evidence, and that rule is why this note explains a mechanism rather
+    // than just quoting a new pair of numbers. Task 7 did two things to exit
+    // velocity at once: widened the scale constant from 16 to 21.88, and
+    // brought the ceiling down from 97 to 94. Those push the same way. A wider
+    // draw off a session average near 83 reaches the knee at 91 far more
+    // often, and the knee is three mph lower than it was, so the compression
+    // is now shaving an honest amount off the top of every session rather than
+    // touching one swing in two hundred. The realised spread comes out about
+    // two and a half percent UNDER the scale constant instead of a fifth of a
+    // percent over it.
+    //
+    // Re-swept over the same 60 seeds at the same 4,000 sessions rather than
+    // guessed: exit velocity 0.96543 to 0.97956, and launch angle 1.00733 to
+    // 1.02164, which is the identical range recorded above because nothing in
+    // Task 7 touched the launch angle scale or its limits. The committed seed
+    // reads 0.97227 and 1.01345.
+    //
+    // WHAT THIS COSTS AND WHAT IT DOES NOT. The failure this test exists for
+    // is an implementation that ADDS the pitch term on top instead of blending
+    // it in, which widens the distribution; that is caught harder than before,
+    // not softer, because the whole band now sits below 1 and a widening has
+    // further to travel to reach the ceiling of it. What is genuinely lost is
+    // that the exit velocity half no longer reads as "the scale constant is
+    // the scale", since the compression is now a visible part of the answer.
+    // Read it as a band on the realised spread rather than as a statement
+    // about the arithmetic alone.
+    //
+    // AND IT IS NOW COUPLED TO THE CEILING, which the old band was not. Task 9
+    // moves both of these constants. If it does, this band has to be re-swept
+    // the way it was here, not widened until the new number fits: a bound
+    // stretched to admit a measurement proves nothing about the next one.
     const random = mulberry32(20260821)
     let evSquares = 0
     let laSquares = 0
@@ -876,8 +940,10 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     const uniformSd = Math.sqrt(1 / 12)
     const evRatio = Math.sqrt(evSquares / degreesOfFreedom) / (EV_SPREAD_MPH * uniformSd)
     const laRatio = Math.sqrt(laSquares / degreesOfFreedom) / (LA_SPREAD_DEGREES * uniformSd)
-    expect(evRatio).toBeGreaterThan(0.99)
-    expect(evRatio).toBeLessThan(1.025)
+    // Exit velocity: 0.955 to 0.99, from a 60-seed sweep that ran 0.96543 to
+    // 0.97956. Launch angle: 0.99 to 1.025, untouched by Task 7.
+    expect(evRatio).toBeGreaterThan(0.955)
+    expect(evRatio).toBeLessThan(0.99)
     expect(laRatio).toBeGreaterThan(0.99)
     expect(laRatio).toBeLessThan(1.025)
   })
@@ -1075,5 +1141,198 @@ describe('how high the pitch was decides how likely that is', () => {
     // ordinary swing.
     expect(high.hit.launch.angle).toBeGreaterThan(GOAL_COUNT_SPECS.popup.popUpAngle)
     expect(low.hit.launch.angle).toBeLessThan(GOAL_COUNT_SPECS.popup.popUpAngle)
+  })
+})
+
+// ── Task 7: the session step, the spray, and the variance factor ────────────
+//
+// The three describes below share one shape, so it is written down once here.
+// Each drives a whole session from a fixed, non-neutral sequence: three header
+// draws, then the same ten-draw swing pattern repeated for all fifteen swings.
+// That makes every swing of the session identical, which is what lets these
+// tests talk about "the" exit velocity of a session rather than fifteen of
+// them, exactly as `constantRandom` does further up. What it adds over
+// `constantRandom` is that the three header draws can be set independently of
+// the swing draws, which is the whole subject of the first describe: the
+// improve-or-decline coin and the size of the step are header draws, and no
+// constant source can hold one at an extreme and the other in the middle.
+//
+// TEN DRAWS PER SWING, and they are spelled out rather than counted, because a
+// sequence that fell out of step with the generator would still return numbers
+// and would still produce a session, just not the one the test says it did.
+// In the order the generator asks for them: three for a pitch inside the zone
+// (the in-zone coin, the height, the side), then the shared quality draw, the
+// exit velocity noise, the launch angle noise, the spray direction, and last
+// the three mis-hit draws Task 6 spends on every swing whether or not it turns
+// out to be one.
+function sessionDrivenBy(header, swing) {
+  let calls = 0
+  return () => {
+    const i = calls++
+    return i < header.length ? header[i] : swing[(i - header.length) % swing.length]
+  }
+}
+
+// A swing inside the zone, dead centre, with the three mis-hit draws set so
+// this swing is never a pop-up. `contact` is where the swing's own three draws
+// sit and `dir` is the spray draw; both are parameters because the describes
+// below want different things from them.
+//
+// WHY THE CONTACT DRAWS ARE A PARAMETER RATHER THAN A CONSTANT, and it was
+// found by running rather than by reading. Driven at the top, 19.8 mph above
+// its session average, the swing lands inside the soft exit velocity ceiling,
+// and the compression there squeezes a 2.7 mph difference between two sessions
+// down to nothing at all: both drew 94. A test of the session step measured at
+// the top of the range would have been measuring the ceiling instead. So the
+// step and the spray are driven from the middle, where nothing is compressed,
+// and only the variance factor is driven at the top, because that one needs a
+// swing far enough from its session average for a five-hundredth of it to be a
+// whole degree.
+const SWING_AT = (contact, dir) => [
+  0.5, 0.5, 0.5,             // in-zone coin, height 2.5 ft, side 0.0 ft
+  contact, contact, contact, // quality, exit velocity noise, launch angle noise
+  dir,                       // spray direction
+  0.99, 0.5, 0.5,            // got under it (no), pop-up angle, pop-up drop
+]
+
+describe('a session step in exit velocity is small enough to be one round of batting practice', () => {
+  // WHY THIS IS A TEST AND NOT A COMMENT: a hitter can change his launch angle
+  // inside one practice and cannot change his bat speed. The launch angle step
+  // keeps its arc for that reason and this one does not, and nothing but this
+  // test stops a future tuning pass reading the two as the same knob.
+  const sessionOffHeader = (header) =>
+    generateSwings({
+      sessionNum: 2,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sessionDrivenBy(header, SWING_AT(0.5, 0.5)),
+    })[0].hit.launch.exitSpeed
+
+  // The improve-or-decline coin, then the size of the step, then the launch
+  // angle step held in the middle so only exit velocity moves between these.
+  const best = sessionOffHeader([0.5, 1, 0.5])
+  const worst = sessionOffHeader([0.99, 1, 0.5])
+
+  it('moves the session average by no more than the step this file declares', () => {
+    // Both sessions spend identical swing draws, so every swing's own offset
+    // is the same number in both and cancels: what is left between them is the
+    // header's step and nothing else. The one slack is rounding to a whole
+    // mph, which can move a difference by at most 1 either way, so the bound
+    // is the declared span rounded up.
+    const declaredSpan = EV_SESSION_STEP.improveMax + EV_SESSION_STEP.declineMax
+    expect(best - worst).toBeLessThanOrEqual(Math.ceil(declaredSpan))
+  })
+
+  it('still moves it, so the bound above is not satisfied by a generator that stopped stepping at all', () => {
+    expect(best - worst).toBeGreaterThanOrEqual(2)
+  })
+
+  it('declares a best case no larger than one round of batting practice can deliver', () => {
+    // The product decision, written as a number rather than left to the
+    // arithmetic above. 1.5 mph is two rounds of ordinary measurement noise on
+    // a fifteen-swing average, not a hitter who got stronger between rounds.
+    // A tuning pass that pushed this back toward the old +4 turns this red
+    // even though the assertion above would still hold, because that one reads
+    // its bound from the same constant.
+    expect(EV_SESSION_STEP.improveMax).toBeLessThanOrEqual(1.5)
+    expect(EV_SESSION_STEP.declineMax).toBeLessThanOrEqual(1.5)
+  })
+})
+
+describe('where the ball is sprayed does not depend on which session it is', () => {
+  const directionsAt = (sessionNum, dir) =>
+    generateSwings({
+      sessionNum,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sessionDrivenBy([0.5, 0.5, 0.5], SWING_AT(0.5, dir)),
+    }).map((w) => w.hit.launch.direction)
+
+  it('sprays a session 4 exactly as wide as a session 2, on the identical draw', () => {
+    // THE DEFECT THIS CLOSES. `dir` used to be multiplied by the variance
+    // factor, which shrinks 1.00 / 0.95 / 0.90, so the hitter sprayed the ball
+    // LESS every session. Nothing a hitter does narrows his own spray angle
+    // three rounds running, and the visible cost was the Hit to All Fields
+    // goal meeting its own stated bar of three pull and three opposite less
+    // often on every session a visitor clicked through.
+    //
+    // Driven at the top of the direction draw, which is where the shrinking
+    // showed most: the further from centre a ball was hit, the more the factor
+    // took off it.
+    expect(directionsAt(4, 1)).toEqual(directionsAt(2, 1))
+    expect(directionsAt(3, 1)).toEqual(directionsAt(2, 1))
+  })
+
+  it('leans to the pull side rather than the opposite field', () => {
+    // A right-handed high school hitter pulls more balls than he goes the
+    // other way, and this generator used to do the opposite: the draw was
+    // centred at +3.5 degrees, which is an opposite-field hitter. Pull is the
+    // negative direction, per SPRAY_CUTOFFS in sessionStats.js.
+    const middleOfTheDraw = directionsAt(2, 0.5)
+    expect(middleOfTheDraw[0]).toBeLessThan(0)
+  })
+})
+
+describe('the variance factor reaches the swings, and a test can see how far', () => {
+  // THE BLIND SPOT THIS CLOSES. A reviewer once changed the 0.05 in the
+  // variance factor six-fold and all 22 generator tests stayed green, because
+  // every one of them drove the noise at a neutral value where the factor
+  // multiplies zero and disappears. Task 7 changes that constant's REACH, by
+  // taking spray direction out from under it, so this is the task that owes
+  // the test.
+  //
+  // LAUNCH ANGLE CARRIES THE ASSERTION AND EXIT VELOCITY CANNOT, which is a
+  // fact about the ranges rather than a preference. The factor steps by 0.05
+  // between consecutive sessions, so for three session numbers to round to
+  // three distinct whole numbers the swing has to sit at least twenty units
+  // from its session average. Launch angle has room for that between -5 and
+  // 50; exit velocity does not, because twenty mph above a session average of
+  // 83 is inside the soft ceiling and comes back compressed. The factor
+  // multiplies both readings on one line each, so proving it on the reading
+  // that can resolve it proves the constant's reach.
+  const anglesAt = (sessionNum) =>
+    generateSwings({
+      sessionNum,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sessionDrivenBy([0.5, 0.5, 1], SWING_AT(1, 0.5)),
+    }).map((w) => w.hit.launch.angle)
+
+  const [s2] = anglesAt(2)
+  const [s3] = anglesAt(3)
+  const [s4] = anglesAt(4)
+
+  it('drops the swing back toward its session average by a fixed step per session', () => {
+    // Every swing of these three sessions spends identical draws, so the
+    // session average is the same number in all three and the only thing that
+    // differs is the factor. The factor is linear in the session number, so
+    // the two steps have to be equal, and they have to be non-zero or the
+    // factor is not reaching the swing at all.
+    expect(s2 - s3).toBe(s3 - s4)
+    expect(s2 - s3).toBeGreaterThan(0)
+  })
+
+  it('holds the exact three angles a six-fold change to that constant would move', () => {
+    // The magnitude, pinned. A session 2 swing sits 19 degrees above its
+    // session average here, so 0.05 of it is a whole degree and each session
+    // number draws one lower.
+    //
+    // WHAT A SIX-FOLD CHANGE ACTUALLY DOES, run rather than predicted, and the
+    // first version of this comment got it wrong in a way worth keeping. Take
+    // the 0.05 to 0.30, which is the change a reviewer made without a single
+    // test noticing, and the factor does NOT read 1.00 / 0.70 / 0.40: the 0.85
+    // floor beside it binds on both later sessions, so it reads 1.00 / 0.85 /
+    // 0.85 and these three angles come back 38, 35, 35. Both assertions in this
+    // describe go red on that, and the one above goes red for the more
+    // interesting reason: the floor makes the two steps 3 and 0 rather than
+    // equal, so a factor that has stopped being linear in the session number
+    // fails on its shape before anyone reads its size.
+    //
+    // These three will move when Task 9 retunes the scale constants, the same
+    // way the fully written-out pair further up this file will. That is the
+    // cost of pinning a magnitude, and it is paid on purpose: a test that only
+    // asserted the structure above stays green through exactly the change this
+    // one exists to catch.
+    expect([s2, s3, s4]).toEqual([38, 37, 36])
   })
 })

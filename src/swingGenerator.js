@@ -111,6 +111,38 @@ const UNIFORM_DRAW_SD = Math.sqrt(1 / 12)
 // pulls the average up with it.
 const POWER_LIFT_PER_SESSION = 2
 
+// How far a session's average exit velocity moves off session 1's, in mph.
+//
+// A HITTER CAN CHANGE HIS LAUNCH ANGLE INSIDE ONE PRACTICE AND CANNOT CHANGE
+// HIS BAT SPEED. That sentence is the whole product argument for this constant
+// existing at all, and for the launch angle step three lines below it keeping
+// its arc untouched. Getting on top of the ball, or under it, is a swing
+// decision a coach can talk a player into between rounds, and it is the thing
+// this demo is about. Bat speed is strength and mechanics; it moves over a
+// winter, not over twenty minutes.
+//
+// It used to be `1 + random() * 3` on the improving side, so a session could
+// come back four mph harder than the one before it, which is a different
+// hitter rather than a better round. It is now at most 1.5, which is inside
+// the noise a fifteen-swing average carries anyway: at the exit velocity
+// spread this file now uses, one session's average wobbles by about 1.6 mph
+// on sampling alone, so the step a visitor sees is honestly a draw rather than
+// a promise. That is the intended reading and it is why the number is not zero
+// either: the 65/35 improve-or-decline coin is a settled product decision, and
+// a step of zero would take the coin away rather than shrink it.
+//
+// THE DECLINE IS SMALLER THAN THE IMPROVEMENT, and it was in the old constants
+// too, at 3 against 4. That asymmetry is what makes the demo trend upward at
+// all once the coin is 65/35, and it is carried across at the same ratio
+// rather than re-argued here.
+//
+// Exported for the reason PITCH_MISS_MAX_FEET and the limits are exported: the
+// test that holds the generator to this step reads the bound from here, so it
+// cannot go on agreeing with a number that has stopped being true. That test
+// also asserts the 1.5 separately as a plain number, so a tuning pass cannot
+// widen the constant and the test that guards it in one move.
+export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2 }
+
 // ── The thrower ─────────────────────────────────────────────────────────────
 //
 // WHAT THIS FILE NOW CLAIMS ABOUT THE PERSON THROWING. A batting practice arm
@@ -234,11 +266,102 @@ const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
 // in. These were bare literals inside the swing arithmetic until Slice 11's
 // Task 5, and they are named and exported now for one reason: the test that
 // proves adding a pitch influence did not widen the distribution has to read
-// the scale from here rather than carry its own 16 and 22, or it would be
+// the scale from here rather than carry its own numbers, or it would be
 // proving that two copies of a number agree rather than that the spread is
-// what the generator claims. Nothing about their values changed.
-export const EV_SPREAD_MPH = 16
+// what the generator claims.
+//
+// THE EXIT VELOCITY NUMBER MOVED IN TASK 7 AND THE LAUNCH ANGLE ONE DID NOT.
+// It was 16, and at 16 the generated hitter was measurably TIGHTER than the
+// fifteen hand-written swings he is derived from: a hitter whose exit velocity
+// varied less from swing to swing than the session the whole demo is
+// calibrated against. Nobody chose that and nothing recorded it.
+//
+// HOW 21.88 WAS DERIVED, AND THE TRAP IN DERIVING IT. Two spreads have to be
+// measured, session 1's own and the generator's, and they have to be measured
+// THE SAME WAY. A standard deviation dividing by n and one dividing by n-1
+// differ by 3.5% at fifteen swings, which is not a rounding difference here, it
+// is most of the answer. Mixing the two, session 1 by n against the generator
+// by n-1, gives 21.17, and that figure was believed for a while.
+//
+// Held to one convention, measured on 21 August 2026 through this generator at
+// 40,000 sessions of session 2, where the variance factor is 1 and does not
+// muddy the arithmetic:
+//
+//   dividing by n-1 throughout:  session 1 is 6.3223, the generator 4.6165,
+//   so the scale has to become 16 * 6.3223 / 4.6165 = 21.91.
+//
+//   dividing by n throughout:    session 1 is 6.1079, the generator 4.4555,
+//   so the scale has to become 16 * 6.1079 / 4.4555 = 21.93.
+//
+// The two conventions agree to within a fiftieth, which is the point: it is
+// mixing them that costs three quarters of a mph, not choosing between them.
+// 21.88 is the figure the product manager adopted, taken at the same
+// measurement one task earlier, and it sits just under both.
+//
+// POP-UPS ARE EXCLUDED FROM THE GENERATOR SIDE OF THAT, and it is not a
+// convenience. A popped-up ball does not come out of this scale constant at
+// all: the hitter got under it, so its exit velocity is drawn off the session
+// average by POP_UP_EV_DROP_MPH below. Counting them would be asking this
+// constant to account for a spread it does not govern. It does mean the spread
+// a visitor actually sees is a little wider than session 1's, because the
+// pop-ups sit on top of it; that is stated where it can be measured, in
+// section 9 of `node scripts/measure-swing-generation.mjs`, rather than
+// tuned away here.
+//
+// PROVISIONAL, LIKE EVERYTHING ELSE IN THIS FILE. Task 9 sets every constant
+// at once against targets that interact, and this one interacts with two of
+// them: it is what takes the strike-versus-ball exit velocity gap from 3.4 mph
+// to about 4.6, which is the target the product manager adopted, and it pushes
+// swings into the soft ceiling below, which pulls some of the widening back.
+export const EV_SPREAD_MPH = 21.88
 export const LA_SPREAD_DEGREES = 22
+
+// ── Where the ball went sideways ────────────────────────────────────────────
+//
+// Spray direction in degrees, signed: negative is the pull side and positive
+// is the opposite field, per SPRAY_CUTOFFS in sessionStats.js, which is the
+// one place in this app those two words are defined and is what both the
+// spray chart and the coach's own direction key read.
+//
+// TWO THINGS WERE WRONG WITH THE LINE THIS REPLACES, and they are separate.
+// It read `(random() - 0.45) * 70 * varianceFactor`.
+//
+//   IT WAS AN OPPOSITE-FIELD HITTER. Subtracting 0.45 centres the draw at
+//   +3.5 degrees, so this generator went the other way more often than it
+//   pulled: measured across 4,500,000 swings, 4.74 balls a session to the
+//   opposite field against 3.25 pulled. A high school hitter pulls more than
+//   he goes the other way, and session 1, which is hand-written and is this
+//   demo's statement of who he is, has three pull to four opposite on fifteen
+//   swings, which is level rather than backwards.
+//
+//   IT NARROWED EVERY SESSION. Multiplying by the variance factor, which
+//   shrinks 1.00 / 0.95 / 0.90, means the hitter sprays the ball LESS each
+//   round, and no hitter does that on his own. The visible cost was on the one
+//   goal that is judged on spray: Hit to All Fields asks for at least three
+//   pull and three opposite in its own coaching prose, and the generator met
+//   that bar 62% of the time at session 2, 57% at session 3 and 53% at session
+//   4, so a visitor who picked that goal watched the demo get worse at the
+//   very thing it had asked him to work on.
+//
+// CENTRING AT -0.05 OF THE DRAW, which is 4 degrees to the pull side at this
+// width, is a deliberately small lean rather than a pull-happy hitter: it
+// moves the balance to roughly five and a half pulled against four the other
+// way, which reads as a right-handed hitter's ordinary tendency rather than as
+// a slugger. The width goes from 70 to 80 degrees for the second defect above:
+// with the variance factor gone there is nothing left to widen the later
+// sessions, so the width has to carry the spread on its own.
+//
+// PROVISIONAL, and this pair in particular. Task 9 is the tuning pass, and
+// these two were found by a parameter search during design rather than derived
+// from anything: what they were chosen to deliver is a Hit to All Fields bar
+// met at a flat rate across all three sessions rather than a falling one.
+// Considered and DECLINED while scoping, recorded so nobody re-proposes it:
+// giving that goal its own spray lift the way Power gets a launch angle lift.
+// Taking the variance factor out closes the "gets worse every session" defect
+// on its own, and Power's lift exists because its band was empty 56% of the
+// time, which was a defect. A flat rate is not.
+const SPRAY_PULL_BIAS = 0.55
+const SPRAY_SPREAD_DEGREES = 80
 
 // Where a pitch sits relative to the zone, in units of the zone's own half
 // height and half width, so that 1.0 means "at the edge" on either axis
@@ -468,13 +591,26 @@ function pitchInfluence(pitch) {
 //   unconditional and the drawn number is rounded to a whole one. Far enough
 //   out the curve flattens under half a unit and two overshoots do draw the
 //   same: measured, every raw launch angle at or above 56.51 draws as 50 and
-//   every raw exit velocity at or above 99.38 draws as 97. What makes that a
+//   every raw exit velocity at or above 96.38 draws as 94. What makes that a
 //   headroom figure rather than a live defect is that the highest angle this
 //   generator produced across 4,500,000 swings is 47, nine and a half degrees
 //   short of it, and that it degrades gradually rather than at a cliff: driven
 //   off baselines of 40, 50, 60, 80, 300 and 1000 degrees the drawn angles are
 //   48, 50, 50, 50, 50, 50. Read the claim as true across the range this
 //   generator reaches, which is the range the charts draw.
+//
+//   THE EXIT VELOCITY HALF OF THAT PAIR MOVED IN TASK 7 AND ITS HEADROOM IS
+//   NOW MUCH SMALLER, which is the honest reading rather than a re-quoted
+//   number. It read 99.38 against a ceiling of 97; at a ceiling of 94 the same
+//   arithmetic puts it at 96.38, and the knee is at 91. That is not a headroom
+//   figure in the way the launch angle one is: the exit velocity spread widened
+//   to 21.88 in the same task, so swings really do reach into the compression
+//   now, and the flattening is close enough to the range this generator
+//   produces that two genuinely different hard swings can draw the same number.
+//   It is a real cost of putting the ceiling where this hitter is, it was taken
+//   knowingly, and section 5 of `node scripts/measure-swing-generation.mjs` is
+//   what to read rather than this sentence: it counts what share of a cell sits
+//   on the top value rather than arguing about it.
 //
 //   Nothing can exceed a limit, which is what the charts and the coach's count
 //   lines assume, so the guarantee the wall was there for is kept.
@@ -512,7 +648,19 @@ function pitchInfluence(pitch) {
 // Exported for the reason PITCH_MISS_MAX_FEET is exported: the test that holds
 // every generated swing inside these limits reads them from here, so it cannot
 // go on agreeing with a number that has stopped being true.
-export const EXIT_VELOCITY_LIMITS = { min: 65, max: 97, soft: 3 }
+// WHERE THE EXIT VELOCITY CEILING SITS IS A STATEMENT ABOUT WHO THIS HITTER
+// IS, and until Task 7 nobody had made one. It was 97, which is a near-elite
+// number, and it was never chosen: it was a wall inherited from the closure
+// this file grew out of, and nothing in this repository recorded a reason for
+// it. 94 is two mph above Bill's best measured ball, the 92 that session 1
+// freezes, and it is a soft ceiling rather than a wall, so it is a number he
+// approaches on his very best swing rather than one he parks on.
+//
+// Bill is a varsity high school junior with real but not elite bat speed. The
+// product manager settled that at the start of Slice 11 and session 1's own
+// numbers, an 81.6 average with a best of 92, ARE that hitter. A generator
+// allowed to reach 97 was quietly claiming a different one.
+export const EXIT_VELOCITY_LIMITS = { min: 65, max: 94, soft: 3 }
 export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
 
 // The one way to set a soft zone that turns `withinLimits` into something worse
@@ -689,8 +837,18 @@ function drawPitch(random) {
 // injected `random`, so a test can decide exactly what kind of session this is.
 function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
   // 65/35 improvement bias on session average
+  //
+  // ONE COIN, TWO STEPS OF VERY DIFFERENT SIZES, and the difference is the
+  // product decision rather than a tuning accident: a hitter can change his
+  // launch angle inside one practice and cannot change his bat speed. The
+  // launch angle line below is untouched, arc and all. The exit velocity line
+  // reads its bounds from EV_SESSION_STEP above, where the reasoning sits.
   const improving = random() < 0.65
-  const sessionEV = prevEV + (improving ? (1 + random() * 3) : -(1 + random() * 2))
+  const sessionEV =
+    prevEV +
+    (improving
+      ? EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.improveMax - EV_SESSION_STEP.min)
+      : -(EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.declineMax - EV_SESSION_STEP.min)))
   const baseLA = prevLA + (improving ? (0.5 + random() * 2) : -(0.5 + random() * 1.5))
 
   // The Power lift applies to the session's whole average, before any swing's
@@ -766,7 +924,14 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
     const laAccident = PITCH_HEIGHT_WEIGHT * fromPitch.height + PITCH_HEIGHT_ACCIDENT_SHARE * laNoise
     const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laAccident
 
-    const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
+    // NO VARIANCE FACTOR ON THIS ONE, WHICH IS THE POINT RATHER THAN AN
+    // OMISSION. Every other reading on this swing is scaled by it and this one
+    // is deliberately not: a hitter's exit velocity and launch angle settle
+    // down as he practises, and how far he sprays the ball does not. See the
+    // spray constants above for what that was costing on the Hit to All Fields
+    // goal, and swingGenerator.test.js for the test that holds a session 4
+    // sprayed exactly as wide as a session 2.
+    const dir = Math.round((random() - SPRAY_PULL_BIAS) * SPRAY_SPREAD_DEGREES)
 
     // THE THREE MIS-HIT DRAWS ARE TAKEN ON EVERY SWING, whether or not it turns
     // out to be one, so a swing always costs the same number of draws. That is
