@@ -55,9 +55,11 @@
 //
 // The export is named generateSwingsPreSlice11 rather than generateSwings on
 // purpose, so an import of this file can never be mistaken at a glance for
-// an import of the live module. Everything below that line is byte-identical
-// to the recovered file apart from the two deleted imports and that one
-// renamed function.
+// an import of the live module. Everything below the "recovered file begins
+// here" line is byte-identical to `git show 53315e5:src/swingGenerator.js`
+// apart from exactly two things: the two import lines replaced by a comment
+// saying where they went, and that one renamed function. `diff` the two and
+// those are the only hunks that come back.
 //
 // Read by scripts/grade-coach-accuracy.mjs's "slice11-before" and
 // "slice9-before" session builders, which are the only supported way to
