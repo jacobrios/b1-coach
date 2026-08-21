@@ -4,6 +4,28 @@ Rescued into the repo on 17 August 2026, at the start of Slice 7b. Until that
 day these files lived in a temporary scratch directory that would have been
 deleted without warning, taking the only ground truth this project has with it.
 
+**Dated note, 20 August 2026: this directory was nearly lost a second way, and
+by then nobody was looking.** Everything below describes `rebuild.mjs` as a
+frozen copy that reconstructs exactly what these 96 debriefs saw. That was true
+of the code written inside it and false of one thing it called. Sessions 2, 3
+and 4 are not stored anywhere; they are worked out from session 1 by the app's
+swing generator, and until this date `rebuild.mjs` reached into the live app for
+that generator. All three cells here are session 2 or later.
+
+Slice 11 rewrites that generator. The moment it had, this fixture would have
+been reconstructed from swings none of these 96 debriefs was written about: not
+an error message, not a gap, but a complete and entirely believable set of
+numbers, with nothing on screen suggesting anything was wrong. The grading
+tool's own claim to catch a real coach error rests on this fixture and no
+other, so the tool would then have been checked against a fiction and passed.
+
+It is fixed. `rebuild.mjs` now reads a frozen copy of the old generator kept in
+`../frozen/`, every swing all three cells produce is written down in the record
+beside that copy, and the test suite rebuilds and compares them on every run. A
+drift now turns tests red by name instead of passing quietly. Found by review
+after five earlier passes had signed off on the work that repaired five other
+directories and missed this one.
+
 ## What these are
 
 96 real debriefs the coach actually wrote, from Slice 7's measurement round on

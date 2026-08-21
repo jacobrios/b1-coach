@@ -555,7 +555,15 @@ the way past if you open the file for another reason.
                              cell at every seed. It is what stops the five
                              rounds listed below being silently re-graded
                              against swings their coaches never saw once the
-                             generator is rewritten. The snapshot imports
+                             generator is rewritten. *(Dated correction, 20
+                             August 2026, later the same day: SIX directories,
+                             not five rounds. Review found that
+                             `slice7-debriefs/` had the same exposure and the
+                             worst consequence, since the grading tool's own
+                             validation run is forced onto that fixture. It
+                             reads the snapshot now and its three cells are in
+                             the digest. See the correction on its row below.)*
+                             The snapshot imports
                              nothing from `src/`, carrying its own frozen copies
                              of the carry formula and the goal targets, because
                              a half-frozen snapshot drifts the first time a
@@ -565,7 +573,21 @@ the way past if you open the file for another reason.
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
                                scripts that rebuild the session data they were
-                               written about. `slice7b-parse-failure/` (112 KB)
+                               written about. *(Dated correction, 20 August
+                               2026: "rebuild the session data they were written
+                               about" was half true. `rebuild.mjs` froze its own
+                               first session and then took the generator that
+                               makes sessions 2 to 4 from the live app, and all
+                               three of its cells are later sessions. Slice 11's
+                               Task 1b repointed it at `frozen/` and put its
+                               three cells in the digest. One live import is
+                               left, the carry formula, because the frozen copy
+                               of it sits inside a pinned hash and reaching it
+                               would mean re-pinning; that residual is measured
+                               in that file's own header. This is the sixth
+                               exposed directory and it was found only after the
+                               other five were repaired and signed off.)*
+                               `slice7b-parse-failure/` (112 KB)
                                holds the before/after records behind Slice 7b's
                                parse-failure fix, 36 calls each.
                                `slice8-grader-validation/` (1.2 MB) holds the
@@ -921,19 +943,24 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and after Slice 11's first task on 20 August 2026 it is 599 tests
-   across 23 files, up from the 573 across 22 at the close of Slice 10 the
-   same day. The 26 new tests are `scripts/frozenGenerator.test.js`, and they
-   answer three different questions that a reader should not merge. Twenty-two
+   vitest, and after Slice 11's first task on 20 August 2026 it is 604 tests
+   across 23 files, up from the 599 that task first landed the same day and
+   the 573 across 22 at the close of Slice 10. The 31 new tests are
+   `scripts/frozenGenerator.test.js`, and they
+   answer three different questions that a reader should not merge. Twenty-five
    of them rebuild every bench cell at every seed through the frozen
    pre-Slice-11 generator and hold the result against a committed digest, so
-   five committed rounds of coach debriefs cannot quietly start being graded
+   six committed fixture directories cannot quietly start being graded
    against swings their coaches never saw. Two more ask a different
    question, whether the snapshot FILE has moved, by hashing every line of
-   code in it. The last two ask whether the guard itself still works: whether
+   code in it. The last four ask whether the guard itself still works: whether
    the rule about what may sit above the hash boundary still refuses every
-   line terminator, and whether the grading script is even reading the file
-   this test is hashing. Both are needed, which was measured rather than assumed: an
+   line terminator, whether the two scripts that load the snapshot are reading
+   the file this test is hashing, and whether the digest's own claim about
+   which seed it covers is honest. *(Those counts read 22, 5 and 2 until a
+   review pass late on 20 August 2026 found a sixth exposed directory; see the
+   "six, not five" correction on the `docs/eval-fixtures/` row further up.)*
+   The first two questions are both needed, which was measured rather than assumed: an
    independent review mutated the snapshot five ways, one line each, and four
    of the five (all the clamps, and the whole above-28-degrees branch of the
    carry formula) changed no swing in any cell at either seed, so the data
@@ -2593,6 +2620,26 @@ own self-checks, not the coach.*
   first, and `npm test` now rebuilds all of it and fails if a single swing
   moves. The trap is not closed by a comment; it is closed by a test that
   cannot be green and wrong at the same time.
+
+  **Corrected again later the same day, and this correction is the useful one:
+  it was six directories, not five, and the sixth was the one that mattered
+  most.** Six review passes over the repair above all counted five. The missing
+  one is `docs/eval-fixtures/slice7-debriefs`, the 96 saved debriefs this
+  project uses to check that its grading tool can actually spot a coach error.
+  The tool is pointed at that fixture automatically every time that check runs,
+  so a generator rewrite would have re-checked the tool against a set of swings
+  no coach in the fixture ever saw, and then reported that the tool was fine.
+  It hid because that directory had already frozen its own first session and its
+  own list of cases, so it read to everyone as a directory that had solved this
+  problem; it had solved half of it, and took the part that builds sessions 2 to
+  4 from the live app. Closed the same day as Task 1b: it reads the frozen copy
+  now, its swings are in the same record as everything else, and two more tests
+  hold it there. **One residual, which Task 4 will meet**: that fixture still
+  asks the live app how far a ball carried, because the frozen copy of that
+  formula cannot be reached without weakening a different guard. It is watched
+  rather than prevented, and exactly what the watch does and does not catch is
+  measured in that file's own header. If Slice 11 ends up touching
+  `src/ballFlight.js`, freeze the carry formula; never adjust the record.
 - ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice

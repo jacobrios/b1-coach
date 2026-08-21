@@ -15,6 +15,31 @@
 //   docs/eval-fixtures/slice10-direction-key/after
 //   docs/eval-fixtures/slice10-direction-key/after-spray
 //
+// DATED CORRECTION, 20 August 2026, LATER THE SAME DAY, from a review pass
+// after this file was written and committed. THE LIST ABOVE IS ONE SHORT.
+// There is a sixth:
+//
+//   docs/eval-fixtures/slice7-debriefs
+//
+// Ninety-six debriefs, and it is the one with the most riding on it. The
+// grading tool forces that builder for every --validate run, and --validate
+// against those 96 debriefs is the entire basis on which this project ever
+// established that its grading tool catches a real coach error. It hid from
+// five review passes for a reason worth knowing: that directory freezes its
+// own stand-in session 1 and its own cell list, so it read as a directory that
+// had already solved this problem. It had solved half of it. It generated
+// sessions 2 and later by importing the generator out of the working tree,
+// exactly like the five above, and all three of its cells are session 2 or
+// later.
+//
+// It reads this file now. Its three cells are in the digest committed beside
+// this one, and two tests in scripts/frozenGenerator.test.js hold it there.
+// One import in it is deliberately still live, carryDistance from
+// src/ballFlight.js, because the frozen copy below is module-private inside
+// the hashed region and exporting it would force a re-pin. That residual, and
+// exactly which carryDistance changes the digest can and cannot see, is
+// measured in that file's own header rather than summarised here.
+//
 // Slice 11 rewrites src/swingGenerator.js: the link between where a pitch
 // was and how well it was struck, the pull and opposite-field bias, and the
 // pop-up ceiling. From the moment it lands, the working tree no longer holds
@@ -191,6 +216,12 @@
 // "slice9-before" session builders, which are the only supported way to
 // grade any of the five rounds listed above, and checked on every npm test
 // by scripts/frozenGenerator.test.js against the digest committed beside it.
+//
+// DATED CORRECTION, 20 August 2026, same pass as the correction at the top of
+// this header. THREE BUILDERS READ THIS FILE, NOT TWO. The third is "frozen",
+// which reaches it through docs/eval-fixtures/slice7-debriefs/rebuild.mjs
+// rather than directly, and it is the one the grading tool forces for every
+// --validate run. Six committed fixture directories, not five rounds.
 
 // ==== HASH BOUNDARY. EVERY LINE BELOW IS PINNED BY scripts/frozenGenerator.test.js ====
 //

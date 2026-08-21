@@ -181,7 +181,10 @@ const MAX_PLANNED_CALLS = 100
 // could load it). docs/eval-fixtures/slice7-debriefs/rebuild.mjs is a
 // frozen, deliberately-unmaintained copy of that exact stand-in generator,
 // kept exactly as it was so it keeps reconstructing what those 96 debriefs
-// actually saw. Grading them against anything else, including today's real
+// actually saw. (DATED CORRECTION, 20 August 2026: "kept exactly as it was"
+// was true of the code written in that file and false of the swing generator
+// it called, which it imported from the working tree until today. See the
+// correction in the fourth section below.) Grading them against anything else, including today's real
 // session-1 swings, would silently invalidate every verdict: the swing
 // numbers and values in the coach's own prose would no longer match the
 // "current" fact sheet's per-swing table at all.
@@ -266,6 +269,47 @@ const MAX_PLANNED_CALLS = 100
 //   current          live baseline, live generator
 //   slice11-before   live baseline, frozen generator
 //   slice9-before    frozen baseline, frozen generator
+//
+// *** DATED CORRECTION, 20 August 2026, LATER THE SAME DAY. THE TABLE ABOVE
+// *** LISTS THREE BUILDERS AND THIS SCRIPT HAS FOUR. The missing row is the
+// *** oldest one, "frozen", and its absence is not a typo: it is what let this
+// *** whole problem hide from six passes of review.
+//
+//   frozen           frozen baseline, LIVE GENERATOR until today
+//                    frozen baseline, frozen generator from today
+//
+// Read that row against the provenance list a dozen lines above this section,
+// which has mapped "frozen" to docs/eval-fixtures/slice7-debriefs since the day
+// it was written. Everything needed to see the gap was already on this screen.
+// What stopped anybody seeing it was that this section's own summary omitted
+// the row, and a reader checking whether the pairs were right checked the
+// summary.
+//
+// The exposure was the worst of the six rather than the mildest.
+// docs/eval-fixtures/slice7-debriefs/rebuild.mjs froze its own stand-in for
+// session 1 in August and then generated sessions 2 and later by importing the
+// generator out of the working tree, and all three of its cells are session 2
+// or later. Meanwhile the flag rules below FORCE this builder for every
+// --validate run, and --validate against those 96 debriefs is the entire basis
+// on which this tool's ability to catch a real coach error was established. A
+// generator rewrite would have re-graded that fixture against a complete,
+// plausible fact sheet no coach in it ever saw, and the tool would then have
+// been "revalidated" against it.
+//
+// It is repaired: rebuild.mjs now imports the same frozen snapshot the two rows
+// above it use, its three cells are recorded in the committed digest, and two
+// tests in scripts/frozenGenerator.test.js hold it there.
+//
+// TWO IMPORTS IN THAT FILE ARE STILL LIVE, deliberately, and the honest
+// statement is in its own header rather than summarised away here. computeStats
+// for the same reason every other builder keeps it. carryDistance because the
+// snapshot's copy is module-private inside a pinned hash region, so reaching it
+// would force a re-pin; that one is a real residual and its header measures
+// exactly which carryDistance changes the digest can and cannot see.
+//
+// THE LESSON FOR WHOEVER ADDS THE FIFTH BUILDER: the summary table above is the
+// thing people read. If a builder is not in it, the builder does not exist as
+// far as review is concerned.
 //
 // The frozen generator is
 // docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs, recovered from
@@ -426,6 +470,27 @@ async function loadCurrentBaseline() {
 // The frozen pre-rewrite session 1: what Slice 9's before round is written
 // about. A committed snapshot, never the working tree, for the reason its own
 // header spells out at length.
+//
+// THIS PATH IS HARDCODED AND NOTHING BINDS IT, AND THAT IS CLOSED RATHER THAN
+// OUTSTANDING. Recorded 20 August 2026 so nobody reopens it.
+//
+// It looks like the gap that was closed one loader up, where the snapshot's
+// path became an exported constant so a test could hold it to the file it
+// hashes. It is not the same gap, and the asymmetry is the reason. That file
+// needed a hash because the digest is measurably blind to parts of it: four
+// clamps and the whole above-28-degrees branch of the carry formula can change
+// without moving a single recorded swing, so "has this file moved" had to be
+// asked separately. A baseline has no blind spot at all. Its fifteen swings go
+// into the digest whole and are compared element by element on every npm test,
+// so any change to this file, or any repointing of this loader, shows up as
+// different swings immediately.
+//
+// Measured both ways rather than argued, first by review and then re-run
+// against the file as it stands on 20 August 2026 rather than carried over as
+// a number: mutating one exitSpeed in place, and repointing this loader at a
+// mutated copy outside the repository, each turn the same seven tests red,
+// every slice9-before cell and nothing else. A hash here would restate what the
+// digest already proves. No second definition is wanted.
 let _slice9BeforeBaseline = null
 async function loadSlice9BeforeBaseline() {
   if (_slice9BeforeBaseline) return _slice9BeforeBaseline

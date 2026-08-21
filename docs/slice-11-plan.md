@@ -140,6 +140,29 @@ imports the generator from the working tree. The five are:
     slice10-direction-key/after      builder = current
     slice10-direction-key/after-spray builder = current
 
+**Dated correction, 20 August 2026, after Task 1 was built, reviewed six times
+and finished. It is six, not five.** The sixth is
+`docs/eval-fixtures/slice7-debriefs`, the 96-debrief fixture, and it is the one
+this project could least afford to lose: the grading tool's own ability to catch
+a real coach error was established against those debriefs and no others, and the
+tool forces that builder every time it runs that check. So a generator rewrite
+would have re-validated the tool against a set of swings no coach in the fixture
+ever saw.
+
+It hid, through six passes, for a reason worth carrying forward. That directory
+already freezes its own first session and its own list of cells, so to everyone
+who looked it read as a directory that had already dealt with this. It had dealt
+with half of it. The other half, the generator that turns session 1 into
+sessions 2, 3 and 4, it took from the live app, exactly like the five above.
+Every one of its cells is a later session, so every one of them was exposed.
+
+The correction was written up as Task 1b and is done. What is worth taking from
+it, more than the number: the summary table inside
+`scripts/grade-coach-accuracy.mjs` listed three builders while the file had
+four, and a provenance list a dozen lines above it named the missing one
+correctly. Reviewers read the summary. A thing left out of the summary does not
+exist as far as review is concerned.
+
 **Write the digest first, from the live code, before anything changes.**
 
 1. A script run resolves all seven cells (`power-s1`, `power-s2`, `contact-s1`,
@@ -207,7 +230,31 @@ suite:
    the live generator and watch it go red once Task 4 lands.
 
 **And correct the record**: CLAUDE.md's "four committed fixture directories"
-becomes five, as a dated annotation.
+becomes five, as a dated annotation. *(Dated correction, 20 August 2026: and
+then six. See the correction under the list further up this task.)*
+
+## Task 1b: the sixth directory, and the summary table that hid it
+
+Written 20 August 2026, after Task 1 was finished and reviewed. It repoints
+`docs/eval-fixtures/slice7-debriefs/rebuild.mjs` at the frozen snapshot, adds a
+third group to the committed record of what the old generator produced so that
+fixture's swings are re-checked on every test run, adds the missing fourth row
+to the builder summary table in `scripts/grade-coach-accuracy.mjs`, and corrects
+every place that said four or five. Full detail in the task's own brief and
+report under `.superpowers/sdd/slice-11-plan/`.
+
+**One residual it could not close, named here because Task 4 will meet it.**
+That fixture works out how far each first-session ball carried by calling
+`carryDistance` from `src/ballFlight.js`, live. It could not be pointed at the
+frozen copy, because that copy is private to the snapshot and sits inside the
+snapshot's pinned region, so reaching it would mean re-pinning a hash for
+convenience, which this project has already decided in writing is how that guard
+stops meaning anything. What it has instead is noise rather than prevention: a
+change to the carry formula that reaches those first-session balls turns three
+named tests red. Measured, along with the case it does NOT catch, in that
+file's own header. Slice 11 does not currently plan to touch
+`src/ballFlight.js`; if that changes, the answer is a frozen carry formula, and
+never a new record of what the generator produced.
 
 ## Task 2: grow the measurement script, and take the before numbers
 

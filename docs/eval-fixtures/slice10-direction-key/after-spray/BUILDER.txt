@@ -91,6 +91,24 @@
 # what this file said on the day the round was generated, which is worth more
 # than a tidy file.
 
+# SECOND ANNOTATION, 20 AUGUST 2026, LATER THE SAME DAY. THE COUNT ABOVE IS
+# WRONG AND THE BUILDER LINE BELOW IS NOT.
+#
+# This file says "all five affected directories" further up. It is six. The
+# sixth is ../../slice7-debriefs, the 96-debrief fixture, found by a review pass
+# after the marker repairs were finished and committed. It hid because it
+# freezes its own session 1 and so looked, to everyone who checked, like a
+# directory that had already solved this problem; it had solved half of it, and
+# was importing the generator out of the working tree exactly as this round was.
+#
+# Nothing about this round changes. The correction is recorded here because
+# this marker is where a future reader will come looking for the list, and a
+# list that is one short is the specific failure that produced the sixth
+# directory in the first place.
+#
+# It is repaired: that fixture now imports the frozen snapshot, its three cells
+# are in the committed digest, and two tests hold it there.
+
 # builder = current   (struck 20 August 2026, see the annotation above)
 builder = slice11-before
 handed-era = current
