@@ -972,7 +972,35 @@ specific to this repo:
    project cannot back is the exact thing the whole task exists to remove.
    The same fix stopped the check calling an indented comment "behaviour",
    which was a live false-red trap in a header that had already been edited
-   three times in a day. It was 573
+   three times in a day.
+
+   **Dated annotation, 20 August 2026, later the same day: that calibration
+   is true of U+2028 and does not carry over to the character the fix was
+   still missing.** The check excluded U+2028 and U+2029 and not U+000D
+   CARRIAGE RETURN, which JavaScript also treats as ending a `//` comment.
+   Review built the identical attack with a CR in place of the U+2028 and
+   measured it rather than arguing it: `npm test` reported 597 passed across
+   23 files, fully green, while loading the snapshot the way the grading
+   script actually loads it made 5 of the 21 digest cells rebuild to
+   different swings, the first being `slice11-before` at seed 20260819 on
+   `power-s2`. **The sentence that no longer holds is the sweeping one.**
+   Nobody types a U+2028 by accident, but ordinary tooling produces a
+   carriage return without anybody intending one: an editor set to CRLF
+   endings, a checkout on Windows, a `core.autocrlf` setting, a paste that
+   mixes line endings. So this class of hole is not tamper-only, and filing
+   it that way was more comfortable than the facts supported.
+
+   **The accidental-drift risk stays low all the same, and the reason is
+   worth keeping rather than dropping with the claim.** A CRLF conversion of
+   the whole file is caught anyway by the byte-count and hash checks below
+   the boundary, so the file has to be LF-only for this guard to be green at
+   all. The fix does mean a CRLF-converted file now also fails the purity
+   check above the boundary, which is correct rather than a cost: it is the
+   same fact arriving one check earlier, in a message that names the line.
+   What the fix buys is that the set is now closed: ECMAScript defines
+   exactly four LineTerminators, LF is the one the check splits the file on,
+   and CR, U+2028 and U+2029 are the three the character class excludes, so
+   there is no fifth character left to be found later. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535

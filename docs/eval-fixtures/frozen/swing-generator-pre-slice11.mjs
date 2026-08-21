@@ -114,6 +114,27 @@
 // it should ride along with some other change that legitimately re-pins the
 // region, and the commit should say so out loud.
 //
+// THE HONEST LIMIT OF THAT DECISION, recorded 20 August 2026 after review
+// asked how a reader would ever actually meet it.
+//
+// This correction sits a long way ABOVE the line it corrects: about a
+// hundred lines of header, and the gap widens every time this header does,
+// including with this paragraph. A precise count is not given on purpose,
+// since it would be wrong by the next edit. There is nothing at or beside
+// the wrong line pointing back up here, and there cannot be, because a
+// pointer down there would sit inside the hashed region and would need the
+// very re-pin the correction was declined over.
+//
+// So the correction reaches somebody who reads this header top to bottom,
+// and misses somebody who arrives at "All four are" directly, by searching
+// the file or by following a reference to it. The second reader is the more
+// likely one. That is a real cost of keeping the pin trustworthy rather than
+// a tidy outcome, and it is written down instead of smoothed over.
+//
+// The CR fix made to scripts/frozenGenerator.test.js the same day does not
+// help here either: it changes no line of this file, so it created no
+// legitimate re-pin for the wording correction to ride along with.
+//
 // SEPARATELY FROM THAT PROSE, EVERY LINE OF CODE IN THIS FILE IS PINNED BY
 // HASH in scripts/frozenGenerator.test.js and checked on every npm test.
 // That includes the frozen copies of carryDistance and the goal targets
@@ -132,10 +153,36 @@
 // things Slice 11 is about to do.
 //
 // The prose header is outside the hashed region on purpose, so it can be
-// corrected (as it has been three times today) without anybody being tempted to
-// re-pin the number. The test defends that carve-out from the other side
-// too: it refuses any line above the boundary that is not blank or a
-// comment, so behaviour cannot be quietly moved out of the hash.
+// corrected (as it has been four times on 20 August 2026) without anybody
+// being tempted to re-pin the number. The test defends that carve-out from
+// the other side too, and it is worth stating exactly rather than loosely,
+// because the loose version of this sentence was wrong in two documents
+// before it was wrong in this one.
+//
+// WHAT THE TEST ACTUALLY ACCEPTS ABOVE THE BOUNDARY: a blank line, or a
+// single-line `//` comment carrying no embedded line terminator. That is
+// narrower than "not blank or a comment" in two ways, and one further point
+// is worth spelling out because it looks like a third. All three matter to
+// anybody editing this header:
+//
+//   * A BLOCK COMMENT IS A COMMENT AND IS STILL REFUSED. A `/* ... */` line
+//     up here turns the suite red. Nothing is wrong with block comments; the
+//     check simply cannot read one line of a block and know whether the
+//     block is still open, so it declines to guess. Write prose up here with
+//     `//`, which is what every line of this header already does.
+//   * An INDENTED `//` comment IS accepted, deliberately, and this is the
+//     one that is not a narrowing. An earlier version of the check anchored
+//     `//` to column 0 and called an indented note behaviour, which failed
+//     the suite with a message telling the author their comment was not a
+//     comment. Indent freely.
+//   * A `//` line carrying a CARRIAGE RETURN, a U+2028 or a U+2029 is
+//     refused, because JavaScript ends a `//` comment at any of those while
+//     a newline-based check does not, so such a line is prose to the guard
+//     and a live statement to Node. Corrected here on 20 August 2026; the
+//     reasoning, and why those three plus the newline are the whole set, is
+//     in the test's own comment.
+//
+// The effect is unchanged: behaviour cannot be quietly moved out of the hash.
 //
 // Read by scripts/grade-coach-accuracy.mjs's "slice11-before" and
 // "slice9-before" session builders, which are the only supported way to

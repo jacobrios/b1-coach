@@ -179,36 +179,75 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
     // this check anchored `//` at column 0, so it would have called an
     // indented line behaviour and failed the suite with a message telling the
     // author their comment was not a comment. The header above this boundary
-    // is actively edited (three times in one day so far), so that was a live
-    // false-red trap rather than a hypothetical one.
+    // is actively edited (four times on 20 August 2026 alone), so that was a
+    // live false-red trap rather than a hypothetical one.
     //
-    // The excluded characters are U+2028 LINE SEPARATOR and U+2029 PARAGRAPH
-    // SEPARATOR, written as escapes rather than pasted in, because the entire
-    // point of them is that they are invisible in a source file. JavaScript
-    // ends a `//` comment at either of them; String.split('\n') does not. So
-    // one physical line starting with `//` and containing a U+2028 is prose
-    // to a newline-based check and a comment followed by a live statement to
-    // Node. Review demonstrated it with a line reading as a formatting note
-    // that patched Math.min when not running under vitest: 597 tests green,
-    // and the frozen generator's exit velocity ceiling reading 90 instead of
-    // 97 when loaded by scripts/grade-coach-accuracy.mjs, which is how it is
-    // actually loaded. Reproduced here before the fix, and measured after.
+    // THE EXCLUDED CHARACTERS ARE A CLOSED SET, AND THAT IS THE WHOLE POINT
+    // OF WRITING THEM OUT.
     //
-    // CALIBRATE THIS HONESTLY, because the fix is cheap and the threat is
-    // not the reason to take it. Nobody types U+2028 by accident and no
-    // search and replace produces one. This was a hole in the
+    // JavaScript ends a `//` comment at any LineTerminator, and ECMAScript
+    // defines exactly four of those: U+000A LINE FEED, U+000D CARRIAGE
+    // RETURN, U+2028 LINE SEPARATOR and U+2029 PARAGRAPH SEPARATOR. There is
+    // no fifth, so this hole closes exhaustively rather than one character at
+    // a time. Each of the four is handled, and here is where:
+    //
+    //   U+000A LF  is what this code splits the file on, so it can never sit
+    //              inside one of the lines being tested.
+    //   U+000D CR  excluded by the character class below.
+    //   U+2028 LS  excluded by the character class below.
+    //   U+2029 PS  excluded by the character class below.
+    //
+    // All three exclusions are written as escapes rather than pasted in,
+    // because the entire point of these characters is that they are
+    // invisible in a source file.
+    //
+    // Without the exclusion, one physical line starting with `//` and
+    // carrying any of the three is prose to a newline-based check and a
+    // comment followed by a live statement to Node. That was reproduced
+    // against this very file, twice, before either fix was trusted: a line
+    // reading as a formatting note, then a line terminator, then a statement
+    // patching Math.min when not running under vitest. Both times the suite
+    // reported 597 tests green while the frozen generator's exit velocity
+    // ceiling read 90 instead of 97 when loaded by
+    // scripts/grade-coach-accuracy.mjs, which is how it is actually loaded.
+    // Review found it with U+2028 on 20 August 2026; CR was closed the same
+    // day and measured the same way.
+    //
+    // THE CR EXCLUSION ALSO REFUSES ANY LINE UP HERE THAT CARRIES A TRAILING
+    // CR, which is what a CRLF-converted file looks like. That is correct
+    // rather than a cost this check pays. A CRLF conversion of the whole file
+    // already fails the byte-count and hash checks below the boundary, so the
+    // file has to be LF-only for this guard to be green at all; a red up here
+    // is the same fact arriving one check earlier.
+    //
+    // CALIBRATE THIS HONESTLY, because the fix is cheap and it is worth being
+    // straight about which of the two threats it answers.
+    //
+    // For U+2028 and U+2029: nobody types either by accident and no search
+    // and replace produces one, so closing those was a hole in the
     // TAMPER-EVIDENCE claim, not in the drift protection that is the guard's
     // day job. It was worth closing because three committed documents assert
     // the stronger claim, and a claim this project cannot back is exactly
     // what this whole task exists to stamp out.
+    //
+    // DATED CORRECTION, 20 August 2026: that calibration does NOT carry over
+    // to CR, and the paragraph above used to be written as though it covered
+    // the whole class. Ordinary tooling produces a CR without anybody
+    // intending one: an editor set to CRLF endings, a checkout on Windows, a
+    // `core.autocrlf` setting, a paste that mixes endings. So CR is a real
+    // accidental-drift path as well as a tamper path. The accidental risk
+    // stays low all the same, for the reason given above: a whole-file CRLF
+    // conversion is caught by the byte-count and hash checks below the
+    // boundary regardless. What no longer holds is the sweeping claim that
+    // this class of hole is tamper-only.
     const above = lines.slice(0, lines.indexOf(HASH_BOUNDARY_LINE))
     const carriesBehaviour = above.filter(
-      (line) => line.trim() !== '' && !/^\s*\/\/[^\u2028\u2029]*$/.test(line),
+      (line) => line.trim() !== '' && !/^\s*\/\/[^\r\u2028\u2029]*$/.test(line),
     )
     expect(
       carriesBehaviour,
       'every line above the hash boundary must be blank, or a single-line // comment ' +
-        'carrying no unicode line separator',
+        'carrying no embedded line terminator (CR, U+2028 or U+2029)',
     ).toEqual([])
   })
 
