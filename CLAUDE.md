@@ -950,19 +950,13 @@ specific to this repo:
    app in a real browser and look at it. This project's whole value is what a
    stranger sees, so "the code looks right" is not evidence here, and the suite
    does not reach it.
-4. **This app is for a desktop or an iPad, and the standing real-phone rule
-   does not apply to it.** Stated by the owner on 20 August 2026, and written
-   here rather than answered again because it had come up before and was being
-   re-raised as a blocker at the start of Slice 11. The user-level rule says
-   anything visual gets a pass on a real phone before the QA script is written;
-   that rule exists to catch failures a desktop browser hides, and it earns its
-   cost only where a phone is a real target. Here it is not one. So the rendered
-   check in item 3 is a desktop check, an iPad-width check is welcome when a
-   layout actually moves, and **a phone pass is neither required nor a deviation
-   to declare.** Two consequences worth naming so nobody re-derives them: do NOT
-   add `--host` to the dev server on the strength of that rule, and do not read
-   the 390px chat-panel finding on the What's Next list as a defect, because
-   390px is not a width this app is asked to survive.
+4. **This app is for a desktop or an iPad, so the standing real-phone rule does
+   not apply.** Owner, 20 August 2026, recorded here because it had come up
+   before and was re-raised as a blocker at the start of Slice 11. Item 3's
+   rendered check is a desktop check; an iPad width is worth a look when a
+   layout moves; a phone pass is neither required nor a deviation to declare.
+   Do not add `--host` on the strength of that rule, and do not read the 390px
+   chat-panel item on What's Next as a defect.
 
 Failure paths need to be seen failing, not reasoned about. Force the error
 rather than describing what would happen.
