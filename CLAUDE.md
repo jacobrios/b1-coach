@@ -921,16 +921,19 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and after Slice 11's first task on 20 August 2026 it is 597 tests
+   vitest, and after Slice 11's first task on 20 August 2026 it is 599 tests
    across 23 files, up from the 573 across 22 at the close of Slice 10 the
-   same day. The 24 new tests are `scripts/frozenGenerator.test.js`, and they
-   answer two different questions that a reader should not merge. Twenty-two
+   same day. The 26 new tests are `scripts/frozenGenerator.test.js`, and they
+   answer three different questions that a reader should not merge. Twenty-two
    of them rebuild every bench cell at every seed through the frozen
    pre-Slice-11 generator and hold the result against a committed digest, so
    five committed rounds of coach debriefs cannot quietly start being graded
-   against swings their coaches never saw. The other two ask a different
+   against swings their coaches never saw. Two more ask a different
    question, whether the snapshot FILE has moved, by hashing every line of
-   code in it. Both are needed, which was measured rather than assumed: an
+   code in it. The last two ask whether the guard itself still works: whether
+   the rule about what may sit above the hash boundary still refuses every
+   line terminator, and whether the grading script is even reading the file
+   this test is hashing. Both are needed, which was measured rather than assumed: an
    independent review mutated the snapshot five ways, one line each, and four
    of the five (all the clamps, and the whole above-28-degrees branch of the
    carry formula) changed no swing in any cell at either seed, so the data
@@ -1000,7 +1003,41 @@ specific to this repo:
    What the fix buys is that the set is now closed: ECMAScript defines
    exactly four LineTerminators, LF is the one the check splits the file on,
    and CR, U+2028 and U+2029 are the three the character class excludes, so
-   there is no fifth character left to be found later. It was 573
+   there is no fifth character left to be found later.
+
+   **Dated correction, 20 August 2026: the paragraph above is right that a
+   CRLF file cannot be green and wrong about which check catches it.** Both
+   cases were run rather than reasoned about, because that sentence was
+   written from reading the pattern instead of from output. A **whole-file**
+   conversion never reaches the purity check at all: the boundary line itself
+   picks up a carriage return, the lookup for it fails, and the test dies on
+   its first assertion instead. What fires is `the snapshot must carry exactly
+   one hash boundary line: expected +0 to be 1`, alongside `the hashed region
+   changed size: expected +0 to be 14093`. Neither names an offending line and
+   the carriage return exclusion contributes nothing to either. The claim is
+   true of a **partial or mixed-ending** file, where the boundary line
+   survives: there the purity check does run and does name the lines. That is
+   also the realistic accident, a few lines pasted in with Windows endings
+   rather than a whole file converted, so the substantive point stands. What
+   was wrong was the mechanism, which is the same defect class this passage
+   has now been corrected for twice.
+
+   **Two further guards were added the same day, both proven by reopening the
+   hole they close.** The prose rule was hoisted into one named function that
+   the boundary check calls, with a test that drives it directly using
+   characters built from their codes, because the boundary check can only
+   exercise the exclusion if the snapshot carries a terminator and the
+   snapshot must never carry one. Dropping the carriage return from the class
+   now fails with `CR must be refused`, where before it left the suite green.
+   And the grading script's snapshot path became an exported constant that
+   the test asserts equals the path it resolves independently, the same shape
+   `src/sessionStats.test.js` uses to hold `src/DebriefScreen.jsx`'s cutoffs
+   to `SPRAY_CUTOFFS`. Before that, the test hashed one path and the loader
+   imported another with nothing tying them together: repointing the loader
+   at a copy carrying a mutated carry-distance floor left the suite reporting
+   597 passed while the hash guarded a file nothing read.
+
+   Earlier counts, for the record. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535

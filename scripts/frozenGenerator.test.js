@@ -46,7 +46,7 @@ import { createHash } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
-import { resolveSessions } from './grade-coach-accuracy.mjs'
+import { resolveSessions, PRE_SLICE11_SNAPSHOT_PATH } from './grade-coach-accuracy.mjs'
 import { DIGEST_GROUPS, digestForCell } from './sessionDigest.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -108,6 +108,27 @@ const RECOVERED_MARKER_LINE = '// The recovered file begins here'
 // the shrunk-to-nothing case says so in words.
 const FROZEN_CODE_BYTES = 14093
 const FROZEN_CODE_SHA256 = 'b03a7c19412ecc470c66d94cb4a17d30e4a7eaab1718d906d3a3f285290202be'
+
+// WHAT COUNTS AS PROSE ABOVE THE HASH BOUNDARY. One definition, called by the
+// real check below and fed hand-built strings by its own test, so the rule can
+// be exercised directly instead of only through whatever the snapshot happens
+// to contain today.
+//
+// It is hoisted for one reason, and it is the concern the last round left
+// open. The real check only sees this pattern reject a line terminator if the
+// snapshot happens to carry one, and the snapshot must never carry one. So a
+// future edit "simplifying" the character class would reopen the smuggling
+// hole with the whole suite still green, which is the precise shape of failure
+// this file exists to remove. Hoisting removes the copy rather than creating
+// one: there is still exactly one pattern in this repository, and the test
+// below now drives it with strings built from character codes.
+//
+// See the long comment inside the boundary test for why the pattern is what it
+// is, and why CR, U+2028 and U+2029 plus the newline it splits on are the
+// whole set.
+export function isProseOnlyLine(line) {
+  return line.trim() === '' || /^\s*\/\/[^\r\u2028\u2029]*$/.test(line)
+}
 
 describe('the frozen pre-Slice-11 generator still produces what it produced', () => {
   // TWO DIFFERENT QUESTIONS ARE ASKED IN THIS FILE, AND MIXING THEM UP IS
@@ -179,7 +200,8 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
     // this check anchored `//` at column 0, so it would have called an
     // indented line behaviour and failed the suite with a message telling the
     // author their comment was not a comment. The header above this boundary
-    // is actively edited (four times on 20 August 2026 alone), so that was a
+    // is actively edited (repeatedly on 20 August 2026; see `git log` on that
+    // file rather than trusting a count written here), so that was a
     // live false-red trap rather than a hypothetical one.
     //
     // THE EXCLUDED CHARACTERS ARE A CLOSED SET, AND THAT IS THE WHOLE POINT
@@ -220,6 +242,38 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
     // file has to be LF-only for this guard to be green at all; a red up here
     // is the same fact arriving one check earlier.
     //
+    // DATED CORRECTION, 20 August 2026: the paragraph above is right that a
+    // CRLF file cannot be green, and wrong about which check says so. Measured
+    // both ways rather than reasoned about, because the first version of this
+    // passage was written from the pattern rather than from a run.
+    //
+    // A WHOLE-FILE CRLF conversion never reaches this check at all.
+    // HASH_BOUNDARY_LINE itself picks up a trailing CR, so `lines.indexOf`
+    // returns -1 and the enclosing `it()` dies on its very first assertion.
+    // What actually fires is:
+    //
+    //   AssertionError: the snapshot must carry exactly one hash boundary
+    //     line: expected +0 to be 1
+    //   AssertionError: the hashed region changed size ...: expected +0 to be
+    //     14093
+    //
+    // Two failures, neither of which names an offending line, and the CR
+    // exclusion contributes nothing to either. So "the same fact arriving one
+    // check earlier, in a message that names the line" is not what happens
+    // here.
+    //
+    // A PARTIAL OR MIXED-ENDING file is the case the claim is true of. If the
+    // boundary line itself survives as LF, this check does run, and it does
+    // name the lines:
+    //
+    //   AssertionError: every line above the hash boundary must be blank, or a
+    //     single-line // comment carrying no embedded line terminator (CR,
+    //     U+2028 or U+2029): expected [ '//\r', ...(4) ] to deeply equal []
+    //
+    // That is the realistic accident, incidentally: a few lines pasted in with
+    // Windows endings, not a whole file converted. So the substantive point
+    // stands and is worth keeping. What was wrong was the mechanism.
+    //
     // CALIBRATE THIS HONESTLY, because the fix is cheap and it is worth being
     // straight about which of the two threats it answers.
     //
@@ -241,14 +295,104 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
     // boundary regardless. What no longer holds is the sweeping claim that
     // this class of hole is tamper-only.
     const above = lines.slice(0, lines.indexOf(HASH_BOUNDARY_LINE))
-    const carriesBehaviour = above.filter(
-      (line) => line.trim() !== '' && !/^\s*\/\/[^\r\u2028\u2029]*$/.test(line),
-    )
+    const carriesBehaviour = above.filter((line) => !isProseOnlyLine(line))
     expect(
       carriesBehaviour,
       'every line above the hash boundary must be blank, or a single-line // comment ' +
         'carrying no embedded line terminator (CR, U+2028 or U+2029)',
     ).toEqual([])
+  })
+
+  // THE GUARD ON THE GUARD, and it exists because the check above cannot fail
+  // for the reason that matters.
+  //
+  // The boundary test only watches the snapshot, and the snapshot must never
+  // carry a line terminator inside a comment. So the exclusion that stops the
+  // smuggle is never actually exercised by it: drop a character from the class
+  // and every test above stays green, because there is nothing up there to
+  // catch. That is the same shape as every other silent-green failure in this
+  // file, one level up.
+  //
+  // This test drives the rule directly with strings built from character
+  // codes, so nothing here depends on an invisible byte surviving an edit.
+  // That is not a hypothetical concern: while this very test was being added,
+  // an editor wrote the two separator escapes as two literal SPACE characters,
+  // which silently turned the rule into "no line above the boundary may
+  // contain a space." The boundary test caught it because 163 real prose lines
+  // went red at once. Building the inputs from character codes is what keeps
+  // this test honest about the same hazard.
+  it('the prose rule accepts prose and refuses every line terminator', () => {
+    const CR = String.fromCharCode(13)
+    const LS = String.fromCharCode(0x2028)
+    const PS = String.fromCharCode(0x2029)
+
+    // Accepted: what this file's header is actually made of.
+    expect(isProseOnlyLine('// an ordinary sentence of prose.'), 'plain comment').toBe(true)
+    expect(isProseOnlyLine('    // an indented note.'), 'indented comment').toBe(true)
+    expect(isProseOnlyLine('//'), 'empty comment').toBe(true)
+    expect(isProseOnlyLine(''), 'blank line').toBe(true)
+    expect(isProseOnlyLine('   '), 'whitespace-only line').toBe(true)
+    expect(
+      isProseOnlyLine('// Read it: (this), and `that`; 20 August 2026, 0.55 to 0.40.'),
+      'prose carrying punctuation and numbers',
+    ).toBe(true)
+
+    // Refused: the three terminators, each smuggling a live statement behind
+    // what looks like a note. Newline is the fourth and is not testable here
+    // by construction, because the caller has already split the file on it.
+    expect(
+      isProseOnlyLine('// formatting note.' + CR + 'globalThis.owned = 1'),
+      'CR must be refused',
+    ).toBe(false)
+    expect(
+      isProseOnlyLine('// formatting note.' + LS + 'globalThis.owned = 1'),
+      'U+2028 must be refused',
+    ).toBe(false)
+    expect(
+      isProseOnlyLine('// formatting note.' + PS + 'globalThis.owned = 1'),
+      'U+2029 must be refused',
+    ).toBe(false)
+
+    // Refused: a trailing CR on its own, which is what a CRLF-converted line
+    // looks like when the boundary line itself survived the conversion.
+    expect(isProseOnlyLine('// an ordinary sentence.' + CR), 'trailing CR must be refused').toBe(
+      false,
+    )
+
+    // Refused: actual behaviour, and a block comment, which is a comment and
+    // is still refused because a line-based check cannot know whether the
+    // block is still open.
+    expect(isProseOnlyLine('const SNEAKY_TUNABLE = 0.40'), 'bare statement').toBe(false)
+    expect(isProseOnlyLine('/* a block comment */'), 'block comment').toBe(false)
+    expect(isProseOnlyLine(' * inside a block comment'), 'block comment continuation').toBe(false)
+  })
+
+  // THE TEST AND THE LOADER MUST BE TALKING ABOUT THE SAME FILE.
+  //
+  // Everything else in this file hashes and rebuilds a path this test works
+  // out for itself. scripts/grade-coach-accuracy.mjs works out its own path to
+  // import. Until 20 August 2026 nothing tied the two together, and the gap was
+  // measured rather than argued: copying the snapshot, repointing the loader at
+  // the copy, and mutating carryDistance's high-angle floor from 0.55 to 0.40
+  // in the copy left `npm test` reporting 597 passed across 23 files. The
+  // imported file ran 0.40, the hashed file ran 0.55, and the hash was
+  // guarding a file nothing read. The only surviving check would have been the
+  // 21-cell data comparison, which this file's own header records as blind to
+  // all four clamps and the whole above-28-degrees carry branch.
+  //
+  // The realistic trigger is not tampering. It is a future slice adding a
+  // second snapshot beside this one and repointing the loader, while this
+  // test's copy of the path stays exactly where it is.
+  //
+  // Same shape src/sessionStats.test.js already uses to hold
+  // src/DebriefScreen.jsx's hardcoded cutoffs to SPRAY_CUTOFFS: two
+  // independent definitions, held equal by a test, so a drift is loud.
+  it('the grading script imports the same snapshot this test hashes', () => {
+    expect(
+      PRE_SLICE11_SNAPSHOT_PATH,
+      'scripts/grade-coach-accuracy.mjs imports a different file from the one this test ' +
+        'hashes, so the hash is guarding a file nothing reads',
+    ).toBe(SNAPSHOT_PATH)
   })
 
   it('every line of frozen code in the snapshot is byte-for-byte what was recovered', () => {

@@ -153,7 +153,10 @@
 // things Slice 11 is about to do.
 //
 // The prose header is outside the hashed region on purpose, so it can be
-// corrected (as it has been four times on 20 August 2026) without anybody
+// corrected (repeatedly, all on 20 August 2026; `git log` on this file is the
+// authority and showed five header-editing commits after creation when this
+// line was written, a count that has been wrong twice already for the obvious
+// reason, so do not trust it over the log) without anybody
 // being tempted to re-pin the number. The test defends that carve-out from
 // the other side too, and it is worth stating exactly rather than loosely,
 // because the loose version of this sentence was wrong in two documents

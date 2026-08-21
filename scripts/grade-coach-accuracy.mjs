@@ -341,10 +341,37 @@ async function loadCurrentGenerator() {
 // The frozen pre-Slice-11 generator: what every round committed before
 // 20 August 2026 is written about. A committed snapshot, never the working
 // tree, for the reason its own header spells out at length.
+//
+// THE PATH IS AN EXPORTED CONSTANT RATHER THAN A STRING INSIDE THE LOADER,
+// AND THAT IS LOAD-BEARING RATHER THAN TIDINESS.
+//
+// scripts/frozenGenerator.test.js hashes this snapshot to prove it has not
+// moved. It computes the path to hash itself. Until 20 August 2026 nothing
+// tied the two together, so the test hashed a path it worked out and the
+// loader imported a path IT worked out, and a change to one was invisible to
+// the other. Measured, not argued: repointing this loader at a copy of the
+// snapshot carrying a mutated carryDistance floor left `npm test` reporting
+// 597 passed across 23 files, while the file actually being imported ran
+// 0.40 and the file being hashed ran 0.55. The hash was guarding a file
+// nothing read.
+//
+// The realistic way that happens is not tampering. It is a future slice
+// adding a second snapshot beside this one and repointing this loader, while
+// the test's own copy of the path stays exactly where it is.
+//
+// So the test now imports this constant and asserts it equals the path it
+// resolved independently. Same shape src/sessionStats.test.js already uses to
+// hold src/DebriefScreen.jsx's hardcoded cutoffs to SPRAY_CUTOFFS: two
+// independent definitions, held equal by a test, so a drift is loud.
+export const PRE_SLICE11_SNAPSHOT_PATH = path.join(
+  FROZEN_DIR,
+  'swing-generator-pre-slice11.mjs',
+)
+
 let _preSlice11Generator = null
 async function loadPreSlice11Generator() {
   if (_preSlice11Generator) return _preSlice11Generator
-  const url = pathToFileURL(path.join(FROZEN_DIR, 'swing-generator-pre-slice11.mjs')).href
+  const url = pathToFileURL(PRE_SLICE11_SNAPSHOT_PATH).href
   const { generateSwingsPreSlice11 } = await import(url)
   if (typeof generateSwingsPreSlice11 !== 'function') {
     throw new Error(`${url} did not export generateSwingsPreSlice11.`)
