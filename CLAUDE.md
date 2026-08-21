@@ -547,7 +547,7 @@ the way past if you open the file for another reason.
                              before the snapshot existed, and refuses to
                              overwrite it.
     docs/eval-fixtures/      Committed ground truth, not code. Nine directories.
-                             The ninth is `frozen/` (92 KB), added in Slice 11
+                             The ninth is `frozen/` (104 KB), added in Slice 11
                              and belonging to no single round because more than
                              one round depends on it: a snapshot of the swing
                              generator as it stood at commit 53315e5, plus a
