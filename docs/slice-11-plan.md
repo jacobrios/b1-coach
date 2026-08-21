@@ -269,8 +269,19 @@ is what Task 4 is pointed at. Three things in it are wrong:
   of the 45 recorded ones is hit steeply enough to reach the part of the formula
   that is uncovered. For this fixture the record catches every carry change that
   can move a number it holds. The honest residual is that this cover comes from
-  the data rather than from the wiring, so it would quietly stop holding if
-  somebody changed how that stand-in first session is built.
+  the data rather than from the wiring, ~~so it would quietly stop holding if
+  somebody changed how that stand-in first session is built.~~
+
+  *(Struck clause corrected 21 August 2026, by review. It was false about the
+  very mechanism it named: changing that stand-in session's seed turns four
+  tests red, loudly, because the record pins all forty-five of its balls one by
+  one. Raising its angle limit does stay green, but only because no ball reaches
+  the limit, so the cover did not change either. What is true is that the cover
+  is complete for the shallow half of the carry formula and absent for the steep
+  half, because none of the forty-five balls exceeds 28 degrees, and that absence
+  is a property of the data rather than a requirement anyone wrote down, so a
+  future slice that legitimately re-pins the record could change which half is
+  covered without any test saying so.)*
 - **It was not impossible, only declined.** The pinning rule rules out exporting
   the frozen copy from inside the snapshot. It does not rule out a second frozen
   copy of the carry formula sitting beside it, which would need no re-pin at all.

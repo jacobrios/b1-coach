@@ -117,11 +117,37 @@
 // So for THIS fixture the digest covers every carry change that can move a
 // recorded number. The honest residual is narrower than the paragraph above
 // claimed: it is that the coverage is a property of the data rather than of the
-// wiring, so it would stop holding the day somebody changes standInSessionOne,
-// its seed, or its clamps, and nothing would announce that the cover had gone.
+// wiring, ~~so it would stop holding the day somebody changes standInSessionOne,
+// its seed, or its clamps, and nothing would announce that the cover had
+// gone.~~
 // The corresponding statement for the snapshot's own frozen copy, which the
 // guard test's header records, is a different and wider blind spot, because that
 // one is reached by real swings.
+//
+// THIRD DATED CORRECTION, 21 August 2026, on the struck half-sentence above,
+// and it is the same conflation CLAUDE.md's copy of this warning had to have
+// corrected out of it on the same day. Both were written by the same hand in
+// the same hour and neither was measured before it was written down.
+//
+// The struck clause is false about its own named mechanism, which is the worst
+// way for a warning to be wrong, because it sends a reader to check the wrong
+// thing. Measured:
+//
+//   Changing standInSessionOne's SEED turns FOUR tests red, loudly. Nothing
+//   about that is quiet. The digest pins all forty-five of its balls one by
+//   one, so anything that moves a ball moves the record.
+//
+//   Raising its angle clamp from 35 to 55 does stay green, and that is not a
+//   gap either: no ball reaches the clamp, so the cover did not change.
+//
+// The clause had confused what CREATES the cover, a fixed seed plus a record
+// that pins every ball, with what creates the GAP, no ball hit steeply. What is
+// actually true: the cover is complete for the shallow half of the carry
+// formula and absent for the steep half, because none of the forty-five
+// stand-in balls exceeds 28 degrees. That absence is a property of the data
+// rather than a requirement anybody wrote down, so a future slice that
+// legitimately re-pins the digest could change which half is covered with no
+// test saying so.
 //
 // A frozen carry formula would make the cover structural instead of incidental.
 // That is still worth doing; it is just not urgent for the reason first given.

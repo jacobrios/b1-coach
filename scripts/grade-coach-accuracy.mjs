@@ -187,9 +187,8 @@ const MAX_PLANNED_CALLS = 100
 // section headed "A BUILDER IS A PAIR NOW", and the dated correction inside
 // it naming the fourth builder.) Grading them against anything else,
 // including today's real session-1 swings, would silently invalidate every
-// verdict: the swing
-// numbers and values in the coach's own prose would no longer match the
-// "current" fact sheet's per-swing table at all.
+// verdict: the swing numbers and values in the coach's own prose would no
+// longer match the "current" fact sheet's per-swing table at all.
 //
 // A bench run from today onward uses the REAL session-1 swings
 // (src/sessionOneSwings.js, extracted in this same slice's earlier task),

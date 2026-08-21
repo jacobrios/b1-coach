@@ -2664,12 +2664,28 @@ own self-checks, not the coach.*
   nothing would announce it going away.** Added 20 August 2026, from the item
   above. The 96-debrief fixture's protection against a change to how far a ball
   carries holds only because its stand-in first session is built at a fixed seed
-  and happens to contain no steeply hit ball. Change how that stand-in session
+  and happens to contain no steeply hit ball. ~~Change how that stand-in session
   is built, its seed, or its limits, and the cover quietly stops applying with
-  every test still green. Nothing guards that today. The fix, if it is ever
+  every test still green.~~ Nothing guards that today. The fix, if it is ever
   wanted, is a frozen copy of the carry formula for that fixture to read, which
   turns an accident into a guarantee. Small, and only worth doing if
   `src/ballFlight.js` is being opened anyway.
+
+  **Struck sentence corrected 21 August 2026, by review, and the correction
+  matters because that sentence was the whole warning.** It was false, and
+  false about its own named mechanism: changing that stand-in's seed turns
+  four tests red, loudly, because the record pins all forty-five of its balls
+  individually. Raising its angle limit does stay green, but only because no
+  ball reaches the limit, which means the cover did not change either. The
+  sentence had confused what CREATES the cover (a fixed seed, and a record
+  that pins every ball) with what creates the gap (no ball hit steeply). What
+  is true:
+
+  the cover is complete for the shallow half of the carry formula and absent
+  for the steep half, because none of the fixture's forty-five stand-in balls
+  exceeds 28 degrees. That absence is a property of the data rather than a
+  stated requirement, so a future slice that legitimately re-pins the record
+  could change which half is covered without any test saying so.
 - ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice

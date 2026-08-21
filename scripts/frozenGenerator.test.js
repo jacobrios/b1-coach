@@ -548,6 +548,15 @@ describe('the frozen pre-Slice-11 generator still produces what it produced', ()
   // the strip and no code is lost to it. If a future edit puts a trailing
   // comment mentioning that path after real code, this goes red; that is the
   // safe direction and is worth a false red about once never.
+  //
+  // ADDED 21 August 2026, because "measured against the file as it stands"
+  // reads like a hole and is not one. The failure direction was measured too,
+  // not assumed: the two edits that break the numbers above, a trailing comment
+  // naming that path after real code and a block comment naming it, each turn
+  // this test red, while an ordinary block comment naming nothing stays green.
+  // So an edit that invalidates the measurement produces a nuisance red that
+  // somebody has to look at. It cannot produce a quiet pass, which is the only
+  // outcome that would actually matter here.
   it('the 96-debrief fixture rebuilds through the frozen snapshot, not the working tree', () => {
     expect(
       FIXTURE_REBUILD_PATH,
