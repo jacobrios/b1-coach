@@ -112,6 +112,16 @@ about, importing the app's real `generateSwings`, `computeStats` and
 `carryDistance`. `regrade.mjs` runs the five checks over both record files and
 writes `regrade-results.json`.
 
+**Dated correction, 20 August 2026: `generateSwings` no longer comes from the
+app, and that sentence is what the note at the top of this file is about.** It
+now comes from a frozen copy kept in `../frozen/`, because the app's own version
+is being rewritten and this fixture must keep reconstructing what its coaches
+actually saw. `computeStats` and `carryDistance` still come from the app. The
+first of those is deliberate and harmless: it summarises swings that have
+already been decided, and nothing it produces is part of the record of what this
+fixture made. The second is a genuine loose end, explained where it lives, at the
+top of `rebuild.mjs`.
+
 Both were re-run from this directory on 17 August 2026 after their scratch-only
 absolute paths were made relative, and `regrade-results.json` came out
 byte-for-byte identical to the rescued copy. So the pipeline reproduces, it is

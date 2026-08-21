@@ -212,7 +212,7 @@ async function main() {
   const digest = {
     whatThisIs: [
       'What the coach grader\'s session builders produced on 20 August 2026, before Slice 11 changed',
-      'src/swingGenerator.js. Five committed rounds of debriefs describe these swings and no others.',
+      'src/swingGenerator.js. Six committed fixture directories describe these swings and no others.',
       'Rebuilding those rounds against a later generator does not fail; it produces a complete and',
       'entirely plausible set of swings the coach never saw, and nothing looks broken. This file is the',
       'evidence that says which one you are looking at.',

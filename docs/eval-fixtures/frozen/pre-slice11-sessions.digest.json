@@ -9,7 +9,14 @@
     "DO NOT UPDATE THIS FILE to match anything. It is checked on every npm test by",
     "scripts/frozenGenerator.test.js, which rebuilds every cell below through the frozen generator",
     "snapshot in docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs. If that check goes red, the",
-    "answer is a change to the snapshot or the builders, never a change to these numbers."
+    "answer is a change to the snapshot or the builders, never a change to these numbers.",
+    "",
+    "DATED CORRECTION, 20 August 2026. The paragraph above says FIVE committed rounds. It is six",
+    "committed fixture directories. The sixth is docs/eval-fixtures/slice7-debriefs, the 96-debrief",
+    "fixture the grading tool validates itself against, found by review after the rest of this file",
+    "was written. Its three cells are the \"frozen\" group below; see laterAdditions at the end of this",
+    "file. Nothing recorded before that group was touched, and the correction is appended here rather",
+    "than edited into the paragraph above, for the same reason none of these numbers may be edited."
   ],
   "producedOn": "2026-08-20",
   "producedFromWorkingTreeAtCommit": "72fc2c1",
