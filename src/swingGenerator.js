@@ -152,13 +152,18 @@ export const IN_ZONE_RATE = 0.65
 //
 // ONE ARTIFACT THAT COMES WITH THAT SHAPE, named here because this file names
 // every other thing it does. Piling misses up against the floor leaves a
-// density spike on the zone edge: measured over 209,463 balls at seed 20260821,
-// exactly 1.45 feet accounts for 8.3% of every low miss and exactly 3.55 feet
-// for 8.1% of every high miss, with each side's 0.75 taking about 4.1% of the
-// wide ones. Either side of that sits a hard dead band, because a miss can
-// never be smaller than the floor: not one pitch anywhere lands strictly
-// between 1.45 and 1.50 feet, between 3.50 and 3.55, or between 0.70 and 0.75
-// sideways.
+// density spike on the zone edge, and the size of it can be read straight off
+// the formula rather than sampled: a miss rounds to the nearest bin when it is
+// under 0.055 feet, which happens on `sqrt(0.005 / 0.75)` of draws, about
+// 8.16%. So roughly one low miss in twelve lands on exactly 1.45 feet and one
+// high miss in twelve on exactly 3.55, while a wide miss splits between two
+// sides and puts about 4.08% on each of 0.75 and -0.75. (A one-off sweep of
+// 209,463 balls agreed at 8.29, 8.07, 4.08 and 4.17 percent. The analytic
+// number is quoted first on purpose, because it is checkable without running
+// anything, and no committed script reproduces that sweep.) Either side of the
+// spike sits a hard dead band, because a miss can never be smaller than the
+// floor: not one pitch anywhere lands strictly between 1.45 and 1.50 feet,
+// between 3.50 and 3.55, or between 0.70 and 0.75 sideways.
 //
 // This is NOT the launch angle clamp in a second costume, and the difference is
 // worth holding on to. A clamp piles values onto one extreme and nothing exists

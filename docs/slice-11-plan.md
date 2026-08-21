@@ -626,3 +626,128 @@ something the app really sent rather than only in a unit test.
 - The PR body, near 300 words, naming every touch to already-shipped code and
   to any file this plan did not name.
 - The QA script goes to the chat message, not the PR body.
+
+---
+
+# The findings this task produced that are not fixes
+
+Added 21 August 2026, at the close of Task 4, on the precedent of
+`docs/slice-10-plan.md`'s section of the same name. These are things Task 4 found
+and deliberately did not act on, either because they sit outside its lane or
+because they are a judgment for somebody else. They are written here rather than
+in the task's own report because that report lives under `.superpowers/`, which
+this repository does not keep. This file travels inside the pull request.
+
+## 1. The measurement script now says "mostly" where its own number says "all"
+
+`scripts/measure-swing-generation.mjs`, section 2, generates the sentence "A
+pitch that misses low while staying plausible sideways is what a real thrower
+produces, and that is now what this one mostly does" in the same block where it
+reports 0.0 percent of misses off on both axes and 100.0 percent off on one axis
+only.
+
+**"Mostly" is false against the script's own numbers.** It is all of them. The
+word was correct while this was written, because before Task 4 the sentence
+described a generator that could only ever reduce the defect, and it became wrong
+the moment a generator arrived that removes it. Task 4 did not touch that file,
+which is right, so this is flagged rather than fixed. One word, for whoever opens
+it next, and it should be conditional on the measured share rather than typed
+flat, the way the rest of that section's prose already is.
+
+## 2. `scripts/handedCounts.js` is the cheapest strike-zone copy left to close
+
+That file imports `SPRAY_CUTOFFS` from `src/sessionStats.js` at line 24 and uses
+it at lines 49 and 50, under a comment saying it is read from the constant rather
+than typed for exactly the reason this project consolidates. Seven lines further
+down, at 57 to 58, `ZONE_HEIGHT_THRESHOLDS` writes 3.5 and 1.5 out by hand.
+
+`STRIKE_ZONE` is exported from the same module the file already imports, on the
+same line, so closing this is an import change and two field reads. It is the
+only one of the six remaining copies where the module is already in scope and the
+file already argues in its own comment for doing it. Not done in Task 4 because
+that task had no reason to open the file.
+
+## 3. The strike-zone copy census, hand-enumerated
+
+Task 4 removed one copy: `src/swingGenerator.js` now reads `STRIKE_ZONE` from
+`src/sessionStats.js` instead of writing the zone out as its own literals. Every
+remaining site was then opened by hand rather than counted from memory.
+
+**The definition:** `src/sessionStats.js:13`.
+
+**Four copies in shipped code:**
+
+- `src/DebriefScreen.jsx:810`, the drawn zone rectangle on the pitch location
+  chart.
+- `src/DebriefScreen.jsx:862-863`, `ZoneBreakdown`'s in-zone predicate.
+- `src/DebriefScreen.jsx:1477-1478`, the raw data table's in-zone predicate.
+- `src/coachApi.js:590`, the zone written into the prompt's prose.
+
+**Two more in tooling:**
+
+- `scripts/handedCounts.js:57-58`, per item 2 above.
+- `scripts/bench-coach-brevity.mjs:326`.
+
+**So: four in shipped code, six counting tooling, seven sites including the
+definition.** Say which is meant when quoting the number.
+
+**The census deliberately EXCLUDES the frozen snapshots**, meaning
+`docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs` and
+`docs/eval-fixtures/slice7-debriefs/rebuild.mjs`. Excluding them is correct
+rather than convenient: they are frozen copies on purpose, they exist precisely
+so they cannot follow a change in `src/`, and counting them as drift risk would
+argue for the one edit their own headers forbid. Anybody quoting the census
+should say the same, because a future reader who greps for the bounds will find
+them there and wonder why they are not on the list.
+
+**CLAUDE.md's own line saying the strike-zone bounds are "still written out six
+times" predates this census and is not reconciled here.** It was already an
+undercount before Task 4, since the generator held a copy too. Reconciling it is
+a slice-close job for Task 15, not a Task 4 edit.
+
+## 4. A density spike on the zone edge, for the browser gate
+
+The floor under a miss is 0.05 feet, which is what stops the generator throwing
+a ball that grazes the zone. It also means a missed pitch can never land inside
+that floor, so the pitch location chart now has a visible line of dots one
+twentieth of a foot outside the drawn rectangle, and a hard dead band between
+the two.
+
+The size of it comes off the formula rather than a sample: a miss rounds to the
+nearest bin when it is under 0.055 feet, which is `sqrt(0.005 / 0.75)` of draws,
+about 8.16 percent. So roughly one low miss in twelve sits on exactly 1.45 feet
+and one high miss in twelve on exactly 3.55, while a wide miss splits between two
+sides and puts about 4.08 percent on each of 0.75 and -0.75. Not one pitch
+anywhere lands strictly between 1.45 and 1.50 feet, between 3.50 and 3.55, or
+between 0.70 and 0.75 sideways.
+
+**This is not the launch angle clamp in a second costume**, and the difference
+decides whether it is a defect. A clamp piles values onto one extreme and nothing
+exists beyond it; here the values fan out smoothly from the edge and the spike is
+merely the nearest bin. Task 4 judged it acceptable and named it in
+`src/swingGenerator.js` rather than tuning it away.
+
+**What Task 14 should actually look at**: whether that line of dots reads as a
+thrower missing just off the plate, or as a rendering artifact hugging the edge
+of the zone rectangle. It is one twentieth of a foot outside a dashed border on a
+chart every visitor sees, so the question is a visual one and no measurement can
+answer it. If it reads badly, the fix is a smaller floor or a small jitter on it,
+not a different miss distribution.
+
+## 5. One thing Experiment A did not prove, so nobody cites it as though it did
+
+Task 4 discharged the obligation inherited from Task 1 by repointing
+`loadPreSlice11Generator` in `scripts/grade-coach-accuracy.mjs` at the live
+generator and watching the frozen guard go red, 15 failed against 16 passed, then
+restoring it and watching it go green at 31 of 31.
+
+**That proves the guard bites for the loader route only.** Of the nine data tests
+that stayed green, six are the `power-s1` and `contact-s1` cells across all three
+digest groups, which do reach the repointed loader but contain no generated swing
+at all, because `buildSessionsFromBaseline` seeds session 1 from the baseline
+verbatim and only enters its generation loop at session 2. Those are benign. The
+other three are the `slice7-debriefs` cells, which reach the frozen snapshot
+through `docs/eval-fixtures/slice7-debriefs/rebuild.mjs` and not through the
+loader that was repointed. **That binding has never been demonstrated to bite.**
+Proving it needs its own experiment against that file's own loader. Cheap, and
+worth doing the next time anything opens that directory.
