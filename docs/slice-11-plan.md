@@ -770,25 +770,56 @@ weight of 1.0 means the pitch IS the contact quality and the hitter's own qualit
 draw counts for nothing, which is not a state anybody wants, and it still lands
 under 4.3.
 
-**So reaching 6 mph is a decision about a different constant.** Two candidates,
-and one is already wanted for its own reasons:
+**Dated correction and completion, 21 August 2026, from the review of this
+task.** Two things above needed fixing and the second one changes the answer.
 
-- **`EV_SPREAD_MPH`, today 16.** The gap scales with it directly, so 22 would put
-  today's structure at roughly 4.7 mph without touching the pitch weight at all.
-  Section 9 of the measurement report separately says the generated hitter is
-  **30% tighter** than the hand-written session he is derived from, "which nobody
-  chose", so widening this is on the table regardless of the zone gap. That makes
-  it the cheaper of the two: one change, two targets.
-- **`CONTACT_CORRELATION`, today 0.6.** Raising it lifts the gap proportionally
-  and also tightens how much exit velocity and launch angle agree with each
-  other, which is a settled product decision with its own recorded reasoning.
-  Do not move it as a side effect of chasing this number.
+First, the caveat this section originally carried, that the sweep came from a
+standalone prototype rather than the shipped generator, is **retired**. The two
+were checked against each other and the prototype's numbers reproduce through the
+shipped generator to within a hundredth. Quote them freely.
 
-The third possibility, and it deserves saying so nobody re-derives it: the target
-itself may be too high. The 8.78 mph gap the target is anchored to is session 1's,
-and session 1 is fifteen hand-written swings chosen to read legibly, not a sample
-anybody fitted a rate to. Six may simply be more than a believable generator
-should produce.
+Second, and this is the substance: the entry went on to name widening
+`EV_SPREAD_MPH` as the cheaper lever, and **widening does not get to 6 either.**
+That was assumed rather than measured. It has now been measured, through the
+shipped generator with one constant changed at a time, 1,800,000 swings a row:
+
+| exit velocity spread | pitch weight | contact correlation | pooled gap |
+| --- | --- | --- | --- |
+| 16 (shipped) | 0.8 (shipped) | 0.6 (shipped) | **3.40 mph** |
+| 21.88 | 0.8 | 0.6 | 4.61 mph |
+| 21.88 | 1.0 | 0.6 | 5.77 mph |
+| 28.0 | 0.8 | 0.6 | 5.74 mph |
+| 21.88 | 0.8 | 0.81 | **6.20 mph** |
+
+21.88 is not arbitrary: it is what `EV_SPREAD_MPH` has to become for a generated
+session's own within-session exit velocity spread to match session 1's, which is
+6.322 mph against the generator's 4.623 on the same convention. That is the
+widening section 9 of the report already wants for its own reasons. **After it,
+the gap is 4.61, and even taking the pitch weight to a value that cannot exist
+leaves it at 5.77.** Widening a third further than the hand-written session,
+to 28, still reads 5.74.
+
+The only combination measured to clear 6 is the widening plus
+`CONTACT_CORRELATION` at 0.81, and that constant is a settled product decision
+about how much exit velocity and launch angle agree with each other. Moving it to
+hit a zone-gap number is moving a product decision as a side effect, which this
+document already says not to do.
+
+**So the finding is the one that was written as a footnote, and it should have
+been the headline: the 6 mph target is very probably too high.** It is anchored
+to session 1's 8.78, and session 1 is fifteen hand-written swings chosen to read
+legibly, not a sample anybody fitted a rate to. Every lever that reaches 6 costs
+something the slice has already said it does not want to spend. Task 9 should
+either adopt a lower target, somewhere near the 4.6 that falls out of the
+widening it wants anyway, or take the decision to move `CONTACT_CORRELATION`
+deliberately and on its own merits rather than as a means to this end.
+
+**One piece of honest framing about "full weight", because the word flatters
+it.** At `PITCH_QUALITY_WEIGHT` of 1.0 the accident share is exactly zero: the
+hitter's own contact quality draw does nothing whatsoever and the shared quality
+IS the pitch. Even at 0.9 the hitter's own draw carries only 19% of that term. So
+the rows above at weight 1.0 are not a setting anybody would ship; they are there
+to show that even an absurd setting does not reach the target.
 
 ## 7. Both empty-band guards moved slightly, in the direction the task predicted, and Task 9 owns whether that is paid back
 
@@ -803,8 +834,18 @@ and after Task 5:
 | Line Drives & Contact, after | 3.0% | 3.8% | 4.0% |
 
 **Power is a wash and Contact is a small real cost.** Power gains six tenths of a
-point on session 2 and gives back three tenths on each of the other two, which is
-noise at this sample size rather than a direction. Contact rises on all three,
+point on session 2 and gives back three tenths on each of the other two, ~~which is
+noise at this sample size rather than a direction.~~
+
+**Corrected 21 August 2026, same day, by review, and the correction is small but
+it is the kind this document exists to catch.** Power's session 2 rise is not
+noise, it is a direction: across eight seeds at 20,000 sessions a cell it is
++0.32 with all eight positive, against -0.12 at session 3 with mixed signs and
+-0.31 at session 4 with all eight negative. So "Power is a wash" survives as a
+NET statement, which is how it should be read, but the reason given for it was
+wrong. Contact's rise was confirmed the same way, +0.31 / +0.42 / +0.47 with all
+eight seeds positive on all three, which is what the paragraph below already
+says and now has behind it. Contact rises on all three,
 by two, three and five tenths, and the rise is a mechanism rather than sampling:
 improving the contact quality on a good pitch pushes launch angle up through that
 goal's 18 degree ceiling, which is the same interaction the empty-band re-roll
@@ -817,3 +858,54 @@ a task whose whole point was structure. The number to hold it against is the one
 this slice inherited, roughly 2.8 / 3.1 / 3.6 across eight independent seeds.
 Nothing here is near a level a visitor would notice; what would be worth noticing
 is the same shift happening again in Task 6 and Task 7 and nobody adding them up.
+
+## 8. Launch angle is not monotone in pitch height, and it inverts against session 1. Task 6 needs to read this before it goes looking for pop-ups
+
+Task 5 gives a high pitch a higher launch angle **at equal distance from the
+heart of the zone**, and that claim is exactly true and has its own test. Across
+the population it is not what ships, because a second effect runs the other way
+and wins at the edges.
+
+Measured through the shipped generator, 1,800,000 generated swings across five
+goals and three session numbers, against the fifteen hand-written swings of
+session 1 on the same bands:
+
+| band | generated launch angle | n | session 1 | n |
+| --- | --- | --- | --- | --- |
+| below the zone | 13.04 | 250,251 | 11.33 | 3 |
+| low third | 17.56 | 452,594 | 15.00 | 1 |
+| middle third | 21.13 | 457,154 | 17.83 | 6 |
+| high third | 20.69 | 451,876 | 20.33 | 3 |
+| above the zone | 19.20 | 188,125 | 21.50 | 2 |
+
+**Session 1 rises across all five bands. The generator rises to the middle and
+then falls.** A ball chased above the strike zone comes out about two degrees
+FLATTER than a strike down the middle, where the hand-written session this demo
+is calibrated against says it should be the steepest thing on the chart.
+
+The generator's own comment cites session 1's data as the authority for the
+height effect, so this is an inversion against its stated source, not merely an
+imperfection.
+
+**It is structural, not a tuning slip, and Task 9 cannot fix it by moving a
+weight.** Two effects reach launch angle from the pitch. The symmetric distance
+penalty arrives through the shared contact quality at `CONTACT_CORRELATION`
+times `PITCH_QUALITY_WEIGHT`, which is 0.48. The directional height term arrives
+through the independent half at `INDEPENDENT_SHARE` times
+`PITCH_HEIGHT_WEIGHT`, which is 0.32. A pitch above the zone is both high and
+far out, so it collects a large positive from the second and a larger negative
+from the first. Making the top of the zone beat the middle needs a height weight
+near 1.14, which does not exist, and still near 1.0 even if the quality weight
+were dropped to 0.7.
+
+**Recorded, deliberately not fixed.** Fixing it means a structure where the two
+terms do not both flow into launch angle at fixed relative strength, which is a
+larger change than Task 5's lane and would want its own reasoning.
+
+**Why Task 6 in particular.** Task 6's whole job is producing pop-ups, and a
+pop-up is what happens when a hitter gets under a high pitch. Today the
+generator's highest pitches produce among its FLATTEST swings, so raising the
+launch angle clamp will produce pop-ups drawn from everywhere except the pitches
+that should cause them, and the coach will be handed a pop-up count with no
+relationship to the pitch location it sits beside. Whoever takes Task 6 should
+decide whether that matters for what the coach says, before tuning a clamp.
