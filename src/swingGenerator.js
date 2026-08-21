@@ -28,9 +28,27 @@
 // existing behaviour, carried across unchanged, including the 65/35 chance that
 // a session trends better than the last one and the variance factor, both of
 // which are settled product decisions recorded in the decision log.
+//
+// Annotation, 21 August 2026, Slice 11. That last sentence was true when it was
+// written and is not any more, so read it as a description of Slice 6 rather
+// than of this file. A fourth thing now happens: the pitch is drawn before the
+// swing, and a missed pitch is a near miss on one side of the zone rather than
+// a wild one off on both. Everything the header above says about the swing
+// itself still stands untouched. The section headed "The thrower", below the
+// Power lift, is where that change is explained.
 
 import { carryDistance } from './ballFlight'
 import { hasTarget, meetsTarget } from './goalTargets'
+// The strike zone is read from sessionStats.js rather than written out again
+// here. It matters more in this file than anywhere else it is copied: whether a
+// pitch counts as a strike is decided by `inStrikeZone` over there, and every
+// pitch a visitor ever sees is thrown here. Two copies of those four numbers
+// would mean this file could aim at a zone the rest of the app does not
+// recognise, and nothing would say so. Adopted while rewriting these very lines
+// in Slice 11, not as a tidy-up of anything else; the remaining copies in
+// DebriefScreen.jsx and the coach prompt are untouched and still counted in
+// CLAUDE.md's consolidation note.
+import { STRIKE_ZONE } from './sessionStats'
 
 // How much of a swing's spread comes from one shared quality of contact rather
 // than from two unrelated accidents. Exit velocity and launch angle used to be
@@ -76,6 +94,112 @@ const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
 // pulls the average up with it.
 const POWER_LIFT_PER_SESSION = 2
 
+// ── The thrower ─────────────────────────────────────────────────────────────
+//
+// WHAT THIS FILE NOW CLAIMS ABOUT THE PERSON THROWING. A batting practice arm
+// that puts about two pitches in three where the hitter can reach them, and
+// whose misses are misses rather than wild ones: a ball just off the edge, on
+// one side of the zone at a time. Before Slice 11 it claimed neither of those
+// things, and both were measured rather than argued about, across 180,000
+// generated swings by `node scripts/measure-swing-generation.mjs`:
+//
+//   Every single missed pitch was off on BOTH axes at once, 100% of them.
+//   There was no such thing here as a pitch that was simply low, because a low
+//   pitch was always wide as well. No real thrower misses that way, and it is
+//   the single reason the pitch location chart looked wrong.
+//
+//   A miss was 0.47 feet outside the zone on average and could be thrown as
+//   low as 0.50 feet off the ground, which is a ball bouncing in front of the
+//   plate rather than a ball anybody would swing at. Session 1, the fifteen
+//   hand-written swings this whole demo is calibrated against, misses by 0.28
+//   feet on average and its worst miss is 0.70.
+
+// READ THIS ONE THE RIGHT WAY ROUND, because a future reader will otherwise
+// get it backwards. IN_ZONE_RATE is a CHASE rate, not a command rate. It is
+// not how often the thrower finds the zone; it is how often the pitch the
+// hitter chose to go after turned out to be a strike, and in this app every
+// pitch is swung at. A hitter who lets the worst balls go by is why this
+// number sits well above any real thrower's strike percentage, and it is why
+// moving it says something about the hitter's discipline rather than about
+// the arm.
+//
+// 0.65 is a product judgment between two anchors, not a measurement. It
+// replaces 0.70, which nothing was ever calibrated against, and it moves
+// toward session 1's own 60% without matching it: session 1 is fifteen swings,
+// far too few to fit a rate to, and its 60% is itself a hand-written choice.
+//
+// Exported so swingGenerator.test.js can drive the generator either side of
+// this exact number, which is what proves the rate the file declares is the
+// rate it actually throws to.
+export const IN_ZONE_RATE = 0.65
+
+// How far outside the zone a missed pitch lands, in feet. Session 1's own six
+// missed pitches are the shape being matched: 0.10, 0.10, 0.20, 0.30, 0.30 and
+// 0.70 feet outside, averaging 0.28, with 0.70 the worst of them.
+//
+// The miss is drawn as `min + random()**2 * (max - min)` rather than flat,
+// because squaring a uniform draw piles the results up near zero. Most misses
+// then come out just off the edge, which is what a hitter actually chases, and
+// the occasional one gets further away. That shape averages 0.30 feet against
+// session 1's 0.28, and can never exceed 0.80, which is a ball off the plate
+// rather than a ball in the dirt.
+//
+// The maximum is exported for the same reason as the rate above: the test that
+// holds every generated pitch inside these walls reads the wall from here, so
+// a test carrying its own copy cannot quietly drift away from the limit it is
+// supposed to be guarding.
+export const PITCH_MISS_MAX_FEET = 0.80
+const PITCH_MISS_MIN_FEET = 0.05
+
+// Which way a missed pitch got away: low 40%, high 30%, wide 30%, and a wide
+// one is an even coin between the two sides of the plate.
+//
+// An engineering judgment rather than a measurement, and worth saying so
+// plainly. The only real data this app has is session 1's own six misses,
+// which are three low, two high and one wide, and six of anything is far too
+// few to fit a distribution to. (Exactly, because this file should not round
+// its own evidence: session 1's swing 14 is a tenth of a foot high AND a tenth
+// wide, and is counted as high in that three-two-one.) Low leads because a
+// dropped ball is the commonest miss out of a practice arm and the one a
+// hitter is most often talked into swinging at.
+const MISS_LOW_SHARE = 0.40
+const MISS_HIGH_SHARE = 0.30
+
+// The zone's own dimensions, derived rather than typed, so the in-zone draw
+// below covers exactly the zone `inStrikeZone` recognises and not a rectangle
+// that merely resembles it.
+const ZONE_HEIGHT = STRIKE_ZONE.heightMax - STRIKE_ZONE.heightMin
+const ZONE_WIDTH = STRIKE_ZONE.sideMax - STRIKE_ZONE.sideMin
+
+// Where one pitch was thrown, in feet: height off the ground, and sideways
+// from the middle of the plate.
+//
+// A missed pitch is off on ONE axis and an ordinary pitch on the other,
+// because that is how a real one misses. That is the whole difference between
+// this and what it replaced.
+function drawPitch(random) {
+  if (random() < IN_ZONE_RATE) {
+    return {
+      height: STRIKE_ZONE.heightMin + random() * ZONE_HEIGHT,
+      side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH,
+    }
+  }
+
+  const miss = PITCH_MISS_MIN_FEET + random() ** 2 * (PITCH_MISS_MAX_FEET - PITCH_MISS_MIN_FEET)
+  const wayItGotAway = random()
+
+  if (wayItGotAway < MISS_LOW_SHARE) {
+    return { height: STRIKE_ZONE.heightMin - miss, side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH }
+  }
+  if (wayItGotAway < MISS_LOW_SHARE + MISS_HIGH_SHARE) {
+    return { height: STRIKE_ZONE.heightMax + miss, side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH }
+  }
+  return {
+    height: STRIKE_ZONE.heightMin + random() * ZONE_HEIGHT,
+    side: random() < 0.5 ? STRIKE_ZONE.sideMin - miss : STRIKE_ZONE.sideMax + miss,
+  }
+}
+
 // One session of fifteen swings. Everything random it needs comes through the
 // injected `random`, so a test can decide exactly what kind of session this is.
 function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
@@ -102,6 +226,22 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
   const varianceFactor = Math.max(0.85, 1 - (sessionNum - 2) * 0.05)
 
   return Array.from({ length: 15 }, () => {
+    // THE PITCH IS DRAWN FIRST, BEFORE ANYTHING ABOUT THE SWING, and the order
+    // is the point rather than a tidy-up. A pitch drawn afterwards cannot
+    // influence what the swing did, and until Slice 11 that is exactly what
+    // happened: measured across 180,000 generated swings, the difference in
+    // exit velocity between swings at strikes and swings at balls was 0.00 mph,
+    // while session 1's own gap is 8.78. Since Slice 8c the coach is handed
+    // which pitches were outside the zone and reasons about them out loud, so
+    // on every generated session that reasoning was a coincidence.
+    //
+    // Moving the draw changes every generated session at a given seed, because
+    // the numbers now come off the shared random source in a different order.
+    // That was expected and is why the pre-Slice-11 generator was snapshotted
+    // under docs/eval-fixtures/frozen/ first, so every committed round of coach
+    // evaluations still describes the swings its coach actually saw.
+    const pitch = drawPitch(random)
+
     // One draw for how well this particular ball was struck, then one apiece
     // for everything else that separates the two numbers. Both readings carry
     // the same quality term, so a barrelled ball comes out fast and well
@@ -116,18 +256,12 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
     const la = Math.round(Math.max(-5, Math.min(35, sessionLA + laOffset * 22 * varianceFactor)))
     const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
     const dist = carryDistance({ exitSpeed: ev, angle: la })
-    const inZonePitch = random() < 0.70
-    const plateLocHeight = inZonePitch
-      ? 1.5 + random() * 2.0
-      : random() < 0.5
-        ? 0.5 + random() * 0.9
-        : 3.6 + random() * 0.5
-    const plateLocSide = inZonePitch
-      ? -0.7 + random() * 1.4
-      : random() < 0.5
-        ? -0.8 - random() * 0.3
-        : 0.8 + random() * 0.3
-    return { plateLocHeight: Math.round(plateLocHeight * 100) / 100, plateLocSide: Math.round(plateLocSide * 100) / 100, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
+    // Both readings are rounded to the hundredth of a foot, which is how
+    // TrackMan reports them and how every chart and count line in this app
+    // reads them. The rounding can never move a pitch across the zone edge:
+    // the smallest miss this file throws is 0.05 feet, ten times the most a
+    // hundredth-of-a-foot rounding can shift a number.
+    return { plateLocHeight: Math.round(pitch.height * 100) / 100, plateLocSide: Math.round(pitch.side * 100) / 100, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
   })
 }
 
