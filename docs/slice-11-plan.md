@@ -1,0 +1,553 @@
+# Slice 11: the generator stops lying about the hitter and the pitcher
+
+Eight measured defects in `src/swingGenerator.js`, all recorded in CLAUDE.md's
+"Added at the close of Slice 10" block, plus the riders queued to travel with
+them. One slice, because the items interact: the pitch-location link moves the
+exit velocity distribution, spray moves Hit to All Fields, and the launch angle
+ceiling moves the on-target counts.
+
+## Settled before work started. Do not relitigate.
+
+- **Bill is a varsity high school junior**, 16, good bat-to-ball skills, real
+  but not elite bat speed, chases too much. Session 1's frozen 81.6 average and
+  92 best ARE this hitter. First written statement of his level outside the
+  coach's own voice.
+- **Exit velocity ceiling 94.** Two above his measured best, reached rarely.
+- **In-zone rate about 65%**, matching session 1's frozen 60%. Every row is a
+  batted ball, so this is Bill's chase rate, not the thrower's accuracy.
+- **Pitch location predicts contact at about 6 mph**, so session 1's measured
+  8.8 reads as an ordinary fifteen-swing draw rather than the population mean.
+- **Per-swing exit velocity spread widens to session 1's 6.11 mph.** The
+  generator is 4.23, a 31% tighter hitter than the session it derives from,
+  which nobody chose and nothing records.
+- **Pop-ups exist, rarely, from getting under high pitches, and need an
+  explicit mis-hit mode.** Decided after measurement showed a raised ceiling
+  plus a pitch-height link delivers 0.01 to 0.03 per session, which is none.
+- **The two prompt lines are approved word for word** and go in BOTH prompts,
+  replacing the `Note:` paragraph at `src/coachApi.js:572`. 54 words against 61:
+  `- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player's swing decisions; never guess at the thrower's intent.`
+  and
+  `- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.`
+- **The Reduce Pop-Ups GOAL is unchanged**; an exit velocity requirement was
+  rejected on 19 August 2026 because it collapses into Line Drives & Contact.
+  **Exit velocity stays flat across sessions 2 to 4**; item 7 is the session 1
+  to 2 step only. **Session 1's fifteen swings do not move.** **The spray legend
+  says "Center" and the coach says "up the middle"**, on purpose.
+
+## Not in this slice
+
+- **The Reduce Pop-Ups goal card copy**, which points the wrong way: Slice 6b,
+  scoped and approved there since 3 August 2026.
+- **Consolidating the spray chart's four inline cutoff literals**: recorded
+  debt, watched by Slice 10's tripwire, only worth closing when that screen file
+  is open anyway.
+- **The two grading-tool gaps from Slice 10**, and **era-gating the fact
+  sheet's spray rows**: their own tool slice. Both sit in extraction, so
+  validating a fix needs a fresh live round.
+- **`--cell` on the bench**: on What's Next, and this slice buys full rounds
+  anyway.
+- **Dropping Hit to All Fields' duplicate count lines**, and **handedness**
+  (the coach now names a field, which assumes a right-handed hitter): both need
+  prompt approval and belong with the next prompt slice.
+
+## How this slice will be verified
+
+Written before any code exists.
+
+1. **The deterministic half carries the weight.** All eight items are free to
+   measure; `scripts/measure-swing-generation.mjs` grows a section per item and
+   gains a seed, since nothing it has ever printed is reproducible today. The
+   slice succeeds if the data got honest and the coach did not get worse.
+2. **Task 1 is proved alone, before any tuning.** The frozen generator is the
+   unproven mechanism. A digest of all seven cells at both seeds, taken from the
+   LIVE builder before any generator edit, becomes a suite test the frozen
+   builder must reproduce. Seen failing first against a mutated snapshot.
+3. **Suite before and after.** Baseline on this branch before any edit: **573
+   tests across 22 files, green**, matching Slice 10's finishing number. No
+   pre-existing failure to carry.
+4. **A failing test first for every new behaviour.** Distribution claims stay in
+   the measurement script; the suite tests deterministic seams and never calls
+   the model.
+5. **The `varianceFactor` blind spot closes here**, because item 8 is about that
+   constant's reach and a reviewer once changed it six-fold with all 22
+   generator tests staying green.
+6. **Two live after rounds at two seeds.** Not optional: this changes all the
+   data, and Slice 9 proved one seed cannot separate signal from noise.
+7. **The before round costs no bench calls.** Slice 10's `after-spray` rebuilds
+   through the frozen builder. It is re-graded, about $0.35, so both sides pass
+   through the identical instrument on the same day.
+8. **A pre-registered non-inferiority band, written here before the money is
+   spent.** Demonstrated same-condition spread of hand-checked genuine coach
+   errors across four committed rounds is 8 to 19, or 1.8% to 3.8% of ruled
+   claims. **The slice fails only if BOTH after rounds hand-check above 3.8%.**
+   One round above it is inside the demonstrated noise. Raw flag counts are
+   reported but are NOT the test.
+9. **Every flagged claim is hand-checked**, and the write-up says so.
+10. **A real browser pass** across several goals and both a session-1 and a
+    session-4 screen, run after the eval and able to reject the slice. Slice
+    10's gate rejected it after its round passed.
+11. **Free dry runs, bench and grader, before every paid round.** That gate was
+    silently dead for an entire slice once.
+
+## The debt this slice is expected to open
+
+- **The frozen snapshot carries its own copies of `carryDistance`,
+  `meetsTarget` and the goal targets.** Deliberate: a snapshot reading the
+  working tree is not a snapshot. It will drift from `src/` on purpose, and a
+  future reader can still mistake that for rot.
+- **Two prompt lines ship inside a round bought to measure the generator.** They
+  carry no counts, so the expectation is nil effect, as Slice 10's direction key
+  was. It is a confound and this slice claims nothing about them.
+- **The mis-hit pop-up rate is chosen, not derived.** No real TrackMan pop-up
+  rate was consulted, and the PR must say so.
+- **The standing real-phone rule cannot be honoured as configured.** Vite binds
+  to localhost and nothing passes `--host`. Declared deviation unless Task 13a
+  is approved.
+- **Widening the spread moves numbers Slice 6 tuned.** Power's empty target band
+  falls from 13.7% to roughly 3%. Lower is not a regression, but it arrives as a
+  side effect rather than an aim, and Slice 6's reasoning was written against the
+  old number.
+
+---
+
+# Tasks
+
+Each task is one implementer and one independent reviewer. The coordinator
+writes nothing.
+
+## Task 1: freeze the generator, repair five markers, prove it
+
+**Nothing in `src/swingGenerator.js` may be touched until this task is
+reviewed and green.** The `current` builder in
+`scripts/grade-coach-accuracy.mjs` rebuilds sessions 2 to 4 from the working
+tree generator. The moment the generator moves, five committed fixture
+directories begin producing complete, plausible-looking fact sheets for swings
+their coaches never saw, and nothing looks broken.
+
+**CLAUDE.md says four directories. It is five.** Correct that number as part of
+this task. `docs/eval-fixtures/slice9-session-one/before` has the identical
+exposure: its `slice9-before` builder swaps only which fifteen session-1 swings
+it starts from and then calls the same `buildSessionsFromBaseline`, which
+imports the generator from the working tree. The five are:
+
+    slice9-session-one/before        builder = slice9-before
+    slice9-session-one/after-a       builder = current
+    slice9-session-one/after-b       builder = current
+    slice10-direction-key/after      builder = current
+    slice10-direction-key/after-spray builder = current
+
+**Write the digest first, from the live code, before anything changes.**
+
+1. A script run resolves all seven cells (`power-s1`, `power-s2`, `contact-s1`,
+   `contact-s4`, `open-s4`, `allfields-s4`, `popup-s4`) at both seeds, 20260814
+   and 20260819, through today's `current` builder, and writes a stable digest
+   to `docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json`. Also
+   resolve the `slice9-before` cells at 20260814. This file is the ground truth
+   for everything below and it can only be produced before the generator moves.
+2. Commit it on its own, before the snapshot exists, so the order is provable
+   from the history.
+
+**Then build the snapshot.**
+
+- `docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs`, recovered from
+  `src/swingGenerator.js` at commit `53315e5`, not retyped.
+- **It imports nothing from `src/`.** It carries frozen copies of
+  `carryDistance` from `src/ballFlight.js`, and `hasTarget` / `meetsTarget` /
+  the `GOAL_TARGETS` table from `src/goalTargets.js`. Precedent is
+  `docs/eval-fixtures/slice7-debriefs/rebuild.mjs`, which freezes an entire
+  stand-in generator for the identical reason one generation earlier.
+- Its header says, in the same voice as
+  `slice9-session-one/session-one-before.mjs`: what it is, why it must never be
+  updated to match `src/`, and that its duplication of `carryDistance` and the
+  goal targets is the point rather than an oversight.
+- The export is named `generateSwingsPreSlice11`, not `generateSwings`, so an
+  import can never be mistaken at a glance for the live module.
+
+**Then restructure the builders.**
+
+A builder becomes a pair, not a baseline. In `scripts/grade-coach-accuracy.mjs`:
+
+    const BUILDERS = {
+      current:          { baseline: loadCurrentBaseline,      generator: loadCurrentGenerator },
+      'slice11-before': { baseline: loadCurrentBaseline,      generator: loadPreSlice11Generator },
+      'slice9-before':  { baseline: loadSlice9BeforeBaseline, generator: loadPreSlice11Generator },
+    }
+
+- `buildSessionsFromBaseline` takes the generator as a parameter instead of
+  reaching for `loadGeneratorDeps`. It stays ONE function shared by all three
+  baseline-driven builders, for the reason its own comment already gives: two
+  copies would let something else drift into the difference.
+- `computeStats` continues to come from the working tree. It is not part of the
+  generator and this slice does not touch `src/sessionStats.js`. Say so in the
+  comment, because it is the next thing a reader will ask.
+- `slice9-before` is **repointed, not renamed**. Its meaning was always "what
+  that round was written against," which now requires the frozen generator too.
+  Its marker keeps saying `slice9-before` and needs only an annotation.
+- The builder comment block, which is the subtlest part of that file, gains a
+  fourth dated section explaining that a builder is now a pair and why.
+
+**Then repair the five markers**, as dated append-only annotations, never
+rewrites. The four `builder = current` lines become `builder = slice11-before`,
+with the old line left visible as a commented-out struck record directly above
+and a dated paragraph saying what changed and why. `slice9-before/BUILDER.txt`
+keeps its line and gains the same dated paragraph.
+
+**Then the permanent guard.** New `scripts/frozenGenerator.test.js`, in the
+suite:
+
+1. Every cell at every seed resolved through `slice11-before` equals the
+   committed digest exactly.
+2. Every `slice9-before` cell equals its committed digest exactly.
+3. Seen failing first, two ways, both recorded in the task report: mutate one
+   constant inside the snapshot and watch it go red, and repoint one loader at
+   the live generator and watch it go red once Task 4 lands.
+
+**And correct the record**: CLAUDE.md's "four committed fixture directories"
+becomes five, as a dated annotation.
+
+## Task 2: grow the measurement script, and take the before numbers
+
+`scripts/measure-swing-generation.mjs` gains one section per item, each
+printing today's number so the after numbers have something to sit against.
+No `src/` file is touched in this task.
+
+1. **Zone gap.** Mean exit velocity on swings at pitches inside the strike zone
+   minus outside, and the same split for launch angle. Today: 0.00 mph.
+2. **Miss geometry.** For every out-of-zone pitch, how far outside it is, in
+   feet, as a distribution, plus the minimum and maximum pitch height seen.
+   Today the misses are 0.5 to 1.4 feet and 3.6 to 4.1 feet, so the closest a
+   miss ever comes to the zone is 0.1 feet and the furthest is a ball that
+   bounces. Session 1's own six misses print beside them as the target shape:
+   0.10, 0.10, 0.20, 0.30, 0.30, 0.70.
+3. **Spray.** Pull, middle and opposite field per session, per session number,
+   using `sprayBreakdown` from `src/sessionStats.js` so the script and the
+   coach's prompt cannot disagree. Today: 3.24 / 7.01 / 4.76, and it narrows
+   every session.
+4. **Pop-ups.** Swings above 35 degrees per session, per goal, and the share of
+   them on pitches at or above the top of the zone. Today: zero everywhere.
+5. **Ceiling pile-ups.** Share of swings at exactly the launch angle ceiling
+   and exactly the exit velocity ceiling. Today: 2.16% at 35.0, and the Power
+   session-4 figure of 4.2% that Slice 10 recorded.
+6. **Top exit velocity.** The distribution of each session's highest exit
+   velocity, and the share of sessions exceeding session 1's frozen best of 92.
+   Today: median 90, p90 94, and 21.6% beat 92.
+7. **The session 1 to 2 step.** The distribution of a session's average exit
+   velocity against session 1's 81.6. Today: mean +1.74, and the improving
+   branch can never return less than +1.
+8. **Hit to All Fields against its own bar.** Share of sessions with at least 3
+   pull and at least 3 opposite field, by session number. Today: 64 / 59 / 52.
+9. **The regression guards**, which are the numbers this slice must not break:
+   empty target band rate per goal per session, distance bucket fill, per-swing
+   exit velocity and launch angle spread, and session average exit velocity.
+
+**Seed it.** Both hand-run measurement scripts are unseeded today, and CLAUDE.md
+records that no number either has ever printed is reproducible. Take a
+`--seed` flag defaulting to a fixed value, so every number this slice quotes
+can be re-run to the same answer. This is in lane: the slice's entire evidence
+base is what this script prints.
+
+Run it and paste the before numbers into the task report. They go in the
+decision record.
+
+## Task 3: the two prompt lines
+
+**Write the tests first and see them red.** Mirror the `DIRECTION_KEY_LINE`
+trio in `src/coachApi.test.js`, which already does this job through the
+`capturedMessage` helper, so no production code needs extracting to reach the
+chat prompt.
+
+1. Both exact lines appear in the debrief message.
+2. Both exact lines appear in the chat message. The chat prompt carries no
+   setting note at all today, which is the gap this closes.
+3. The two prompts cannot drift: extract each line from both with the same
+   regex, assert equal, and assert both equal the exported constants.
+4. The old `Note: All sessions shown here...` paragraph is gone from the
+   debrief prompt. Assert its absence, or the change can half-land.
+
+**Then implement.** Two exported constants beside `DIRECTION_KEY_LINE` in
+`src/coachApi.js`, interpolated into both builders. Placement: with the other
+session-level context, above the per-session blocks, since they describe the
+whole practice rather than one session.
+
+**Disclosed cost, carried into the PR:** adding the sessions line to the chat
+prompt also fixes a pre-existing bug nobody asked about, since the chat coach
+can say "yesterday" today and will stop.
+
+## Task 4: the pitch is drawn first, and the misses are near misses
+
+**Write the tests first and see them red.**
+
+1. Given a random source that forces an out-of-zone pitch, the pitch never
+   lands below 1.5 minus 0.80 feet or above 3.5 plus 0.80 feet, and never
+   further sideways than 0.7 plus 0.80 feet. Today's floor is 0.5 feet, a ball
+   that bounces, so this test is red against the unfixed code.
+2. An out-of-zone pitch is out on ONE axis and plausible on the other. A low
+   pitch still has an ordinary side value rather than a second independent
+   miss.
+3. The in-zone share responds to the constant, checked by driving `random` with
+   values either side of it.
+
+**Then implement**, in `src/swingGenerator.js`:
+
+- The pitch is drawn before the swing outcome, because a pitch drawn after
+  cannot influence it. This reorders the draws, which changes every generated
+  session at a given seed. That is expected and is exactly why Task 1 came
+  first.
+- `IN_ZONE_RATE = 0.65`, replacing 0.70.
+- Out of zone, a miss distance of `0.05 + random()**2 * 0.75`, which
+  concentrates near the edge and tops out at 0.80 feet. Mean 0.30, matching
+  session 1's own six misses whose mean is 0.28 and whose worst is 0.70.
+- Axis chosen low 40% / high 30% / wide 30%. An engineering judgment, recorded
+  in the comment with session 1's own three low, two high and one wide beside
+  it.
+- The comment says what this file now claims about the thrower, and that the
+  in-zone number is a chase rate rather than a command rate, because that is
+  the sentence a future reader will otherwise get backwards.
+
+## Task 5: the pitch predicts the contact
+
+**Write the tests first and see them red.**
+
+1. Holding every noise draw identical, a pitch down the middle produces a
+   higher exit velocity than a pitch outside the zone. Red today, where the two
+   are identical by construction.
+2. Holding every noise draw identical, a high pitch produces a higher launch
+   angle than a low pitch.
+3. The blend preserves spread: with the pitch term at full weight the swing's
+   own scale constant still governs the spread, asserted on exact values from a
+   fixed sequence.
+
+**Then implement**, using the variance-preserving idiom this file already uses
+for `CONTACT_CORRELATION`, which is the reason that idiom is worth following
+rather than inventing a second one:
+
+- A standardised pitch-quality term from the pitch's distance from the heart of
+  the zone, normalised so it has the same scale as the existing uniform draws.
+- A standardised signed pitch-height term, separate from it, because how far a
+  pitch is from the middle and which way it is off are two different facts:
+  distance hurts contact quality, direction moves launch angle.
+- Both blended in with `sqrt(1 - w^2)` weights so total spread is set by the
+  scale constants and not by how many terms were added. The first prototype
+  added the pitch on top instead and produced an 11 mph gap with 10% of swings
+  stacked against the exit velocity ceiling, which is worth one line in the
+  comment so nobody re-adds it.
+
+Constants are provisional here. Task 9 sets them.
+
+## Task 6: pop-ups, and soft ceilings instead of walls
+
+**Write the tests first and see them red.**
+
+1. A forced mis-hit produces a launch angle in the pop-up band and an exit
+   velocity below the session's own average. Red today: nothing above 35 exists.
+2. A mis-hit is far more likely on a pitch at the top of the zone than on one
+   at the bottom, checked by driving the same random source against two pitches.
+3. **The ceiling no longer stacks.** Two different extreme inputs produce two
+   different outputs. A hard clamp returns the same number for both, so this is
+   red against today's `Math.min(35, ...)`.
+4. Nothing ever exceeds the ceiling.
+
+**Then implement.**
+
+- An explicit mis-hit mode: a small per-swing chance, weighted by how high the
+  pitch is, that the swing gets under the ball. Launch angle from its own band
+  around 38 to 50 degrees, exit velocity knocked down, because a pop-up is a
+  distinct contact outcome rather than an extreme line drive.
+- **Soft compression replaces both hard clamps.** The defect in item 5 is not
+  where the wall sits, it is that there is a wall: 2.16% of swings stack at
+  exactly 35.0 today, and moving the wall to 50 only works because nothing
+  reaches 50. Measured during design, widening the exit velocity spread put 3%
+  of swings against a hard 94, which is the identical artefact relocated.
+  Compression fixes both ends with one mechanism and survives future tuning.
+- `carryDistance` needs no change. Slice 10's finding 3 measured its shape term
+  reaching its floor at exactly 50.5 degrees, so a pop-up band topping out at
+  50 sits under it. **Verify that rather than trusting the note**, and record
+  the check.
+
+## Task 7: exit velocity, and spray
+
+**Write the tests first and see them red.**
+
+1. The session 1 to 2 exit velocity step, driven at the extremes of the random
+   source, never exceeds the new bound. Red today, where the improving branch
+   returns +1 to +4.
+2. Spray direction does not depend on session number. Red today, where `dir` is
+   multiplied by `varianceFactor` and so narrows every session.
+3. **`varianceFactor` becomes visible to a test.** Driven by a fixed
+   non-neutral sequence, session 4's swings differ from session 2's by exactly
+   the 0.90 factor. Today a reviewer changed that constant six-fold and all 22
+   generator tests stayed green, which is the blind spot item 8 sits inside.
+
+**Then implement.**
+
+- Per-swing exit velocity spread widens toward session 1's measured 6.11 mph.
+  The generator is 4.23 today, a 31% tighter hitter than the session it derives
+  from, chosen by nobody.
+- Exit velocity ceiling 94, soft, per Task 6.
+- The session step shrinks so the systematic component sits under the sampling
+  noise of a fifteen-swing average. Launch angle keeps its arc: **a hitter can
+  change his launch angle inside one practice and cannot change his bat speed**,
+  and that sentence is the whole product argument for treating the two
+  differently. Put it in the comment.
+- `dir` loses `varianceFactor`, widens, and leans slightly pull. Today's
+  `(random() - 0.45) * 70 * varianceFactor` centres at +3.5 degrees, which is
+  an opposite-field hitter, and shrinks toward zero every session.
+
+**Considered and declined, recorded here so nobody re-proposes it:** giving Hit
+to All Fields its own spread lift the way Power gets a launch angle lift.
+Removing `varianceFactor` alone already takes that goal from 64 / 59 / 52 to a
+flat 73, so the "gets worse every session" defect is fully closed without a
+second special-cased goal. Power's lift exists because its band was empty 56%
+of the time, which was a defect. A flat 73% is not.
+
+## Task 8: the riders
+
+Three small things queued to travel with this work.
+
+1. **`CONTACT_CORRELATION` does not hold a correlation.** It reads `0.6` and is
+   applied to both readings, so the correlation it produces is 0.36, confirmed
+   by measurement. Anyone retuning it toward "0.5" would get 0.25. Fix the
+   comment, not the constant.
+2. **Two test files hold stale copies of session 1's distances.**
+   `src/ballFlight.test.js:184` and `src/coachApi.test.js:831` each carry a
+   hardcoded array and both stayed green with stale data after Slice 9 replaced
+   all fifteen swings. **Do not collapse them into an import**: they are
+   expected values inside an assertion, and this project has twice and
+   correctly declined to collapse that shape. Add one cross-check per file
+   asserting the literal equals what `SESSION_ONE_SWINGS` actually holds, so a
+   future session-1 change turns them red instead of leaving them silently
+   meaningless. Seen failing first by mutating one value.
+3. **`scripts/search-session-one-swings.mjs` hand-copies the generator's
+   clamps** and its comment calls them "the clamps the generator obeys" without
+   saying they are a copy. This slice changes those clamps, so the copy becomes
+   wrong today rather than theoretically. Either import them or annotate the
+   comment to say plainly that it is a frozen copy of the Slice 10 clamps and
+   that the script reproduces a search run under them.
+
+## Task 9: the tuning pass, and the after numbers
+
+The one task that sets every constant, because they interact and tuning them
+inside their own tasks would mean tuning each of them three times.
+
+Targets, in priority order:
+
+1. Zone gap about 6.0 mph.
+2. Power's empty target band no worse than today's 13.7%. It is expected to
+   fall to roughly 3% as a side effect of the wider spread. Falling is fine;
+   record it as a side effect rather than an aim.
+3. Contact's empty band no worse than about 5%. It sat at 3.0 to 3.5% and rises
+   as contact quality improves, because harder contact pushes launch angle
+   through that goal's 18 degree ceiling. This is the guard Slice 6's re-roll
+   exists to hold and it is the one most at risk here.
+4. Pop-ups roughly 0.3 to 0.5 per session on goals other than Power, with the
+   clear majority on pitches at or above the top of the zone. If the majority
+   are not on high pitches, the mechanism is not doing what it was bought for
+   and the constants are wrong.
+5. Nothing stacked at either ceiling above 0.5%.
+6. Per-swing exit velocity spread near 6.11, launch angle spread near 7.23.
+7. Session average exit velocity step near +0.9 off session 1's 81.6.
+8. Hit to All Fields meets its own bar at a rate that does not fall across
+   sessions.
+9. Distance bucket fill: no empty column on a typical session.
+
+Re-run Task 2's script and put the full before-and-after table in the task
+report. **If a target and a guard cannot both be met, stop and bring it to the
+product manager rather than picking one.** That trade is his, and the most
+likely place it bites is Contact's empty band against the zone gap.
+
+## Task 10: free dry runs
+
+Before any money is spent, and reported even when clean:
+
+- `node scripts/bench-coach-brevity.mjs --dry-run`, which builds every prompt
+  and grades a canned reply with no network calls.
+- `node --env-file=.env.local scripts/grade-coach-accuracy.mjs --dry-run
+  --input docs/eval-fixtures/slice10-direction-key/after-spray --builder
+  slice11-before`, which must resolve the new builder and the marker together.
+
+This gate was silently dead for an entire slice once, refusing every `--input`
+directory holding one failed bench record, and nothing noticed until a human
+ran it by hand at final review. Run both and paste the output.
+
+## Task 11: the before round, re-graded free of bench cost
+
+Slice 10's `after-spray` is 64 debriefs on the pre-Slice-11 generator at seed
+20260814. Rebuild it through `slice11-before` and re-grade it, roughly $0.35,
+so both sides of the comparison pass through the identical instrument on the
+same day. No bench calls are bought.
+
+**Confirm before grading, not after**, that the two new prompt lines do not
+move attribution. They carry no counts, so the expectation is that
+`scripts/handedCounts.js` reports the same handed-versus-derived split as
+`after-spray/grading.json` already holds. If it moves, say so and treat the
+comparison as needing the same care the Slice 10 marker demands.
+
+## Task 12: two after rounds
+
+`--runs 8` at seed 20260814, then again at 20260819. 64 calls each, roughly
+$1.30 a round plus $0.35 to grade. `BUILDER.txt` written **before** grading, in
+the moment the answer is actually known, and it must anticipate its own two
+ways of going stale, since this is the slice that learned markers were written
+too narrowly twice running.
+
+Output under `docs/eval-fixtures/slice11-generator-realism/after-a/` and
+`after-b/`, with a README covering what is and is not safe to conclude.
+
+Total expected spend across Tasks 11 and 12: about $3.65.
+
+## Task 13: hand-check every flagged claim
+
+The tool's false-positive rate has measured 11%, 42%, 12.5%, 34.5%, 40%, 61.9%
+and 43.5% across seven rounds, and the last wave produced two mechanisms never
+seen before. **A raw flag is a lead, not a finding.** Every one gets read, in a
+committed `HAND-CHECK.md` per round, adjudicated genuine or false positive with
+the quote and the mechanism. Only then does the pre-registered band in the
+verification section get applied.
+
+Watch specifically for the two known gaps, since this slice makes the coach
+write about spray and pitch location more, not less: a spray count extracted
+as a threshold claim with no comparison and dropped as UNVERIFIABLE, and the
+prior-session half of a cross-session comparison never extracted at all.
+
+## Task 13a: reachable from a phone. Needs the product manager's yes.
+
+The standing rule says anything visual gets a pass on a real phone before the
+QA script is written. It cannot be honoured here: Vite binds to localhost and
+nothing passes `--host`, so a phone on the same network cannot load this app at
+all. It is already on What's Next as its own item.
+
+Adding `--host` is one line. It is strictly out of this slice's lane, and the
+rule for out-of-lane finds is a micro-PR rather than a ride in the diff. It is
+proposed here anyway because it is the thing standing between this slice and a
+verification gate this project does not skip, and because this slice changes
+what every chart looks like. **If it is declined, the phone pass is a declared
+deviation and the PR says so.**
+
+## Task 14: browser QA
+
+After the eval, and able to reject the slice regardless of what the eval said.
+Slice 10's gate rejected it after its round passed, which is the reason this
+task exists as its own gate rather than as a line in Task 12.
+
+At minimum: session 1 and session 4, on Power, Line Drives & Contact, Reduce
+Pop-Ups and Hit to All Fields. Look at the Launch Angle vs Exit Velocity
+scatter for the flat row of dots that should now be gone, the Pitch Location
+chart for pitches that no longer bounce, and the spray chart. Ask the coach in
+chat about pop-ups and about chased pitches, which are the two things this
+slice newly gives it to talk about, and check its answers against the charts on
+the same screen. That last check is exactly what Slice 10's own verification
+skipped.
+
+Capture the request payload once, so the two new prompt lines are proven inside
+something the app really sent rather than only in a unit test.
+
+## Task 15: the records, then the pull request
+
+- The decision log entry, in product language.
+- CLAUDE.md: the current-state sections, the file-by-file map, the test count,
+  the "data is synthetic" section, which is now substantially wrong, the "four
+  directories" correction from Task 1, and the What's Next items this slice
+  closes and opens.
+- The PR body, near 300 words, naming every touch to already-shipped code and
+  to any file this plan did not name.
+- The QA script goes to the chat message, not the PR body.
