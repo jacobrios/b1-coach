@@ -474,6 +474,27 @@ function printBucketLine(buckets) {
 // disclosed copy scripts/bench-coach-brevity.mjs carries for the same reason,
 // and TARGET_GOALS above already carries three of the five. Renaming a goal on
 // screen does not rename it here; that has to be done by hand.
+// FIVE SENTENCES IN THESE SECTIONS CARRY A HAND-TYPED NUMBER, AND WHOEVER RUNS
+// THE AFTER-ROUND OWES THEM A HAND-CHECK. Added 21 August 2026. Everything else
+// in the nine sections is interpolated from the measurement, so it re-states
+// itself correctly on any run. These five do not, they were true of the numbers
+// this file printed on the day they were written, and every one of them sits in
+// a section Slice 11's rewrite directly targets:
+//
+//   1. Section 5: "at a hundredth of a percent on session 2 and not at all
+//      after that", about the four non-Power goals touching the launch angle
+//      ceiling.
+//   2. Section 5: "one swing in twenty-five", about Power session 4.
+//   3. Section 7: "The other three all land near +0.93".
+//   4. Section 9: "reads 14.0% here and 13.8% there", the two independent
+//      samples of Power session 2's empty band.
+//   5. Section 9: "showing none at all seven times in ten", about Power's
+//      shortest distance column.
+//
+// They were left hand-typed on purpose rather than derived, so this list is the
+// obligation rather than a to-do: read each one against the table beneath it on
+// the after-run, and correct it there. Do not assume a generated report is
+// self-correcting just because most of it is.
 const SLICE11_GOALS = [
   { id: 'power', label: 'Power & Distance' },
   { id: 'contact', label: 'Line Drives & Contact' },
@@ -492,9 +513,23 @@ const POP_UP_ANGLE = GOAL_COUNT_SPECS.popup.popUpAngle
 // A copy of a shipped number is exactly what this project consolidates against
 // everywhere else, so it does not sit here unwatched: the check below refuses
 // to print a report if a swing ever came out beyond one of these, which is what
-// a stale copy would look like. It cannot catch a wall that has moved further
-// out, so Slice 11's Task 6, which replaces both clamps with soft compression,
-// has to update this by hand and the comment in that task says so.
+// a stale copy would look like.
+//
+// WHICH HALF IT CATCHES, corrected 21 August 2026 after this comment stated it
+// backwards and the wrong version was repeated into a task report. Measured
+// both ways, not reasoned about:
+//
+//   A wall that moved further OUT than this copy IS caught. The generator
+//   produces a value beyond the copy, the check sees it, and the run stops
+//   with a message naming both ranges.
+//
+//   A wall that moved INWARD is MISSED. Every value the generator produces is
+//   still inside this copy, so nothing looks wrong, and the report goes on to
+//   describe a wall at a position no swing can now reach.
+//
+// So Slice 11's Task 6, which replaces both clamps with soft compression, has
+// to update this by hand. That instruction was always right; only the reason
+// printed beside it was inverted.
 const GENERATOR_CLAMPS = {
   exitVelocity: { min: 65, max: 97 },
   launchAngle: { min: -5, max: 35 },
@@ -834,10 +869,11 @@ console.log(`           fingerprint ${GENERATOR_FINGERPRINT}, ${GENERATOR_SOURCE
 console.log(`Seed:      ${SEED}. Rerun the same command and every number comes back the same.`)
 console.log(`Sample:    ${REPLAYS_PER_CELL.toLocaleString()} replayed practice sessions per goal, per session number.`)
 console.log('')
-console.log('Two saved runs of this report are only comparable if the fingerprints')
-console.log('differ and the seed matches. The fingerprint is what says which version of')
-console.log('the generator a saved report describes, so quote it alongside any number')
-console.log('taken from here.')
+console.log('Comparing two saved runs. To see what a change to the generator did, hold')
+console.log('the seed and compare two different fingerprints: the fingerprint is what')
+console.log('names each side. To see how far a number wanders on sampling alone, hold')
+console.log('the fingerprint and change the seed. Quote both stamps with any number')
+console.log('taken from here, so a reader knows which of the two they are looking at.')
 console.log('')
 console.log('This half of the report is one section per defect Slice 11 sets out to fix,')
 console.log('plus the numbers the slice must not break. The Slice 6 before-and-after')
@@ -1078,7 +1114,31 @@ const walls = [
 
 // A share that rounds to 0.00% next to a count that is not zero reads as a
 // contradiction, so a nonzero count that small says so in words instead.
+// Every share printed in this section goes through this, in the prose as well
+// as in the table: an earlier draft applied it to the table only, and the
+// paragraph underneath then rendered the same quantity as "0.00%" two lines
+// below the table's "<0.01%".
 const shareCell = (share, count) => (count > 0 && share < 0.00005 ? '<0.01%' : pct2(share))
+
+// How often a visitor would actually meet a swing sitting on a wall. A share
+// is hard to feel; "one swing in every N sessions" is not. Fifteen swings to a
+// session, so a share of 0.44% is one swing every fifteen sessions or so.
+const appearsOnceIn = (share) => (share > 0 ? 1 / (share * 15) : Infinity)
+
+// The one threshold behind every "would anybody ever see this" judgment below,
+// written down as a number rather than left to an adjective. A wall a visitor
+// would meet less than once in a hundred sessions is one nobody meets.
+//
+// THIS EXISTS BECAUSE THE ADJECTIVES WENT FALSE WHILE THE FACTS STAYED TRUE.
+// The paragraphs under this table are generated from the counts, which keeps
+// the numbers honest, but an earlier draft picked its adjectives from a wall's
+// POSITION in a sorted list rather than from any measurement. Run against a
+// generator whose walls sat elsewhere, it called a wall carrying 0.35% of every
+// swing "far too rare to see on a chart", and told the reader that a wall
+// carrying FEWER swings than the value inside it was proof that walls carry
+// more. Both sentences were generated, and both were wrong. A generated
+// sentence is only as honest as the test behind its adjective.
+const MEETS_IT_ONCE_IN = 100
 
 for (const w of walls) {
   console.log(
@@ -1089,10 +1149,30 @@ for (const w of walls) {
   )
 }
 
+// Three groups, decided by measurement rather than by rank. A wall either
+// holds nothing, or holds MORE than the value just inside it (which is what a
+// wall does: it is catching a tail that wanted to go further), or holds fewer
+// (which is just an ordinary tail that happens to stop there).
 const untouchedWalls = walls.filter((w) => w.onIt === 0)
-const touchedWalls = walls.filter((w) => w.onIt > 0).sort((a, b) => b.onIt - a.onIt)
+const stackingWalls = walls.filter((w) => w.onIt > 0 && w.share > w.insideShare).sort((a, b) => b.share - a.share)
+const grazedWalls = walls.filter((w) => w.onIt > 0 && w.share <= w.insideShare).sort((a, b) => b.share - a.share)
 
-if (untouchedWalls.length > 0) {
+const everySessions = (w) => Math.round(appearsOnceIn(w.share)).toLocaleString()
+const wouldBeMet = (w) => appearsOnceIn(w.share) <= MEETS_IT_ONCE_IN
+
+if (untouchedWalls.length === walls.length) {
+  // The state Slice 11 is trying to reach, so it is reported as the result it
+  // is rather than as a table that failed to appear.
+  console.log('')
+  console.log(`  NOT ONE of the ${walls.length} is holding anything. Across ${swingsTotal.toLocaleString()} generated swings no swing`)
+  console.log('  came out sitting exactly on a limit, so nothing is stacked and no chart')
+  console.log('  carries a flat row of dots against an edge. The nearest this hitter came')
+  console.log('  to each:')
+  for (const w of untouchedWalls) {
+    console.log(`    the ${w.name} of ${w.where}, closest approach ${w.nearest} ${w.unit}`)
+  }
+  console.log('  That is the result this section exists to check for, not a missing table.')
+} else if (untouchedWalls.length > 0) {
   console.log('')
   console.log(`  ${untouchedWalls.length} of the ${walls.length} hold nothing whatsoever. Across ${swingsTotal.toLocaleString()} generated swings not one`)
   console.log('  landed on:')
@@ -1102,27 +1182,50 @@ if (untouchedWalls.length > 0) {
   console.log('  Those walls are set outside this hitter and are doing nothing at all.')
 }
 
-for (const w of touchedWalls.slice(1)) {
-  const perMillion = Math.round((w.onIt / swingsTotal) * 1000000)
+for (const w of grazedWalls) {
   console.log('')
-  console.log(`  The ${w.name} of ${w.where} holds ${w.onIt.toLocaleString()} swings, which is ${perMillion} in a`)
-  console.log('  million. Reachable rather than reached, far too rare to see on a chart, but')
-  console.log('  not zero, and this report will not round it to zero.')
+  console.log(`  The ${w.name} of ${w.where} holds ${w.onIt.toLocaleString()} swings, ${shareCell(w.share, w.onIt)} of them.`)
+  console.log(`  FEWER sit on it than on the value just inside it (${pct2(w.insideShare)}), so it is being`)
+  console.log('  reached rather than stacked against: an ordinary tail that happens to stop')
+  console.log('  there. Not zero, though, and this report will not round it to zero.')
+  console.log(
+    `  A visitor would see one about every ${everySessions(w)} sessions, ` +
+      (wouldBeMet(w) ? 'which is often enough to meet.' : 'which is never, in practice.')
+  )
 }
 
-const bindingWall = touchedWalls[0]
-console.log('')
-console.log(`  The ${bindingWall.name} is the one actually holding swings, and holding them is`)
-console.log(`  what a wall does. Everything that would have gone past ${bindingWall.where} is parked on it`)
-console.log(`  instead, so that single value carries ${pct2(bindingWall.share)} of every swing against ${pct2(bindingWall.insideShare)} on`)
-console.log('  the value just inside it, where an unwalled tail would carry fewer, not more.')
-console.log('')
-const powerS4Angles = cell(4, 'power').laCounter
-console.log(
-  `  On Power session 4, where it bites hardest: ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling))} of swings sit exactly on ${laCeiling},`
-)
-console.log(`  against ${pct2(counterShare(powerS4Angles, (v) => v === laCeiling - 1))} on ${laCeiling - 1}. That is the flat row of dots, on a chart every`)
-console.log('  visitor who picks that goal can see.')
+for (const w of stackingWalls) {
+  console.log('')
+  console.log(`  The ${w.name} of ${w.where} is holding swings back, which is what a`)
+  console.log(`  wall does. Everything that would have gone past ${w.where} is parked on it`)
+  console.log(`  instead, so that one value carries ${shareCell(w.share, w.onIt)} of every swing against ${pct2(w.insideShare)} on`)
+  console.log('  the value just inside it. More on the edge than beside it is the signature;')
+  console.log('  an ordinary tail thins out instead.')
+  console.log(
+    `  A visitor would see one about every ${everySessions(w)} sessions, ` +
+      (wouldBeMet(w) ? 'which is often enough to meet.' : 'which is never, in practice.')
+  )
+}
+
+// Where the launch angle ceiling bites hardest, if it is stacking at all. Both
+// the goal and the session number are found from the data rather than named
+// here, because "hardest" is a superlative and a superlative that is typed out
+// is a sentence waiting to go false.
+const laCeilingStacks = stackingWalls.some((w) => w.name === 'launch angle ceiling')
+if (laCeilingStacks) {
+  const worstCeilingCell = SLICE11_CELLS
+    .map((c) => ({ c, share: counterShare(c.laCounter, (v) => v === laCeiling) }))
+    .sort((a, b) => b.share - a.share)[0]
+  const worstLabel = SLICE11_GOALS.find((g) => g.id === worstCeilingCell.c.goalId).label
+  console.log('')
+  console.log(
+    `  It bites hardest on ${worstLabel} session ${worstCeilingCell.c.sessionNum}: ${pct2(worstCeilingCell.share)} of swings sit`
+  )
+  console.log(
+    `  exactly on ${laCeiling}, against ${pct2(counterShare(worstCeilingCell.c.laCounter, (v) => v === laCeiling - 1))} on ${laCeiling - 1}. That is the flat row of dots, on a`
+  )
+  console.log('  chart every visitor who picks that goal can see.')
+}
 
 // --- 6. Top exit velocity --------------------------------------------------
 
@@ -1303,27 +1406,51 @@ console.log(
 console.log('  fifteen swings. That is a Power hitter producing about one weakly struck')
 console.log('  ball every other session, and showing none at all seven times in ten.')
 console.log('')
+const otherGoalCells = SLICE11_CELLS.filter((c) => c.goalId !== 'power')
+const powerCells = SLICE11_CELLS.filter((c) => c.goalId === 'power')
+const rangeOf = (cells, column) => {
+  const rates = cells.map((c) => c.bucketEmptyRates[column])
+  return { lo: Math.min(...rates), hi: Math.max(...rates) }
+}
+const otherLong = rangeOf(otherGoalCells, 4)
+const otherShort = rangeOf(otherGoalCells, 0)
+const powerLong = rangeOf(powerCells, 4)
+const powerShort = rangeOf(powerCells, 0)
 console.log(`  The other four run out of LONG balls. Their "${bucketHeaders[4]}" column is empty on`)
-const longEndRates = SLICE11_CELLS.filter((c) => c.goalId !== 'power').map((c) => c.bucketEmptyRates[4])
+console.log(`  ${pct(otherLong.lo)} to ${pct(otherLong.hi)} of sessions, while Power's is empty on ${pct(powerLong.lo)} to ${pct(powerLong.hi)}.`)
+console.log('')
+console.log('  Neither set is free of the other\'s problem, and it would be wrong to say')
+console.log(`  otherwise: the four non-Power goals leave "${bucketHeaders[0]}" empty on ${pct(otherShort.lo)} to`)
+console.log(`  ${pct(otherShort.hi)} of sessions too, and Power leaves "${bucketHeaders[4]}" empty on ${pct(powerLong.lo)} to ${pct(powerLong.hi)}.`)
+console.log('  What differs is how much worse each set is at its OWN end than at the')
 console.log(
-  `  ${pct(Math.min(...longEndRates))} to ${pct(Math.max(...longEndRates))} of sessions, while Power's is empty on ` +
-    `${pct(Math.min(...SESSIONS.map((s) => cell(s, 'power').bucketEmptyRates[4])))} to ` +
-    `${pct(Math.max(...SESSIONS.map((s) => cell(s, 'power').bucketEmptyRates[4])))}.`
+  `  other's: about ${(powerShort.hi / powerLong.hi).toFixed(1)} times for Power, about ${(otherLong.hi / otherShort.hi).toFixed(1)} times for the rest.`
 )
-console.log('  Each set of goals barely has the other\'s problem.')
 console.log('')
 console.log('  Session 1, the hand-written one, fills all five. That is the shape the')
 console.log('  generated sessions are being measured against, and none of them holds it')
 console.log('  reliably today, so this row is a target the generator currently misses')
 console.log('  rather than ground it currently holds.')
 console.log('')
-console.log('  Note the "any column" column before reading this as a Power problem. Every')
+console.log('  Now the "any column" column, which is the pooled measure. Every goal shows')
 const anyEmptyRates = SLICE11_CELLS.map((c) => c.anyEmptyColumnRate)
-console.log(`  goal shows at least one empty column on between ${pct(Math.min(...anyEmptyRates))} and ${pct(Math.max(...anyEmptyRates))} of sessions.`)
-console.log('  What differs is WHICH column, and that is the whole reason this is reported')
-console.log('  per column: the guard Slice 11 has to hold is that the "305+" column on the')
-console.log('  four non-Power goals does not get materially emptier than it already is,')
-console.log('  and a pooled figure cannot answer that question at all.')
+const worstAny = SLICE11_CELLS.slice().sort((a, b) => b.anyEmptyColumnRate - a.anyEmptyColumnRate)[0]
+const worstAnyLabel = SLICE11_GOALS.find((g) => g.id === worstAny.goalId).label
+const worstAnyElsewhere = SLICE11_CELLS
+  .filter((c) => c.goalId !== worstAny.goalId)
+  .sort((a, b) => b.anyEmptyColumnRate - a.anyEmptyColumnRate)[0]
+console.log(`  at least one empty column on between ${pct(Math.min(...anyEmptyRates))} and ${pct(Math.max(...anyEmptyRates))} of sessions, so`)
+console.log('  no goal is clean and this is not one goal misbehaving.')
+console.log('')
+console.log(`  But the top of that range is ${worstAnyLabel} alone. It reaches ${pct(worstAny.anyEmptyColumnRate)} on`)
+console.log(`  session ${worstAny.sessionNum}, where no other goal in the table passes ${pct(worstAnyElsewhere.anyEmptyColumnRate)}. So it is both worse`)
+console.log('  overall AND worse at a different end, and a reader should not come away')
+console.log('  thinking the five goals are comparably bad on the pooled measure.')
+console.log('')
+console.log('  That is the whole reason this is reported per column: the guard Slice 11')
+console.log(`  has to hold is that the "${bucketHeaders[4]}" column on the four non-Power goals does not`)
+console.log('  get materially emptier than it already is, and a pooled figure cannot')
+console.log('  answer that question at all.')
 console.log('')
 console.log('  How far one swing sits from its own session average. Dividing by n, which')
 console.log('  is the convention session 1\'s own numbers below are calculated on.')
