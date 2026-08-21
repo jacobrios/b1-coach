@@ -16,9 +16,25 @@ import { swingCountPhrase } from './promptText.js'
 // around 28 degrees, keeps all of its potential. A ground ball keeps very
 // little of it, and a ball hit too high loses some too, the way a real
 // warning-track flyball does. The exact constants are a starting point tuned
-// against the app's own 65-97 mph / -5-35 degree range, not a physics model,
-// and may move if the rendered chart argues for it; see the decision record
-// for this slice if they do.
+// against the app's own range, not a physics model, and may move if the
+// rendered chart argues for it; see the decision record for this slice if
+// they do.
+//
+// THAT RANGE WAS 65-97 MPH AND -5 TO 35 DEGREES WHEN THESE CONSTANTS WERE
+// FITTED, AND IT IS NOT THAT ANY MORE. Corrected 21 August 2026: Slice 11
+// took the exit velocity ceiling to 94 and the launch angle ceiling to 50,
+// and made both of them soft limits a swing approaches rather than walls it
+// stacks up on. See EXIT_VELOCITY_LIMITS and LAUNCH_ANGLE_LIMITS in
+// src/swingGenerator.js, which are the one place those numbers live.
+//
+// Nothing here was changed to follow them, which is a decision rather than an
+// oversight: the formula was checked against the new top end and it holds.
+// That slice's own note beside LAUNCH_ANGLE_LIMITS records the coupling it
+// checked, that the shape term below stops falling at 50.5 degrees so a limit
+// of 50 never reaches the flat part. Measured the same day over the whole
+// reachable range, carry runs from 45 feet at 65 mph and -5 degrees to 368
+// feet at 94 mph and 28 degrees, so the honest curve stays honest across
+// everything the generator can now produce.
 //
 // It lives in its own file, beside goalTargets.js, sessionStats.js and
 // chartSlots.js, so it can be tested without loading the results screen, which

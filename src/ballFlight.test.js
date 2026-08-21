@@ -66,14 +66,32 @@ describe('carry peaks near the ideal launch angle', () => {
 })
 
 describe('the extremes of the app\'s own range stay sane', () => {
-  // The app only ever generates 65-97 mph and -5 to 35 degrees. Nothing this
-  // function is fed inside that range should come out negative or absurd.
+  // Nothing this function is fed inside the range the generator can produce
+  // should come out negative or absurd.
+  //
+  // THAT RANGE MOVED IN SLICE 11 AND THIS TABLE HAD NOT. Until 21 August 2026
+  // the line above read "the app only ever generates 65-97 mph and -5 to 35
+  // degrees", and the six rows under it were those corners. The ceiling is now
+  // 94 mph and the launch angle limit 50 (EXIT_VELOCITY_LIMITS and
+  // LAUNCH_ANGLE_LIMITS in src/swingGenerator.js), so a whole quarter of the
+  // reachable range, everything above 35 degrees, was going unchecked here
+  // while the comment said otherwise. The three rows at 50 degrees close that.
+  //
+  // The 97 mph rows are deliberately kept rather than lowered to 94. They are
+  // above what the generator can now reach, and a formula that stays sane
+  // slightly past the generator's reach is worth holding still: 97 is where
+  // this test started, nothing about it has stopped being true, and dropping a
+  // passing row buys nothing. Read them as headroom, not as the app's range.
   it.each([
     [65, -5],
     [65, 35],
+    [65, 50],
+    [94, -5],
+    [94, 50],
     [97, -5],
     [97, 35],
     [65, 4],
+    [94, 28],
     [97, 28],
   ])('%s mph at %s degrees is between 0 and 400 feet', (exitSpeed, angle) => {
     const feet = carryDistance({ exitSpeed, angle })
