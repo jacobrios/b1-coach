@@ -311,8 +311,8 @@ export const PITCH_SCALING = {
 //
 // BLENDED IN, NEVER ADDED ON TOP, and this is the one line to read if you are
 // about to change any of it. The first prototype of this task added the pitch
-// term on top of the existing draws. It produced an 11 mph zone gap against a
-// 6 mph target and stacked 10 percent of every swing generated against the
+// term on top of the existing draws. It produced an 11 mph zone gap against an
+// adopted target of about 4.5 mph and stacked 10 percent of every swing
 // exit velocity ceiling, because adding independent terms widens the
 // distribution. The sqrt(1 - w**2) weights below are the same arithmetic
 // CONTACT_CORRELATION already uses and are what keeps the total spread
@@ -362,6 +362,11 @@ export const PITCH_SCALING = {
 // moves a settled product decision to chase a number. So the honest reading is
 // that a 6 mph gap is not what this generator is, and the fuller version of
 // that argument, with the whole table, is in docs/slice-11-plan.md.
+//
+// AND THAT IS WHAT HAPPENED: on 21 August 2026 the product manager adopted a
+// target of about 4.5 mph, which is what the widened configuration above
+// actually produces. So read the two paragraphs here as the record of why the
+// target moved rather than as an open argument against one.
 const PITCH_QUALITY_WEIGHT = 0.8
 const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
 const PITCH_HEIGHT_WEIGHT = 0.4
@@ -406,11 +411,19 @@ const PITCH_HEIGHT_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_HEIGHT_WEIGHT ** 2)
 // rise of 0.88%.
 //
 // Against a measured 0.93% for the whole thing, of which rounding to whole
-// degrees accounts for about 0.05% and the clamps pull a little back. So the
-// prediction and the measurement agree, which the earlier version of this
+// degrees accounts for 0.103% and the clamps pull the rest back. That rounding
+// figure is Sheppard's correction rather than a measurement, so a reader can
+// check it without running anything: rounding to a bin of width 1 adds 1/12 to
+// the variance, and sqrt(6.35085**2 + 1/12) / 6.35085 is 1.00103. The same
+// arithmetic on exit velocity gives 0.195%, which is why the 4.6188 the scale
+// constant implies is measured at 4.6233 rather than dead on it.
+//
+// So the prediction and the measurement agree, which the earlier version of this
 // comment could not say: it dropped the pitch-quality weight out of the
 // covariance, predicted 1.05%, and then shrugged at a 25% disagreement with its
-// own measurement.
+// own measurement. (A later version of it got the rounding term wrong too, by
+// about a factor of two in the same paragraph written to correct that class of
+// defect, which is how these two numbers came to be quoted in closed form.)
 //
 // Not worth correcting for: the fix would be to orthogonalise the two terms,
 // which buys six hundredths of a degree at the cost of a step nobody could read.

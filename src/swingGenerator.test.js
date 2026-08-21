@@ -648,13 +648,20 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // are above 1 and neither is an accident:
     //
     //   Rounding to whole numbers adds 1/12 of variance to each reading, worth
-    //   about 0.10% on exit velocity and 0.05% on launch angle. The clamps pull
-    //   a little back the other way.
+    //   0.195% on exit velocity and 0.103% on launch angle. Those two are
+    //   Sheppard's correction rather than measurements, so they can be checked
+    //   without running anything: sqrt(4.61880**2 + 1/12) / 4.61880 is 1.00195
+    //   and sqrt(6.35085**2 + 1/12) / 6.35085 is 1.00103. The clamps pull the
+    //   remainder back the other way. (This paragraph first said 0.10 and 0.05,
+    //   out by about a factor of two, in the comment written to correct exactly
+    //   that. The conclusions did not move; the unexplained remainder simply
+    //   sat in the wrong term.)
     //
     //   Launch angle carries the rest, about 0.88%, from the two pitch terms
     //   being correlated at +0.058 rather than at 0, which is explained where
     //   it happens in swingGenerator.js. Exit velocity has no second term and
-    //   so has no second effect.
+    //   so has no second effect, which is why it lands within a fifth of a
+    //   percent of its constant and launch angle does not.
     //
     // THE BAND IS 0.99 TO 1.025 AND IS SIZED FROM MEASUREMENT, not chosen.
     // Across 60 seeds at the 4,000 sessions below, exit velocity ran 0.99542 to
@@ -731,6 +738,13 @@ describe('the pitch terms are standardised against the pitches this file actuall
   // than a quiet promise it cannot keep. That is still well inside what a real
   // retune moves: a five-point change to IN_ZONE_RATE shifts the mean distance
   // by about five hundredths.
+  //
+  // ONE RESIDUAL, RECORDED RATHER THAN CHASED. Even widened, 1 of 300 alternative
+  // seeds still exceeds this row. That cannot flake here, because the sweep it
+  // reads runs off one committed seed and is deterministic, so it is a statement
+  // about how much headroom the number has rather than about this test's
+  // reliability. Widening it further would start letting a real retune through,
+  // which is the thing it exists to catch, so it stays where it is.
   const TOLERANCE = 0.02
   const HEIGHT_MEAN_TOLERANCE = 0.03
 

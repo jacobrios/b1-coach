@@ -15,8 +15,20 @@ ceiling moves the on-target counts.
 - **Exit velocity ceiling 94.** Two above his measured best, reached rarely.
 - **In-zone rate about 65%**, matching session 1's frozen 60%. Every row is a
   batted ball, so this is Bill's chase rate, not the thrower's accuracy.
-- **Pitch location predicts contact at about 6 mph**, so session 1's measured
-  8.8 reads as an ordinary fifteen-swing draw rather than the population mean.
+- ~~**Pitch location predicts contact at about 6 mph**~~ **about 4.5 mph**, so
+  session 1's measured 8.8 reads as an ordinary fifteen-swing draw rather than
+  the population mean.
+
+  **Amended 21 August 2026, and this is a product decision rather than an
+  engineering trim, so do not relitigate it as one.** The 6 was written before
+  anything measured what the structure could reach. Task 5 then measured it from
+  both ends: 4.5 is what this generator produces once the exit velocity spread is
+  widened to match session 1, which this slice wants anyway for its own reasons,
+  and every route to 6 costs something the slice has already said it will not
+  spend. The product manager took the decision on that evidence, on the reasoning
+  that the reachable number is the honest one and that session 1's 8.8 is itself
+  a high draw from fifteen swings. Section 6 below carries the full table. Task 9
+  aims at 4.5.
 - **Per-swing exit velocity spread widens to session 1's 6.11 mph.** The
   generator is 4.23, a 31% tighter hitter than the session it derives from,
   which nobody chose and nothing records.
@@ -770,6 +782,33 @@ weight of 1.0 means the pitch IS the contact quality and the hitter's own qualit
 draw counts for nothing, which is not a state anybody wants, and it still lands
 under 4.3.
 
+~~**So reaching 6 mph is a decision about a different constant.** Two candidates,
+and one is already wanted for its own reasons:~~
+
+- ~~**`EV_SPREAD_MPH`, today 16.** The gap scales with it directly, so 22 would put
+  today's structure at roughly 4.7 mph without touching the pitch weight at all.
+  Section 9 of the measurement report separately says the generated hitter is
+  **30% tighter** than the hand-written session he is derived from, "which nobody
+  chose", so widening this is on the table regardless of the zone gap. That makes
+  it the cheaper of the two: one change, two targets.~~
+- ~~**`CONTACT_CORRELATION`, today 0.6.** Raising it lifts the gap proportionally
+  and also tightens how much exit velocity and launch angle agree with each
+  other, which is a settled product decision with its own recorded reasoning.
+  Do not move it as a side effect of chasing this number.~~
+
+~~The third possibility, and it deserves saying so nobody re-derives it: the target
+itself may be too high. The 8.78 mph gap the target is anchored to is session 1's,
+and session 1 is fifteen hand-written swings chosen to read legibly, not a sample
+anybody fitted a rate to. Six may simply be more than a believable generator
+should produce.~~
+
+**Struck rather than deleted, 21 August 2026.** The correction below originally
+removed those twenty lines outright, which is not how this project keeps a
+record, and it was inconsistent inside its own commit: section 7 of this document
+used a strikethrough plus a dated note in the same change. Restored so the wrong
+recommendation stays legible next to what replaced it, because the wrong one is
+what a reader would otherwise reinvent.
+
 **Dated correction and completion, 21 August 2026, from the review of this
 task.** Two things above needed fixing and the second one changes the answer.
 
@@ -806,16 +845,25 @@ hit a zone-gap number is moving a product decision as a side effect, which this
 document already says not to do.
 
 **So the finding is the one that was written as a footnote, and it should have
-been the headline: the 6 mph target is very probably too high.** It is anchored
+been the headline: the 6 mph target is too high.** *(Decided, 21 August 2026: the
+product manager adopted about 4.5 mph on this evidence. The front settled block
+at the top of this document carries the amendment, and that is the authoritative
+line; what follows here is the reasoning behind it.)* It is anchored
 to session 1's 8.78, and session 1 is fifteen hand-written swings chosen to read
 legibly, not a sample anybody fitted a rate to. Every lever that reaches 6 costs
 something the slice has already said it does not want to spend. Task 9 should
 either adopt a lower target, somewhere near the 4.6 that falls out of the
 widening it wants anyway, or take the decision to move `CONTACT_CORRELATION`
-deliberately and on its own merits rather than as a means to this end.
+deliberately and on its own merits rather than as a means to this end. *(The
+first of those two was chosen. `CONTACT_CORRELATION` stays where it is.)*
 
 **One piece of honest framing about "full weight", because the word flatters
-it.** At `PITCH_QUALITY_WEIGHT` of 1.0 the accident share is exactly zero: the
+it.** Everywhere in this document and in Task 5's tests, "full weight" means
+`PITCH_QUALITY_WEIGHT` at 1.0 and `PITCH_HEIGHT_WEIGHT` left where it is. That
+is load-bearing rather than pedantry: read as BOTH weights at 1.0 it means a
+different generator, and the spread assertion in `swingGenerator.test.js` fails
+about a fifth of the time under that reading. Nobody should have to guess which
+was meant. At `PITCH_QUALITY_WEIGHT` of 1.0 the accident share is exactly zero:
 hitter's own contact quality draw does nothing whatsoever and the shared quality
 IS the pitch. Even at 0.9 the hitter's own draw carries only 19% of that term. So
 the rows above at weight 1.0 are not a setting anybody would ship; they are there
