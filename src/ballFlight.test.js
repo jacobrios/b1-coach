@@ -25,6 +25,12 @@ describe('the reference points the shape is built from', () => {
     [88, 26, 310],
     [88, 28, 323],
     [91, 28, 345],
+    // The hardest ball this generator can now produce, added 21 August 2026.
+    // The row under it, 97 mph, was that ball until Slice 11 lowered the exit
+    // velocity ceiling to 94, and it stays as headroom. This one is here so the
+    // 368 that three comments in ballFlight.js now quote guards itself rather
+    // than depending on somebody rerunning a script.
+    [94, 28, 368],
     [97, 28, 390],
     [65, -5, 45],
     [97, 35, 335],
@@ -270,8 +276,18 @@ describe('every swing the real generator can produce lands in exactly one bucket
 describe('the spray chart distance-to-radius mapping', () => {
   // Both ends of what the generator can actually produce, measured over 20,000
   // replays per goal per session by scripts/measure-swing-generation.mjs.
-  const SHORTEST_REAL_BALL = 74
-  const LONGEST_REAL_BALL = 390
+  //
+  // These read 74 and 390 until 21 August 2026, which was the range before
+  // Slice 11 moved the generator's limits. Unlike the four comments corrected
+  // alongside them, these two are inside a live assertion, so the stale pair
+  // was a test checking a range this app no longer produces rather than merely
+  // a sentence saying so. Read the correction calmly, though: neither value
+  // turned this file red at either setting, because what the rows below assert
+  // is that a ball lands off the plate ring and inside fair territory, and 74
+  // and 390 both do. Nothing was broken and no constant in ballFlight.js
+  // moved; what was wrong was what this block claimed to be covering.
+  const SHORTEST_REAL_BALL = 52
+  const LONGEST_REAL_BALL = 368
 
   it.each([SHORTEST_REAL_BALL, LONGEST_REAL_BALL])(
     'draws a %sft ball inside fair territory and off the plate',
