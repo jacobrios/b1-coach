@@ -124,6 +124,17 @@
 // tighter. Both were quoted as measured fact in comments before anything here
 // could reproduce them, which is the same defect this slice exists to remove.
 //
+// ANNOTATION, 21 AUGUST 2026, SLICE 11 TASK 5. Only the "before" row of either
+// section is frozen. Every other row is built from the generator in the working
+// tree, so both sections drift forward as the generator changes and neither is
+// a preserved picture of August 2026 any more. That was harmless while nothing
+// touched the generator and stopped being harmless the moment something did:
+// the second section's own header used to promise that the correlation was the
+// only thing separating its two rows, which Task 5 made false. Both banners now
+// say so where a reader of the OUTPUT will see it, which is the half that
+// matters, since almost nobody reading a number off this report is reading this
+// file. Nothing about the measurements themselves changed.
+//
 // A LOADER WRINKLE, EXPLAINED SO NOBODY "FIXES" IT AWAY. src/swingGenerator.js
 // imports its neighbours as `./ballFlight` and `./goalTargets`, with no file
 // extension. That is fine under Vite and under vitest (both resolve it), but
@@ -3118,12 +3129,18 @@ console.log('='.repeat(78))
 console.log('WHAT THE CORRELATION CHANGE DID ON ITS OWN, WITH NO RE-ROLL')
 console.log('Line Drives & Contact: how often a session drew a completely empty')
 console.log('target band. The middle row is the state that never shipped.')
+console.log('')
+console.log('THE BOTTOM TWO ROWS ARE NO LONGER THE SLICE 6 GENERATOR. They come')
+console.log('from whatever is in the working tree, so since Slice 11 they carry its')
+console.log('changes too, and the last row is not "correlation + re-roll" on its own')
+console.log('any more. Only the top row is frozen. Read this table as three states of')
+console.log("today's generator, not as a Slice 6 before-and-after preserved in amber.")
 console.log('='.repeat(78))
 console.log('  ' + 'state'.padEnd(46) + SESSIONS.map((s) => `S${s}`.padStart(8)).join(''))
 const EMPTY_BAND_ROWS = [
   ['pre-slice generator (independent draws)', contactEmptyRateBefore],
   ['correlation only, re-roll switched off', contactEmptyRateCorrelationOnly],
-  ['as this app ships (correlation + re-roll)', contactEmptyRateShipped],
+  ['as this app ships, re-roll included', contactEmptyRateShipped],
 ]
 for (const [label, measure] of EMPTY_BAND_ROWS) {
   console.log('  ' + label.padEnd(46) + SESSIONS.map((s) => pct(measure(s)).padStart(8)).join(''))
@@ -3179,15 +3196,21 @@ function spreads(gen) {
 console.log('')
 console.log('='.repeat(78))
 console.log('HOW SPREAD OUT A SESSION IS, BEFORE AND AFTER THE CORRELATION CHANGE')
-console.log('Session 2, re-roll switched off on the "after" row so the correlation')
-console.log('is the only thing that differs between them.')
+console.log('Session 2, re-roll switched off on the "after" row.')
+console.log('')
+console.log('THE "AFTER" ROW IS TODAY\'S GENERATOR, NOT SLICE 6\'S. That sentence used')
+console.log('to say the correlation was the only thing that differed between the two')
+console.log('rows, and Slice 11 made it untrue: the after row reads from the working')
+console.log('tree, so it now carries the pitch link as well. What the two rows still')
+console.log('answer together is the question this section was written for, whether the')
+console.log('spread has quietly moved, and the answer is what to read off it.')
 console.log('='.repeat(78))
 const SPREAD_BEFORE_RANDOM = streamFor('spread-pre-slice6|session-2')
 const SPREAD_AFTER_RANDOM = streamFor('spread-correlated|session-2')
 for (const [label, gen] of [
   ['before (independent draws)', () => oldGenerateSwings(2, mockSwings, SPREAD_BEFORE_RANDOM)],
   [
-    'after (correlated, no re-roll)',
+    'after (today, no re-roll)',
     () => generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: mockSwings, random: SPREAD_AFTER_RANDOM }),
   ],
 ]) {
