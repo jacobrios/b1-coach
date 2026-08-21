@@ -56,6 +56,12 @@
 //   --input docs/eval-fixtures/slice9-session-one/before  --builder slice9-before --seed 20260814
 //   --input docs/eval-fixtures/slice9-session-one/after-a --builder current       --seed 20260814
 //   --input docs/eval-fixtures/slice9-session-one/after-b --builder current       --seed 20260819
+// (Dated correction, 20 August 2026, Slice 11: the two "current" lines above
+// are what was run on the day and are left standing as the record of it, but
+// they are no longer the right command. Both rounds now take
+// --builder slice11-before, because "current" has since come to mean a
+// different swing generator. So do Slice 10's two rounds. See the fourth
+// section of the session-builders comment below.)
 // NOTE THE THIRD SEED. Round B was generated at a different seed from the
 // other two and from this script's own default. Each of those directories
 // carries a BUILDER.txt naming its own builder AND its own seed, so both
@@ -126,6 +132,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const FIXTURE_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice7-debriefs')
 const SLICE9_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice9-session-one')
+const SLICE10_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice10-direction-key')
+// Snapshots that belong to no single round, because more than one round
+// depends on them. The pre-Slice-11 generator is the first of them.
+const FROZEN_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model, pricing, cost guardrails
@@ -158,7 +168,7 @@ const FALLBACK_PRICING = PRICING['claude-haiku-4-5-20251001']
 const MAX_PLANNED_CALLS = 100
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Session builders: frozen, slice9-before, current
+// Session builders: frozen, slice9-before, slice11-before, current
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // This is the subtlest part of the task, so the mechanism is spelled out
@@ -196,11 +206,20 @@ const MAX_PLANNED_CALLS = 100
 // the current builder and differs in nothing but which fifteen swings it
 // starts from.
 //
+// *** AND IT RECURRED AGAIN, IN A NEW PLACE, 20 AUGUST 2026. ***
+// See the fourth section below, "A builder is a pair now." Everything above
+// this line is about WHICH FIFTEEN SWINGS a round started from. That turned
+// out to be only half of what the working tree contributes.
+//
 // Which builder goes with which records:
-//   frozen         docs/eval-fixtures/slice7-debriefs (the 96-debrief fixture)
-//   slice9-before  docs/eval-fixtures/slice9-session-one/before
-//   current        anything produced by the bench against today's working
-//                  tree, including slice9-session-one/after-*
+//   frozen          docs/eval-fixtures/slice7-debriefs (the 96-debrief fixture)
+//   slice9-before   docs/eval-fixtures/slice9-session-one/before
+//   slice11-before  docs/eval-fixtures/slice9-session-one/after-a and after-b,
+//                   docs/eval-fixtures/slice10-direction-key/after and
+//                   after-spray. All four said "current" until 20 August 2026;
+//                   see below for what changed and why it is not a rename.
+//   current         anything produced by the bench against today's working
+//                   tree, and nothing that is already committed
 //
 // The flag design makes the choice unavoidable rather than defaulted:
 //   - No --records flag (the default: grade the 96-debrief fixture) locks
@@ -222,6 +241,54 @@ const MAX_PLANNED_CALLS = 100
 //     The marker is committed beside the records by whoever generated them,
 //     which is the one moment the answer is actually known. See
 //     readBuilderMarker below.
+//
+// *** A BUILDER IS A PAIR NOW, NOT A BASELINE. 20 AUGUST 2026, SLICE 11. ***
+//
+// Every paragraph above this one treats a builder as an answer to one
+// question: which fifteen session-1 swings did this round start from. That
+// framing was wrong, and it was wrong from the day the second builder was
+// added; it simply could not be noticed while only session 1 ever moved.
+//
+// Sessions 2, 3 and 4 are not stored anywhere either. They are GENERATED
+// from session 1, by src/swingGenerator.js, read out of the working tree.
+// So a builder has always depended on two moving parts, and only one of them
+// was pinned. Slice 11 rewrites the generator (the link between where a
+// pitch was and how well it was struck, the pull and opposite-field bias,
+// and the pop-up ceiling). The moment it lands, four committed rounds that
+// said "current" would rebuild sessions 2 to 4 from the new generator while
+// their session 1 stayed correct: a complete, entirely plausible fact sheet
+// covering 40 of every 64 records, describing swings no coach ever saw, with
+// nothing appearing broken. This is the identical failure the two sections
+// above describe, arriving through the other door.
+//
+// So a builder is now a PAIR: which baseline, and which generator.
+//
+//   current          live baseline, live generator
+//   slice11-before   live baseline, frozen generator
+//   slice9-before    frozen baseline, frozen generator
+//
+// The frozen generator is
+// docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs, recovered from
+// commit 53315e5. It imports nothing from src/ at all, carrying its own
+// frozen copies of the carry formula and the goal target table, because a
+// snapshot that reaches into the live app for half its behaviour would drift
+// the first time a target band moved by a degree. Exactly what it produces,
+// for every cell at every seed, is written down in
+// docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json and re-checked
+// on every npm test by scripts/frozenGenerator.test.js.
+//
+// slice9-before was REPOINTED, not renamed, and the distinction matters if
+// you are reading its marker. That builder's meaning was always "what that
+// round was written against", and what that round was written against now
+// requires the frozen generator too. Its BUILDER.txt still says
+// slice9-before and always will; only its meaning was completed.
+//
+// THE NEXT QUESTION A READER ASKS: what about computeStats? It still comes
+// from the working tree, in every builder, deliberately. computeStats is not
+// part of the generator; it summarises swings that have already been
+// decided, and src/sessionStats.js is not touched by this slice. If a future
+// slice does change how a session is summarised, that is a third moving part
+// and it needs its own answer, not a quiet extension of this one.
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -262,24 +329,54 @@ export const CURRENT_CELLS = [
   { key: 'contact-s1', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 1 },
 ]
 
-let _generatorDeps = null
-async function loadGeneratorDeps() {
-  if (_generatorDeps) return _generatorDeps
+// The live generator: what a bench round run today is written about.
+let _currentGenerator = null
+async function loadCurrentGenerator() {
+  if (_currentGenerator) return _currentGenerator
   const { generateSwings } = await import(`${REPO_ROOT}/src/swingGenerator.js`)
-  const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
-  _generatorDeps = { generateSwings, computeStats }
-  return _generatorDeps
+  _currentGenerator = generateSwings
+  return _currentGenerator
 }
 
-// The one piece of session-construction logic behind both baseline-driven
-// builders. Deliberately not forked per builder: the seeding, the generator
-// call and the stats are identical for the before round and the after
-// rounds, and the whole point of the before/after comparison is that the
-// fifteen baseline swings are the ONLY thing that differs. Two copies of
-// this loop would let something else drift into the difference without
-// anyone noticing.
-async function buildSessionsFromBaseline({ baseline, goalId, upTo, seed }) {
-  const { generateSwings, computeStats } = await loadGeneratorDeps()
+// The frozen pre-Slice-11 generator: what every round committed before
+// 20 August 2026 is written about. A committed snapshot, never the working
+// tree, for the reason its own header spells out at length.
+let _preSlice11Generator = null
+async function loadPreSlice11Generator() {
+  if (_preSlice11Generator) return _preSlice11Generator
+  const url = pathToFileURL(path.join(FROZEN_DIR, 'swing-generator-pre-slice11.mjs')).href
+  const { generateSwingsPreSlice11 } = await import(url)
+  if (typeof generateSwingsPreSlice11 !== 'function') {
+    throw new Error(`${url} did not export generateSwingsPreSlice11.`)
+  }
+  _preSlice11Generator = generateSwingsPreSlice11
+  return _preSlice11Generator
+}
+
+// How a session is SUMMARISED, as opposed to how it is made. This one stays
+// on the working tree in every builder, on purpose; see the note at the end
+// of the builder comment block above for why it is not a third frozen part.
+let _computeStats = null
+async function loadComputeStats() {
+  if (_computeStats) return _computeStats
+  const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
+  _computeStats = computeStats
+  return _computeStats
+}
+
+// The one piece of session-construction logic behind all three
+// baseline-driven builders. Deliberately not forked per builder: the seeding,
+// the generator call and the stats are identical for the before round and
+// the after rounds, and the whole point of a before/after comparison is that
+// exactly one thing differs. Two copies of this loop would let something
+// else drift into the difference without anyone noticing.
+//
+// The generator arrives as a parameter rather than being fetched in here,
+// which is the Slice 11 change: this function used to reach for the working
+// tree itself, which is precisely how four committed rounds came to depend
+// on a file nobody thought of as part of their provenance.
+async function buildSessionsFromBaseline({ baseline, generateSwings, goalId, upTo, seed }) {
+  const computeStats = await loadComputeStats()
   const random = mulberry32(seed)
   const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
   for (let n = 2; n <= upTo; n++) {
@@ -314,14 +411,21 @@ async function loadSlice9BeforeBaseline() {
   return _slice9BeforeBaseline
 }
 
-// builder name -> how to get its fifteen baseline swings. Adding a fourth
-// generation of session 1 means adding one line here and one frozen
-// snapshot, not another copy of the loop above.
-const BASELINE_LOADERS = {
-  current: loadCurrentBaseline,
-  'slice9-before': loadSlice9BeforeBaseline,
+// builder name -> the PAIR it stands for: which fifteen baseline swings, and
+// which generator builds sessions 2 to 4 off them. Adding a fourth generation
+// means adding one line here and one frozen snapshot, not another copy of the
+// loop above.
+//
+// Read the rows against each other rather than one at a time. Each frozen
+// half is a thing the working tree has already moved on from, and the
+// combinations that exist are exactly the combinations some committed round
+// was actually written against.
+const BUILDERS = {
+  current: { baseline: loadCurrentBaseline, generator: loadCurrentGenerator },
+  'slice11-before': { baseline: loadCurrentBaseline, generator: loadPreSlice11Generator },
+  'slice9-before': { baseline: loadSlice9BeforeBaseline, generator: loadPreSlice11Generator },
 }
-const BUILDER_NAMES = ['frozen', ...Object.keys(BASELINE_LOADERS)]
+const BUILDER_NAMES = ['frozen', ...Object.keys(BUILDERS)]
 // The prompt eras --handed-era accepts. One list, so a value arriving from a
 // marker is checked against exactly what a value arriving from the flag is.
 const HANDED_ERAS = ['slice8b', 'current']
@@ -347,17 +451,19 @@ export async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
     }
     return { sessions: sessionsForCell(cellKey), goal: cell.goal, viewingSessionNumber: cell.session }
   }
-  const loadBaseline = BASELINE_LOADERS[builder]
-  if (loadBaseline) {
+  const pair = BUILDERS[builder]
+  if (pair) {
     const cell = CURRENT_CELLS.find((c) => c.key === cellKey)
     if (!cell) {
       throw new Error(
         `Unknown cell "${cellKey}" for the ${builder} builder. Known: ${CURRENT_CELLS.map((c) => c.key).join(', ')}`,
       )
     }
-    const baseline = await loadBaseline()
+    const baseline = await pair.baseline()
+    const generateSwings = await pair.generator()
     const sessions = await buildSessionsFromBaseline({
       baseline,
+      generateSwings,
       goalId: cell.goal.id,
       upTo: cell.session,
       seed,
@@ -436,7 +542,11 @@ function loadInputDirectory(dir) {
 // --builder is required and nothing can be cross-checked.
 const BUILDER_MARKER_FILENAME = 'BUILDER.txt'
 
-function readBuilderMarker(dir) {
+// Exported since Slice 11 so scripts/replay-grading.mjs can read the same
+// provenance marker rather than trusting a saved run's record of which flag
+// was passed on the day. Those two answers came apart the moment four
+// markers were repointed; see the fourth section of the builder comment.
+export function readBuilderMarker(dir) {
   const markerPath = path.join(dir, BUILDER_MARKER_FILENAME)
   let text
   try {
@@ -611,6 +721,7 @@ function resolveRecordsAndBuilder(args) {
       missingBuilderMessage:
         '--input was given without --builder, and the directory carries no BUILDER.txt. There is no default: ' +
         'pass --builder current for anything produced by the bench against today\'s working tree, ' +
+        '--builder slice11-before for a round committed before the Slice 11 generator rewrite, ' +
         '--builder slice9-before for Slice 9\'s pre-rewrite round, or --builder frozen only if the directory ' +
         'holds records generated against the old stand-in session 1 (rare, and you should know why).',
     })
@@ -653,7 +764,8 @@ function resolveRecordsAndBuilder(args) {
     missingBuilderMessage:
       '--records was given without --builder, and no BUILDER.txt sits beside it. There is no default: pass ' +
       '--builder frozen only if this file was generated against the old stand-in session 1 (rare, and you ' +
-      'should know why), --builder slice9-before for Slice 9\'s pre-rewrite round, or --builder current for ' +
+      'should know why), --builder slice9-before for Slice 9\'s pre-rewrite round, --builder slice11-before ' +
+      'for a round committed before the Slice 11 generator rewrite, or --builder current for ' +
       'anything produced by the bench against today\'s working tree.',
   })
   const records = JSON.parse(readFileSync(args.records, 'utf8'))
@@ -1237,6 +1349,27 @@ async function dryRun(args) {
   }
   console.log('  ok: the two builders disagree, which is the whole point of the second one')
 
+  // 1c. The two GENERATORS, reported rather than asserted, and the asymmetry
+  // is deliberate. 1b above is a hard failure because those two builders must
+  // ALWAYS differ. These two must differ EVENTUALLY: they are the same code
+  // until Slice 11 rewrites src/swingGenerator.js, so a hard check either way
+  // would be wrong on one side of that change. What is asserted, permanently
+  // and on every npm test, is that slice11-before still reproduces the
+  // committed digest; see scripts/frozenGenerator.test.js.
+  console.log('')
+  console.log('The two generators (power-s2, session 2, seed 20260814)')
+  console.log('-'.repeat(70))
+  const liveS2 = await resolveSessions({ builder: 'current', cellKey: 'power-s2', seed: 20260814 })
+  const frozenS2 = await resolveSessions({ builder: 'slice11-before', cellKey: 'power-s2', seed: 20260814 })
+  const generatorsAgree =
+    JSON.stringify(liveS2.sessions[1].swings) === JSON.stringify(frozenS2.sessions[1].swings)
+  console.log(
+    generatorsAgree
+      ? '  current and slice11-before produce identical swings: the generator has not been rewritten yet'
+      : '  current and slice11-before now differ: the generator has been rewritten, and every committed round ' +
+        'correctly reads the frozen one',
+  )
+
   // 2. Builder-selection guardrails, exercised without ever making a real call.
   console.log('')
   console.log('Builder-selection guardrails')
@@ -1273,12 +1406,22 @@ async function dryRun(args) {
   // The provenance marker, exercised against the real committed fixtures
   // rather than a made-up directory, so a marker that goes missing or gets
   // edited to the wrong value fails a free dry run.
+  //
+  // 20 August 2026, Slice 11: the four rounds that used to be marked
+  // "current" are now marked "slice11-before", and Slice 10's two rounds
+  // joined this list. Every committed round in this repository is now
+  // exercised here, which is the state it should have been in already: the
+  // two Slice 10 rounds were missing from this check for no reason anyone
+  // recorded, and a marker nothing looks at is a marker nobody notices going
+  // wrong.
   const markerCases = [
     { dir: path.join(SLICE9_DIR, 'before'), expected: 'slice9-before', wrong: 'current', seed: 20260814 },
-    { dir: path.join(SLICE9_DIR, 'after-a'), expected: 'current', wrong: 'slice9-before', seed: 20260814 },
+    { dir: path.join(SLICE9_DIR, 'after-a'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
     // Not the default seed, and nothing but this marker says so. See its own
     // BUILDER.txt.
-    { dir: path.join(SLICE9_DIR, 'after-b'), expected: 'current', wrong: 'slice9-before', seed: 20260819 },
+    { dir: path.join(SLICE9_DIR, 'after-b'), expected: 'slice11-before', wrong: 'current', seed: 20260819 },
+    { dir: path.join(SLICE10_DIR, 'after'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
+    { dir: path.join(SLICE10_DIR, 'after-spray'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
   ]
   for (const c of markerCases) {
     const rel = path.relative(REPO_ROOT, c.dir)
@@ -1357,7 +1500,19 @@ async function dryRun(args) {
       console.log(`  ok: ${rel} resolved seed ${c.seed} with no --seed passed (from ${adopted.seedSource})`)
     }
   }
-  if (guardOk !== 13) throw new Error('Builder-selection guardrail self-check failed.')
+  // Four flag-shape guards, plus three checks on each committed round's
+  // marker. Derived from markerCases rather than written out as a number,
+  // since Slice 11 grew that list from three rounds to five and a hand-typed
+  // total is one more thing to forget. It still bites for the failure it was
+  // put here to catch: a guard that prints FAILED instead of throwing does
+  // not increment, so the total comes up short and the dry run stops.
+  const expectedGuards = 4 + markerCases.length * 3
+  if (guardOk !== expectedGuards) {
+    throw new Error(
+      `Builder-selection guardrail self-check failed: ${guardOk} of ${expectedGuards} passed. ` +
+      'Read the FAILED lines above rather than adjusting this count.',
+    )
+  }
 
   // 3. Build the real fact sheet and the real prompt for one record, report sizes.
   console.log('')
