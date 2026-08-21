@@ -930,8 +930,13 @@ const sessionCountPhrase = (count) => `${count.toLocaleString()} session${count 
 // back as 1 and the report said "about one swing in every 1 session". Asking
 // the rounded answer whether it is still 1 closes that gap exactly, whatever
 // the share.
+// The unit a visitor actually looks at. One chart is one session of fifteen
+// swings, which is what turns a share into something a person can picture and
+// is what the flat-row test below is built on.
+const SWINGS_PER_SESSION = 15
+
 function howOftenSeen(share) {
-  const perSession = share * 15
+  const perSession = share * SWINGS_PER_SESSION
   if (!Number.isFinite(perSession)) return 'an unknown number of times, since nothing was counted'
   if (perSession <= 0) return 'never'
   if (perSession >= 1.5) return `about ${perSession.toFixed(1)} swings on every session`
@@ -1039,6 +1044,52 @@ const A_REAL_SPREAD = 0.005
 // before this report calls it a pile-up rather than an ordinary tail.
 const A_PILE_UP_RATIO = MATERIAL_RATIO
 
+// A SECOND, ABSOLUTE TEST BESIDE THE RELATIVE ONE, because a relative test
+// cannot see the thing this section exists to find once the clamps are gone.
+//
+// The assumption that was invisible while hard clamps existed: a clamp piles
+// EVERYTHING on one value, so the top value always beats the value below it and
+// comparing the two works. Soft compression spreads the pile across the top few
+// integers, so the last value need not beat its neighbour while still holding a
+// third of the cell. Measured on a curve saturating at 28.4 degrees, Power's
+// session 4 put 34.58% of its swings on one exact launch angle against 30.46%
+// on the one below, and this report said no chart it can draw carries a flat
+// row of dots.
+//
+// HOW THE THRESHOLD IS ARRIVED AT, and it is a derivation rather than a pick,
+// with one judgment in it that is named rather than hidden. The unit is a
+// chart, which is one session of SWINGS_PER_SESSION swings. howOftenSeen
+// already treats about one swing on every session as the point where a value
+// stops being occasional. Half of that, one swing on every other chart a
+// visitor opens, is where this report will call a single value a flat row on
+// its own merits. The judgment is the half; everything else follows from the
+// chart.
+//
+// CHECKED AGAINST THIS PROJECT'S OWN RECORDED PRECEDENT, which is what makes it
+// more than an opinion. CLAUDE.md records 4.2% of Power session-4 swings
+// sitting on exactly 35.0 degrees as a first-screen credibility defect worth
+// its own slice. That is above the line below, so the precedent fires. The
+// precedent is a check on the derivation, not its source.
+const A_FLAT_ROW_PER_SESSION = 0.5
+const A_FLAT_ROW_SHARE = A_FLAT_ROW_PER_SESSION / SWINGS_PER_SESSION
+
+// One value in one cell, judged both ways. `why` says which test fired, because
+// "more swings than on the value below it" and "a fifth of the chart on one
+// value" are different findings and a reader deserves to know which one they
+// are being shown.
+function flatRowVerdict(share, insideShare) {
+  const relative = ratioVerdict(share, insideShare, A_PILE_UP_RATIO)
+  const stacksRelative = relative === 'above'
+  const bigOnItsOwn = share >= A_FLAT_ROW_SHARE
+  return {
+    relative,
+    stacksRelative,
+    bigOnItsOwn,
+    flatRow: stacksRelative || bigOnItsOwn,
+    why: stacksRelative && bigOnItsOwn ? 'both' : stacksRelative ? 'relative' : bigOnItsOwn ? 'absolute' : 'neither',
+  }
+}
+
 // A FLOOR THAT KNOWS HOW BIG THE SAMPLE IS, because a hand-picked one does not.
 // The first attempt at fixing section 8 gave its trend the half a point this
 // file uses elsewhere for rates, and the verdict STILL flipped with the seed at
@@ -1062,6 +1113,10 @@ const floorForRate = (rate, n, productFloor) => Math.max(productFloor, rateNoise
 // small cannot reach a visitor even in principle. It is a judgment, and it is
 // on the threshold list this report prints before the Slice 6 tables.
 const A_REAL_GAP_MPH = 0.1
+
+// When a column counts as one the generator fills reliably: a gap on fewer than
+// one session in twenty. Top level so the threshold list can print it.
+const FILLS_RELIABLY_BELOW = 0.05
 
 const SESSION_ONE_SHAPE_WITHIN = 1.25
 const againstSessionOne = (measured, sessionOne) =>
@@ -1601,10 +1656,18 @@ if (totalPopUps === 0) {
           `against the ${pct(evenShare)} an even split would give it.`
       )
     } else {
+      // THE FAILED THRESHOLD IS NOT A FINDING. This used to assert a positive
+      // conclusion out of a negative test: on a fixture where Power produced
+      // four times as many pop-ups as any other goal and held 34.4% of them,
+      // missing the concentration threshold by a tenth of a point, it printed
+      // "this is a whole-generator behaviour rather than something one goal
+      // does". The band is wide, not a knife edge, so the number is printed
+      // and left to speak.
       say(
-        `No one goal is where they come from: the five hold ${pct(bottomGoal.share)} to ${pct(topGoal.share)} of them each, ` +
-          `against the ${pct(evenShare)} an even split would give, so this is a whole-generator behaviour ` +
-          'rather than something one goal does.'
+        `Spread across the goals, the five hold ${pct(bottomGoal.share)} to ${pct(topGoal.share)} of them each, against the ` +
+          `${pct(evenShare)} an even split would give. The widest of those, ${topGoal.goal.label}, is under the ` +
+          `${POP_UPS_CONCENTRATED_AT} times an even share this report needs before it says they come mostly from one goal, ` +
+          'so no such claim is made here either way.'
       )
     }
 
@@ -1875,27 +1938,63 @@ const cellPilesUpAnywhere = (c) =>
     [c.evCounter, +1],
   ].some(([counter, step]) => {
     const at = step < 0 ? counterMax(counter) : counterMin(counter)
-    return (
-      ratioVerdict(
-        counterShare(counter, (v) => v === at),
-        counterShare(counter, (v) => v === at + step),
-        A_PILE_UP_RATIO
-      ) === 'above'
-    )
+    return flatRowVerdict(
+      counterShare(counter, (v) => v === at),
+      counterShare(counter, (v) => v === at + step)
+    ).flatRow
   })
 const pilingCells = SLICE11_CELLS.filter(cellPilesUpAnywhere)
+// Which of the two tests each piling cell fired, so the sentence below can say
+// what kind of finding this is rather than lumping them together.
+const cellFlatRowReasons = new Set(
+  pilingCells.flatMap((c) =>
+    [
+      [c.laCounter, -1],
+      [c.laCounter, +1],
+      [c.evCounter, -1],
+      [c.evCounter, +1],
+    ]
+      .map(([counter, step]) => {
+        const at = step < 0 ? counterMax(counter) : counterMin(counter)
+        return flatRowVerdict(
+          counterShare(counter, (v) => v === at),
+          counterShare(counter, (v) => v === at + step)
+        )
+      })
+      .filter((v) => v.flatRow)
+      .map((v) => v.why)
+  )
+)
+// A lowercase clause, because it is joined onto the sentence above it after a
+// comma rather than starting one.
+const flatRowReasonPhrase = () => {
+  const relative = cellFlatRowReasons.has('relative') || cellFlatRowReasons.has('both')
+  const absolute = cellFlatRowReasons.has('absolute') || cellFlatRowReasons.has('both')
+  const onItsOwn =
+    `holding at least ${pct(A_FLAT_ROW_SHARE)} of the cell's swings on one value, which is ` +
+    `${A_FLAT_ROW_PER_SESSION} of a swing on every chart`
+  if (relative && absolute) {
+    return `some holding more swings than the value just inside them and some ${onItsOwn}`
+  }
+  if (relative) return 'each holding more swings than the value just inside it'
+  return `none of them beating the value just inside it, but each ${onItsOwn}`
+}
 console.log('')
 console.log('  Taken one cell at a time, which is what a visitor actually looks at:')
 if (pilingCells.length === 0) {
-  console.log(`  none of the ${SLICE11_CELLS.length} goal-and-session combinations piles up on any of its own four`)
-  console.log('  edges, so no chart this generator can draw carries a flat row of dots along')
-  console.log('  an edge.')
+  say(
+    `none of the ${SLICE11_CELLS.length} goal-and-session combinations piles up on any of its own four edges. No ` +
+      'edge value holds more than the value just inside it, and none holds as much as ' +
+      `${pct(A_FLAT_ROW_SHARE)} of its cell on its own, which is ${A_FLAT_ROW_PER_SESSION} of a swing on every chart. So no chart this ` +
+      'generator can draw carries a flat row of dots along an edge.'
+  )
 } else {
   const pilingGoals = [...new Set(pilingCells.map((c) => SLICE11_GOALS.find((g) => g.id === c.goalId).label))]
   say(
     `${pilingCells.length} of the ${SLICE11_CELLS.length} goal-and-session combinations pile up on at least one of ` +
-      `their own four edges, across ${pilingGoals.length === 1 ? 'one goal' : `${pilingGoals.length} goals`}: ${pilingGoals.join(', ')}. ` +
-      'Each of those is a chart a visitor can be shown with a flat row of dots along one edge of it.'
+      `their own four edges, across ${pilingGoals.length === 1 ? 'one goal' : `${pilingGoals.length} goals`}: ${pilingGoals.join(', ')}, ` +
+      `${flatRowReasonPhrase()}. Each of those is a chart a visitor can be shown with a flat ` +
+      'row of dots along one edge of it.'
   )
 }
 
@@ -1967,20 +2066,42 @@ const worstCeilingInside = counterShare(worstCeilingCell.c.laCounter, (v) => v =
 // laCeiling is the largest value in the pooled counter, so some cell attains it
 // and worstCeilingCell.share is never zero. There is no branch for that case
 // because it cannot happen.
-const worstCellStacks = ratioVerdict(worstCeilingCell.share, worstCeilingInside, A_PILE_UP_RATIO) === 'above'
+// THE THREE-WAY VERDICT IS CARRIED THROUGH RATHER THAN COLLAPSED BACK TO TWO.
+// This was `ratioVerdict(...) === 'above'`, a boolean, so 'level' (a ratio
+// anywhere from 1.00 to A_PILE_UP_RATIO) fell through and printed the 'below'
+// prose. Under soft compression that put "Fewer swings on the last value than
+// on the one below it" directly under "34.58% of swings sit exactly on 28,
+// against 30.46% on 27", and contradicted the pooled half of this same section
+// eleven lines earlier, which had handled 'level' correctly.
+const worstCellFlatRow = flatRowVerdict(worstCeilingCell.share, worstCeilingInside)
 console.log('')
 console.log(
   `  It shows up most on ${worstCeilingLabel} session ${worstCeilingCell.c.sessionNum}: ` +
     `${shareCell(worstCeilingCell.share, Math.round(worstCeilingCell.share * counterTotal(worstCeilingCell.c.laCounter)))} of swings sit`
 )
 console.log(`  exactly on ${laCeiling}, against ${pct2(worstCeilingInside)} on ${laCeiling - 1}.`)
-if (worstCellStacks) {
-  console.log('  More swings on the last value than on the one below it, in that cell: that is')
-  console.log('  the flat row of dots, on a chart every visitor who picks that goal can see.')
+// Two findings, said apart. "More than the value below it" and "a large share
+// of the chart on one value" are different things and either one is a flat row.
+const relativeClause =
+  worstCellFlatRow.relative === 'above'
+    ? 'More swings on the last value than on the one below it'
+    : worstCellFlatRow.relative === 'below'
+      ? 'Fewer swings on the last value than on the one below it'
+      : `Within ${A_PILE_UP_RATIO} times the value below it either way, so neither clearly more nor clearly fewer`
+if (worstCellFlatRow.flatRow) {
+  const because =
+    worstCellFlatRow.why === 'relative'
+      ? `${relativeClause}, in that cell: that is the flat row of dots`
+      : worstCellFlatRow.why === 'both'
+        ? `${relativeClause}, and that one value holds ${shareCell(worstCeilingCell.share, 1)} of the cell on its own, which is ${(worstCeilingCell.share * SWINGS_PER_SESSION).toFixed(1)} swings on every chart: that is the flat row of dots`
+        : `${relativeClause}. But that one value still holds ${shareCell(worstCeilingCell.share, 1)} of the cell on its own, which is ${(worstCeilingCell.share * SWINGS_PER_SESSION).toFixed(1)} swings on every chart, so it is a flat row of dots whatever its neighbour does`
+  say(`${because}, on a chart every visitor who picks that goal can see.`)
 } else {
-  console.log('  Fewer swings on the last value than on the one below it, in that cell, so it')
-  console.log('  thins out into its own top end rather than piling against it. No flat row')
-  console.log('  there, whatever the pooled edge table above says.')
+  say(
+    `${relativeClause}, in that cell, and that value holds ${shareCell(worstCeilingCell.share, 1)} of the cell, ` +
+      `under the ${pct(A_FLAT_ROW_SHARE)} this report treats as a row on its own. No flat row there, ` +
+      'whatever the pooled edge table above says.'
+  )
 }
 
 // --- 6. Top exit velocity --------------------------------------------------
@@ -2015,6 +2136,48 @@ console.log(
     String(counterMax(allTopEvs)).padStart(9) +
     pct(counterShare(allTopEvs, (v) => v > SESSION_ONE.topEv)).padStart(12)
 )
+console.log('')
+
+// THIS SECTION USED TO PRINT THE TABLE AND SAY NOTHING AT ALL, which made it
+// the one defect of the eight with no verdict anywhere in the report. On a
+// fixture where 71.2% of generated sessions beat session 1's frozen top ball
+// it printed these six columns and stopped.
+//
+// THE UNIT IS A VISITOR, NOT A SESSION, and that is what makes the threshold a
+// derivation rather than a pick. The app offers a visitor exactly the sessions
+// in SESSIONS, so the question the share answers is how likely one visitor is
+// to be shown at least one session claiming the hitter got faster. That is one
+// minus the chance every one of their sessions stays inside the frozen number.
+// The boundary is a half, because a majority of visitors seeing it or not
+// seeing it is the split a person can act on; the low end reuses the same one
+// in twenty this report already calls reliable elsewhere.
+const beatsBySession = SESSIONS.map((sessionNum) =>
+  counterShare(mergeCounters(cellsForSession(sessionNum).map((c) => c.topEvCounter)), (v) => v > SESSION_ONE.topEv)
+)
+const visitorSeesFaster = 1 - beatsBySession.reduce((chance, rate) => chance * (1 - rate), 1)
+const A_MAJORITY_OF_VISITORS = 0.5
+say(
+  `A visitor clicking through all ${SESSIONS.length} generated sessions is shown at least one that beats ` +
+    `${SESSION_ONE.topEv} mph ${pct(visitorSeesFaster)} of the time, from the three rates above.`
+)
+if (visitorSeesFaster >= A_MAJORITY_OF_VISITORS) {
+  say(
+    'More visitors than not are therefore shown a session claiming this hitter got ' +
+      'faster than the fifteen swings the whole demo is built off, which is a number ' +
+      'session 1 freezes on purpose.'
+  )
+} else if (visitorSeesFaster < FILLS_RELIABLY_BELOW) {
+  say(
+    `That is under the ${pct(FILLS_RELIABLY_BELOW)} this report treats as reliable ground, so a session ` +
+      'claiming he got faster is something a visitor essentially never meets.'
+  )
+} else {
+  say(
+    `That is under the ${pct(A_MAJORITY_OF_VISITORS)} that would make it more visitors than not, and over the ` +
+      `${pct(FILLS_RELIABLY_BELOW)} that would make it essentially never, so it happens to a minority of ` +
+      'visitors and this report draws no stronger conclusion than that.'
+  )
+}
 
 // --- 7. The step off session 1 ---------------------------------------------
 
@@ -2211,9 +2374,6 @@ if (Math.max(...barBySession) < BAR_RARELY_MET) {
 
 // --- 9. The regression guards ----------------------------------------------
 
-// When a column counts as one the generator fills reliably: a gap on fewer than
-// one session in twenty. Top level so the threshold list can print it.
-const FILLS_RELIABLY_BELOW = 0.05
 // How far the generated spread has to sit from session 1's before this report
 // calls it tighter or looser rather than the same.
 const SPREAD_COUNTS_AS_SAME_WITHIN = 0.05
@@ -2650,6 +2810,7 @@ const JUDGMENTS_NOT_MEASUREMENTS = [
   [3, 'Spray narrowing toward the middle session by session is something no hitter does on his own, so it is a defect; widening is not called one, and a move under the floor is called neither. All three branches.'],
   [4, 'A pop-up is supposed to come off a high pitch, so pop-ups arriving no more often on high pitches than chance would give means the constants are wrong, and pop-ups AVOIDING high pitches means a sign error rather than a mis-tuning. Both halves of the same opinion about what a pop-up is.'],
   [4, 'Pop-ups a visitor would never meet are not a fixed defect, they are a mis-tuned mechanism. That the goal wants a failure the hitter can actually commit is what this slice decided, not something this run measured.'],
+  [5, 'Where an edge holds a pile-up, this report says something is parking there whatever would have gone past it. That is a clamp mechanism inferred from a shape, and it is the wrong story for a mis-hit mode that spikes at one isolated value, where nothing would have gone past it at all. The counts are measured; the mechanism behind them is not.'],
   [6, 'Session 1\'s best ball is frozen, so a generated session that beats it is claiming the hitter got faster. That is what this demo decided session 1 is for, not something this run measured; the run only counts how often it is beaten.'],
   [7, 'Every generated session is built off session 1 rather than off the session before it, so the step is the same step every time rather than a run of improvement. That is a fact about what onNewSession in src/App.jsx passes, read from the app rather than from this run.'],
   [7, 'The lift on the re-rolled goals is the re-roll discarding weak sessions. Which goals are lifted and which have an empty band often enough to be re-rolled are both measured here; that a re-roll happens at all, and that it keeps the second attempt whatever it holds, is a fact about src/swingGenerator.js.'],
@@ -2678,8 +2839,10 @@ const THRESHOLDS_THAT_PICK_A_SENTENCE = [
   [4, `the high-pitch link is real at ${POP_UP_LIFT_FACTOR} times the rate chance alone would give, and BACKWARDS at the same factor the other way`],
   [4, `pop-ups are split by goal and by pitch height only above ${POP_UP_SAMPLE_FLOOR.toLocaleString()} of them; below that the breakdowns are skipped rather than quoted off a handful of events`],
   [5, `a value nobody meets is one a visitor would see less than once in ${MEETS_IT_ONCE_IN} sessions`],
+  [5, `a single value is a flat row on its own merits at ${pct(A_FLAT_ROW_SHARE)} of a cell, which is ${A_FLAT_ROW_PER_SESSION} of a swing on every chart of ${SWINGS_PER_SESSION}. Derived from the chart rather than picked, with the half named as the judgment in it, and checked against this project's own recorded 4.2% first-screen defect, which is above the line and therefore fires. It exists because the relative test cannot see a pile spread across the top few values by soft compression`],
   [5, `an edge is a pile-up when it holds ${A_PILE_UP_RATIO} times the value just inside it, a tail when the value inside holds ${A_PILE_UP_RATIO} times the edge, and level in between; a bare "more than" called 5.00% against 4.99% a pile-up`],
   [5, `the Power lift is "session by session" only when its share climbs on every step AND climbs by ${pct(A_REAL_SPREAD)} across the three`],
+  [6, `a session beating session 1's frozen top ball is reported against the visitor rather than the session: ${pct(A_MAJORITY_OF_VISITORS)} of visitors makes it more of them than not, and under ${pct(FILLS_RELIABLY_BELOW)} makes it something they essentially never meet`],
   [7, `the empty-band re-roll "bites" above an empty-band rate of ${pct(RE_ROLL_BITES_ABOVE)}`],
   [7, `the re-rolled goals count as lifted above the rest by ${A_REAL_GAP_MPH} mph, the same floor section 1 uses for the same quantity`],
   [8, `the bar is "essentially never met" below ${pct(BAR_RARELY_MET)} and "met almost every time" above ${pct(BAR_USUALLY_MET)}, and stated plainly in between`],
