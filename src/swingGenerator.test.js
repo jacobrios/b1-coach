@@ -21,10 +21,20 @@ import {
   normalisedPitch,
   EV_SPREAD_MPH,
   LA_SPREAD_DEGREES,
+  EXIT_VELOCITY_LIMITS,
+  LAUNCH_ANGLE_LIMITS,
+  POP_UP_BAND,
 } from './swingGenerator.js'
 import { meetsTarget } from './goalTargets.js'
 import { carryDistance } from './ballFlight.js'
 import { inStrikeZone, STRIKE_ZONE } from './sessionStats.js'
+// The one place the number that makes a swing a pop-up is written down: the
+// coaching prose the Reduce Pop-Ups goal hands the coach. The generator does
+// not import it, deliberately, because its pop-up band is its own product
+// decision rather than the goal's; this test is what holds the two together,
+// so a band that stopped producing swings the coach would call pop-ups fails
+// here instead of quietly handing the goal a zero again.
+import { GOAL_COUNT_SPECS } from './goalCountSpecs.js'
 
 // A four-swing baseline built here rather than borrowed from the app, so these
 // tests keep working if the app's opening session is ever re-tuned. Only the
@@ -48,17 +58,47 @@ function constantRandom(value) {
   }
 }
 
-// An impossible hitter, used only to measure. Every swing off this baseline
-// clears the Power target no matter what the random source says, because the
-// numbers are so far outside the app's range that the clamps do the work.
+// A baseline whose session cannot trigger the empty-band re-roll, for whichever
+// source value is about to be measured.
 //
 // It exists because the first version of these tests measured against a goal
 // with no target instead, which quietly cancelled itself out: delete the
 // has-a-target check from the generator and the measurement re-rolled exactly
 // as the thing it was measuring did, so the four guards below stayed green
-// against a broken generator. A baseline that can never trigger a re-roll is
-// the fix. Found by breaking the generator on purpose, not by reading it.
-const ALWAYS_ON_TARGET = [{ hit: { launch: { exitSpeed: 120, angle: 45 } } }]
+// against a broken generator. A session that lands on a real target is the fix.
+// Found by breaking the generator on purpose, not by reading it.
+//
+// IT USED TO BE ONE TYPED BASELINE FOR EVERY VALUE, an impossible hitter at 120
+// mph and 45 degrees, and it leaned on something Task 6 removed. The launch
+// angle clamp stopped at 35 and the Power band's ceiling is 35 too, so every
+// swing that would have sailed off the top of the chart was parked exactly on
+// the top of Power's own target and counted as a swing that met the goal. With
+// the wall gone that swing comes out around 47 degrees and meets nothing.
+//
+// No single typed baseline can replace it, and the reason is arithmetic rather
+// than tuning: at a source stuck at 0 a swing lands about 17 degrees below its
+// session average and at 0.64 about 8 above it, which is 25 degrees of range to
+// fit inside a 10 degree band. So the baseline is searched for instead of
+// typed, against Reduce Pop-Ups, whose band is the widest in the app and which
+// asks nothing of exit velocity. Task 9 retunes every constant in this file,
+// which would have made a typed pair of fixtures stale within the week; this
+// re-derives itself, and still fails loudly when nothing works at all.
+const MEASURING_GOAL = 'popup'
+function unRerolledBaselineFor(value) {
+  for (let angle = -40; angle <= 80; angle += 1) {
+    const baselineSwings = [{ hit: { launch: { exitSpeed: 85, angle } } }]
+    const swings = generateSwings({ sessionNum: 2, goalId: MEASURING_GOAL, baselineSwings, random: constantRandom(value).random })
+    // Every swing of a session drawn from a constant source is identical, so a
+    // returned session that is on target could not have been preceded by an
+    // empty first attempt: the first attempt WAS this session. That is what
+    // makes checking the returned swings enough to know no re-roll happened.
+    if (swings.every((w) => meetsTarget(MEASURING_GOAL, w.hit.launch))) return baselineSwings
+  }
+  throw new Error(
+    `No baseline angle lands a session on the ${MEASURING_GOAL} target at a source stuck at ${value}, ` +
+      'so there is no way to measure one attempt without the empty-band re-roll firing inside the measurement.',
+  )
+}
 
 // How many draws one attempt at a session costs, measured rather than written
 // down, so these tests do not have to know the generator's internals. Measured
@@ -70,23 +110,22 @@ const ALWAYS_ON_TARGET = [{ hit: { launch: { exitSpeed: 120, angle: 45 } } }]
 // branch here, but a miss low or high now costs one rather than two and the
 // old wording would have been quietly wrong.) Neither the goal, the session
 // number nor the baseline changes it, since the Power lift, the variance
-// factor and the clamps all draw nothing.
+// factor and the limits all draw nothing, and Task 6's three mis-hit draws are
+// spent on every swing whether or not it turns out to be one.
 function callsPerAttempt(value) {
+  const baselineSwings = unRerolledBaselineFor(value)
   const source = constantRandom(value)
-  const swings = generateSwings({ sessionNum: 2, goalId: 'power', baselineSwings: ALWAYS_ON_TARGET, random: source.random })
+  const swings = generateSwings({ sessionNum: 2, goalId: MEASURING_GOAL, baselineSwings, random: source.random })
 
-  // The comment above is a lesson; this is what enforces it. The measurement
-  // only holds while every swing off that baseline really does clear the Power
-  // target, and today that is partly luck: the launch angle clamp stops at 35
-  // and Power's band happens to end at 35 too, so the measuring swing sits
-  // exactly on the boundary. Narrow the band or drop the clamp and this helper
-  // would silently start measuring two attempts again, which would make the
-  // four no-target guards below pass against anything. It fails loudly here
-  // instead.
+  // The comment above is a lesson; this is what enforces it. The search picks a
+  // baseline that was on target a moment ago, and this re-checks the session
+  // actually measured, so a helper that quietly starts measuring two attempts
+  // (which would make the four no-target guards below pass against anything)
+  // fails loudly here instead.
   for (const swing of swings) {
     expect(
-      meetsTarget('power', swing.hit.launch),
-      'callsPerAttempt is no longer measuring a single attempt: its baseline stopped clearing the Power target, so the re-roll now fires inside the measurement itself',
+      meetsTarget(MEASURING_GOAL, swing.hit.launch),
+      'callsPerAttempt is no longer measuring a single attempt: its baseline stopped clearing the target, so the re-roll now fires inside the measurement itself',
     ).toBe(true)
   }
 
@@ -129,16 +168,79 @@ describe('the shape of a generated session', () => {
 
   it('keeps exit velocity and launch angle inside the range the app can draw', () => {
     // Both directions, against a baseline already sitting on the boundary, so
-    // the clamps are the only thing keeping the numbers on the chart.
-    const ceiling = [{ hit: { launch: { exitSpeed: 97, angle: 35 } } }]
+    // the limits are the only thing keeping the numbers on the chart.
+    //
+    // THE LIMITS ARE READ FROM THE GENERATOR, NOT TYPED HERE, for the reason
+    // PITCH_MISS_MAX_FEET is already read that way: a test carrying its own
+    // copy of a wall cannot drift away from the wall it is guarding, it can
+    // only agree with a number that has stopped being true. Task 6 moved the
+    // top of the launch angle range from 35 to 50 to make room for a pop-up,
+    // and this test asserted 35 until it did.
+    //
+    // A THIRD CASE THE OLD VERSION HAD NO WAY TO REACH: a mis-hit does not
+    // come from the same arithmetic as an ordinary swing, so the two extreme
+    // sessions above say nothing about it. The forced pop-up below is a swing
+    // off a session already at the bottom of the exit velocity range, where
+    // the drop a pop-up takes would push it under the floor.
+    const ceiling = [{ hit: { launch: { exitSpeed: 200, angle: 200 } } }]
     const high = generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: ceiling, random: constantRandom(1).random })
-    expect(Math.max(...high.map((s) => s.hit.launch.exitSpeed))).toBeLessThanOrEqual(97)
-    expect(Math.max(...high.map((s) => s.hit.launch.angle))).toBeLessThanOrEqual(35)
+    expect(Math.max(...high.map((s) => s.hit.launch.exitSpeed))).toBeLessThanOrEqual(EXIT_VELOCITY_LIMITS.max)
+    expect(Math.max(...high.map((s) => s.hit.launch.angle))).toBeLessThanOrEqual(LAUNCH_ANGLE_LIMITS.max)
 
-    const floor = [{ hit: { launch: { exitSpeed: 65, angle: -5 } } }]
+    const floor = [{ hit: { launch: { exitSpeed: -200, angle: -200 } } }]
     const low = generateSwings({ sessionNum: 2, goalId: 'open', baselineSwings: floor, random: constantRandom(0).random })
-    expect(Math.min(...low.map((s) => s.hit.launch.exitSpeed))).toBeGreaterThanOrEqual(65)
-    expect(Math.min(...low.map((s) => s.hit.launch.angle))).toBeGreaterThanOrEqual(-5)
+    expect(Math.min(...low.map((s) => s.hit.launch.exitSpeed))).toBeGreaterThanOrEqual(EXIT_VELOCITY_LIMITS.min)
+    expect(Math.min(...low.map((s) => s.hit.launch.angle))).toBeGreaterThanOrEqual(LAUNCH_ANGLE_LIMITS.min)
+
+    const poppedOffAWeakSession = generateSwings({
+      sessionNum: 2,
+      goalId: null,
+      baselineSwings: [{ hit: { launch: { exitSpeed: 66, angle: 5 } } }],
+      random: sequence(...NEUTRAL_HEADER, ...HIGH_ABOVE_ZONE, ...NEUTRAL_SWING, ...FORCED_POP_UP),
+    })[0]
+    expect(poppedOffAWeakSession.hit.launch.exitSpeed).toBeGreaterThanOrEqual(EXIT_VELOCITY_LIMITS.min)
+    expect(poppedOffAWeakSession.hit.launch.angle).toBeLessThanOrEqual(LAUNCH_ANGLE_LIMITS.max)
+
+    // And nothing anywhere in a long ordinary run, which is the case a
+    // hand-picked extreme cannot speak for.
+    for (const swing of SWEEP) {
+      expect(swing.hit.launch.exitSpeed).toBeGreaterThanOrEqual(EXIT_VELOCITY_LIMITS.min)
+      expect(swing.hit.launch.exitSpeed).toBeLessThanOrEqual(EXIT_VELOCITY_LIMITS.max)
+      expect(swing.hit.launch.angle).toBeGreaterThanOrEqual(LAUNCH_ANGLE_LIMITS.min)
+      expect(swing.hit.launch.angle).toBeLessThanOrEqual(LAUNCH_ANGLE_LIMITS.max)
+    }
+  })
+
+  it('gives two different answers to two swings that both bust a limit', () => {
+    // THE DEFECT THIS IS THE TEST FOR IS NOT WHERE THE WALL SAT, IT IS THAT
+    // THERE WAS A WALL. Math.min(35, x) hands back 35 for every swing that
+    // would have gone past it, so a session's worth of overshoots all land on
+    // one value and the chart draws a flat row of dots along its top edge.
+    // Both baselines below overshoot; the question is only whether they come
+    // out as two numbers or as one.
+    //
+    // Held against each other rather than against hand-computed values,
+    // because what matters is that the ceiling still carries information about
+    // how hard the swing was, not what the two particular answers are. Task 9
+    // retunes every constant in this file and would have made a pinned pair
+    // stale.
+    const topOf = (exitSpeed, angle) =>
+      generateSwings({
+        sessionNum: 2,
+        goalId: 'open',
+        baselineSwings: [{ hit: { launch: { exitSpeed, angle } } }],
+        random: constantRandom(0.5).random,
+      })[0].hit.launch
+
+    const hard = topOf(90, 40)
+    const harder = topOf(95, 60)
+
+    expect(harder.exitSpeed).not.toBe(hard.exitSpeed)
+    expect(harder.angle).not.toBe(hard.angle)
+    // Both really are past the old walls, which is what makes the assertions
+    // above about compression rather than about two ordinary swings.
+    expect(hard.exitSpeed).toBeGreaterThan(94)
+    expect(hard.angle).toBeGreaterThan(35)
   })
 })
 
@@ -517,6 +619,11 @@ const NEUTRAL_SWING = [0.5, 0.5, 0.5, 0.5]
 const DEAD_CENTRE = [0.5, 0.5, 0.5] // in-zone coin, height 2.5 ft, side 0.0 ft
 const HIGH_IN_ZONE = [0.5, 0.9, 0.5] // height 1.5 + 0.9 * 2 = 3.3 ft
 const LOW_IN_ZONE = [0.5, 0.1, 0.5] // height 1.5 + 0.1 * 2 = 1.7 ft
+// Above the zone entirely: the coin misses, the squared miss draw at 1 gives
+// the full 0.80 feet, 0.5 picks the high branch out of low/high/wide, and the
+// last draw puts it over the middle of the plate. Height 3.5 + 0.80 = 4.30 ft,
+// which is the highest pitch this file can throw.
+const HIGH_ABOVE_ZONE = [0.99, 1, 0.5, 0.5]
 // Out of the zone: the coin misses, the squared miss draw at 1 gives the
 // full 0.80 feet, 0.9 picks the wide branch, the height is an ordinary 2.5,
 // and the last draw puts it 0.80 feet outside the far edge, at 1.5 feet.
@@ -679,12 +786,44 @@ describe('the pitch is blended into the swing, not added on top of it', () => {
     // them. At full weight the deviation from the scale constant is about
     // 1.12% rather than 0.93%, so the band above would still hold; what would
     // not hold is the current one. Measured by review rather than here.
+    // POP-UPS ARE LEFT OUT OF THIS MEASUREMENT ON PURPOSE, ADDED 21 AUGUST 2026
+    // FOR TASK 6, and the reason is what the assertion is about rather than
+    // convenience. A pop-up does not come out of the blending arithmetic at
+    // all: the hitter got under the ball, so the angle is drawn from its own
+    // band and the exit velocity from the session average, neither of which the
+    // scale constants govern or claim to. Left in, 2.64% of swings landing 25
+    // degrees off the session mean take the launch angle ratio to 1.199 and
+    // exit velocity to 1.048, which would say nothing about whether the pitch
+    // was blended in or added on top.
+    //
+    // The cost of drawing the line at the pop-up band is that an ORDINARY swing
+    // that reaches 38 degrees is trimmed too. That is a real, small bias
+    // downward, and it is under a tenth of a percent of swings on this goal.
+    //
+    // THE NUMBERS IN THE PARAGRAPHS ABOVE MOVED WITH THIS CHANGE and are
+    // re-measured here rather than left stale. Trimmed, at the committed seed:
+    // exit velocity 0.99884 and launch angle 1.01345, against 1.00098 and
+    // 1.00931 before Task 6. Both moves are the removal of the two walls
+    // showing up. Launch angle rose because a wall at 35 degrees used to squash
+    // its upper tail into one value, and exit velocity fell because the soft
+    // zone now eases the top 1.4% of swings in from 94 mph where the old wall
+    // only touched the 0.03% that reached 97.
+    //
+    // The band still holds on all 60 seeds, which was re-swept rather than
+    // assumed: exit velocity 0.99241 to 1.00710 and launch angle 1.00733 to
+    // 1.02164. It holds with LESS ROOM than it did, though, and a future reader
+    // should know that before moving anything: the worst seed now sits about
+    // three thousandths inside a bound where it used to sit eight. The bounds
+    // are deliberately not widened to restore that headroom, because nothing
+    // needs them widened today and a band moved to fit a measurement stops
+    // being evidence.
     const random = mulberry32(20260821)
     let evSquares = 0
     let laSquares = 0
     let degreesOfFreedom = 0
     for (let i = 0; i < 4000; i++) {
       const swings = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: BASELINE, random })
+        .filter((w) => w.hit.launch.angle < POP_UP_BAND.min)
       const evs = swings.map((w) => w.hit.launch.exitSpeed)
       const las = swings.map((w) => w.hit.launch.angle)
       const meanEv = evs.reduce((a, b) => a + b, 0) / evs.length
@@ -763,5 +902,137 @@ describe('the pitch terms are standardised against the pitches this file actuall
     expect(meanOf(heights)).toBeLessThan(PITCH_SCALING.heightMean + HEIGHT_MEAN_TOLERANCE)
     expect(sdOf(heights)).toBeGreaterThan(PITCH_SCALING.heightSd - TOLERANCE)
     expect(sdOf(heights)).toBeLessThan(PITCH_SCALING.heightSd + TOLERANCE)
+  })
+})
+
+// ── Getting under a high one ─────────────────────────────────────────────────
+//
+// The Reduce Pop-Ups goal calls a pop-up a launch angle above the number in
+// GOAL_COUNT_SPECS, and until Task 6 the generator could not produce one: the
+// launch angle was clamped at exactly that number, so across 4,500,000
+// generated swings the count handed to the coach was zero on every session and
+// the goal named a failure its own hitter never committed.
+//
+// A pop-up is a DIFFERENT CONTACT OUTCOME rather than an extreme line drive,
+// which is why it is drawn from its own band instead of being reached by
+// widening the ordinary spread. Two measurements are behind that. Removing the
+// clamp on its own produces nothing usable: swings above the pop-up angle then
+// appear on the Power goal alone, 0.04 per session at session 2 rising to 0.38
+// at session 4, never above 40 degrees, and stay at zero on the goal that
+// needs them. And widening the launch angle spread far enough to reach a
+// pop-up makes every generated session visibly wilder than the hand-written
+// first session this demo is calibrated against, which is a cure worse than
+// the disease.
+//
+// So it is caused rather than stumbled into: a small per-swing chance, weighted
+// by how high the pitch was, that the hitter got under the ball. That ties the
+// coach's pop-up coaching to something a visitor can see on the pitch location
+// chart beside it.
+
+// The three draws a swing spends on the mis-hit, in the order the generator
+// asks for them: whether the hitter got under it, where in the pop-up band the
+// ball went, and how much exit velocity it lost. 0.1 is under the chance the
+// highest pitch this file throws carries and over nothing else in these tests.
+const FORCED_POP_UP = [0.1, 0.5, 0.5]
+
+// A draw that is under the chance a pitch at the top of the zone carries and
+// over the chance a pitch at the bottom carries, which is none at all. The
+// SAME number is fed to both pitches below, so the only thing separating the
+// two swings is where the ball was thrown.
+const MIS_HIT_DRAW_A_HIGH_PITCH_MEETS = [0.03, 0.5, 0.5]
+
+// The same swing off the same pitch with the mis-hit coin the other side of
+// the line: 0.99 is over the chance any pitch this file throws can carry, so
+// the hitter squares it up instead of getting under it. Everything else about
+// the two draws is identical, which is what makes the pair a comparison.
+const NO_POP_UP = [0.99, 0.5, 0.5]
+
+describe('a pop-up comes off getting under a high pitch', () => {
+  const firstSwingWith = (misHitDraws) =>
+    generateSwings({
+      sessionNum: 2,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sequence(...NEUTRAL_HEADER, ...HIGH_ABOVE_ZONE, ...NEUTRAL_SWING, ...misHitDraws),
+    })
+  const session = firstSwingWith(FORCED_POP_UP)
+  const popped = session[0]
+  const ordinary = session.slice(1)
+  const squaredUp = firstSwingWith(NO_POP_UP)[0]
+
+  it('put the pitch where this test says it did', () => {
+    // Without this the two tests below could be satisfied by a sequence that
+    // quietly threw the pitch somewhere else, which is what would happen if
+    // the pitch draws ever changed order again.
+    expect(popped.plateLocHeight).toBe(STRIKE_ZONE.heightMax + PITCH_MISS_MAX_FEET)
+    expect(inStrikeZone(popped)).toBe(false)
+    // The fourteen swings behind it are ordinary ones off a pitch down the
+    // middle, which is what makes them the comparison for the exit velocity
+    // assertion below.
+    expect(ordinary.every((w) => w.hit.launch.angle < GOAL_COUNT_SPECS.popup.popUpAngle)).toBe(true)
+  })
+
+  it('sends the ball up into the pop-up band', () => {
+    // Above the angle the goal's own coaching prose calls a pop-up, read from
+    // that goal's table rather than typed here, so the generator cannot start
+    // producing swings the coach would not call pop-ups.
+    expect(popped.hit.launch.angle).toBeGreaterThan(GOAL_COUNT_SPECS.popup.popUpAngle)
+    expect(popped.hit.launch.angle).toBeGreaterThanOrEqual(POP_UP_BAND.min)
+    expect(popped.hit.launch.angle).toBeLessThanOrEqual(POP_UP_BAND.max)
+  })
+
+  it('and takes the sting out of it, coming off the bat under the session average', () => {
+    // The session's own average, not a fixed number: a pop-up is soft
+    // relative to the hitter having it, whatever kind of day he is having.
+    // Measured against the fourteen ordinary swings beside it rather than
+    // against all fifteen, because a pop-up dragging the average down and
+    // then being compared to it would be an easier test than it looks.
+    //
+    // THIS ASSERTION ON ITS OWN CANNOT FAIL, AND SAYING SO IS THE POINT.
+    // Proven by mutation on 21 August 2026 rather than reasoned about: with
+    // the pop-up's exit velocity drop set to zero, so a popped ball comes off
+    // the bat at exactly the session average, this line still passed. The
+    // fourteen swings it is measured against are off a pitch down the middle
+    // and come out five mph ABOVE the session average because of it, so they
+    // are a soft comparison rather than a fair one. It is kept because it is
+    // the claim a reader wants to see; the assertion below is the one that
+    // holds the drop in place.
+    const sessionAverage = ordinary.reduce((s, w) => s + w.hit.launch.exitSpeed, 0) / ordinary.length
+    expect(popped.hit.launch.exitSpeed).toBeLessThan(sessionAverage)
+
+    // The fair comparison: the same swing, off the same pitch, with the same
+    // fourteen draws, that the hitter squared up instead. Under the same
+    // mutation this one goes red, which is what makes the pair worth having.
+    expect(popped.hit.launch.exitSpeed).toBeLessThan(squaredUp.hit.launch.exitSpeed)
+    expect(squaredUp.hit.launch.angle).toBeLessThan(GOAL_COUNT_SPECS.popup.popUpAngle)
+  })
+})
+
+describe('how high the pitch was decides how likely that is', () => {
+  const offPitch = (pitchDraws) =>
+    generateSwings({
+      sessionNum: 2,
+      goalId: null,
+      baselineSwings: BASELINE,
+      random: sequence(...NEUTRAL_HEADER, ...pitchDraws, ...NEUTRAL_SWING, ...MIS_HIT_DRAW_A_HIGH_PITCH_MEETS),
+    })[0]
+
+  const high = offPitch(HIGH_IN_ZONE)
+  const low = offPitch(LOW_IN_ZONE)
+
+  it('put the two pitches where this test says it did', () => {
+    expect(high.plateLocHeight).toBe(3.3)
+    expect(low.plateLocHeight).toBe(1.7)
+    expect(inStrikeZone(high)).toBe(true)
+    expect(inStrikeZone(low)).toBe(true)
+  })
+
+  it('pops the high one up and leaves the low one alone, on the identical draw', () => {
+    // The whole mechanism, as one comparison. Both swings spend the same
+    // eleven draws in the same order; the only difference between them is two
+    // feet of pitch height, and it is the difference between a pop-up and an
+    // ordinary swing.
+    expect(high.hit.launch.angle).toBeGreaterThan(GOAL_COUNT_SPECS.popup.popUpAngle)
+    expect(low.hit.launch.angle).toBeLessThan(GOAL_COUNT_SPECS.popup.popUpAngle)
   })
 })

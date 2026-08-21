@@ -435,6 +435,164 @@ function pitchInfluence(pitch) {
   }
 }
 
+// ── The limits, which are approached rather than parked on ──────────────────
+//
+// WHAT WAS WRONG WITH THE OLD ONES, AND IT IS NOT WHERE THEY SAT. Every swing
+// used to end with `Math.max(65, Math.min(97, ...))` and `Math.max(-5,
+// Math.min(35, ...))`, which is a wall: every swing that would have gone past
+// a limit is handed back the limit itself. Measured across 4,500,000 generated
+// swings before this task, 3.67% of Power's session 4 swings came out at
+// exactly 35.0 degrees against 2.13% on 34, which is not a tail, it is a stack.
+// On screen it is a flat row of dots pinned along the top edge of the launch
+// angle chart on a goal every visitor can pick, and it is the same class of
+// defect as the impossible hit distances Slice 6 removed: a baseball-literate
+// visitor sees it in a second.
+//
+// MOVING A WALL DOES NOT FIX A WALL. The obvious change, once the pop-up band
+// below needs room, is to move the launch angle limit from 35 to 50 and stop
+// there. It looks fixed only because nothing reaches 50 today. Measured while
+// designing this task: widening the exit velocity spread put 3% of swings
+// against a hard 94, the identical artefact relocated one constant over. Task 9
+// is a tuning pass over every constant in this file at once, so a fix that only
+// holds at today's settings is not a fix.
+//
+// SO THE LIMIT IS APPROACHED INSTEAD. Inside `soft` units of a limit the value
+// is eased toward it along an exponential that never arrives, which is one
+// mechanism covering both ends of both readings:
+//
+//   Two different overshoots come out as two different numbers, so the chart
+//   still says which swing was the harder one. A wall cannot do that, and that
+//   is exactly what its flat row of dots means.
+//
+//   Nothing can exceed a limit, which is what the charts and the coach's count
+//   lines assume, so the guarantee the wall was there for is kept.
+//
+//   The curve is continuous and its slope is 1 at the knee, so an ordinary
+//   swing inside the soft zone is barely moved and there is no second edge
+//   where the compression starts.
+//
+// HOW WIDE THE SOFT ZONE IS, IS THE ONE JUDGMENT HERE, and both numbers are
+// provisional for Task 9. Too wide and the compression reaches into the body
+// of the distribution and quietly shrinks an honest tail; too narrow and it
+// crushes the overshoots back together, which is a wall again by another name.
+// 5 degrees and 3 mph put the knees at 45 degrees and 94 mph, where the pop-up
+// band below passes through untouched and roughly one exit velocity in seventy
+// is moved at all.
+//
+// Exported for the reason PITCH_MISS_MAX_FEET is exported: the test that holds
+// every generated swing inside these limits reads them from here, so it cannot
+// go on agreeing with a number that has stopped being true.
+export const EXIT_VELOCITY_LIMITS = { min: 65, max: 97, soft: 3 }
+export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
+
+// THE TOP OF THE LAUNCH ANGLE RANGE IS COUPLED TO src/ballFlight.js AND THE
+// COUPLING WAS CHECKED RATHER THAN ASSUMED. `carryDistance`'s shape term reads
+// `Math.max(0.55, 1 - (angle - 28) * 0.02)`, so it stops falling at exactly
+// 50.5 degrees and every angle above that is credited with the same carry.
+// A limit of 50 sits under that, so no swing this file can produce reaches the
+// flat part, and the carry formula needed no change for this task. Raise this
+// limit past 50.5 and that stops being true: a 60 degree pop-up and a 51
+// degree one would carry the same distance, which is the sort of thing this
+// project's charts get judged on.
+function withinLimits(value, { min, max, soft }) {
+  if (value > max - soft) return max - soft * Math.exp((max - soft - value) / soft)
+  if (value < min + soft) return min + soft * Math.exp((value - min - soft) / soft)
+  return value
+}
+
+// ── Getting under a high one ────────────────────────────────────────────────
+//
+// THE DEFECT THIS CLOSES. The Reduce Pop-Ups goal tells the coach a pop-up is
+// a launch angle above 35 degrees, and the wall above used to sit on exactly
+// 35, so a pop-up was arithmetically impossible: across 4,500,000 generated
+// swings the count handed to the coach was zero on every single session. One
+// of the six goals a visitor can pick named a failure its own hitter could not
+// commit.
+//
+// RAISING THE LIMIT ALONE DOES NOT PRODUCE ONE, which is the measurement that
+// decided the shape of this. With the wall removed and nothing else changed,
+// swings above 35 degrees appear on the Power goal alone, 0.04 per session at
+// session 2 rising to 0.38 at session 4, and never above 40 degrees anywhere;
+// on Reduce Pop-Ups itself, the goal that needs them, the count stays at zero.
+// The other way to reach one, widening the launch angle spread until the
+// ordinary distribution gets there, was rejected while scoping: it makes every
+// generated session visibly wilder than the hand-written first session this
+// whole demo is calibrated against.
+//
+// SO A POP-UP IS ITS OWN CONTACT OUTCOME HERE, not an extreme line drive. The
+// hitter gets under the ball: the angle comes from its own band and the ball
+// comes off the bat softer than the session average, both of which are what a
+// pop-up is. That is a product decision taken on 21 August 2026 rather than an
+// engineering one, and the alternatives it beat were "leave the goal naming an
+// impossible failure" and "make pop-ups common".
+//
+// RARE, AND CAUSED BY A HIGH PITCH, is the whole of that decision. Roughly one
+// pop-up every two or three sessions, so the coach has something real to coach
+// against without the demo turning into a hitter who cannot square anything up.
+// Tying it to pitch height is what makes the coaching point visible: the coach
+// can say the pop-ups came off pitches at the top of the zone, and the visitor
+// can see those pitches on the pitch location chart beside it.
+//
+// AND IT HAS TO BE CAUSED OUTRIGHT, because the underlying tendency runs the
+// other way. Measured in Task 5: mean launch angle by pitch height band rises
+// to the middle of the zone and then falls, so a ball chased above the zone
+// currently comes out about two degrees FLATTER than a strike down the middle,
+// where session 1 says it should be the steepest thing on the chart. Nothing
+// here fixes that (it is recorded as a finding and is Task 9's to weigh); what
+// it means is that a mis-hit mode leaning on the existing height term would
+// have produced nothing, so this one replaces the swing rather than nudging it.
+//
+// ONE THING THIS COSTS, NAMED BECAUSE THE FILE NAMES ITS OTHER OVERSHOOTS.
+// Session 1 is hand-written, frozen, and contains no pop-up at all, its
+// steepest ball being 27 degrees. So every generated pop-up is a step away from
+// the first screen a visitor sees. That was weighed when the target was set and
+// it is why the answer is "rare" rather than "common".
+//
+// ALL FIVE CONSTANTS BELOW ARE PROVISIONAL. Task 9 sets every constant in this
+// file at once against targets that interact; what was chosen here is the
+// structure. The band is exported so its own test cannot carry a stale copy of
+// it; the rest are not, because nothing outside this file has any business
+// knowing them.
+export const POP_UP_BAND = { min: 38, max: 48 }
+
+// How much slower than the session's own average a popped-up ball comes off
+// the bat. A range rather than one number, so fifteen pop-ups in a demo would
+// not all read the same. It is subtracted from the session average rather than
+// from the swing's own exit velocity, because a pop-up is a contact outcome in
+// its own right and not a discount on the swing that would otherwise have
+// happened.
+const POP_UP_EV_DROP_MPH = { min: 6, max: 14 }
+
+// Where the chance of getting under one starts to rise and where it tops out,
+// in the units normalisedPitch reports: 0 is the middle of the zone, 1.0 is
+// the top edge of it, and 1.8 is the highest pitch this file can throw.
+//
+// A RAMP RATHER THAN A STRAIGHT LINE THROUGH THE WHOLE RANGE, and the reason
+// is a measurement rather than taste. Pitches at or above the top of the zone
+// are only about a tenth of all pitches thrown here, so a chance that rose
+// gently from the bottom of the zone upward would put most pop-ups on ordinary
+// strikes purely because there are so many more of them, and the coaching
+// point ("you got under the high ones") would be false. Starting the ramp
+// above the middle of the zone is what keeps the majority of pop-ups on the
+// pitches the coach is going to blame: about seven in ten, against the one in
+// ten chance alone would give.
+const POP_UP_FROM_HEIGHT = 0.6
+const POP_UP_FULL_HEIGHT = 1.4
+
+// The chance of getting under the very highest pitch this file throws. It
+// reads high for a single swing, and it is the number the frequency target
+// above actually lands on, because it applies to about an eighth of pitches
+// once the ramp is taken into account: 0.22 at the top of the ramp works out
+// at 0.027 per swing averaged over every pitch, which is 0.40 pop-ups in a
+// fifteen swing session, or one every two or three sessions.
+const POP_UP_MAX_CHANCE = 0.22
+
+function popUpChance(pitch) {
+  const { height } = normalisedPitch(pitch)
+  const reach = (height - POP_UP_FROM_HEIGHT) / (POP_UP_FULL_HEIGHT - POP_UP_FROM_HEIGHT)
+  return POP_UP_MAX_CHANCE * Math.min(1, Math.max(0, reach))
+}
+
 // Where one pitch was thrown, in feet: height off the ground, and sideways
 // from the middle of the plate.
 //
@@ -545,9 +703,37 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
     const laAccident = PITCH_HEIGHT_WEIGHT * fromPitch.height + PITCH_HEIGHT_ACCIDENT_SHARE * laNoise
     const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laAccident
 
-    const ev = Math.round(Math.max(65, Math.min(97, sessionEV + evOffset * EV_SPREAD_MPH * varianceFactor)))
-    const la = Math.round(Math.max(-5, Math.min(35, sessionLA + laOffset * LA_SPREAD_DEGREES * varianceFactor)))
     const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
+
+    // THE THREE MIS-HIT DRAWS ARE TAKEN ON EVERY SWING, whether or not it turns
+    // out to be one, so a swing always costs the same number of draws. That is
+    // not tidiness: several tests in swingGenerator.test.js spell a session out
+    // draw by draw and read the result off the page, and a swing whose cost
+    // depended on which branch it took would make those unreadable. It also
+    // keeps the empty-band re-roll's arithmetic simple, since two attempts are
+    // then always the same length.
+    //
+    // They sit AFTER the swing's own four draws rather than before them, which
+    // keeps the order those tests already document (quality, exit velocity
+    // noise, launch angle noise, direction) unchanged.
+    const gotUnderIt = random() < popUpChance(pitch)
+    const popUpAngle = POP_UP_BAND.min + random() * (POP_UP_BAND.max - POP_UP_BAND.min)
+    const popUpDrop = POP_UP_EV_DROP_MPH.min + random() * (POP_UP_EV_DROP_MPH.max - POP_UP_EV_DROP_MPH.min)
+
+    // A pop-up REPLACES the swing rather than adjusting it. Everything above
+    // describes a ball the hitter squared up to some degree, and this is the
+    // one outcome where he did not: he got under it, so the angle comes off
+    // the ball's own band and the exit velocity comes off the session average
+    // rather than off this swing's contact quality. Blending the two would
+    // produce a hard pop-up on a good draw, which is not a thing.
+    const rawEv = gotUnderIt ? sessionEV - popUpDrop : sessionEV + evOffset * EV_SPREAD_MPH * varianceFactor
+    const rawLa = gotUnderIt ? popUpAngle : sessionLA + laOffset * LA_SPREAD_DEGREES * varianceFactor
+
+    // One place per reading where the limits are applied, ordinary swing and
+    // pop-up alike, so "nothing can leave the range the charts draw" is a
+    // property of one line rather than of every branch above it remembering.
+    const ev = Math.round(withinLimits(rawEv, EXIT_VELOCITY_LIMITS))
+    const la = Math.round(withinLimits(rawLa, LAUNCH_ANGLE_LIMITS))
     const dist = carryDistance({ exitSpeed: ev, angle: la })
     return { plateLocHeight: pitch.height, plateLocSide: pitch.side, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
   })
