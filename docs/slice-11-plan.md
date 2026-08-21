@@ -100,9 +100,13 @@ Written before any code exists.
   was. It is a confound and this slice claims nothing about them.
 - **The mis-hit pop-up rate is chosen, not derived.** No real TrackMan pop-up
   rate was consulted, and the PR must say so.
-- **The standing real-phone rule cannot be honoured as configured.** Vite binds
-  to localhost and nothing passes `--host`. Declared deviation unless Task 13a
-  is approved.
+- **No debt here, recorded because it was nearly opened.** The plan first
+  carried a task to make the dev server reachable from a phone, so the standing
+  real-phone rule could be honoured. The owner declined it on 20 August 2026:
+  this app is consumed on a desktop or an iPad and does not need to work on a
+  phone at all. The rule now has a permanent home as the fourth verification
+  norm in CLAUDE.md, so it is not re-decided next slice. Task 14's browser pass
+  is a desktop pass and that is complete, not a deviation.
 - **Widening the spread moves numbers Slice 6 tuned.** Power's empty target band
   falls from 13.7% to roughly 3%. Lower is not a regression, but it arrives as a
   side effect rather than an aim, and Slice 6's reasoning was written against the
@@ -509,28 +513,16 @@ write about spray and pitch location more, not less: a spray count extracted
 as a threshold claim with no comparison and dropped as UNVERIFIABLE, and the
 prior-session half of a cross-session comparison never extracted at all.
 
-## Task 13a: reachable from a phone. Needs the product manager's yes.
-
-The standing rule says anything visual gets a pass on a real phone before the
-QA script is written. It cannot be honoured here: Vite binds to localhost and
-nothing passes `--host`, so a phone on the same network cannot load this app at
-all. It is already on What's Next as its own item.
-
-Adding `--host` is one line. It is strictly out of this slice's lane, and the
-rule for out-of-lane finds is a micro-PR rather than a ride in the diff. It is
-proposed here anyway because it is the thing standing between this slice and a
-verification gate this project does not skip, and because this slice changes
-what every chart looks like. **If it is declined, the phone pass is a declared
-deviation and the PR says so.**
-
 ## Task 14: browser QA
 
 After the eval, and able to reject the slice regardless of what the eval said.
 Slice 10's gate rejected it after its round passed, which is the reason this
 task exists as its own gate rather than as a line in Task 12.
 
-At minimum: session 1 and session 4, on Power, Line Drives & Contact, Reduce
-Pop-Ups and Hit to All Fields. Look at the Launch Angle vs Exit Velocity
+**A desktop pass, and that is the whole gate**; see the fourth verification
+norm in CLAUDE.md for why no phone check is owed here. At minimum: session 1
+and session 4, on Power, Line Drives & Contact, Reduce Pop-Ups and Hit to All
+Fields. Look at the Launch Angle vs Exit Velocity
 scatter for the flat row of dots that should now be gone, the Pitch Location
 chart for pitches that no longer bounce, and the spray chart. Ask the coach in
 chat about pop-ups and about chased pitches, which are the two things this

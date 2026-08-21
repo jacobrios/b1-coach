@@ -950,6 +950,19 @@ specific to this repo:
    app in a real browser and look at it. This project's whole value is what a
    stranger sees, so "the code looks right" is not evidence here, and the suite
    does not reach it.
+4. **This app is for a desktop or an iPad, and the standing real-phone rule
+   does not apply to it.** Stated by the owner on 20 August 2026, and written
+   here rather than answered again because it had come up before and was being
+   re-raised as a blocker at the start of Slice 11. The user-level rule says
+   anything visual gets a pass on a real phone before the QA script is written;
+   that rule exists to catch failures a desktop browser hides, and it earns its
+   cost only where a phone is a real target. Here it is not one. So the rendered
+   check in item 3 is a desktop check, an iPad-width check is welcome when a
+   layout actually moves, and **a phone pass is neither required nor a deviation
+   to declare.** Two consequences worth naming so nobody re-derives them: do NOT
+   add `--host` to the dev server on the strength of that rule, and do not read
+   the 390px chat-panel finding on the What's Next list as a defect, because
+   390px is not a width this app is asked to survive.
 
 Failure paths need to be seen failing, not reasoned about. Force the error
 rather than describing what would happen.
@@ -1785,11 +1798,17 @@ rewritten, per the append-only rule.
   been seen failing for absence (the constant not existing yet), never for
   drift (the constant existing but having changed). Worth one deliberate
   mutation to prove a future edit to the prompt would turn it red.
-- **The dev server cannot be reached from a phone.** Vite binds to localhost
+- ~~**The dev server cannot be reached from a phone.** Vite binds to localhost
   only; neither `vite.config.js` nor `.claude/launch.json` passes `--host`.
   Separate from the layout question below: even a real phone on the same
   network could not currently load this app at all, so the standing
-  real-phone-before-QA rule cannot be honoured for this project as configured.
+  real-phone-before-QA rule cannot be honoured for this project as
+  configured.~~ **Closed as declined, 20 August 2026**, at the start of Slice
+  11, where it had been written into the plan as a task needing approval. The
+  owner: this app is consumed on a desktop or an iPad and does not need to work
+  on a phone at all. So there is nothing to fix and nothing to declare. See the
+  fourth verification norm above, which is where the rule now lives rather than
+  being re-decided each time it surfaces.
 - **At 390px wide, the chat panel's send button is entirely off-canvas, with
   no horizontal scroll to reach it.** Found during this slice's browser pass,
   pre-existing and not something this slice introduced. Worse than
@@ -1797,6 +1816,11 @@ rewritten, per the append-only rule.
   right edge with no way to bring them into view. Matches CLAUDE.md's
   standing note that this app has no mobile layout, but this is the first
   time the specific failure was measured rather than assumed.
+  *(Annotation, 20 August 2026: downgraded, not closed. 390px is a phone
+  width, and this app is not asked to work on a phone. The measurement stands
+  and is worth keeping, because it is the sharpest evidence of where the
+  layout gives out, but it is no longer a defect to fix. The width worth
+  checking is an iPad's, and nobody has measured that.)*
 - **Three small cosmetic issues on the new summary-box fade**, none blocking:
   its gradient interpolates between two slightly different background
   colours rather than one colour fading to transparent; it sits on top of
