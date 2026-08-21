@@ -627,12 +627,23 @@ export const PITCH_SCALING = {
 //
 // WHAT DID CHANGE, SAID PLAINLY RATHER THAN LEFT TO BE NOTICED. The pitch now
 // sits behind about 20% of the variance in exit velocity rather than 23%, and
-// the LAUNCH ANGLE gap, which no target names, falls with it: it read
-// 4.10 / 3.87 / 3.62 degrees at 0.8 against session 1's own 3.89, so it
-// bracketed the hand-written session, and at 0.74 it sits a little under it.
+// the LAUNCH ANGLE gap, which no target names, falls with it. From section 1
+// of `node scripts/measure-swing-generation.mjs` at seed 20260821, sessions 2,
+// 3 and 4, against session 1's own 3.89 degrees:
+//
+//   weight 0.80   4.10 / 3.87 / 3.62 degrees, bracketing the hand-written one
+//   weight 0.74   3.75 / 3.53 / 3.31 degrees, all three a little under it
+//
 // That was weighed and accepted. The exit velocity gap is the one the product
-// manager took a decision on; the launch angle gap is reported by section 1 of
-// `node scripts/measure-swing-generation.mjs` and has never had a target.
+// manager took a decision on; the launch angle gap has never had a target, and
+// under this weight it goes from straddling session 1 to sitting below it,
+// which is a real change and is the whole of what this move cost.
+//
+// AND THE SAME REPORT AT FIVE SEEDS IS WHERE "COSTS NOTHING MEASURABLE" COMES
+// FROM, rather than from the single run the table above quotes. Seeds 20260821,
+// 1, 7, 424242 and 99999, before and after: the gap moved to 4.67-4.70 /
+// 4.49-4.51 / 4.30-4.32 and every other figure in the report's nine sections
+// came back inside the band its own five before-runs already spanned.
 //
 // THE CEILING THIS STRUCTURE HAS, worth knowing before anybody tries to reach
 // a 6 mph gap by raising PITCH_QUALITY_WEIGHT. The pitch's effect on exit
