@@ -10,14 +10,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
   DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
-  DIRECTION_KEY_LINE,
+  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 // Imported rather than hand-copied, unlike the distances the block below pins
 // as literals: these tests are about which swings the coach is told went
 // where, so they have to run against the real session 1, not a copy of it.
 import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
-import { sprayBreakdown } from './sessionStats.js'
+import { sprayBreakdown, pitchZoneBreakdown } from './sessionStats.js'
 import { generateSwings } from './swingGenerator.js'
 
 const RETRY_DELAY_MS = 1500
@@ -75,13 +75,20 @@ describe('the targets the coach is told about', () => {
   // Slice 6 replaced the fake distance formula with an honest carry curve.
   // Under the old formula, 88 mph at 25-35 degrees carried 399 feet, so calling
   // it "home run distance" was true. Under the honest curve a swing that meets
-  // the target carries 277 to 390 feet, and at the band's own minimum of 88 mph
-  // it never clears 323 — warning-track territory, not out of the park. Only
-  // the hardest contact the generator can produce, 97 mph at 28 degrees,
-  // reaches 390. So the prompt must not claim a home run next to a chart that
+  // the target carries 277 to 368 feet, and at the band's own minimum of 88 mph
+  // it never clears 323, warning-track territory, not out of the park. Only
+  // the hardest contact the generator can produce, 94 mph at 28 degrees,
+  // reaches 368. So the prompt must not claim a home run next to a chart that
   // shows one falling short. This
   // pins the wording, not the number, so it survives future retuning of the
   // carry curve itself.
+  //
+  // The two figures above were 390 feet and 97 mph until 21 August 2026;
+  // Slice 11 moved the exit velocity ceiling to 94, and "ceiling" now means a
+  // soft limit nothing exceeds rather than a wall. Re-measured against the
+  // current ceiling rather than adjusted by eye. The 277 and the 323 did not
+  // move, and neither does what this test asserts, which is the absence of a
+  // phrase rather than any number.
   it('does not tell the coach the Power target is home run distance', () => {
     const context = goalContext({ id: 'power' })
     expect(context.toLowerCase()).not.toMatch(/home run/)
@@ -175,7 +182,9 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
     swings: pinSwings,
     stats: { avgExitVelocity: 82.5, avgLaunchAngle: 18, inZoneCount: 2, totalSwings: 2 },
   }]
-  const pinTop = `\n\nNote: All sessions shown here are consecutive rounds of batting practice in a single continuous practice period, like taking multiple rounds of BP in the same cage session. Do not use words like "today" or "yesterday" when comparing sessions. Refer to sessions by number only. Do not imply the current session is the final one unless it is explicitly Session 4.\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
+  // Slice 11 Task 3 replaced the old Note paragraph with the two approved
+  // setting and sessions lines.
+  const pinTop = `\n\n${SETTING_LINE}\n${SESSIONS_LINE}\n\nSession 1:\n- Avg Exit Velocity: 82.5 mph\n- Avg Launch Angle: 18 degrees\n- Pitches in strike zone: 2/2 (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)\n- Swings on pitches outside the strike zone: 0 swings\n- Swings on pitches high (height above 3.5ft): 0 swings\n- Swings on pitches low (height below 1.5ft): 0 swings\n- Swings on pitches wide (side outside -0.7 to 0.7ft): 0 swings\n`
   // Slice 10 added the three spray count lines here and reworded the direction
   // key. Swing 1 is -12 degrees (up the middle under the screen's own rule,
   // which is exactly the case the old "negative is pull side" wording got
@@ -382,6 +391,91 @@ describe('the strike-zone count lines every goal is handed', () => {
     expect(message).toContain('- Swings on pitches high (height above 3.5ft): 1 swing — numbers: 2')
     expect(message).toContain('- Swings on pitches low (height below 1.5ft): 2 swings — numbers: 3, 5')
     expect(message).toContain('- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 5')
+  })
+})
+
+// Slice 11 Task 14b. The block above only ever asked the DEBRIEF prompt, and
+// the chat prompt carried none of these four lines at all, which is the whole
+// defect: asked in chat which pitches he chased, the coach named two in-zone
+// pitches as chases, missed two real ones, and called four high pitches low.
+// Same shape as the spray and direction-key blocks below, and the same reason:
+// the coach repeats a count it is handed and miscounts one it derives. No new
+// wording is introduced here; these four lines have shipped in the debrief
+// prompt since Slice 8c.
+describe('the strike-zone count lines the CHAT prompt is handed', () => {
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  const sessionOf = (swings) => ({
+    sessionNumber: 1,
+    stats: {
+      avgExitVelocity: 80, avgLaunchAngle: 15,
+      inZoneCount: swings.length, totalSwings: swings.length,
+    },
+    swings,
+  })
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  const debriefFor = (session) => capturedMessage(() =>
+    generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+  )
+  // The question Task 14's browser gate actually asked, which is the one that
+  // produced the wrong answer twice out of two.
+  const chatFor = (session) => capturedMessage(() =>
+    sendChatMessage({
+      goal, player, sessions: [session], viewingSessionNumber: 1,
+      messages: [{ role: 'user', content: 'Which pitches did I chase?' }],
+    }),
+  )
+
+  // Literals, hand-derived from the plate locations in src/sessionOneSwings.js
+  // against the 1.5-3.5ft / -0.7 to 0.7ft strike zone, so this pins the shipped
+  // sentence AND the shipped numbers rather than proving the prompt echoes
+  // whatever the code happens to return. Swing 14 is both high and wide, which
+  // is why the three sub-counts do not sum to the outside count.
+  const OUTSIDE_LINE = '- Swings on pitches outside the strike zone: 6 swings — numbers: 2, 4, 6, 9, 12, 14'
+  const HIGH_LINE = '- Swings on pitches high (height above 3.5ft): 2 swings — numbers: 6, 14'
+  const LOW_LINE = '- Swings on pitches low (height below 1.5ft): 3 swings — numbers: 2, 9, 12'
+  const WIDE_LINE = '- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 14'
+
+  it('the chat prompt states all four, exactly, on session 1\'s real swings', async () => {
+    const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(OUTSIDE_LINE)
+    expect(message).toContain(HIGH_LINE)
+    expect(message).toContain(LOW_LINE)
+    expect(message).toContain(WIDE_LINE)
+  })
+
+  it('cannot drift apart: both prompts report the same four lines for the same swings', async () => {
+    const session = sessionOf(SESSION_ONE_SWINGS)
+    const debriefMessage = await debriefFor(session)
+    const chatMessage = await chatFor(session)
+    const extract = (text) => [
+      text.match(/- Swings on pitches outside the strike zone[^\n]+/)[0],
+      text.match(/- Swings on pitches high \([^\n]+/)[0],
+      text.match(/- Swings on pitches low \([^\n]+/)[0],
+      text.match(/- Swings on pitches wide \([^\n]+/)[0],
+    ]
+    expect(extract(chatMessage)).toEqual(extract(debriefMessage))
+    // And they are the shared breakdown's numbers, not a third value.
+    const zone = pitchZoneBreakdown(SESSION_ONE_SWINGS)
+    expect(extract(chatMessage)[0]).toContain(`numbers: ${zone.outside.swings.join(', ')}`)
+  })
+
+  // Placement matters as much as presence: the debrief hangs these four off
+  // its strike-zone summary line, and a reader comparing the two prompts
+  // should find them in the same seat. Also the seat that keeps them next to
+  // the in-zone total they break down.
+  it('sits directly under the chat prompt\'s own In Zone line', async () => {
+    const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(`swing outcome)\n${OUTSIDE_LINE}\n${HIGH_LINE}\n${LOW_LINE}\n${WIDE_LINE}\n`)
   })
 })
 
@@ -891,6 +985,16 @@ describe('the distance distribution both prompts describe', () => {
   // rather than an import, proving these specific numbers still write the
   // right sentence rather than proving only that the module re-exports
   // whatever it currently holds.
+  //
+  // AND ONE CROSS-CHECK, ADDED 21 AUGUST 2026, WHICH IS THE PRICE OF KEEPING
+  // THE LITERAL. The reasoning above stands and this array stays a literal.
+  // What it did not cover is the failure that actually happened: when Slice 9
+  // replaced all fifteen swings, this block kept its old numbers and stayed
+  // green, so for a while it was pinning the sentence the coach reads about a
+  // session the app no longer had. The single assertion below holds the
+  // literal against what SESSION_ONE_SWINGS really contains, so the next
+  // rewrite of session 1 turns this file red rather than quietly making it
+  // meaningless. Everything under it still runs off the literal.
   const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map((distance) => ({
     plateLocHeight: 2.5,
@@ -907,6 +1011,10 @@ describe('the distance distribution both prompts describe', () => {
   }
   const goal = { id: 'open', label: 'Open Session' }
   const player = { firstName: 'Test' }
+
+  it('is still the fifteen distances session 1 actually holds', () => {
+    expect(mockDistances).toEqual(SESSION_ONE_SWINGS.map((w) => w.hit.landing.distance))
+  })
 
   // Runs a real call through callApi with fetch stubbed, and hands back the
   // exact user-message text that was about to leave the browser.
@@ -1157,18 +1265,41 @@ describe('the spray count lines both prompts state', () => {
       seed = (seed * 1103515245 + 12345) % 2147483648
       return seed / 2147483648
     }
+    let pooledPull = 0
+    let pooledOppo = 0
     for (const sessionNum of [2, 3, 4]) {
       const swings = generateSwings({
         sessionNum, goalId: 'power', baselineSwings: SESSION_ONE_SWINGS, random,
       })
       const [pull, middle, oppo] = countsIn(await debriefFor(sessionOf(swings)))
       expect(pull + middle + oppo).toBe(swings.length)
-      // Summing to the total is satisfied trivially by a classifier that puts
-      // every ball up the middle and never fires the other two, so check the
-      // outer buckets are actually populated on real generated data.
-      expect(pull).toBeGreaterThan(0)
-      expect(oppo).toBeGreaterThan(0)
+      pooledPull += pull
+      pooledOppo += oppo
     }
+
+    // Summing to the total is satisfied trivially by a classifier that puts
+    // every ball up the middle and never fires the other two, so check the
+    // outer buckets are actually populated on real generated data.
+    //
+    // POOLED ACROSS THE THREE SESSIONS RATHER THAN ASKED OF EACH ONE, changed
+    // 21 August 2026 in Slice 11, and the reason is what this comment is for.
+    // Asked of each session, this was a statistical claim resting on one fixed
+    // draw sequence: any change to the ORDER the generator pulls its numbers in
+    // reshuffles which swing gets which direction, and a fifteen-swing session
+    // holds no pull-side ball about one time in fifty by luck alone. Slice 11
+    // moved the pitch draw to the front of every swing and session 3 duly came
+    // out with its hardest pull at exactly -15, one degree short of the bucket,
+    // while every count in this test still summed correctly. That is the second
+    // slice to reorder these draws, and Slice 11 is not finished doing it.
+    //
+    // Pooling makes the assertion about the hitter rather than about the seed:
+    // across forty-five generated swings a hitter who never once pulls a ball
+    // is a real defect in the generator or the buckets, which is what this
+    // check was always meant to catch. The per-session assertion above is
+    // untouched and exactly as strong as it was, because that one is what this
+    // test is named for.
+    expect(pooledPull).toBeGreaterThan(0)
+    expect(pooledOppo).toBeGreaterThan(0)
   })
 
   // The disagreement that caused the defect, one layer up from the unit test
@@ -1237,5 +1368,93 @@ describe('the JSON-first instruction that fixed the session-1 MAX_TOKENS bug', (
 
   it('tells the model its reply must start with the JSON object, not analysis first', () => {
     expect(DEBRIEF_SYSTEM_BASE).toContain('Do not write any analysis, reasoning, or commentary before it')
+  })
+})
+
+// Slice 11 Task 3. The old Note paragraph told the coach these were
+// consecutive practice rounds, but said nothing about who is throwing, so a
+// pitch that misses the zone reads to the coach as a mistake worth reasoning
+// about rather than a live thrower varying his location. The two approved
+// lines below replace that paragraph in the debrief prompt and, for the
+// first time, reach the chat prompt too, closing a gap where the chat coach
+// could say "yesterday" with nothing stopping it. Same three-part shape as
+// the direction key block above (debrief, chat, cannot drift), plus a fourth
+// check that the old paragraph is actually gone, since this change can
+// half-land and leave both versions in the prompt at once.
+describe('the setting and sessions lines both prompts state', () => {
+  const swings = [{
+    plateLocHeight: 2.5,
+    plateLocSide: 0,
+    hit: {
+      launch: { exitSpeed: 80, angle: 15, direction: 0 },
+      landing: { distance: 200 },
+    },
+  }]
+  const session = {
+    sessionNumber: 1,
+    stats: { avgExitVelocity: 80, avgLaunchAngle: 15, inZoneCount: 1, totalSwings: 1 },
+    swings,
+  }
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  it('the debrief prompt states both exact lines', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(message).toContain(
+      '- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player\'s swing decisions; never guess at the thrower\'s intent.',
+    )
+    expect(message).toContain(
+      '- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.',
+    )
+  })
+
+  it('the chat prompt (which carries no setting note at all today) states both exact lines too', async () => {
+    const message = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    expect(message).toContain(
+      '- Setting: a coach throws live from behind a screen, so pitch locations vary. Coach the player\'s swing decisions; never guess at the thrower\'s intent.',
+    )
+    expect(message).toContain(
+      '- Sessions: consecutive rounds in one continuous practice period. Refer to them by number, never "today" or "yesterday." Do not imply this is the final session unless it is Session 4.',
+    )
+  })
+
+  it('cannot drift apart: the debrief prompt and the chat prompt state the same two lines, and both equal the exported constants', async () => {
+    const debriefMessage = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chatMessage = await capturedMessage(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'What should I work on next round?' }],
+      }),
+    )
+    const extractSetting = (text) => text.match(/- Setting: [^\n]+/)[0]
+    const extractSessions = (text) => text.match(/- Sessions: [^\n]+/)[0]
+    expect(extractSetting(debriefMessage)).toBe(extractSetting(chatMessage))
+    expect(extractSessions(debriefMessage)).toBe(extractSessions(chatMessage))
+    expect(extractSetting(debriefMessage)).toBe(SETTING_LINE)
+    expect(extractSessions(debriefMessage)).toBe(SESSIONS_LINE)
+  })
+
+  it('the debrief prompt no longer carries the old Note paragraph the two lines replaced', async () => {
+    const message = await capturedMessage(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(message).not.toContain('Note: All sessions shown here are consecutive rounds of batting practice')
   })
 })

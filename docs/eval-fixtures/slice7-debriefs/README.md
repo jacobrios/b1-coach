@@ -4,6 +4,28 @@ Rescued into the repo on 17 August 2026, at the start of Slice 7b. Until that
 day these files lived in a temporary scratch directory that would have been
 deleted without warning, taking the only ground truth this project has with it.
 
+**Dated note, 20 August 2026: this directory was nearly lost a second way, and
+by then nobody was looking.** Everything below describes `rebuild.mjs` as a
+frozen copy that reconstructs exactly what these 96 debriefs saw. That was true
+of the code written inside it and false of one thing it called. Sessions 2, 3
+and 4 are not stored anywhere; they are worked out from session 1 by the app's
+swing generator, and until this date `rebuild.mjs` reached into the live app for
+that generator. All three cells here are session 2 or later.
+
+Slice 11 rewrites that generator. The moment it had, this fixture would have
+been reconstructed from swings none of these 96 debriefs was written about: not
+an error message, not a gap, but a complete and entirely believable set of
+numbers, with nothing on screen suggesting anything was wrong. The grading
+tool's own claim to catch a real coach error rests on this fixture and no
+other, so the tool would then have been checked against a fiction and passed.
+
+It is fixed. `rebuild.mjs` now reads a frozen copy of the old generator kept in
+`../frozen/`, every swing all three cells produce is written down in the record
+beside that copy, and the test suite rebuilds and compares them on every run. A
+drift now turns tests red by name instead of passing quietly. Found by review
+after five earlier passes had signed off on the work that repaired five other
+directories and missed this one.
+
 ## What these are
 
 96 real debriefs the coach actually wrote, from Slice 7's measurement round on
@@ -89,6 +111,23 @@ So this fixture supports a hard test in one direction only:
 about, importing the app's real `generateSwings`, `computeStats` and
 `carryDistance`. `regrade.mjs` runs the five checks over both record files and
 writes `regrade-results.json`.
+
+**Dated correction, 20 August 2026: `generateSwings` no longer comes from the
+app, and that sentence is what the note at the top of this file is about.** It
+now comes from a frozen copy kept in `../frozen/`, because the app's own version
+is being rewritten and this fixture must keep reconstructing what its coaches
+actually saw. `computeStats` and `carryDistance` still come from the app. The
+first of those is deliberate: it summarises swings that have already been
+decided, and nothing it produces is part of the record of what this fixture
+made. Read "harmless" narrowly, though, because it is not the same as "cannot
+affect a verdict". Those session averages do reach the sheet of facts a debrief
+is graded against, so a change to how the app rounds them would change a grade.
+What covers that is a different test file, `src/sessionStats.test.js`, not
+anything built here: checked by hand on 20 August 2026 by making the app
+truncate an average instead of rounding it, which turned that file red and left
+this fixture's own guards green, correctly, since averages are not part of what
+this fixture records. The second import is a genuine loose end, explained where
+it lives, at the top of `rebuild.mjs`.
 
 Both were re-run from this directory on 17 August 2026 after their scratch-only
 absolute paths were made relative, and `regrade-results.json` came out

@@ -24,6 +24,29 @@
 # session-1 cells stay correct, and the report that comes out looks partly
 # sane rather than obviously broken.
 
+# ANNOTATION, 20 AUGUST 2026, SLICE 11 TASK 1. THE LINE BELOW IS UNCHANGED,
+# AND SAYING WHY IS THE POINT OF THIS PARAGRAPH.
+#
+# The three sibling rounds beside and above this one had their builder line
+# repointed today, from "current" to "slice11-before". This one did not, and
+# a reader comparing the files deserves to know that is deliberate rather
+# than an omission.
+#
+# "slice9-before" was REPOINTED, NOT RENAMED. Its meaning was always "what
+# this round was written against", and that meaning has now been completed
+# rather than changed. It used to mean the frozen fifteen session-1 swings in
+# ../session-one-before.mjs plus whatever generator the working tree happened
+# to hold. It now means those same fifteen swings plus the generator frozen
+# at commit 53315e5, snapshotted at
+# docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs.
+#
+# Why that matters here: the generator was the second moving part nobody had
+# pinned. Sessions 2, 3 and 4 are generated from session 1, so this round's
+# 40 multi-session records depended on src/swingGenerator.js just as much as
+# on the fifteen swings, and Slice 11 rewrites it. Freezing the snapshot is
+# what keeps this round gradeable; the name on this line did not need to
+# change for that to be true.
+
 builder = slice9-before
 handed-era = current
 seed = 20260814

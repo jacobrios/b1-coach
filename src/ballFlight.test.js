@@ -8,6 +8,10 @@
 import { describe, it, expect } from 'vitest'
 import { carryDistance, DISTANCE_BUCKETS, distanceBucketCounts, distanceDistributionLine, sprayRadius, SPRAY_RINGS, SPRAY_PLATE_RADIUS, SPRAY_FAIR_RADIUS } from './ballFlight.js'
 import { generateSwings } from './swingGenerator.js'
+// Imported for ONE assertion only, the cross-check below that the hardcoded
+// fifteen distances are still session 1's own. Everything else in this file
+// deliberately runs against literals; see that block's comment for why.
+import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
 
 describe('the reference points the shape is built from', () => {
   // These numbers come straight from the slice plan. They pin the curve so a
@@ -21,6 +25,12 @@ describe('the reference points the shape is built from', () => {
     [88, 26, 310],
     [88, 28, 323],
     [91, 28, 345],
+    // The hardest ball this generator can now produce, added 21 August 2026.
+    // The row under it, 97 mph, was that ball until Slice 11 lowered the exit
+    // velocity ceiling to 94, and it stays as headroom. This one is here so the
+    // 368 that three comments in ballFlight.js now quote guards itself rather
+    // than depending on somebody rerunning a script.
+    [94, 28, 368],
     [97, 28, 390],
     [65, -5, 45],
     [97, 35, 335],
@@ -62,14 +72,32 @@ describe('carry peaks near the ideal launch angle', () => {
 })
 
 describe('the extremes of the app\'s own range stay sane', () => {
-  // The app only ever generates 65-97 mph and -5 to 35 degrees. Nothing this
-  // function is fed inside that range should come out negative or absurd.
+  // Nothing this function is fed inside the range the generator can produce
+  // should come out negative or absurd.
+  //
+  // THAT RANGE MOVED IN SLICE 11 AND THIS TABLE HAD NOT. Until 21 August 2026
+  // the line above read "the app only ever generates 65-97 mph and -5 to 35
+  // degrees", and the six rows under it were those corners. The ceiling is now
+  // 94 mph and the launch angle limit 50 (EXIT_VELOCITY_LIMITS and
+  // LAUNCH_ANGLE_LIMITS in src/swingGenerator.js), so a whole quarter of the
+  // reachable range, everything above 35 degrees, was going unchecked here
+  // while the comment said otherwise. The three rows at 50 degrees close that.
+  //
+  // The 97 mph rows are deliberately kept rather than lowered to 94. They are
+  // above what the generator can now reach, and a formula that stays sane
+  // slightly past the generator's reach is worth holding still: 97 is where
+  // this test started, nothing about it has stopped being true, and dropping a
+  // passing row buys nothing. Read them as headroom, not as the app's range.
   it.each([
     [65, -5],
     [65, 35],
+    [65, 50],
+    [94, -5],
+    [94, 50],
     [97, -5],
     [97, 35],
     [65, 4],
+    [94, 28],
     [97, 28],
   ])('%s mph at %s degrees is between 0 and 400 feet', (exitSpeed, angle) => {
     const feet = carryDistance({ exitSpeed, angle })
@@ -181,8 +209,22 @@ describe('the exact fifteen distances the app opens on', () => {
   // fifteen specific numbers still sort into the right buckets and still
   // write the right sentence, not merely that the module re-exports whatever
   // it happens to hold today.
+  //
+  // AND ONE CROSS-CHECK, ADDED 21 AUGUST 2026, WHICH IS THE PRICE OF KEEPING
+  // THE LITERAL. The paragraph above is the reason this array is not an
+  // import, and it stays. What it did not cover is the failure that actually
+  // happened: when Slice 9 replaced all fifteen swings, this file kept its old
+  // numbers and stayed green, so for a while it was proving that fifteen
+  // distances nobody's app held sorted correctly. The single assertion below
+  // holds the literal against what SESSION_ONE_SWINGS really contains, so the
+  // next rewrite of session 1 turns this file red instead of quietly making it
+  // meaningless. The two tests under it still run off the literal.
   const mockDistances = [272, 122, 192, 159, 346, 249, 246, 266, 201, 219, 229, 117, 311, 204, 156]
   const swings = mockDistances.map(swingAt)
+
+  it('is still the fifteen distances session 1 actually holds', () => {
+    expect(mockDistances).toEqual(SESSION_ONE_SWINGS.map((w) => w.hit.landing.distance))
+  })
 
   it('gives every column real fill: 4, 4, 3, 2, 2', () => {
     expect(distanceBucketCounts(swings).map((b) => b.count)).toEqual([4, 4, 3, 2, 2])
@@ -234,8 +276,18 @@ describe('every swing the real generator can produce lands in exactly one bucket
 describe('the spray chart distance-to-radius mapping', () => {
   // Both ends of what the generator can actually produce, measured over 20,000
   // replays per goal per session by scripts/measure-swing-generation.mjs.
-  const SHORTEST_REAL_BALL = 74
-  const LONGEST_REAL_BALL = 390
+  //
+  // These read 74 and 390 until 21 August 2026, which was the range before
+  // Slice 11 moved the generator's limits. Unlike the four comments corrected
+  // alongside them, these two are inside a live assertion, so the stale pair
+  // was a test checking a range this app no longer produces rather than merely
+  // a sentence saying so. Read the correction calmly, though: neither value
+  // turned this file red at either setting, because what the rows below assert
+  // is that a ball lands off the plate ring and inside fair territory, and 74
+  // and 390 both do. Nothing was broken and no constant in ballFlight.js
+  // moved; what was wrong was what this block claimed to be covering.
+  const SHORTEST_REAL_BALL = 52
+  const LONGEST_REAL_BALL = 368
 
   it.each([SHORTEST_REAL_BALL, LONGEST_REAL_BALL])(
     'draws a %sft ball inside fair territory and off the plate',

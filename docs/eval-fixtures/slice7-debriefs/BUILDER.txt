@@ -1,0 +1,70 @@
+# Which session data the 96 debriefs in this directory were written against.
+#
+# Written 20 August 2026, in Slice 11's Task 1b.
+#
+# It is NOT the last directory here to need one, and an earlier draft of this
+# line said it was, which is the sort of tidy-sounding sentence this whole task
+# exists to stop. Counted rather than assumed on the day this was written: seven
+# other directories under docs/eval-fixtures hold records and carry no marker,
+# among them the Slice 8b, 8c and 8d rounds, several of which contain
+# multi-session cells and therefore the same exposure this file is about. They
+# are left alone here because this task's lane is the sixth exposed directory,
+# not a marker sweep, and because a marker has to be written by somebody who
+# actually knows what a round was generated against. Recorded so the gap is a
+# known one rather than an implied absence.
+#
+# WHY THIS DIRECTORY HAD NO MARKER FOR SO LONG, AND WHY THAT WAS A HOLE.
+#
+# Every other committed round needs a marker because there is a real choice to
+# get wrong. This one looked as though there were no choice at all: the grading
+# tool hardcodes this fixture as its default records and forces the "frozen"
+# builder for it, refusing any other builder outright. So the common path was
+# already safe, and nobody wrote a marker.
+#
+# There is a second door, and it was open. Naming this directory's files
+# explicitly, with
+#
+#   --records docs/eval-fixtures/slice7-debriefs/baseline-records.json \
+#     --builder current
+#
+# skips the forcing rule entirely, because that rule only applies when no
+# --records flag is given. Measured on 20 August 2026: that command was
+# accepted and exited 0. With this file present it is refused, because a
+# --builder flag that disagrees with a marker beside the records is refused
+# rather than obeyed.
+#
+# The stakes are the highest of any directory here. These 96 debriefs are the
+# only evidence this project has that its grading tool can catch a real coach
+# error, so a run that grades them through the wrong builder does not just
+# produce a wrong answer, it produces a wrong answer about whether the
+# instrument works.
+#
+# WHAT "frozen" MEANS HERE, AND WHY IT IS NOT THE SAME KIND OF ANSWER AS THE
+# OTHER MARKERS.
+#
+# The other markers name which fifteen session-1 swings a round started from.
+# This one names a whole rebuild script, docs/eval-fixtures/slice7-debriefs/
+# rebuild.mjs, which carries its own stand-in first session, its own list of
+# cells, and its own seed. Read that file's header before changing anything
+# here.
+#
+# It was itself repaired on the day this marker was written. Until then it made
+# sessions 2 and later by importing the swing generator out of the live app,
+# which Slice 11 rewrites, so it was frozen in its own code and nowhere else.
+# It now reads ../frozen/swing-generator-pre-slice11.mjs, and everything all
+# three of its cells produce is recorded in
+# ../frozen/pre-slice11-sessions.digest.json and re-checked on every npm test.
+#
+# NO handed-era LINE, AND NO seed LINE, BOTH ON PURPOSE.
+#
+# handed-era: these debriefs are from 14 August 2026, before the prompt eras
+# this tool knows about were defined, and nobody has ever established which of
+# them fits. A guess written here would look exactly like a measurement. The
+# run header says plainly when a marker does not name one.
+#
+# seed: rebuild.mjs seeds itself from its own SEED constant, currently
+# 20260814, and ignores whatever seed it is handed. A seed line here would
+# imply a choice that does not exist. A test in scripts/frozenGenerator.test.js
+# pins that constant, so it cannot move quietly either.
+
+builder = frozen

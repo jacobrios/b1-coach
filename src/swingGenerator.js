@@ -28,9 +28,35 @@
 // existing behaviour, carried across unchanged, including the 65/35 chance that
 // a session trends better than the last one and the variance factor, both of
 // which are settled product decisions recorded in the decision log.
+//
+// Annotation, 21 August 2026, Slice 11. That last sentence was true when it was
+// written and is not any more, so read it as a description of Slice 6 rather
+// than of this file. A fourth thing now happens: the pitch is drawn before the
+// swing, and a missed pitch is a near miss on one side of the zone rather than
+// a wild one off on both. Everything the header above says about the swing
+// itself still stands untouched. The section headed "The thrower", below the
+// Power lift, is where that change is explained.
+//
+// Second annotation, the same day, and this one does touch the swing. A FIFTH
+// thing now happens: where the pitch was thrown decides part of how well it was
+// struck. Until now it decided nothing at all, measured at a 0.00 mph
+// difference in exit velocity between swings at strikes and swings at balls
+// across 4,500,000 generated swings, against session 1's own 8.78. The section
+// headed "What the pitch does to the swing" is where that is explained, and it
+// is the section to read before changing any of the blending arithmetic below.
 
 import { carryDistance } from './ballFlight'
 import { hasTarget, meetsTarget } from './goalTargets'
+// The strike zone is read from sessionStats.js rather than written out again
+// here. It matters more in this file than anywhere else it is copied: whether a
+// pitch counts as a strike is decided by `inStrikeZone` over there, and every
+// pitch a visitor ever sees is thrown here. Two copies of those four numbers
+// would mean this file could aim at a zone the rest of the app does not
+// recognise, and nothing would say so. Adopted while rewriting these very lines
+// in Slice 11, not as a tidy-up of anything else; the remaining copies in
+// DebriefScreen.jsx and the coach prompt are untouched and still counted in
+// CLAUDE.md's consolidation note.
+import { STRIKE_ZONE } from './sessionStats'
 
 // How much of a swing's spread comes from one shared quality of contact rather
 // than from two unrelated accidents. Exit velocity and launch angle used to be
@@ -57,8 +83,67 @@ import { hasTarget, meetsTarget } from './goalTargets'
 // after. A visitor sees a few more dots at the edges of the chart, which is
 // honest for a hitter and worth knowing before anyone reads a wider scatter as
 // a bug.
+//
+// EVERY NUMBER IN THE THREE PARAGRAPHS ABOVE IS A SLICE 6 MEASUREMENT AND
+// THREE OF THEM NO LONGER DESCRIBE THIS GENERATOR. Dated 21 August 2026 rather
+// than rewritten, because the argument they were quoted to make is still the
+// right one. All three come off the "how spread out a session is" section of
+// `node scripts/measure-swing-generation.mjs`, which is what to rerun.
+//
+//   The within-session pair reads 6.30 mph and 7.54 degrees today, not 4.63
+//   and 6.36, because Task 7 widened EV_SPREAD_MPH.
+//
+//   The pooled pair in the parenthetical reads 6.36 mph and 7.67 degrees on
+//   that section's after row, not 5.2 and 6.5. Worth one extra sentence
+//   because this is the one figure of the three a reader could still see on
+//   screen and take as current: 5.16 and 6.53 is what the BEFORE row prints,
+//   and the before row is the pre-Slice-6 generator rather than this one. The
+//   distinction the parenthetical draws, pooled against within-session, is
+//   unaffected and is still the thing to read it for.
+//
+//   The launch angle range no longer stops at 35, because Task 3 replaced that
+//   wall with a soft limit at 50 and Task 5 gave the hitter pop-ups to reach
+//   it with.
+//
+// This annotation itself said "two of them" until later the same day, having
+// enumerated the two and left the third un-enumerated, which in a comment that
+// lists what moved reads as a claim that the rest did not.
+//
+// THIS CONSTANT IS NOT THE CORRELATION IT IS NAMED FOR, and reading it as one
+// is how somebody ends up retuning it in the wrong direction. It is the WEIGHT
+// the shared contact-quality term carries into each of the two readings, and
+// it is applied to BOTH of them, so what actually comes out is roughly its
+// square. Set it to 0.5 expecting a correlation of 0.5 and the generator would
+// produce 0.25.
+//
+// Measured through this generator on 21 August 2026, 60,000 sessions across
+// five goals and sessions 2 to 4, seed 20260821:
+//
+//   as it ships                        0.23 median per session (0.17 pooled)
+//   setting the pop-ups aside          0.37 median per session (0.37 pooled)
+//
+// The second row is the blend on its own, and it lands where the arithmetic
+// says it should: 0.6 squared, plus a hundredth from the two pitch terms not
+// being quite independent of each other. The first row is what a visitor's
+// chart actually shows, and the gap between the two rows is the pop-up, which
+// by construction pairs a high launch angle with a soft exit velocity and so
+// pulls against the blend. Pop-ups are 2.7% of swings. (The second row is
+// measured by setting aside every swing at 38 degrees or above, the bottom of
+// POP_UP_BAND. That is the pop-ups plus a few of the very highest ordinary
+// swings on the Power goal, whose share of the band drifts from 2.6% at
+// session 2 to 3.1% at session 4; it is a close proxy rather than an exact
+// split.)
 const CONTACT_CORRELATION = 0.6
 const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
+
+// The standard deviation of one of this file's uniform draws, which are all
+// `random() - 0.5` and so spread evenly over an interval of width 1. Every
+// term blended into an offset is standardised to exactly this, which is what
+// lets the sqrt(1 - w**2) arithmetic above and below hold: two terms on the
+// same scale, blended at weights whose squares sum to 1, come out on that
+// scale again. Named rather than written as a literal because three separate
+// places lean on it meaning the same thing.
+const UNIFORM_DRAW_SD = Math.sqrt(1 / 12)
 
 // How much higher a Power player hits the ball, session by session. Power asks
 // for 25 to 35 degrees and the generator used to ignore the player's chosen
@@ -76,12 +161,1152 @@ const INDEPENDENT_SHARE = Math.sqrt(1 - CONTACT_CORRELATION ** 2)
 // pulls the average up with it.
 const POWER_LIFT_PER_SESSION = 2
 
+// How far a session's average exit velocity moves off session 1's, in mph.
+//
+// A HITTER CAN CHANGE HIS LAUNCH ANGLE INSIDE ONE PRACTICE AND CANNOT CHANGE
+// HIS BAT SPEED. That sentence is the whole product argument for this constant
+// existing at all, and for the launch angle step three lines below it keeping
+// its arc untouched. Getting on top of the ball, or under it, is a swing
+// decision a coach can talk a player into between rounds, and it is the thing
+// this demo is about. Bat speed is strength and mechanics; it moves over a
+// winter, not over twenty minutes.
+//
+// It used to be `1 + random() * 3` on the improving side, so a session could
+// come back four mph harder than the one before it, which is a different
+// hitter rather than a better round. It is now at most 1.5, which is inside
+// the noise a fifteen-swing average carries anyway: at the exit velocity
+// spread this file now uses, one session's average wobbles by about 1.6 mph
+// on sampling alone, so the step a visitor sees is honestly a draw rather than
+// a promise. That is the intended reading and it is why the number is not zero
+// either: the 65/35 improve-or-decline coin is a settled product decision, and
+// a step of zero would take the coin away rather than shrink it.
+//
+// THE DECLINE IS SMALLER THAN THE IMPROVEMENT, and it was in the old constants
+// too, at 3 against 4. That asymmetry is what makes the demo trend upward at
+// all once the coin is 65/35, and it is carried across at the same ratio
+// rather than re-argued here.
+//
+// Exported for the reason PITCH_MISS_MAX_FEET and the limits are exported: the
+// test that holds the generator to this step reads the bound from here, so it
+// cannot go on agreeing with a number that has stopped being true. That test
+// also asserts the 1.5 separately as a plain number, so a tuning pass cannot
+// widen the constant and the test that guards it in one move.
+//
+// TASK 9 MUST READ THIS BEFORE IT TOUCHES EITHER THIS CONSTANT OR THE EXIT
+// VELOCITY SPREAD, because the two of them pull Power's empty target band in
+// opposite directions and only their sum is safe. Measured on 21 August 2026,
+// one constant at a time off the pre-task generator, 20,000 sessions a cell at
+// seed 20260821, Power's empty-band rate on sessions 2, 3 and 4:
+//
+//   pre-task, all three constants old        14.7 / 12.6 / 11.9
+//   the new ceiling alone                    14.7 / 12.6 / 11.9   (inert)
+//   THIS SHRUNKEN STEP alone                 17.5 / 15.1 / 14.4   (worse)
+//   the widened spread alone                  7.4 /  4.9 /  3.8   (better)
+//   shipped, all three new                    8.1 /  5.1 /  3.6
+//
+// WHICH HARNESS THESE CAME FROM, because the EV_SPREAD_MPH block above quotes
+// the same quantity as 14.7 / 12.2 / 11.9 going to 8.1 / 4.8 / 3.5 and a
+// tuning pass reading two answers for one number will otherwise pick one at
+// random. Those come from `node scripts/measure-swing-generation.mjs`, which
+// cannot vary a constant, so this table had to be built by patching one
+// constant at a time in a separate harness. The two draw from different random
+// streams, so they land a few tenths apart at sessions 3 and 4 and agree at
+// session 2. Neither is wrong and neither is more authoritative; the script is
+// the one to quote outside this file, and the value of this table is the
+// DIFFERENCES down its column, which are all measured the same way.
+//
+// So shrinking the step COSTS Power about three points of empty band, because a
+// lower session average makes that goal's demanding exit velocity harder to
+// reach, and the widened spread pays for it several times over. Shrink this
+// step further without widening the spread and Power ends up worse than the
+// slice found it.
+//
+// AND THE CEILING CANNOT BE PART OF THIS AT ALL, which is worth having as a
+// proof rather than as a row in a table, because a proof survives Task 9
+// retuning everything and a measurement does not. Lowering the ceiling from 97
+// to 94 moves the soft zone's knee from 94 to 91, and `withinLimits` maps
+// everything above the knee into the open interval between the knee and the
+// ceiling. So every swing the ceiling can touch comes out above 91 either way.
+// Power's bar is 88 mph and Contact's is 85, both below 91, so no swing can
+// cross either goal's exit velocity threshold because of the ceiling, and it
+// cannot move either empty-band rate whatever the other constants are doing.
+// A tuning pass reaching for the ceiling to fix an empty band is reaching for
+// the wrong constant, and that is true by construction rather than by sample.
+//
+// ── `lift`, ADDED 21 AUGUST 2026, AND THE ROUTE IS THE POINT ────────────────
+//
+// THE DEFECT IT CLOSES, WHICH IS ABOUT A TILE AND NOT ABOUT A DISTRIBUTION.
+// The results screen's AVG EXIT VELO tile is a rounded whole number. Session 1
+// always reads 82. Before this constant existed that tile was MORE LIKELY to
+// read below 82 than above it: POOLED across the fifteen goal-and-session
+// combinations, 44.1% to 44.3% below against 33.5% to 33.7% above at five
+// seeds. So a visitor
+// clicking through four sessions of a demo about a hitter improving was more
+// likely to finish lower than he started. That is backwards, and no
+// distribution-shaped target was ever going to catch it, because the
+// distribution was fine and the ROUNDED TILE was what a visitor read.
+//
+// THERE ARE TWO WAYS TO BUY A HIGHER SESSION AVERAGE AND THEY COST VERY
+// DIFFERENT AMOUNTS. This is the whole reason the constant is a separate field
+// rather than a bigger `improveMax`, and it was measured rather than reasoned
+// about, 8,000 sessions a cell at seed 20260821 and confirmed at 20,000 across
+// five seeds:
+//
+//   route                              pooled step   on 94 mph   EV spread
+//   shipped                                  +0.13       0.37%        6.02
+//   MEAN SHIFT, this one (lift 0.35)         +0.47       0.48%        6.00
+//   widening to a comparable step            +0.53       0.78%        5.97
+//   mean shift, as far as it goes            +0.85       0.65%        5.97
+//   widening to the same place               +0.89       1.46%        5.89
+//
+// WHICH HARNESS, because a second table of the same quantity lives in
+// docs/slice-11-plan.md finding 11 and the two read a few hundredths apart.
+// These five rows are all one run of a patched copy of this file at 8,000
+// sessions a cell, seed 20260821, spread read off the Open Session cell so no
+// goal lift or empty-band re-roll is in it. Finding 11's table is 20,000 a cell
+// at five seeds and reads the spread the way the measurement script does. Read
+// the DIFFERENCES down either column rather than any single figure, and quote
+// the script outside this file. Neither is wrong and neither is more
+// authoritative, which is the same caveat this file already carries beside its
+// other two hand-patched tables.
+//
+// TWO OF THESE ROWS WERE WRONG FOR PART OF 21 AUGUST 2026 and the way they were
+// wrong is worth keeping. The widening row read "+0.53 / 0.53%", which paired
+// one setting's step with a different setting's ceiling: an `improveMax` of 2.5
+// gives 0.53% at a step of +0.33, and reaching +0.53 needs 3.5, which costs
+// 0.78%. It made widening look half as expensive as it is, which is the same
+// direction as this task's original error and was found by reconciling this
+// table against the plan's rather than by re-running anything.
+//
+// Widening the coin buys mean by buying VARIANCE, and variance is what pushes
+// swings into the soft ceiling and stacks them on 94. A mean shift moves the
+// whole distribution and leaves its width alone, so it costs about a third as
+// much at the same step. Read the last two rows against each other: the same
+// +0.9 costs 0.65% one way and 1.45% the other.
+//
+// WHY +0.5 AND NOT MORE. Target 5 of this slice says nothing may hold more than
+// 0.5% of swings at either ceiling. A mean shift of 0.35 lands the step at
+// +0.48 and the ceiling at 0.48%, which is inside the guard with room to spare
+// at five seeds. A shift of 0.40 lands +0.53 and 0.50%, which is ON the line
+// rather than inside it, and sitting exactly on a guard is not the same as
+// clearing it. The product manager asked for about +0.5 and that is what the
+// free column tops out at; this constant stops just under it deliberately.
+//
+// WHAT IT COSTS, ALL THREE OF THEM, so nobody has to go looking. Every figure
+// here is from `node scripts/measure-swing-generation.mjs` at five seeds, which
+// is also where the tile numbers above come from: that script grew a subsection
+// for them in the same change, because a constant justified by a number no
+// instrument prints is a constant nobody can check.
+//
+//   A generated session beats Bill's frozen best of 92 mph more often. Across
+//   five seeds, 39.3% to 39.4% of sessions against 34.5% to 34.6% before this
+//   constant, and 76.5% to 82.8% of visitors against 70.5% to 77.8%. (Those
+//   ranges are envelopes across the seeds, not one seed's spread of goals; the
+//   figures here read "39.4% against 34.6% and 76.8% to 82.8% against 70.8% to
+//   77.8%" for part of 21 August 2026, which was seed 20260821 alone quoted as
+//   though it were the envelope. The comparison is against the generator as it
+//   stood earlier the same day, after the pitch weight moved and before this
+//   constant existed, because that is the one thing this constant changed.)
+//
+//   Power's "Under 175" distance column, already its worst, empties on 26.0%
+//   to 26.4% of session 4s against 23.9% to 24.5%. That is the one genuine
+//   regression in the whole change.
+//
+//   The strike-versus-ball gap slips about two hundredths, which is nothing
+//   beside the pop-up ramp that moves it a tenth in the other direction.
+//
+// Against those: both empty target bands improve on every session, the "305+"
+// column improves on all four non-Power goals, and the tile reads above 82 more
+// often than below, 41.0% to 41.2% against 36.4% to 36.7%, which is what it was
+// bought for. Before this constant existed the same script printed the opposite
+// verdict off the same code path, 44.1% to 44.3% below against 33.5% to 33.7%
+// above, so both branches of that sentence have now been seen printing.
+//
+// POOLED, AND ONLY POOLED, WHICH IS WHERE THIS CLAIM STOPS. It was written for
+// part of 21 August 2026 as "on every goal at every later session", and that is
+// not true in either direction. After this constant, four of five seeds have one
+// cell still reading below more often than above, almost always Hit to All
+// Fields session 2 (39.5% against 39.1% at seed 20260821). Before it, seed
+// 20260821 had Power session 2 reading 38.2% below against 39.0% above. Every
+// one of those misses is a few tenths of a point, against a per-cell floor of
+// about 1.9 points at 20,000 sessions, so the per-cell picture is noise and the
+// pooled one is not. The measurement script never made the per-cell claim: its
+// verdict sentence is pooled and correctly floored. This comment did, and it
+// does not any more.
+//
+// IT IS NOT A SECOND STEP CONSTANT AND MUST NOT BECOME ONE. `min`,
+// `improveMax` and `declineMax` are the 65/35 coin, which is a settled product
+// decision about a session reading as a draw rather than a promise. This moves
+// where that coin is centred and changes nothing about its shape. A future pass
+// that wants a bigger step should move this and leave those three alone, which
+// is the opposite of what the first attempt at this task did.
+export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2, lift: 0.35 }
+
+// ── The thrower ─────────────────────────────────────────────────────────────
+//
+// WHAT THIS FILE NOW CLAIMS ABOUT THE PERSON THROWING. A batting practice arm
+// that puts about two pitches in three where the hitter can reach them, and
+// whose misses are misses rather than wild ones: a ball just off the edge, on
+// one side of the zone at a time. Before Slice 11 it claimed neither of those
+// things, and both were measured rather than argued about, across 4,500,000
+// generated swings by `node scripts/measure-swing-generation.mjs`, which is
+// what that script's own sample of 20,000 sessions per goal per session number
+// comes to and what it prints for itself:
+//
+//   Every single missed pitch was off on BOTH axes at once, 100% of them.
+//   There was no such thing here as a pitch that was simply low, because a low
+//   pitch was always wide as well. No real thrower misses that way, and it is
+//   the single reason the pitch location chart looked wrong.
+//
+//   A miss was 0.47 feet outside the zone on average and could be thrown as
+//   low as 0.50 feet off the ground, which is a ball bouncing in front of the
+//   plate rather than a ball anybody would swing at. Session 1, the fifteen
+//   hand-written swings this whole demo is calibrated against, misses by 0.28
+//   feet on average and its worst miss is 0.70.
+
+// READ THIS ONE THE RIGHT WAY ROUND, because a future reader will otherwise
+// get it backwards. IN_ZONE_RATE is a CHASE rate, not a command rate. It is
+// not how often the thrower finds the zone; it is how often the pitch the
+// hitter chose to go after turned out to be a strike. Every pitch this file
+// produces is swung at, because a session is fifteen SWINGS: the pitches he
+// let go by are not modelled here at all, so the arm threw some larger and
+// entirely unrecorded number of which these fifteen are the ones he offered
+// at. That is what resolves the next sentence, which otherwise reads as a flat
+// contradiction of this one. A hitter who lets the worst balls go by is why
+// this number sits well above any real thrower's strike percentage, and it is
+// why moving it says something about the hitter's discipline rather than about
+// the arm.
+//
+// 0.65 is a product judgment between two anchors, not a measurement. It
+// replaces 0.70, which nothing was ever calibrated against, and it moves
+// toward session 1's own 60% without matching it: session 1 is fifteen swings,
+// far too few to fit a rate to, and its 60% is itself a hand-written choice.
+//
+// Exported so swingGenerator.test.js can drive the generator either side of
+// this exact number, which is what proves the rate the file declares is the
+// rate it actually throws to.
+export const IN_ZONE_RATE = 0.65
+
+// How far outside the zone a missed pitch lands, in feet. Session 1's own six
+// missed pitches are the shape being matched: 0.10, 0.10, 0.20, 0.30, 0.30 and
+// 0.70 feet outside, averaging 0.28, with 0.70 the worst of them.
+//
+// The miss is drawn as `min + random()**2 * (max - min)` rather than flat,
+// because squaring a uniform draw piles the results up near zero. Most misses
+// then come out just off the edge, which is what a hitter actually chases, and
+// the occasional one gets further away. That shape averages 0.30 feet against
+// session 1's 0.28, and can never exceed 0.80, which is a ball off the plate
+// rather than a ball in the dirt.
+//
+// ONE ARTIFACT THAT COMES WITH THAT SHAPE, named here because this file names
+// every other thing it does. Piling misses up against the floor leaves a
+// density spike on the zone edge, and the size of it can be read straight off
+// the formula rather than sampled: a miss rounds to the nearest bin when it is
+// under 0.055 feet, which happens on `sqrt(0.005 / 0.75)` of draws, about
+// 8.16%. So roughly one low miss in twelve lands on exactly 1.45 feet and one
+// high miss in twelve on exactly 3.55, while a wide miss splits between two
+// sides and puts about 4.08% on each of 0.75 and -0.75. (A one-off sweep of
+// 209,463 balls agreed at 8.29, 8.07, 4.08 and 4.17 percent. The analytic
+// number is quoted first on purpose, because it is checkable without running
+// anything, and no committed script reproduces that sweep.) Either side of the
+// spike sits a hard dead band, because a miss can never be smaller than the
+// floor: not one pitch anywhere lands strictly between 1.45 and 1.50 feet,
+// between 3.50 and 3.55, or between 0.70 and 0.75 sideways.
+//
+// This is NOT the launch angle clamp in a second costume, and the difference is
+// worth holding on to. A clamp piles values onto one extreme and nothing exists
+// beyond it; here the values fan out smoothly from the edge and the spike is
+// merely the nearest bin. It is still a boundary artifact on the pitch location
+// chart, which is the one screen this change alters, so it goes on the list for
+// this slice's browser gate rather than waiting for somebody to notice it.
+//
+// The maximum is exported for the same reason as the rate above: the test that
+// holds every generated pitch inside these walls reads the wall from here, so
+// a test carrying its own copy cannot quietly drift away from the limit it is
+// supposed to be guarding.
+export const PITCH_MISS_MAX_FEET = 0.80
+const PITCH_MISS_MIN_FEET = 0.05
+
+// Which way a missed pitch got away: low 40%, high 30%, wide 30%, and a wide
+// one is an even coin between the two sides of the plate.
+//
+// An engineering judgment rather than a measurement, and worth saying so
+// plainly. The only real data this app has is session 1's own six misses,
+// which are three low, two high and one wide, and six of anything is far too
+// few to fit a distribution to. (Exactly, because this file should not round
+// its own evidence: session 1's swing 14 is a tenth of a foot high AND a tenth
+// wide, and is counted as high in that three-two-one.) Low leads because a
+// dropped ball is the commonest miss out of a practice arm and the one a
+// hitter is most often talked into swinging at.
+const MISS_LOW_SHARE = 0.40
+const MISS_HIGH_SHARE = 0.30
+
+// AND THE JUDGMENT INSIDE THAT RULE, said out loud because this file
+// acknowledges its others. Choosing one axis makes a missed pitch off on
+// exactly one of them, always, so the both-axes share is now 0.000% against
+// session 1's own 16.7%: one of its six misses, swing 14, is a tenth of a foot
+// high AND a tenth wide. The brief asked for exactly this and it is what was
+// built, but it overshoots the calibration target rather than meeting it, and
+// a thrower who CANNOT miss two ways at once is a shade tidier than the session
+// this demo is calibrated against. The defect being removed was 100% of misses
+// off on both axes, so the overshoot buys a great deal and costs about one
+// pitch in six of one fifteen-swing session. If it is ever judged worth closing,
+// the change is a small chance of a second axis, not a different split.
+
+// The zone's own dimensions, derived rather than typed, so the in-zone draw
+// below covers exactly the zone `inStrikeZone` recognises and not a rectangle
+// that merely resembles it.
+const ZONE_HEIGHT = STRIKE_ZONE.heightMax - STRIKE_ZONE.heightMin
+const ZONE_WIDTH = STRIKE_ZONE.sideMax - STRIKE_ZONE.sideMin
+const ZONE_HEIGHT_MIDDLE = (STRIKE_ZONE.heightMin + STRIKE_ZONE.heightMax) / 2
+const ZONE_SIDE_MIDDLE = (STRIKE_ZONE.sideMin + STRIKE_ZONE.sideMax) / 2
+
+// How wide a swing's two readings are spread, in the units each is reported
+// in. These were bare literals inside the swing arithmetic until Slice 11's
+// Task 5, and they are named and exported now for one reason: the test that
+// proves adding a pitch influence did not widen the distribution has to read
+// the scale from here rather than carry its own numbers, or it would be
+// proving that two copies of a number agree rather than that the spread is
+// what the generator claims.
+//
+// THE EXIT VELOCITY NUMBER MOVED IN TASK 7 AND THE LAUNCH ANGLE ONE DID NOT.
+// It was 16, and at 16 the generated hitter was measurably TIGHTER than the
+// fifteen hand-written swings he is derived from: a hitter whose exit velocity
+// varied less from swing to swing than the session the whole demo is
+// calibrated against. Nobody chose that and nothing recorded it.
+//
+// HOW 21.88 WAS DERIVED, AND THE TRAP IN DERIVING IT. Two spreads have to be
+// measured, session 1's own and the generator's, and they have to be measured
+// THE SAME WAY. A standard deviation dividing by n and one dividing by n-1
+// differ by 3.5% at fifteen swings, which is not a rounding difference here, it
+// is most of the answer. Mixing the two, session 1 by n against the generator
+// by n-1, gives 21.17, and that figure was believed for a while.
+//
+// Held to one convention, measured on 21 August 2026 through this generator at
+// 40,000 sessions of session 2, where the variance factor is 1 and does not
+// muddy the arithmetic:
+//
+//   dividing by n-1 throughout:  session 1 is 6.3223, the generator 4.6165,
+//   so the scale has to become 16 * 6.3223 / 4.6165 = 21.91.
+//
+//   dividing by n throughout:    session 1 is 6.1079, the generator 4.4555,
+//   so the scale has to become 16 * 6.1079 / 4.4555 = 21.93.
+//
+// The two conventions agree to within a fiftieth, which is the point: it is
+// mixing them that costs three quarters of a mph, not choosing between them.
+// 21.88 is the figure the product manager adopted, taken at the same
+// measurement one task earlier, and it sits just under both.
+//
+// POP-UPS ARE EXCLUDED FROM THE GENERATOR SIDE OF THAT, and it is not a
+// convenience. A popped-up ball does not come out of this scale constant at
+// all: the hitter got under it, so its exit velocity is drawn off the session
+// average by POP_UP_EV_DROP_MPH below. Counting them would be asking this
+// constant to account for a spread it does not govern.
+//
+// WHAT IT ACTUALLY DELIVERED, MEASURED AFTER THE CHANGE RATHER THAN PREDICTED,
+// and the two halves of it very nearly cancel. Session 2, 40,000 sessions,
+// dividing by n-1 throughout:
+//
+//   6.1598 counting only ordinary swings, which is 2.6% SHORT of session 1's
+//   6.3223 rather than level with it. The derivation above does not know about
+//   the soft ceiling three sections down, and at this width swings reach it,
+//   so some of the widening is eased straight back off.
+//
+//   6.2989 counting every swing, which is within four thousandths of session
+//   1. The pop-ups sit outside this constant and add back almost exactly what
+//   the ceiling takes off.
+//
+// The second of those is the number a visitor sees, because a visitor is shown
+// every swing. So the hitter's spread now matches the session he is derived
+// from, and it matches for two reasons pulling against each other rather than
+// for the one this constant was set by. Task 9 should know that before it moves
+// either the ceiling or the pop-up rate, because moving one alone breaks the
+// cancellation.
+//
+// PROVISIONAL, LIKE EVERYTHING ELSE IN THIS FILE. Task 9 sets every constant
+// at once against targets that interact, and this one interacts with three of
+// them. It takes the strike-versus-ball exit velocity gap from 3.91 / 3.72 /
+// 3.54 to 5.05 / 4.85 / 4.63 across sessions 2, 3 and 4, a little above the
+// 4.5 the product manager adopted. (Those before-numbers are this task's own
+// run at seed 20260821. A 3.4 stood here briefly, carried over from Task 5's
+// comment and measured before pop-ups existed, which is exactly the sort of
+// untraceable number a block headed "measured after the change" must not
+// hold.) It
+// halves both empty-band rates, Power from 14.7 / 12.2 / 11.9 percent to
+// 8.1 / 4.8 / 3.5 and Contact from 3.2 / 3.9 / 4.2 to 1.4 / 1.6 / 1.7, because
+// more extremes means more chances to land inside a band. (Those six figures
+// come from `node scripts/measure-swing-generation.mjs`. The table beside
+// EV_SESSION_STEP measures the same quantity on a separate harness and reads a
+// few tenths apart at sessions 3 and 4; see the note there, which says which
+// is which and why neither is wrong.) And it is most of why a generated
+// session now beats Bill's frozen best of 92 mph more often than it used to,
+// which is NOT a number that moved the wrong way: the ceiling comment below
+// carries that one, with the control showing this generator sits under what a
+// hitter who never improves would produce.
+export const EV_SPREAD_MPH = 21.88
+export const LA_SPREAD_DEGREES = 22
+
+// ── Where the ball went sideways ────────────────────────────────────────────
+//
+// Spray direction in degrees, signed: negative is the pull side and positive
+// is the opposite field, per SPRAY_CUTOFFS in sessionStats.js, which is the
+// one place in this app those two words are defined and is what both the
+// spray chart and the coach's own direction key read.
+//
+// TWO THINGS WERE WRONG WITH THE LINE THIS REPLACES, and they are separate.
+// It read `(random() - 0.45) * 70 * varianceFactor`.
+//
+//   IT WAS AN OPPOSITE-FIELD HITTER. Subtracting 0.45 centres the draw at
+//   +3.5 degrees, so this generator went the other way more often than it
+//   pulled: measured across 4,500,000 swings, 4.74 balls a session to the
+//   opposite field against 3.25 pulled. A high school hitter pulls more than
+//   he goes the other way, and session 1, which is hand-written and is this
+//   demo's statement of who he is, has three pull to four opposite on fifteen
+//   swings, which is level rather than backwards.
+//
+//   IT NARROWED EVERY SESSION. Multiplying by the variance factor, which
+//   shrinks 1.00 / 0.95 / 0.90, means the hitter sprays the ball LESS each
+//   round, and no hitter does that on his own. The visible cost was on the one
+//   goal that is judged on spray: Hit to All Fields asks for at least three
+//   pull and three opposite in its own coaching prose, and the generator met
+//   that bar 62% of the time at session 2, 57% at session 3 and 53% at session
+//   4, so a visitor who picked that goal watched the demo get worse at the
+//   very thing it had asked him to work on.
+//
+// CENTRING AT -0.05 OF THE DRAW, which is 4 degrees to the pull side at this
+// width, is a deliberately small lean rather than a pull-happy hitter: it
+// moves the balance to roughly five and a half pulled against four the other
+// way, which reads as a right-handed hitter's ordinary tendency rather than as
+// a slugger. The width goes from 70 to 80 degrees for the second defect above:
+// with the variance factor gone there is nothing left to widen the later
+// sessions, so the width has to carry the spread on its own.
+//
+// PROVISIONAL, and this pair in particular. Task 9 is the tuning pass, and
+// these two were found by a parameter search during design rather than derived
+// from anything: what they were chosen to deliver is a Hit to All Fields bar
+// met at a flat rate across all three sessions rather than a falling one.
+// Considered and DECLINED while scoping, recorded so nobody re-proposes it:
+// giving that goal its own spray lift the way Power gets a launch angle lift.
+// Taking the variance factor out closes the "gets worse every session" defect
+// on its own, and Power's lift exists because its band was empty 56% of the
+// time, which was a defect. A flat rate is not.
+//
+// NEITHER OF THESE TWO IS HELD BY A TEST, and Task 9 should know that before it
+// moves one. swingGenerator.test.js proves what this pair is FOR, that a
+// session 4 sprays exactly as wide as a session 2 and that the middle of the
+// draw is a pull-side ball, and both of those survive any width above zero and
+// any bias above 0.5001. The values themselves are pinned only by the
+// re-capturable session snapshot in sessionOneSwings.test.js, which is
+// re-captured whenever the generator moves and so is a record rather than a
+// guard. That is deliberate rather than an oversight: Task 9 owns tuning these,
+// and a test pinning a number a tuning pass is about to change would be
+// re-pinned rather than consulted. What holds them honest is section 3 and
+// section 8 of the measurement script, which are read rather than asserted.
+const SPRAY_PULL_BIAS = 0.55
+const SPRAY_SPREAD_DEGREES = 80
+
+// Where a pitch sits relative to the zone, in units of the zone's own half
+// height and half width, so that 1.0 means "at the edge" on either axis
+// despite the zone being wider than it is tall in feet. `distanceFromHeart`
+// is how far it sits from the middle, treating the two axes together: 0 is a
+// pitch straight down the middle and 1.41 is a corner.
+//
+// A judgment worth naming rather than leaving in the arithmetic: a foot off
+// the side counts for more than a foot off the top, because the zone is
+// narrower than it is tall and a pitch a foot outside is further out of the
+// hitter's reach than one a foot high. Measuring in feet on both axes instead
+// is the obvious alternative and would say the opposite.
+//
+// Exported so swingGenerator.test.js can measure the population of pitches
+// this file throws through the same normalisation the generator uses, and
+// hold PITCH_SCALING below to what it finds.
+export function normalisedPitch({ height, side }) {
+  const h = (height - ZONE_HEIGHT_MIDDLE) / (ZONE_HEIGHT / 2)
+  const s = (side - ZONE_SIDE_MIDDLE) / (ZONE_WIDTH / 2)
+  return { height: h, side: s, distanceFromHeart: Math.hypot(h, s) }
+}
+
+// What that population looks like, measured over 4,000,000 pitches drawn from
+// `drawPitch` on 21 August 2026, with the hundredth-of-a-foot rounding applied
+// first so these describe the pitches a visitor is actually shown: the
+// distance from the heart averages 1.007 with a spread of 0.432, and the
+// signed height averages -0.045 with a spread of 0.822. (The height mean is
+// slightly below the middle of the zone rather than exactly on it because the
+// thrower misses low more often than high.)
+//
+// THESE ARE MEASURED, NOT DERIVED, WHICH MAKES THEM STALE THE MOMENT THE
+// PITCH DISTRIBUTION MOVES. They exist to put the two pitch terms on the same
+// scale as the generator's own uniform draws, and centring is the half that
+// matters most: a term that is not centred shifts every session's average
+// exit velocity rather than merely re-weighting it. There is no closed form
+// for the mean of a distance over this mixture, so it is measured and then
+// guarded, by a test in swingGenerator.test.js that re-measures the population
+// and fails by name if these drift out of date.
+export const PITCH_SCALING = {
+  distanceMean: 1.007,
+  distanceSd: 0.432,
+  heightMean: -0.045,
+  heightSd: 0.822,
+}
+
+// ── What the pitch does to the swing ────────────────────────────────────────
+//
+// THE DEFECT THIS CLOSES, MEASURED BEFORE ANYTHING WAS CHANGED. Across
+// 4,500,000 generated swings, the difference in exit velocity between swings
+// at strikes and swings at balls off the plate was 0.00 mph. Session 1, the
+// fifteen hand-written swings this demo is calibrated against, has a gap of
+// 8.78. The pitch and the swing were simply drawn without reference to each
+// other, and since Slice 8c the coach has been handed which pitches were
+// outside the zone and has reasoned about them out loud, so on every generated
+// session that reasoning was a coincidence.
+//
+// TWO TERMS, NOT ONE, AND THEY ANSWER DIFFERENT QUESTIONS.
+//
+//   The pitch-quality term is how far the pitch sits from the heart of the
+//   zone, and it is SYMMETRIC: a ball badly missed high and a ball badly
+//   missed low are both hard to square up. It feeds the shared contact
+//   quality, which is what makes a chased pitch come out soft AND flat
+//   together, the way a real mis-hit does rather than one number at a time.
+//
+//   The pitch-height term is WHICH WAY the pitch is off, and it is
+//   directional: a high pitch produces a higher launch angle and a low pitch
+//   a lower one. That is ordinary baseball and it is visible in session 1's
+//   own data. It feeds launch angle only, and it must not feed exit velocity,
+//   or a high strike would come out harder than a low one for no reason.
+//
+// BLENDED IN, NEVER ADDED ON TOP, and this is the one line to read if you are
+// about to change any of it. The first prototype of this task added the pitch
+// term on top of the existing draws. It produced an 11 mph zone gap against an
+// adopted target of about 4.5 mph and stacked 10 percent of every swing
+// exit velocity ceiling, because adding independent terms widens the
+// distribution. The sqrt(1 - w**2) weights below are the same arithmetic
+// CONTACT_CORRELATION already uses and are what keeps the total spread
+// governed by EV_SPREAD_MPH and LA_SPREAD_DEGREES rather than by how many
+// influences somebody has added since.
+//
+// WHERE THE HEIGHT TERM IS BLENDED IN IS A CHOICE, and it is not the obvious
+// one. It goes inside the independent half of the launch angle, beside
+// laNoise, rather than over the finished offset. Blending it over the finished
+// offset dilutes the shared contact term as well, which quietly re-tunes
+// CONTACT_CORRELATION, a settled product decision this task has no business
+// touching. Measured over 4,000 sessions per goal and session number: doing it
+// the obvious way took the Power goal's empty target band from 14.6% to 15.3%
+// at session 2 for that reason alone. Blended where it is, exit velocity and
+// launch angle still agree with each other exactly as much as 0.6 says they do.
+//
+// BOTH WEIGHTS WERE PROVISIONAL UNTIL 21 AUGUST 2026, when Task 9, the tuning
+// pass, set every constant in this file at once against targets that interact.
+// What they had been chosen for before that was the structure, not the
+// calibration, and the two halves of that sentence ended differently:
+//
+//   0.8 on pitch quality was structural. It put the pitch behind roughly 23%
+//   of the variance in exit velocity (0.6 squared times 0.8 squared) and
+//   landed the strike-versus-ball gap at about 3.4 mph, before the exit
+//   velocity spread widened and before pop-ups existed. IT IS NOW 0.74, AND
+//   THE PARAGRAPH BELOW IS WHY.
+//
+//   0.4 on pitch height makes a pitch at the top of the zone come out about 5
+//   degrees higher than one at the bottom, which is a believable batting
+//   practice effect rather than a dramatic one. Task 9 swept it at 0.3 and
+//   0.55 and left it here: neither moved the gap, neither moved any target,
+//   and 0.55 cost Line Drives & Contact two or three tenths of a point of
+//   empty target band for nothing in return.
+//
+// WHY 0.74, WHICH IS NOT A ROUND NUMBER AND IS NOT MEANT TO BE. This constant's
+// whole job is setting how much better a swing at a strike comes out than a
+// swing at a ball, and on 21 August 2026 the product manager adopted about 4.5
+// mph for that gap. 0.74 is the value at which the gap actually lands there.
+// Measured through this generator at 8,000 sessions a cell, sessions 2, 3 and
+// 4, seed 20260821 with seed 7 in brackets where it differs:
+//
+//   weight 0.72   4.56 / 4.38 / 4.20   pooled 4.38 (4.39)
+//   weight 0.74   4.68 / 4.49 / 4.30   pooled 4.49 (4.50)
+//   weight 0.76   4.79 / 4.60 / 4.41   pooled 4.60 (4.62)
+//   weight 0.80   5.03 / 4.83 / 4.62   pooled 4.82 (4.84)
+//
+// AND IT COSTS NOTHING MEASURABLE ANYWHERE ELSE, which is the reason this is
+// the lever rather than the pop-up drop or the exit velocity spread, both of
+// which also move the gap and both of which move three other things with it.
+// Across the same runs, every other quantity this file is judged on came back
+// inside its own sampling noise: both empty target bands, pop-ups per session
+// and their share on high pitches, the per-swing spreads, the Hit to All
+// Fields bar, all four distribution edges, and every distance column at both
+// ends. The gap is the only thing that moved.
+//
+// WHAT DID CHANGE, SAID PLAINLY RATHER THAN LEFT TO BE NOTICED. The pitch now
+// sits behind about 20% of the variance in exit velocity rather than 23%, and
+// the LAUNCH ANGLE gap, which no target names, falls with it. From section 1
+// of `node scripts/measure-swing-generation.mjs` at seed 20260821, sessions 2,
+// 3 and 4, against session 1's own 3.89 degrees:
+//
+//   weight 0.80   4.10 / 3.87 / 3.62 degrees, bracketing the hand-written one
+//   weight 0.74   3.75 / 3.53 / 3.31 degrees, all three a little under it
+//
+// That was weighed and accepted. The exit velocity gap is the one the product
+// manager took a decision on; the launch angle gap has never had a target, and
+// under this weight it goes from straddling session 1 to sitting below it,
+// which is a real change and is the whole of what this move cost.
+//
+// AND THE SAME REPORT AT FIVE SEEDS IS WHERE "COSTS NOTHING MEASURABLE" COMES
+// FROM, rather than from the single run the table above quotes. Seeds 20260821,
+// 1, 7, 424242 and 99999, before and after: the gap moved to 4.67-4.70 /
+// 4.49-4.51 / 4.30-4.32 and every other figure in the report's nine sections
+// came back inside the band its own five before-runs already spanned.
+//
+// THE CEILING THIS STRUCTURE HAS, worth knowing before anybody tries to reach
+// a 6 mph gap by raising PITCH_QUALITY_WEIGHT. The pitch's effect on exit
+// velocity is throttled twice over: once by this weight, and again by
+// CONTACT_CORRELATION, because the pitch reaches exit velocity only through
+// the shared term. Even at a weight of 1.0, where the pitch would BE the
+// contact quality and the swing's own quality draw would count for exactly
+// nothing, the gap comes out at about 4.2 mph.
+//
+// AND WIDENING THE SPREAD DOES NOT GET THERE EITHER, which is the half a first
+// reading of this paragraph used to miss. Measured through this generator with
+// one constant changed at a time, 1,800,000 swings a row: widening
+// EV_SPREAD_MPH to 21.88, which is what it takes to match the hand-written
+// session's own spread, gives 4.61 at the shipped weight and 5.77 even at full
+// weight. Widening all the way to 28, a third wider than the session the target
+// is anchored to, still only gives 5.74. The one combination measured to clear
+// 6 was that widening plus CONTACT_CORRELATION at 0.81, which reads 6.20 and
+// moves a settled product decision to chase a number. So the honest reading is
+// that a 6 mph gap is not what this generator is, and the fuller version of
+// that argument, with the whole table, is in docs/slice-11-plan.md.
+//
+// AND THAT IS WHAT HAPPENED: on 21 August 2026 the product manager adopted a
+// target of about 4.5 mph, which is what the widened configuration above
+// actually produces. So read the two paragraphs here as the record of why the
+// target moved rather than as an open argument against one.
+//
+// WHERE THE SHIPPED GAP ACTUALLY COMES FROM, ISOLATED ON 21 AUGUST 2026 IN
+// TASK 7, one constant at a time at 20,000 sessions a cell. Sessions 2, 3, 4:
+//
+//   shipped                              5.05 / 4.85 / 4.63
+//   shipped with pop-ups switched off    4.78 / 4.57 / 4.35
+//   the widened spread alone             5.14 / 4.92 / 4.68
+//   the new ceiling alone                3.90 / 3.73 / 3.56
+//   pre-task                             3.91 / 3.73 / 3.56
+//
+// Same harness caveat as the table beside EV_SESSION_STEP, and the same reason:
+// varying one constant at a time is not something the measurement script can
+// do. Its own before and after rows for this quantity read 3.91 / 3.72 / 3.54
+// and 5.05 / 4.85 / 4.63, so the two agree on the shipped generator and sit a
+// hundredth or two apart on the pre-task one. Read the differences down the
+// column rather than any single figure.
+//
+// Three things Task 9 took from that. The entire movement is the exit velocity
+// spread; the ceiling contributes a hundredth and is effectively inert. Pop-ups
+// add between +0.27 and +0.28 of it, which is real but was not the whole
+// overshoot above 4.5. And the gap FALLS across sessions because the variance
+// factor shrinks the spread, so session 4 is the session nearest the target
+// and, with pop-ups off, would sit below it at 4.35.
+//
+// THE OVERSHOOT THOSE ROWS DESCRIBE IS THE ONE TASK 9 CLOSED, by taking this
+// weight to 0.74 rather than by touching the spread or the pop-up drop. Read
+// the rows above as the state before that, at a weight of 0.8, and the table
+// under "WHY 0.74" for what replaced it. Nothing else about them changed.
+const PITCH_QUALITY_WEIGHT = 0.74
+const PITCH_QUALITY_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_QUALITY_WEIGHT ** 2)
+const PITCH_HEIGHT_WEIGHT = 0.4
+const PITCH_HEIGHT_ACCIDENT_SHARE = Math.sqrt(1 - PITCH_HEIGHT_WEIGHT ** 2)
+
+// The two terms one pitch contributes, each standardised to the same scale as
+// one of this file's uniform draws so they can be blended without changing
+// what the scale constants mean.
+//
+// The quality term is NEGATED: distance from the heart is a bad thing, so the
+// further out the pitch, the lower the contact quality. A sign error here is
+// the likeliest way this whole change goes wrong, and it would show up as a
+// hitter who strikes balls off the plate better than strikes down the middle;
+// section 1 of `node scripts/measure-swing-generation.mjs` reports it in those
+// words rather than as a number to squint at.
+//
+// WHAT IS NOT PRESERVED IS THE EXTREMES, the same caveat CONTACT_CORRELATION
+// carries above. The typical distance of a swing from its session average is
+// unchanged, but the best pitch this file can throw now reaches further than
+// any single draw could, so the occasional swing lands further out on the
+// chart. That is honest for a hitter and worth knowing before anyone reads a
+// wider scatter as a bug.
+//
+// AND ONE THING THAT IS PRESERVED ONLY ALMOST, measured rather than assumed
+// and named here because this file names its other overshoots. Across the
+// whole report, exit velocity spread within a session came back identical to
+// the hundredth, 4.49 / 4.27 / 4.04 mph on sessions 2, 3 and 4 either side of
+// this change. Launch angle rose by about eight tenths of a percent, 6.15 to
+// 6.20 degrees on session 2 and the same shift on the other two.
+//
+// The reason is that these two terms are not quite independent of each other:
+// the thrower misses low more often than high, so a pitch far from the heart of
+// the zone is slightly more likely to be a low one, which leaves them
+// correlated rather than orthogonal. Measured through generateSwings itself at
+// three seeds of 2,100,000 swings each, it is +0.0576, +0.0577 and +0.0579.
+// Feeding one term into the shared half and the other into the independent half
+// then adds a little variance instead of none. The arithmetic, since a wrong
+// version of it stood here for part of a day: the covariance reaches the launch
+// angle offset through both weights on the way, so the term is
+// 2 * CONTACT_CORRELATION * INDEPENDENT_SHARE * PITCH_QUALITY_WEIGHT *
+// PITCH_HEIGHT_WEIGHT * rho, which is 0.3072 * rho. At 0.0576 that predicts a
+// rise of 0.88%.
+//
+// Against a measured 0.93% for the whole thing, of which rounding to whole
+// degrees accounts for 0.103% and the clamps pull the rest back. That rounding
+// figure is Sheppard's correction rather than a measurement, so a reader can
+// check it without running anything: rounding to a bin of width 1 adds 1/12 to
+// the variance, and sqrt(6.35085**2 + 1/12) / 6.35085 is 1.00103. The same
+// arithmetic on exit velocity gives 0.195%, which is why the 4.6188 the scale
+// constant implies is measured at 4.6233 rather than dead on it.
+//
+// So the prediction and the measurement agree, which the earlier version of this
+// comment could not say: it dropped the pitch-quality weight out of the
+// covariance, predicted 1.05%, and then shrugged at a 25% disagreement with its
+// own measurement. (A later version of it got the rounding term wrong too, by
+// about a factor of two in the same paragraph written to correct that class of
+// defect, which is how these two numbers came to be quoted in closed form.)
+//
+// Not worth correcting for: the fix would be to orthogonalise the two terms,
+// which buys six hundredths of a degree at the cost of a step nobody could read.
+function pitchInfluence(pitch) {
+  const { height, distanceFromHeart } = normalisedPitch(pitch)
+  return {
+    quality: -((distanceFromHeart - PITCH_SCALING.distanceMean) / PITCH_SCALING.distanceSd) * UNIFORM_DRAW_SD,
+    height: ((height - PITCH_SCALING.heightMean) / PITCH_SCALING.heightSd) * UNIFORM_DRAW_SD,
+  }
+}
+
+// ── The limits, which are approached rather than parked on ──────────────────
+//
+// WHAT WAS WRONG WITH THE OLD ONES, AND IT IS NOT WHERE THEY SAT. Every swing
+// used to end with `Math.max(65, Math.min(97, ...))` and `Math.max(-5,
+// Math.min(35, ...))`, which is a wall: every swing that would have gone past
+// a limit is handed back the limit itself. Measured across 4,500,000 generated
+// swings before this task, 3.67% of Power's session 4 swings came out at
+// exactly 35.0 degrees against 2.13% on 34, which is not a tail, it is a stack.
+// On screen it is a flat row of dots pinned along the top edge of the launch
+// angle chart on a goal every visitor can pick, and it is the same class of
+// defect as the impossible hit distances Slice 6 removed: a baseball-literate
+// visitor sees it in a second.
+//
+// MOVING A WALL DOES NOT FIX A WALL. The obvious change, once the pop-up band
+// below needs room, is to move the launch angle limit from 35 to 50 and stop
+// there. It looks fixed only because nothing reaches 50 today. Measured while
+// designing this task: widening the exit velocity spread put 3% of swings
+// against a hard 94, the identical artefact relocated one constant over. Task 9
+// is a tuning pass over every constant in this file at once, so a fix that only
+// holds at today's settings is not a fix.
+//
+// SO THE LIMIT IS APPROACHED INSTEAD. Inside `soft` units of a limit the value
+// is eased toward it along an exponential that never arrives, which is one
+// mechanism covering both ends of both readings:
+//
+//   Two different overshoots come out as two different numbers, so the chart
+//   still says which swing was the harder one. A wall cannot do that, and that
+//   is exactly what its flat row of dots means.
+//
+//   QUALIFIED 21 AUGUST 2026, BY REVIEW, because that sentence is
+//   unconditional and the drawn number is rounded to a whole one. Far enough
+//   out the curve flattens under half a unit and two overshoots do draw the
+//   same: measured, every raw launch angle at or above 56.51 draws as 50 and
+//   every raw exit velocity at or above 96.38 draws as 94. What makes that a
+//   headroom figure rather than a live defect is that the highest angle this
+//   generator produced across 4,500,000 swings is 47, nine and a half degrees
+//   short of it, and that it degrades gradually rather than at a cliff: driven
+//   off baselines of 40, 50, 60, 80, 300 and 1000 degrees the drawn angles are
+//   48, 50, 50, 50, 50, 50. Read the claim as true across the range this
+//   generator reaches, which is the range the charts draw.
+//
+//   THE EXIT VELOCITY HALF OF THAT PAIR MOVED IN TASK 7 AND ITS HEADROOM IS
+//   NOW MUCH SMALLER, which is the honest reading rather than a re-quoted
+//   number. It read 99.38 against a ceiling of 97; at a ceiling of 94 the same
+//   arithmetic puts it at 96.38, and the knee is at 91. That is not a headroom
+//   figure in the way the launch angle one is: the exit velocity spread widened
+//   to 21.88 in the same task, so swings really do reach into the compression
+//   now, and the flattening is close enough to the range this generator
+//   produces that two genuinely different hard swings can draw the same number.
+//   It is a real cost of putting the ceiling where this hitter is, it was taken
+//   knowingly, and section 5 of `node scripts/measure-swing-generation.mjs` is
+//   what to read rather than this sentence: it counts what share of a cell sits
+//   on the top value rather than arguing about it.
+//
+//   Nothing can exceed a limit, which is what the charts and the coach's count
+//   lines assume, so the guarantee the wall was there for is kept.
+//
+//   The curve is continuous and its slope is 1 at the knee, so an ordinary
+//   swing inside the soft zone is barely moved and there is no second edge
+//   where the compression starts.
+//
+// HOW WIDE THE SOFT ZONE IS, IS THE ONE JUDGMENT HERE, and both numbers are
+// provisional for Task 9. Too wide and the compression reaches into the body
+// of the distribution and quietly shrinks an honest tail; too narrow and it
+// crushes the overshoots back together, which is a wall again by another name.
+// 5 degrees and 3 mph put the knees at 45 degrees and 94 mph.
+//
+// WHAT THAT COSTS, COUNTED RATHER THAN ESTIMATED, and corrected on 21 August
+// 2026 the same day it was written: this paragraph first said "the pop-up band
+// passes through untouched and roughly one exit velocity in seventy is moved at
+// all", and neither half held. Measured by counting the branch taken, over
+// 900,000 swings off session 1:
+//
+//   Exit velocity is eased at all on 0.85% of swings, one in 118, of which one
+//   in 200 is at the top end and the rest at the floor. The old "one in
+//   seventy" overstated it by nearly a factor of two.
+//
+//   The pop-up band is NOT untouched. It runs to 48 and the knee is at 45, so
+//   30% of pop-up draws land in the soft zone and the worst of them moves 0.74
+//   of a degree. That is exactly why the realised band tops out at 47.26 rather
+//   than 48, and it is most of why launch angle is eased on 0.98% of swings
+//   against exit velocity's 0.85%.
+//
+// A SOFT ZONE WIDER THAN HALF THE RANGE BREAKS THIS OUTRIGHT, and the guard
+// below rather than this sentence is what stops it, because Task 9 is handed
+// `soft` by name as a constant to tune and a sentence relies on being read.
+//
+// Exported for the reason PITCH_MISS_MAX_FEET is exported: the test that holds
+// every generated swing inside these limits reads them from here, so it cannot
+// go on agreeing with a number that has stopped being true.
+// WHERE THE EXIT VELOCITY CEILING SITS IS A STATEMENT ABOUT WHO THIS HITTER
+// IS, and until Task 7 nobody had made one. It was 97, which is a near-elite
+// number, and it was never chosen: it was a wall inherited from the closure
+// this file grew out of, and nothing in this repository recorded a reason for
+// it. 94 is two mph above Bill's best measured ball, the 92 that session 1
+// freezes, and it is a soft ceiling rather than a wall, so it is a number he
+// approaches on his very best swing rather than one he parks on.
+//
+// Bill is a varsity high school junior with real but not elite bat speed. The
+// product manager settled that at the start of Slice 11 and session 1's own
+// numbers, an 81.6 average with a best of 92, ARE that hitter. A generator
+// allowed to reach 97 was quietly claiming a different one.
+//
+// HOW OFTEN A SESSION BEATS 92 WENT UP, HOW FAR PAST IT ANY SESSION CAN GO
+// WENT DOWN, AND THE SECOND IS THE ONE THAT MATTERS. Section 6 of
+// `node scripts/measure-swing-generation.mjs` asks how often a visitor is
+// shown a session whose hardest ball beats Bill's frozen 92, and that number
+// rose from 48.0% to 59.1% of visitors before this task to 70.7% to 77.0%
+// after it. Read alone, that looks like the demo claiming harder that he got
+// faster. It is not, and the control is what settles it rather than an
+// argument.
+//
+// THE CONTROL: A HITTER WHO DOES NOT CHANGE AT ALL. Take the shipped
+// generator, set the session step to zero and hold the variance factor at 1,
+// so nothing about him improves or settles, and leave everything else
+// including this ceiling alone. Measured over 100,000 visitors per goal, that
+// stationary hitter is shown a session beating 92 on 74.0% to 78.9% of
+// visitors. The shipped generator is UNDER that, not over it.
+//
+// The reason is that 92 was never a rare peak for this hitter. Session 1's
+// best ball sits 1.703 population standard deviations above session 1's own
+// mean, and the expected maximum of fifteen draws sits a little above that, so
+// 92 is a hair BELOW a typical fifteen-swing best for him. Beating it about
+// three visitors in four is what an honest hitter with his spread does. The
+// pre-task 48% was the artefact: that generator was too tight, and it was
+// hitting its own honest rate for a hitter nobody chose.
+//
+// SO SECTION 6 ASKS THE WRONG QUESTION AT THE PER-VISITOR SCOPE, and a future
+// reader should not tune against it. The question that matters is whether the
+// demo shows him getting faster, and that is the TOP EXIT VELO tile a visitor
+// actually reads across the four sessions. Measured over 500,000 visitors:
+//
+//   The tile reads 92.0 / 91.7 / 91.3 / 91.0. Noisy and gently falling, which
+//   is a hitter having ordinary sessions.
+//
+//   It reads strictly rising across all four on 0 of 500,000 visitors. Not
+//   rare, impossible: rising from a frozen 92 needs 93, then 94, then 95, and
+//   this ceiling is 94. Before this task it was possible, and 89 visitors in
+//   500,000 saw it.
+//
+//   Session 4 is the outright best of the three generated sessions on 16.2% of
+//   visitors and the outright worst on 34.1%.
+//
+// AND THE MAGNITUDE IMPROVED, which is what this constant actually bought. The
+// highest session maximum the generator can produce anywhere fell from 96 to
+// 94, and the mean overshoot when a session does beat 92 fell from +1.78 to
+// +1.15. Before this task a visitor could be shown a ball four mph above the
+// hitter's frozen best; now nothing can exceed it by more than two.
+export const EXIT_VELOCITY_LIMITS = { min: 65, max: 94, soft: 3 }
+export const LAUNCH_ANGLE_LIMITS = { min: -5, max: 50, soft: 5 }
+
+// The one way to set a soft zone that turns `withinLimits` into something worse
+// than the wall it replaced. Past half the range the two branches below overlap,
+// and the value where they meet becomes a cliff the curve falls off: at
+// { min: 65, max: 97, soft: 20 } a raw 77.00 comes back as 78.41 and a raw 77.01
+// as 77.01, so a swing struck a hundredth of a mph harder draws nearly a mph and
+// a half softer, on every chart, with nothing anywhere saying so. The threshold
+// is half the range either way, which is 16 mph and 27.5 degrees at today's
+// limits, and the cliff always sits at `max - soft`.
+//
+// THE EXAMPLE HERE WAS WRONG FOR HALF A DAY AND THE CORRECTION IS WORTH KEEPING.
+// It first cited a raw 66 giving 72.73 against a raw 96 giving 89.27, and both
+// of those numbers are real, but 89.27 is the LARGER of the two: that pair shows
+// the harder swing still drawing harder, so it disproved the sentence it was
+// printed under. Scanning the whole range at a thousandth of a mph finds exactly
+// one descent, and it is the one now quoted. The guard and the threshold were
+// right all along; only the illustration was not, and an illustration a reader
+// can check is the entire reason for putting one here.
+//
+// It throws at module load rather than warning, because a generator that has
+// silently swapped hard contact for weak contact is not a degraded demo, it is a
+// demo saying the opposite of what happened. Exported so its own test can drive
+// the broken case directly; nothing else has any reason to call it.
+export function assertSoftZoneFits(name, { min, max, soft }) {
+  if (!(soft > 0) || soft > (max - min) / 2) {
+    throw new Error(
+      `The ${name} soft zone of ${soft} does not fit inside its own range of ${min} to ${max}: ` +
+        `it has to be above 0 and at most ${(max - min) / 2}, or the two ends of the compression overlap and the curve inverts.`
+    )
+  }
+}
+assertSoftZoneFits('exit velocity', EXIT_VELOCITY_LIMITS)
+assertSoftZoneFits('launch angle', LAUNCH_ANGLE_LIMITS)
+
+// THE TOP OF THE LAUNCH ANGLE RANGE IS COUPLED TO src/ballFlight.js AND THE
+// COUPLING WAS CHECKED RATHER THAN ASSUMED. `carryDistance`'s shape term reads
+// `Math.max(0.55, 1 - (angle - 28) * 0.02)`, so it stops falling at exactly
+// 50.5 degrees and every angle above that is credited with the same carry.
+// A limit of 50 sits under that, so no swing this file can produce reaches the
+// flat part, and the carry formula needed no change for this task. Raise this
+// limit past 50.5 and that stops being true: a 60 degree pop-up and a 51
+// degree one would carry the same distance, which is the sort of thing this
+// project's charts get judged on.
+function withinLimits(value, { min, max, soft }) {
+  if (value > max - soft) return max - soft * Math.exp((max - soft - value) / soft)
+  if (value < min + soft) return min + soft * Math.exp((value - min - soft) / soft)
+  return value
+}
+
+// ── Getting under a high one ────────────────────────────────────────────────
+//
+// THE DEFECT THIS CLOSES. The Reduce Pop-Ups goal tells the coach a pop-up is
+// a launch angle above 35 degrees, and the wall above used to sit on exactly
+// 35, so a pop-up was arithmetically impossible: across 4,500,000 generated
+// swings the count handed to the coach was zero on every single session. One
+// of the six goals a visitor can pick named a failure its own hitter could not
+// commit.
+//
+// RAISING THE LIMIT ALONE DOES NOT PRODUCE ONE, which is the measurement that
+// decided the shape of this. With the wall removed and nothing else changed,
+// swings above 35 degrees appear on the Power goal alone, 0.04 per session at
+// session 2 rising to 0.38 at session 4, and never above 40 degrees anywhere;
+// on Reduce Pop-Ups itself, the goal that needs them, the count stays at zero.
+// The other way to reach one, widening the launch angle spread until the
+// ordinary distribution gets there, was rejected while scoping: it makes every
+// generated session visibly wilder than the hand-written first session this
+// whole demo is calibrated against.
+//
+// SO A POP-UP IS ITS OWN CONTACT OUTCOME HERE, not an extreme line drive. The
+// hitter gets under the ball: the angle comes from its own band and the ball
+// comes off the bat softer than the session average, both of which are what a
+// pop-up is. That is a product decision taken on 21 August 2026 rather than an
+// engineering one, and the alternatives it beat were "leave the goal naming an
+// impossible failure" and "make pop-ups common".
+//
+// RARE, AND CAUSED BY A HIGH PITCH, is the whole of that decision. Roughly one
+// pop-up every two or three sessions, so the coach has something real to coach
+// against without the demo turning into a hitter who cannot square anything up.
+// Tying it to pitch height is what makes the coaching point visible: the coach
+// can say the pop-ups came off pitches at the top of the zone, and the visitor
+// can see those pitches on the pitch location chart beside it.
+//
+// AND IT HAS TO BE CAUSED OUTRIGHT, because the underlying tendency runs the
+// other way. Measured in Task 5: mean launch angle by pitch height band rises
+// to the middle of the zone and then falls, so a ball chased above the zone
+// currently comes out about two degrees FLATTER than a strike down the middle,
+// where session 1 says it should be the steepest thing on the chart. Nothing
+// here fixes that (it is recorded as a finding and is Task 9's to weigh); what
+// it means is that a mis-hit mode leaning on the existing height term would
+// have produced nothing, so this one replaces the swing rather than nudging it.
+//
+// ONE THING THIS COSTS, NAMED BECAUSE THE FILE NAMES ITS OTHER OVERSHOOTS.
+// Session 1 is hand-written, frozen, and contains no pop-up at all, its
+// steepest ball being 27 degrees. So every generated pop-up is a step away from
+// the first screen a visitor sees. That was weighed when the target was set and
+// it is why the answer is "rare" rather than "common".
+//
+// ALL FIVE CONSTANTS BELOW ARE PROVISIONAL. Task 9 sets every constant in this
+// file at once against targets that interact; what was chosen here is the
+// structure. The band is exported so its own test cannot carry a stale copy of
+// it; the rest are not, because nothing outside this file has any business
+// knowing them.
+export const POP_UP_BAND = { min: 38, max: 48 }
+
+// How much slower than the session's own average a popped-up ball comes off
+// the bat. A range rather than one number, so fifteen pop-ups in a demo would
+// not all read the same. It is subtracted from the session average rather than
+// from the swing's own exit velocity, because a pop-up is a contact outcome in
+// its own right and not a discount on the swing that would otherwise have
+// happened.
+const POP_UP_EV_DROP_MPH = { min: 6, max: 14 }
+
+// Where the chance of getting under one starts to rise and where it tops out,
+// in the units normalisedPitch reports: 0 is the middle of the zone, 1.0 is
+// the top edge of it, and 1.8 is the highest pitch this file can throw.
+//
+// A RAMP RATHER THAN A STRAIGHT LINE THROUGH THE WHOLE RANGE, and the reason
+// is a measurement rather than taste. Pitches at or above the top of the zone
+// are only about a tenth of all pitches thrown here, so a chance that rose
+// gently from the bottom of the zone upward would put most pop-ups on ordinary
+// strikes purely because there are so many more of them, and the coaching
+// point ("you got under the high ones") would be false. Starting the ramp
+// above the middle of the zone is what keeps the majority of pop-ups on the
+// pitches the coach is going to blame.
+//
+// THE FOOT OF THE RAMP MOVED FROM 0.6 TO 0.8 ON 21 AUGUST 2026, TASK 9, and it
+// is the difference between "most" and "nearly all". Measured through the
+// generator at 8,000 sessions a cell and confirmed at 20,000 across five
+// seeds, with the chance below moved in the same change to hold the frequency
+// still:
+//
+//   foot 0.6, chance 0.22   65.0% of pop-ups on high pitches   6.1x chance
+//   foot 0.8, chance 0.22   79.0%                              7.5x, but the
+//                                                              rate falls to
+//                                                              0.32 a session
+//   foot 0.8, chance 0.30   80.9%                              7.6x, rate held
+//                                                              at 0.40
+//
+// "High" here means at or above the top of the strike zone, which is 10.6% of
+// the pitches this file throws. So roughly one pop-up in five used to land
+// somewhere the coach could not honestly blame, and now it is one in eight.
+// The coach's sentence is "you got under the high ones", and this is the
+// constant that decides how often that sentence is true.
+//
+// WHAT IT COST, AND WHO DECIDED. It pushes the strike-versus-ball exit velocity
+// gap from 4.50 to about 4.62, above the 4.5 the product manager adopted,
+// because a pop-up drawn from a higher pitch is drawn from further outside the
+// zone and the pop-up's own exit velocity drop then lands disproportionately on
+// the ball side of that comparison. He took it on 21 August 2026 on the
+// reasoning that "about 4.5" was adopted from a measured range rather than as a
+// precise target.
+//
+// AND IT MOVED THE LAUNCH ANGLE GAP FURTHER THAN IT MOVED THE ONE HE DECIDED
+// ON, which nobody predicted and which is this constant's largest single
+// effect. Section 1 of the measurement script prints both gaps side by side.
+// The launch angle one goes from 3.73 / 3.55 / 3.32 degrees to
+// 3.32 / 3.16 / 2.91, a drop of about four tenths where the exit velocity gap
+// rose by one tenth. Attributed one constant at a time rather than assumed: the
+// mean shift added the same day accounts for none of it, reading 3.74 / 3.55 /
+// 3.31 on its own, so this ramp owns all of it.
+//
+// The mechanism is not subtle once stated. A pop-up carries a launch angle from
+// POP_UP_BAND, 38 to 48 degrees, far above any ordinary swing. Moving them onto
+// higher pitches moves them onto pitches that are more often OUTSIDE the zone,
+// so they lift the average launch angle of the ball side of that comparison and
+// close the gap from underneath.
+//
+// NO TARGET NAMES THE LAUNCH ANGLE GAP, so nothing here is off a guard.
+//
+// WHAT THIS CONSTANT DID NOT DO, corrected 21 August 2026 the same day it was
+// written, because the first version of this paragraph claimed a cost that
+// belongs one block up and then gave advice that followed from the wrong owner.
+// It said the generator "used to bracket" session 1's 3.89 degrees "and now
+// sits below it at every session". Its own before-numbers four lines above are
+// 3.73 / 3.55 / 3.32, which are already all three below 3.89, so the sentence
+// disagreed with the table it was printed under.
+//
+// The bracketing was lost BEFORE this constant, by PITCH_QUALITY_WEIGHT going
+// from 0.8 to 0.74 earlier the same day. That transition is 4.10 / 3.87 / 3.62
+// to 3.75 / 3.53 / 3.31, and the block beside that constant already claims it,
+// correctly, as "the whole of what this move cost". This ramp owns the four
+// tenths below that and nothing above it.
+//
+// WHICH CHANGES THE ADVICE, AND THAT IS THE PART THAT MATTERED. Reverting this
+// ramp lands the gap at 3.75 / 3.53 / 3.31, still below session 1 at every
+// session, so a future pass that wants the bracketing back and reaches for this
+// constant would spend it and not get there. The lever is PITCH_QUALITY_WEIGHT,
+// and reaching for that one runs straight back into the 4.5 mph
+// strike-versus-ball gap the product manager decided on. Recorded rather than
+// fixed, and now pointing at the right constant.
+//
+// Everything else came back inside its own five-seed band: both empty target
+// bands, all four distribution edges, both per-swing spreads, the Hit to All
+// Fields bar and every distance column.
+//
+// THE TWO CONSTANTS MOVE TOGETHER OR NOT AT ALL. Raising the foot without
+// raising the chance drops the rate to about 0.29 pop-ups a session, 0.29 to
+// 0.31 across the four non-Power goals, which straddles target 4's floor of 0.3
+// rather than sitting comfortably inside it, and it costs launch
+// angle spread as well, 6.81 degrees against 7.05 on the same measurement.
+// (That figure read 0.32 for part of 21 August 2026, taken off a single cell
+// rather than the four non-Power goals the target is stated over. The corrected
+// number strengthens the warning rather than weakening it: the pairing is not a
+// nicety, it is what keeps the rate inside its band at all.) Anybody tuning one
+// of these should re-read the row above before leaving the other.
+const POP_UP_FROM_HEIGHT = 0.8
+const POP_UP_FULL_HEIGHT = 1.4
+
+// The chance of getting under the very highest pitch this file throws. It
+// reads high for a single swing, and it is the number the frequency target
+// above actually lands on, because it applies to a small share of pitches once
+// the ramp is taken into account.
+//
+// IT MOVED FROM 0.22 TO 0.30 ON 21 AUGUST 2026, TASK 9, AND IT MOVED TO STAND
+// STILL. Raising the foot of the ramp from 0.6 to 0.8 narrows the band of
+// pitches this chance applies to, so the same 0.22 would have dropped the rate
+// from 0.40 pop-ups a session to 0.32. 0.30 puts it back: measured at 0.39 to
+// 0.41 a session on all four non-Power goals across five seeds, which is where
+// it was and is inside target 4's 0.3-to-0.5 band with room either side.
+//
+// So a reader comparing this against the version before it should not read the
+// rise as "more pop-ups". It is the same number of pop-ups landing on a
+// narrower and more deserving set of pitches. The ramp's own comment above
+// carries the measurement and the product decision behind it.
+const POP_UP_MAX_CHANCE = 0.30
+
+function popUpChance(pitch) {
+  const { height } = normalisedPitch(pitch)
+  const reach = (height - POP_UP_FROM_HEIGHT) / (POP_UP_FULL_HEIGHT - POP_UP_FROM_HEIGHT)
+  return POP_UP_MAX_CHANCE * Math.min(1, Math.max(0, reach))
+}
+
+// Where one pitch was thrown, in feet: height off the ground, and sideways
+// from the middle of the plate.
+//
+// A missed pitch is off on ONE axis and an ordinary pitch on the other,
+// because that is how a real one misses. That is the whole difference between
+// this and what it replaced.
+function drawPitch(random) {
+  if (random() < IN_ZONE_RATE) {
+    return {
+      height: STRIKE_ZONE.heightMin + random() * ZONE_HEIGHT,
+      side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH,
+    }
+  }
+
+  const miss = PITCH_MISS_MIN_FEET + random() ** 2 * (PITCH_MISS_MAX_FEET - PITCH_MISS_MIN_FEET)
+  const wayItGotAway = random()
+
+  if (wayItGotAway < MISS_LOW_SHARE) {
+    return { height: STRIKE_ZONE.heightMin - miss, side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH }
+  }
+  if (wayItGotAway < MISS_LOW_SHARE + MISS_HIGH_SHARE) {
+    return { height: STRIKE_ZONE.heightMax + miss, side: STRIKE_ZONE.sideMin + random() * ZONE_WIDTH }
+  }
+  return {
+    height: STRIKE_ZONE.heightMin + random() * ZONE_HEIGHT,
+    side: random() < 0.5 ? STRIKE_ZONE.sideMin - miss : STRIKE_ZONE.sideMax + miss,
+  }
+}
+
 // One session of fifteen swings. Everything random it needs comes through the
 // injected `random`, so a test can decide exactly what kind of session this is.
 function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
   // 65/35 improvement bias on session average
+  //
+  // ONE COIN, TWO STEPS OF VERY DIFFERENT SIZES, and the difference is the
+  // product decision rather than a tuning accident: a hitter can change his
+  // launch angle inside one practice and cannot change his bat speed. The
+  // launch angle line below is untouched, arc and all. The exit velocity line
+  // reads its bounds from EV_SESSION_STEP above, where the reasoning sits.
   const improving = random() < 0.65
-  const sessionEV = prevEV + (improving ? (1 + random() * 3) : -(1 + random() * 2))
+  // `lift` is added OUTSIDE the coin, on its own line, because that is exactly
+  // what makes it a mean shift rather than a wider bet: both branches move by
+  // the same amount and the distance between the best session and the worst is
+  // untouched. Fold it into either branch and it becomes a widening, which
+  // costs three times as much at the same step. The reasoning and the measured
+  // table are with the constant.
+  const sessionEV =
+    prevEV +
+    EV_SESSION_STEP.lift +
+    (improving
+      ? EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.improveMax - EV_SESSION_STEP.min)
+      : -(EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.declineMax - EV_SESSION_STEP.min)))
   const baseLA = prevLA + (improving ? (0.5 + random() * 2) : -(0.5 + random() * 1.5))
 
   // The Power lift applies to the session's whole average, before any swing's
@@ -102,32 +1327,101 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
   const varianceFactor = Math.max(0.85, 1 - (sessionNum - 2) * 0.05)
 
   return Array.from({ length: 15 }, () => {
+    // THE PITCH IS DRAWN FIRST, BEFORE ANYTHING ABOUT THE SWING, and the order
+    // is the point rather than a tidy-up. A pitch drawn afterwards cannot
+    // influence what the swing did, and until Slice 11 that is exactly what
+    // happened: measured across 4,500,000 generated swings, the difference in
+    // exit velocity between swings at strikes and swings at balls was 0.00 mph,
+    // while session 1's own gap is 8.78. Since Slice 8c the coach is handed
+    // which pitches were outside the zone and reasons about them out loud, so
+    // on every generated session that reasoning was a coincidence.
+    //
+    // Moving the draw changes every generated session at a given seed, because
+    // the numbers now come off the shared random source in a different order.
+    // That was expected and is why the pre-Slice-11 generator was snapshotted
+    // under docs/eval-fixtures/frozen/ first, so every committed round of coach
+    // evaluations still describes the swings its coach actually saw.
+    // Both readings are rounded to the hundredth of a foot, which is how
+    // TrackMan reports them and how every chart and count line in this app
+    // reads them. The rounding can never move a pitch across the zone edge:
+    // the smallest miss this file throws is 0.05 feet, ten times the most a
+    // hundredth-of-a-foot rounding can shift a number.
+    //
+    // ROUNDED HERE, BEFORE THE SWING READS IT, rather than on the way out.
+    // Since Task 5 the pitch decides part of how well the ball was struck, and
+    // it should decide that from the number the visitor is shown and the coach
+    // is handed, not from an unrounded one nothing else in the app ever sees.
+    const drawn = drawPitch(random)
+    const pitch = {
+      height: Math.round(drawn.height * 100) / 100,
+      side: Math.round(drawn.side * 100) / 100,
+    }
+    const fromPitch = pitchInfluence(pitch)
+
     // One draw for how well this particular ball was struck, then one apiece
     // for everything else that separates the two numbers. Both readings carry
     // the same quality term, so a barrelled ball comes out fast and well
     // angled together and a mis-hit comes out slow and flat together.
-    const quality = random() - 0.5
+    //
+    // How well the ball was struck is now part the pitch and part the hitter:
+    // the accident share is what is left of a swing once the pitch has had its
+    // say, and squaring the two weights and adding them still gives 1, so this
+    // blend cannot widen the distribution however the weights are retuned.
+    const qualityDraw = random() - 0.5
     const evNoise = random() - 0.5
     const laNoise = random() - 0.5
+    const quality = PITCH_QUALITY_WEIGHT * fromPitch.quality + PITCH_QUALITY_ACCIDENT_SHARE * qualityDraw
     const evOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * evNoise
-    const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laNoise
+    // The signed height sits inside the independent half, beside laNoise,
+    // which is the half this file already describes as "everything else that
+    // separates the two numbers". That is exactly what a high pitch is: a
+    // reason for the launch angle to differ from the exit velocity on the same
+    // swing. Blending it over the finished offset instead would water down the
+    // shared term too and quietly re-tune CONTACT_CORRELATION; see the note
+    // above the weights for the measurement that ruled that out.
+    const laAccident = PITCH_HEIGHT_WEIGHT * fromPitch.height + PITCH_HEIGHT_ACCIDENT_SHARE * laNoise
+    const laOffset = CONTACT_CORRELATION * quality + INDEPENDENT_SHARE * laAccident
 
-    const ev = Math.round(Math.max(65, Math.min(97, sessionEV + evOffset * 16 * varianceFactor)))
-    const la = Math.round(Math.max(-5, Math.min(35, sessionLA + laOffset * 22 * varianceFactor)))
-    const dir = Math.round((random() - 0.45) * 70 * varianceFactor)
+    // NO VARIANCE FACTOR ON THIS ONE, WHICH IS THE POINT RATHER THAN AN
+    // OMISSION. Every other reading on this swing is scaled by it and this one
+    // is deliberately not: a hitter's exit velocity and launch angle settle
+    // down as he practises, and how far he sprays the ball does not. See the
+    // spray constants above for what that was costing on the Hit to All Fields
+    // goal, and swingGenerator.test.js for the test that holds a session 4
+    // sprayed exactly as wide as a session 2.
+    const dir = Math.round((random() - SPRAY_PULL_BIAS) * SPRAY_SPREAD_DEGREES)
+
+    // THE THREE MIS-HIT DRAWS ARE TAKEN ON EVERY SWING, whether or not it turns
+    // out to be one, so a swing always costs the same number of draws. That is
+    // not tidiness: several tests in swingGenerator.test.js spell a session out
+    // draw by draw and read the result off the page, and a swing whose cost
+    // depended on which branch it took would make those unreadable. It also
+    // keeps the empty-band re-roll's arithmetic simple, since two attempts are
+    // then always the same length.
+    //
+    // They sit AFTER the swing's own four draws rather than before them, which
+    // keeps the order those tests already document (quality, exit velocity
+    // noise, launch angle noise, direction) unchanged.
+    const gotUnderIt = random() < popUpChance(pitch)
+    const popUpAngle = POP_UP_BAND.min + random() * (POP_UP_BAND.max - POP_UP_BAND.min)
+    const popUpDrop = POP_UP_EV_DROP_MPH.min + random() * (POP_UP_EV_DROP_MPH.max - POP_UP_EV_DROP_MPH.min)
+
+    // A pop-up REPLACES the swing rather than adjusting it. Everything above
+    // describes a ball the hitter squared up to some degree, and this is the
+    // one outcome where he did not: he got under it, so the angle comes off
+    // the ball's own band and the exit velocity comes off the session average
+    // rather than off this swing's contact quality. Blending the two would
+    // produce a hard pop-up on a good draw, which is not a thing.
+    const rawEv = gotUnderIt ? sessionEV - popUpDrop : sessionEV + evOffset * EV_SPREAD_MPH * varianceFactor
+    const rawLa = gotUnderIt ? popUpAngle : sessionLA + laOffset * LA_SPREAD_DEGREES * varianceFactor
+
+    // One place per reading where the limits are applied, ordinary swing and
+    // pop-up alike, so "nothing can leave the range the charts draw" is a
+    // property of one line rather than of every branch above it remembering.
+    const ev = Math.round(withinLimits(rawEv, EXIT_VELOCITY_LIMITS))
+    const la = Math.round(withinLimits(rawLa, LAUNCH_ANGLE_LIMITS))
     const dist = carryDistance({ exitSpeed: ev, angle: la })
-    const inZonePitch = random() < 0.70
-    const plateLocHeight = inZonePitch
-      ? 1.5 + random() * 2.0
-      : random() < 0.5
-        ? 0.5 + random() * 0.9
-        : 3.6 + random() * 0.5
-    const plateLocSide = inZonePitch
-      ? -0.7 + random() * 1.4
-      : random() < 0.5
-        ? -0.8 - random() * 0.3
-        : 0.8 + random() * 0.3
-    return { plateLocHeight: Math.round(plateLocHeight * 100) / 100, plateLocSide: Math.round(plateLocSide * 100) / 100, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
+    return { plateLocHeight: pitch.height, plateLocSide: pitch.side, hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } } }
   })
 }
 

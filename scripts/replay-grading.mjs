@@ -22,6 +22,10 @@
 //
 // HOW TO RUN (no network, no spend, no API key needed)
 //   node scripts/replay-grading.mjs --input <grading.json> --handed-era slice8b|current [--seed 20260814]
+//   ... [--builder <name>], which is refused outright if it disagrees with a
+//   BUILDER.txt sitting beside the file. See the note beside the builder
+//   resolution below for why the marker, not the saved run's own meta, is
+//   what a replay trusts.
 //
 // Era and seed come from the file's own `meta` when present (the
 // { meta, results } shape scripts/gradingOutput.js reads); pass the flags
@@ -31,26 +35,30 @@
 // prints saying so.
 
 import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { readGradingOutput } from './gradingOutput.js'
 import { buildFactSheet } from './factSheet.js'
 import { verdictForClaim } from './claimVerdict.js'
 import { handedClaimSpecs, eraExtraThresholds } from './handedCounts.js'
-import { CURRENT_CELLS, resolveSessions } from './grade-coach-accuracy.mjs'
+import { CURRENT_CELLS, readBuilderMarker, resolveSessions } from './grade-coach-accuracy.mjs'
 
 const VALID_ERAS = new Set(['slice8b', 'current'])
 const VERDICTS = ['TRUE', 'FALSE', 'UNVERIFIABLE']
 
 function parseArgs(argv) {
-  const args = { input: null, handedEra: null, seed: null }
+  const args = { input: null, handedEra: null, seed: null, builder: null }
   for (let i = 0; i < argv.length; i++) {
     const flag = argv[i]
     if (flag === '--input') { args.input = argv[i + 1]; i += 1 }
     else if (flag === '--handed-era') { args.handedEra = argv[i + 1]; i += 1 }
     else if (flag === '--seed') { args.seed = Number(argv[i + 1]); i += 1 }
+    else if (flag === '--builder') { args.builder = argv[i + 1]; i += 1 }
     else throw new Error(`Unknown flag: ${flag}`)
   }
   if (!args.input) {
-    throw new Error('Pass --input <grading.json> [--handed-era slice8b|current] [--seed 20260814].')
+    throw new Error(
+      'Pass --input <grading.json> [--handed-era slice8b|current] [--seed 20260814] [--builder <name>].',
+    )
   }
   if (args.handedEra !== null && !VALID_ERAS.has(args.handedEra)) {
     throw new Error(`--handed-era must be "slice8b" or "current", got "${args.handedEra}".`)
@@ -115,7 +123,36 @@ async function main() {
   // all, and every one of them (including both Slice 8c fixtures this
   // script replays) was graded with --builder current, so that is the only
   // sane default for the pre-metadata shape.
-  const builder = meta?.builder ?? 'current'
+  //
+  // 20 August 2026, Slice 11: meta.builder is no longer the last word, and
+  // this is the one place in this script where a saved file can be out of
+  // date about itself. meta.builder records the flag that was passed on the
+  // day. The BUILDER.txt beside the records says what the round is actually
+  // about, and four of them were repointed from "current" to
+  // "slice11-before" when the swing generator was frozen, because "current"
+  // has since come to mean a different generator. Left trusting meta, a
+  // replay of any of those four would silently rebuild sessions 2 to 4 from
+  // swings no coach ever saw. So the marker wins, and it says why out loud.
+  const marker = readBuilderMarker(path.dirname(path.resolve(args.input)))
+  let builder = marker?.builder ?? meta?.builder ?? 'current'
+  if (marker && meta?.builder && marker.builder !== meta.builder) {
+    console.log(
+      `NOTE: replaying through builder "${marker.builder}", named by the BUILDER.txt beside this file, ` +
+      `not "${meta.builder}", which is the flag that was passed when the run was saved. The marker is the ` +
+      'later and better answer; see the session-builders comment in scripts/grade-coach-accuracy.mjs.',
+    )
+  }
+  if (args.builder !== null) {
+    if (marker && args.builder !== marker.builder) {
+      throw new Error(
+        `--builder ${args.builder} disagrees with the BUILDER.txt beside this file, which names ` +
+        `"${marker.builder}". Refusing: replaying through the wrong builder does not fail, it re-rules every ` +
+        'claim against a complete, plausible-looking fact sheet for swings the coach never saw. Fix the flag ' +
+        'rather than the marker.',
+      )
+    }
+    builder = args.builder
+  }
 
   // Fail fast, before doing any grading work, on a record whose cell this
   // session builder does not know about, rather than discovering it one
