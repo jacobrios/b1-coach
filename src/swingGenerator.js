@@ -1136,9 +1136,32 @@ const POP_UP_EV_DROP_MPH = { min: 6, max: 14 }
 // zone and the pop-up's own exit velocity drop then lands disproportionately on
 // the ball side of that comparison. He took it on 21 August 2026 on the
 // reasoning that "about 4.5" was adopted from a measured range rather than as a
-// precise target. Nothing else measured moved: both empty bands, the
-// distribution edges, the spreads, the Hit to All Fields bar and every distance
-// column came back inside their own five-seed bands.
+// precise target.
+//
+// AND IT MOVED THE LAUNCH ANGLE GAP FURTHER THAN IT MOVED THE ONE HE DECIDED
+// ON, which nobody predicted and which is this constant's largest single
+// effect. Section 1 of the measurement script prints both gaps side by side.
+// The launch angle one goes from 3.73 / 3.55 / 3.32 degrees to
+// 3.32 / 3.16 / 2.91, a drop of about four tenths where the exit velocity gap
+// rose by one tenth. Attributed one constant at a time rather than assumed: the
+// mean shift added the same day accounts for none of it, reading 3.74 / 3.55 /
+// 3.31 on its own, so this ramp owns all of it.
+//
+// The mechanism is not subtle once stated. A pop-up carries a launch angle from
+// POP_UP_BAND, 38 to 48 degrees, far above any ordinary swing. Moving them onto
+// higher pitches moves them onto pitches that are more often OUTSIDE the zone,
+// so they lift the average launch angle of the ball side of that comparison and
+// close the gap from underneath.
+//
+// NO TARGET NAMES THE LAUNCH ANGLE GAP, so nothing here is off a guard. What it
+// is worth knowing for is the comparison against session 1, whose own gap is
+// 3.89 degrees: the generator used to bracket that figure across sessions 2 to
+// 4 and now sits below it at every session. Recorded rather than fixed, and it
+// is the first thing to look at if a future pass wants that comparison back.
+//
+// Everything else came back inside its own five-seed band: both empty target
+// bands, all four distribution edges, both per-swing spreads, the Hit to All
+// Fields bar and every distance column.
 //
 // THE TWO CONSTANTS MOVE TOGETHER OR NOT AT ALL. Raising the foot without
 // raising the chance drops the rate to 0.32 a session, which is inside target
