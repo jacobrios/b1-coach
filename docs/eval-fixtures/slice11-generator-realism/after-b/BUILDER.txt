@@ -1,0 +1,124 @@
+# Which session data the debriefs in this directory were written about.
+# See ../../slice9-session-one/before/BUILDER.txt for what this file is and why
+# editing it to make a command work defeats the point.
+#
+# Written 21 August 2026, in Slice 11 Task 12, AFTER the 64 live calls were
+# bought and BEFORE the grading run was started. That is the only moment every
+# answer below is actually known, and it is the whole reason this file exists.
+#
+# WHAT THIS DIRECTORY IS.
+#
+# 64 fresh coach debriefs, seven cells, condition "shipped", bought from the
+# live model on 21 August 2026 against the working tree as Slice 11 leaves it.
+# This is the SECOND-SEED after round of Slice 11's non-inferiority guard.
+# ../after-a is the first, at seed 20260814, and it is the one that pairs with
+# ../before, which is Slice 10's 64 shipped debriefs re-graded on the same day
+# through the same instrument at that same seed.
+#
+# THE GENERATOR THE COACH SAW, WHICH IS THE POINT OF THIS ROUND.
+#
+# These debriefs describe swings produced by the REWRITTEN src/swingGenerator.js
+# as it stands at the end of Slice 11. That generator differs from every other
+# committed round in this repository. Eight measured defects were closed in it:
+# the link between where a pitch was and how well it was struck, the per-swing
+# exit velocity spread, the pull and opposite-field bias, the launch angle
+# ceiling and its pop-up mis-hit mode, the session 1 to 2 exit velocity step,
+# and the two hard clamps that piled values onto the extremes. Sessions 2, 3
+# and 4 in these records are therefore NOT reproducible from any frozen
+# snapshot in this repository; they are reproducible only from the working tree
+# at the commit named below.
+#
+# Session 1 did not move in this slice. Its fifteen hand-written swings are
+# exactly as Slice 9 left them, in src/sessionOneSwings.js.
+#
+# THE PROMPT THE COACH READ.
+#
+# Slice 11 added two approved lines to BOTH prompts (SETTING_LINE and
+# SESSIONS_LINE in src/coachApi.js), telling the coach that a coach throws live
+# from behind a screen and that sessions are consecutive rounds in one practice
+# period. Neither carries a count, so neither changes which claims count as
+# handed to the coach versus derived by it. That was verified rather than
+# assumed in Task 11: all 543 stored Slice 10 claims re-attributed through
+# today's scripts/handedCounts.js came back byte-identical, 0 claims moving.
+#
+# WHAT WAS RUN.
+#
+#   bought        node --env-file=.env.local scripts/bench-coach-brevity.mjs
+#                   --condition shipped --runs 8 --seed 20260819
+#                   --out docs/eval-fixtures/slice11-generator-realism/after-b/shipped-64.json
+#   graded        node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate
+#                   --input docs/eval-fixtures/slice11-generator-realism/after-b
+#                   --out docs/eval-fixtures/slice11-generator-realism/after-b/grading.json
+#   date          21 August 2026
+#   HEAD          565747a (working tree clean at the time of the bench run)
+#   generator     src/swingGenerator.js last changed at 4b39747
+#   prompt        src/coachApi.js last changed at 17cd600
+#
+# THE SEED, AND WHY THERE ARE TWO ROUNDS.
+#
+# Session 1 is the same fifteen swings at any seed, but sessions 2, 3 and 4 are
+# GENERATED from it with a seeded PRNG, so the seed alone decides what those
+# sessions contain. This round is seed 20260819, which is a DIFFERENT seed from
+# ../before and ../after-a, both of which are 20260814. That is deliberate and
+# it is why this directory exists. A generator rewrite moves ALL the data, so a
+# single seed measures one excursion rather than a result, and this project has
+# twice reported a single-seed excursion and then had to correct it. ../after-a
+# is the seed-matched comparison against ../before; this round is the check that
+# whatever ../after-a shows is not an artefact of one draw. There is no
+# seed-matched before side at 20260819 and this round is not claiming one.
+#
+# THE POP-UP NOTE THIS SEED CARRIES, MEASURED BEFORE THE MONEY WAS SPENT.
+#
+# At seed 20260819 five cells (power-s2, contact-s4, open-s4, allfields-s4,
+# popup-s4) carry exactly ONE pop-up each, so roughly 40 of these 64 debriefs
+# are written about a session containing a single pop-up swing. That is the
+# opposite of ../after-a, where the count is zero everywhere, and it is the
+# reason both seeds are worth having. Neither seed exercises the pop-up change
+# hard enough to measure it: the bench builds each cell's sessions once outside
+# the run loop, and the four session-4 cells are 89% correlated, so the whole
+# bench sees at most a handful of distinct pop-up draws. The evidence that the
+# pop-up work landed is the deterministic measurement, 0.394 pop-ups per
+# session across 400 seeds and 18,000 swings, not this round. Do not read a
+# null pop-up result here as evidence the fix did not land.
+#
+# THREE WAYS THIS ROUND GOES STALE.
+#
+# First, and this is the one that has caught this repository twice: THESE
+# DEBRIEFS WERE WRITTEN AGAINST THE POST-SLICE-11 GENERATOR, AND "current"
+# NAMES THE WORKING TREE. The moment any later slice changes
+# src/swingGenerator.js, "current" stops meaning what it means today, and
+# re-grading this directory as "current" would rebuild sessions 2, 3 and 4 from
+# a generator no coach here ever saw: a complete, entirely plausible fact sheet
+# on 40 of these 64 records, with nothing appearing broken. This is not a
+# hypothetical. It is exactly what happened to Slice 9's three rounds and Slice
+# 10's two, whose markers said "current" and were repaired in this slice's own
+# first task. THE FIX IS NOT TO EDIT THIS FILE INTO AGREEMENT WITH A COMMAND.
+# It is to freeze the generator as it stands at the commit named above, give
+# that pair its own builder name (the shape of "slice11-before", so something
+# like "slice12-before"), add its output for every cell at every seed to
+# docs/eval-fixtures/frozen/, and repoint the builder line below to it as a
+# dated annotation with the old line struck through.
+#
+# Second, if session 1's fifteen hand-written swings are rewritten again, the
+# session-1 half of "current" moves underneath this round too, exactly as it
+# did to Slice 9's rounds. This round would then need a frozen snapshot of
+# session 1 of its own, in the shape of
+# ../../slice9-session-one/session-one-before.mjs, and the builder line changes
+# to name that pair.
+#
+# Third, computeStats in src/sessionStats.js is read live by every builder, on
+# purpose, because it summarises swings that have already been decided rather
+# than deciding them. Slice 11 did not touch it. A slice that does change how a
+# session is summarised is a THIRD moving part and needs its own answer, not a
+# quiet extension of this one.
+#
+# AND THE ONE THIS FILE CANNOT PROTECT AGAINST: the flag counts in grading.json
+# are LEADS, NOT FINDINGS. This tool's false-positive rate has measured 11, 42,
+# 12.5, 34.5, 40, 61.9 and 43.5 percent across seven rounds. Task 13 hand-checks
+# every flagged claim in this round, in ../after-a and in ../before together. Do
+# not quote a flag count out of here as a coach error rate without reading that
+# hand-check.
+
+builder = current
+handed-era = current
+seed = 20260819
