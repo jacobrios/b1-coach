@@ -178,6 +178,21 @@ Note carefully what this is and is not: it is evidence the coach now *talks
 about* a relationship that is now real, not evidence that any particular
 sentence is accurate. Accuracy is Task 13's question.
 
+> *Added 21 August 2026, Task 13, and it answers the sentence just above.* Every
+> flagged claim in all three rounds is now adjudicated one at a time in
+> `HAND-CHECK.md` beside this file. **The headline: the coach did not get
+> worse.** Hand-checked, the rounds carry 12, 14 and 9 genuine error claims, or
+> 2.85%, 3.47% and 1.84% of the claims the tool could rule on, all inside the 8
+> to 19 errors and 1.8 to 3.8 percent this project has measured as
+> same-condition noise. The two after seeds differ from each other by more than
+> either differs from before. The tool's false-positive rate on these rounds was
+> 36.8%, 30.0% and **64.0%**, the last being the highest ever recorded here, and
+> five failure mechanisms had never been seen before, four of them about pitch
+> location. **Read no number out of any `grading.json` in this directory without
+> reading `HAND-CHECK.md` first.** The `popup-s4/run1` debrief quoted above was
+> checked claim by claim and is entirely accurate; the one flag against it is a
+> tool error.
+
 ## Reproducing this
 
 Both commands spend real money and neither is needed to read the result. A
