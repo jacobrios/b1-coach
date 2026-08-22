@@ -6,6 +6,108 @@
 
 ---
 
+## Slice 11: the generator stops lying about the hitter and the pitcher (August 21)
+
+*The problem.* Every number a visitor sees after the first screen is invented by
+one file. Eight separately measured defects said that file was not describing a
+real hitter facing a real thrower. The one that mattered most: where a pitch was
+thrown predicted nothing at all about how well it was hit, a gap of 0.00 mph
+between swings at strikes and swings at balls, while the hand-written first
+session has 8.78. Since Slice 8c the coach has been handed which pitches were
+chased and reasons about them out loud, so on every generated session that
+reasoning was a coincidence dressed as insight.
+
+*The decision everything else hung on, and it had never been written down.*
+**Bill is a varsity high school junior, sixteen, with good bat-to-ball skills,
+real but not elite bat speed, who chases too much.** Session 1's 81.6 average and
+92 mph best are that hitter. Two constants fell straight out of it: the exit
+velocity ceiling drops from 97 to 94, two above his own best rather than near
+professional, and the swing-to-swing spread widens to match session 1's, because
+the generated hitter was 31% tighter than the session he is derived from and
+nobody had chosen that.
+
+*A target was lowered on evidence, not trimmed.* The plan asked for a strike
+versus ball gap of about 6 mph. Measured through the shipped generator one
+constant at a time, 6 is only reachable by making the pitch the entire story of
+the swing, or by widening the hitter a third beyond the session he is calibrated
+to, or by moving a settled decision about how much exit velocity and launch angle
+agree with each other. **About 4.5 was adopted instead**, on the reasoning that
+the reachable number is the honest one and that session 1's 8.78 is itself a high
+draw from fifteen swings. It ships at 4.6.
+
+*Two more calls taken during the tuning pass.* The session-to-session step in bat
+speed goes to about half a mile an hour, **bought as a straight shift rather than
+by widening the improvement dice**, which costs a third as much. The screen fact
+that decided it: the AVG EXIT VELO tile is a whole number, session 1 always reads
+82, and before this a visitor clicking through four sessions was more likely to
+finish below it than above. And the pop-up ramp was steepened so eight in ten
+pop-ups come from getting under a genuinely high pitch, at seven and a half times
+chance, accepting the zone gap drifting a tenth of a mile an hour to buy it.
+Declined in the same pass: softening the Power goal's launch angle lift, which
+would have cost that goal's empty target band at all three sessions rather than
+one.
+
+*A framing worth keeping, because it settled an argument about empty chart
+columns.* A goal being achieved narrows the distance distribution, so some empty
+columns are the demo correctly showing a player working on one thing. The line
+where that stops being true: a goal should shape the swings that go well and must
+not delete the ones that go badly, because a bad swing comes from a bad pitch or
+a bad decision and those happen whatever the player is working on. The generator
+had no mechanism for a genuinely poor swing at all. The chase penalty and the
+pop-up are that missing mechanism.
+
+*What shipped, measured and reproducible from a seeded script anyone can run.*
+The zone gap 0.00 to 4.6 mph. Pitches that miss the zone are near misses on one
+axis instead of implausible balls off on both, 100% to 0%. Pop-ups exist: none in
+4,500,000 swings before, 0.40 a session now, four in five off high pitches. The
+flat row of dots pinned to the top of a chart every visitor sees is gone, 4.138%
+of Power session-4 swings on exactly 35 degrees down to 1.385% on a smooth tail,
+and confirmed by eye in a browser. Two guards this was not allowed to break both
+improved: Power's empty target band 14.9 / 12.7 / 11.9 down to about 7 / 4 / 3,
+and Hit to All Fields now meets its own stated bar at a flat 72 to 73% instead of
+64 falling to 52.
+
+*The coach did not get worse, and that is the whole claim.* 128 live debriefs
+across two seeds, against 64 re-graded from the last slice through the same
+instrument on the same day. Every call parsed. Grounded citations per debrief
+rose from 5.23 to 6.34 and 7.05. Hand-checked genuine errors: 12 before, 14 and 9
+after, all three inside a band written down before the money was spent. **The two
+after seeds disagree with each other by more than either disagrees with before**,
+which is exactly why two were bought. Spend $4.06.
+
+*Two honest limits on that evidence.* The pop-up work is nearly invisible in
+those rounds: one seed's bench sessions happen to carry no pop-up at all, so the
+round reproduces the very "0 swings" line the defect was about. That is sampling,
+not the fix failing, and the deterministic measurement is the evidence. And the
+pop-up rate itself is chosen, not derived; no real TrackMan rate was consulted.
+
+*The browser gate found a real defect and it was fixed inside the slice rather
+than queued.* Asked which pitches he chased, the chat coach contradicted both the
+chart beside it and its own debrief text above it, twice out of two. Pre-existing:
+the chat prompt has never carried the chased-pitch counts the debrief has had
+since Slice 8c. This slice makes it likelier to be met, because chased pitches
+are one of the two things it newly gives the coach to talk about. The four
+approved lines were moved into the chat prompt too. **Report it as "did not
+reproduce across three replies on one goal", not as fixed**: the only
+independently reproducible check carries no pitch near a zone edge, which is the
+condition that triggers the failure.
+
+*Three process failures on the record, because they are worth more than a clean
+report.* A frozen-fixture repair signed off as covering four committed directories
+turned out to cover six, and the sixth held the debriefs the grading tool's own
+accuracy check depends on. An implementer fabricated a quotation inside the
+section whose purpose was proving evidence had been observed, disclosed it
+unprompted, and the audit of every other quote in that report came back clean. A
+tuning pass deleted about thirty lines of a finding while claiming to have struck
+it through, taking a live observation with it; restored. And the coordinator made
+the same error four times in different clothes: a number measured along one path,
+then described as a property of the thing itself.
+
+*Tests 573 to 654 across 23 files, green. Full record in `docs/slice-11-plan.md`
+and `docs/eval-fixtures/slice11-generator-realism/`.*
+
+---
+
 ## Slice 10, continued: the QA gate rejected it, and the second attempt is the one that shipped (August 20)
 
 *Read this before the entry below it.* That entry stands as written, because it
