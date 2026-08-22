@@ -512,6 +512,14 @@ function goalCountLines(goalId, swings) {
 // itself, measured at 11 wrong claims per 52-debrief round, unchanged
 // across Slice 8b's before and after rounds. Same rule as the goal count
 // lines: count every threshold the prompt names.
+//
+// 21 August 2026, Slice 11 Task 14b: these now reach the CHAT prompt too. For
+// three slices they were debrief-only, and the chat coach derived chased
+// pitches for itself, which is the one thing this project has measured it
+// cannot do. Task 14's browser gate caught it naming in-zone pitches as chases
+// and calling high pitches low, on 2 of 2 attempts, while the handed debrief
+// text directly above it on the same screen was right. Not new wording: the
+// four lines are unchanged from the ones approved in Slice 8c.
 function zoneCountLines(swings) {
   const zone = pitchZoneBreakdown(swings)
   return [
@@ -623,7 +631,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Avg Exit Velocity: ${s.stats.avgExitVelocity} mph
 - Avg Launch Angle: ${s.stats.avgLaunchAngle} degrees
 - In Zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} pitches landed in the strike zone (pitch location only — not related to launch angle or swing outcome)
-- Distance distribution: ${distanceDistributionLine(s.swings)}
+${zoneCountLines(s.swings).map((line) => `${line}\n`).join('')}- Distance distribution: ${distanceDistributionLine(s.swings)}
 ${s.debrief?.coachingSummary ? `- Previously told player in session summary: ${s.debrief.coachingSummary}` : ''}
 ${s.debrief?.whatThisMeans ? `- Previously told player in what this means: ${s.debrief.whatThisMeans}` : ''}
 ${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}

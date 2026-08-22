@@ -17,7 +17,7 @@ import { distanceDistributionLine } from './ballFlight.js'
 // as literals: these tests are about which swings the coach is told went
 // where, so they have to run against the real session 1, not a copy of it.
 import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
-import { sprayBreakdown } from './sessionStats.js'
+import { sprayBreakdown, pitchZoneBreakdown } from './sessionStats.js'
 import { generateSwings } from './swingGenerator.js'
 
 const RETRY_DELAY_MS = 1500
@@ -391,6 +391,91 @@ describe('the strike-zone count lines every goal is handed', () => {
     expect(message).toContain('- Swings on pitches high (height above 3.5ft): 1 swing — numbers: 2')
     expect(message).toContain('- Swings on pitches low (height below 1.5ft): 2 swings — numbers: 3, 5')
     expect(message).toContain('- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 5')
+  })
+})
+
+// Slice 11 Task 14b. The block above only ever asked the DEBRIEF prompt, and
+// the chat prompt carried none of these four lines at all, which is the whole
+// defect: asked in chat which pitches he chased, the coach named two in-zone
+// pitches as chases, missed two real ones, and called four high pitches low.
+// Same shape as the spray and direction-key blocks below, and the same reason:
+// the coach repeats a count it is handed and miscounts one it derives. No new
+// wording is introduced here; these four lines have shipped in the debrief
+// prompt since Slice 8c.
+describe('the strike-zone count lines the CHAT prompt is handed', () => {
+  const goal = { id: 'open', label: 'Open Session' }
+  const player = { firstName: 'Test' }
+
+  const sessionOf = (swings) => ({
+    sessionNumber: 1,
+    stats: {
+      avgExitVelocity: 80, avgLaunchAngle: 15,
+      inZoneCount: swings.length, totalSwings: swings.length,
+    },
+    swings,
+  })
+
+  async function capturedMessage(sendCall) {
+    const fetchMock = vi.fn(async () => ok('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await run(sendCall)
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return body.messages[0].content
+  }
+
+  const debriefFor = (session) => capturedMessage(() =>
+    generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+  )
+  // The question Task 14's browser gate actually asked, which is the one that
+  // produced the wrong answer twice out of two.
+  const chatFor = (session) => capturedMessage(() =>
+    sendChatMessage({
+      goal, player, sessions: [session], viewingSessionNumber: 1,
+      messages: [{ role: 'user', content: 'Which pitches did I chase?' }],
+    }),
+  )
+
+  // Literals, hand-derived from the plate locations in src/sessionOneSwings.js
+  // against the 1.5-3.5ft / -0.7 to 0.7ft strike zone, so this pins the shipped
+  // sentence AND the shipped numbers rather than proving the prompt echoes
+  // whatever the code happens to return. Swing 14 is both high and wide, which
+  // is why the three sub-counts do not sum to the outside count.
+  const OUTSIDE_LINE = '- Swings on pitches outside the strike zone: 6 swings — numbers: 2, 4, 6, 9, 12, 14'
+  const HIGH_LINE = '- Swings on pitches high (height above 3.5ft): 2 swings — numbers: 6, 14'
+  const LOW_LINE = '- Swings on pitches low (height below 1.5ft): 3 swings — numbers: 2, 9, 12'
+  const WIDE_LINE = '- Swings on pitches wide (side outside -0.7 to 0.7ft): 2 swings — numbers: 4, 14'
+
+  it('the chat prompt states all four, exactly, on session 1\'s real swings', async () => {
+    const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(OUTSIDE_LINE)
+    expect(message).toContain(HIGH_LINE)
+    expect(message).toContain(LOW_LINE)
+    expect(message).toContain(WIDE_LINE)
+  })
+
+  it('cannot drift apart: both prompts report the same four lines for the same swings', async () => {
+    const session = sessionOf(SESSION_ONE_SWINGS)
+    const debriefMessage = await debriefFor(session)
+    const chatMessage = await chatFor(session)
+    const extract = (text) => [
+      text.match(/- Swings on pitches outside the strike zone[^\n]+/)[0],
+      text.match(/- Swings on pitches high \([^\n]+/)[0],
+      text.match(/- Swings on pitches low \([^\n]+/)[0],
+      text.match(/- Swings on pitches wide \([^\n]+/)[0],
+    ]
+    expect(extract(chatMessage)).toEqual(extract(debriefMessage))
+    // And they are the shared breakdown's numbers, not a third value.
+    const zone = pitchZoneBreakdown(SESSION_ONE_SWINGS)
+    expect(extract(chatMessage)[0]).toContain(`numbers: ${zone.outside.swings.join(', ')}`)
+  })
+
+  // Placement matters as much as presence: the debrief hangs these four off
+  // its strike-zone summary line, and a reader comparing the two prompts
+  // should find them in the same seat. Also the seat that keeps them next to
+  // the in-zone total they break down.
+  it('sits directly under the chat prompt\'s own In Zone line', async () => {
+    const message = await chatFor(sessionOf(SESSION_ONE_SWINGS))
+    expect(message).toContain(`swing outcome)\n${OUTSIDE_LINE}\n${HIGH_LINE}\n${LOW_LINE}\n${WIDE_LINE}\n`)
   })
 })
 
