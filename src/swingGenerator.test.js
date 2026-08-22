@@ -1223,11 +1223,28 @@ describe('how high the pitch was decides how likely that is', () => {
       random: sequence(...NEUTRAL_HEADER, ...pitchDraws, ...NEUTRAL_SWING, ...MIS_HIT_DRAW_A_HIGH_PITCH_MEETS),
     })[0]
 
-  const high = offPitch(HIGH_IN_ZONE)
+  // THIS DESCRIBE STOPPED USING HIGH_IN_ZONE ON 21 AUGUST 2026, TASK 9, AND
+  // THE REASON IS A REAL CHANGE TO THE GENERATOR RATHER THAN A FIXTURE TIDY-UP.
+  // That task moved the foot of the pop-up ramp from 0.6 to 0.8 of the zone's
+  // half height, which in feet moved it from 3.10 to 3.30. HIGH_IN_ZONE is 3.30
+  // exactly, so its chance of a pop-up is now ZERO and this describe went red
+  // on its main assertion. Nothing about the mechanism broke; the fixture
+  // stopped being high enough to be inside it.
+  //
+  // WHAT THAT MEANS, IN FEET, BECAUSE IT IS THE COST OF THAT DECISION AND
+  // NOTHING ELSE IN THE SUITE STATES IT. Only the top tenth of the strike zone
+  // can produce a pop-up now, 3.30 to 3.50 feet, where before it was the top
+  // fifth from 3.10. Measured chances: 3.30 ft is 0.00%, 3.40 ft is 5.00%,
+  // 3.50 ft is 10.00%, and everything at 3.90 ft or above is at the ramp's full
+  // 30.00%. The pitch below is 3.46 feet, still comfortably inside the strike
+  // zone, which is what keeps this comparison the in-zone one it was written to
+  // be rather than quietly becoming a comparison against a ball.
+  const NEAR_TOP_OF_ZONE = [0.5, 0.98, 0.5] // height 1.5 + 0.98 * 2 = 3.46 ft
+  const high = offPitch(NEAR_TOP_OF_ZONE)
   const low = offPitch(LOW_IN_ZONE)
 
   it('put the two pitches where this test says it did', () => {
-    expect(high.plateLocHeight).toBe(3.3)
+    expect(high.plateLocHeight).toBe(3.46)
     expect(low.plateLocHeight).toBe(1.7)
     expect(inStrikeZone(high)).toBe(true)
     expect(inStrikeZone(low)).toBe(true)
@@ -1235,9 +1252,9 @@ describe('how high the pitch was decides how likely that is', () => {
 
   it('pops the high one up and leaves the low one alone, on the identical draw', () => {
     // The whole mechanism, as one comparison. Both swings spend the same
-    // eleven draws in the same order; the only difference between them is two
-    // feet of pitch height, and it is the difference between a pop-up and an
-    // ordinary swing.
+    // eleven draws in the same order; the only difference between them is
+    // pitch height, and it is the difference between a pop-up and an ordinary
+    // swing.
     expect(high.hit.launch.angle).toBeGreaterThan(GOAL_COUNT_SPECS.popup.popUpAngle)
     expect(low.hit.launch.angle).toBeLessThan(GOAL_COUNT_SPECS.popup.popUpAngle)
   })
@@ -1324,6 +1341,40 @@ describe('a session step in exit velocity is small enough to be one round of bat
 
   it('still moves it, so the bound above is not satisfied by a generator that stopped stepping at all', () => {
     expect(best - worst).toBeGreaterThanOrEqual(2)
+  })
+
+  it('centres that coin on the lift, so buying a bigger step by widening the bet turns this red', () => {
+    // ADDED 21 AUGUST 2026, TASK 9, and it guards a ROUTE rather than a value.
+    // The product manager asked for a session step of about +0.5 mph, and
+    // there are two ways to deliver one. A mean shift moves the whole coin up
+    // and leaves its width alone. Widening the coin buys the same mean by
+    // buying variance, and variance is what pushes swings into the soft
+    // ceiling: measured at the same +0.9 step, the two routes put 0.65% and
+    // 1.45% of swings on 94 mph against a guard of 0.5%. The constant's own
+    // comment carries the table.
+    //
+    // ONE PIN CATCHES BOTH WAYS OF LOSING IT, which is why this is one
+    // assertion and not three. Executed against the two mutations, not
+    // predicted:
+    //
+    //   lift deleted outright                  worst draws 87, this goes red
+    //   lift folded into the improving branch  worst draws 87, this goes red
+    //
+    // The second is what a widening looks like as a one-line edit, and it is
+    // the failure this test exists for: it leaves the best session exactly
+    // where it is and takes the lift away from the declining half, which is
+    // the definition of buying mean with variance.
+    //
+    // WHY THE BEST END IS PINNED TOO AND WHY IT DOES NOT MOVE. Both ends move
+    // by 0.35 mph, but a drawn exit velocity is a whole number and at this
+    // baseline only the worst end crosses a rounding boundary. That is a fact
+    // about rounding rather than about the mechanism, and pinning both says so
+    // rather than leaving a reader to wonder why one number is doing all the
+    // work. Do not "fix" it by hunting a baseline where both move: the window
+    // where both cross is about five hundredths of a mph wide, and a fixture
+    // that narrow is the fragile kind this file has already been burned by
+    // twice, up where the two limit fixtures sit.
+    expect([best, worst]).toEqual([90, 88])
   })
 
   it('declares a best case no larger than one round of batting practice can deliver', () => {
@@ -1488,8 +1539,20 @@ describe('the variance factor reaches the swings, and a test can see how far', (
         random: sessionDrivenBy([0.5, 0.5, 0.5], [...WORST_PITCH, 0, 0, 0, 0.5, 0.99, 0.5, 0.5]),
       })[0].hit.launch
 
+    // THE EXIT VELOCITY ROW MOVED UP BY EXACTLY ONE ON ALL THREE SESSIONS IN
+    // TASK 9, from 70 / 71 / 72, and the SHAPE of that move is worth more than
+    // the values. It was `EV_SESSION_STEP.lift`, the mean shift added to every
+    // session's average that day. A mean shift moves all three by the same
+    // amount and leaves the angles alone, which is exactly what happened here:
+    // three exit velocities up by one, three angles untouched. Had the same
+    // step been bought by widening the coin instead, the three would have moved
+    // by different amounts, because the variance factor scales a swing's
+    // distance from its session average and a wider coin changes that distance
+    // session by session. So this test accidentally photographs the difference
+    // between the two routes, and that is why the note is here rather than only
+    // beside the constant.
     const [s2, s3, s4] = [2, 3, 4].map(readingsAt)
-    expect([s2.exitSpeed, s3.exitSpeed, s4.exitSpeed]).toEqual([70, 71, 72])
+    expect([s2.exitSpeed, s3.exitSpeed, s4.exitSpeed]).toEqual([71, 72, 73])
     expect([s2.angle, s3.angle, s4.angle]).toEqual([12, 13, 14])
   })
 })

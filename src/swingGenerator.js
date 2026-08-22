@@ -232,7 +232,78 @@ const POWER_LIFT_PER_SESSION = 2
 // cannot move either empty-band rate whatever the other constants are doing.
 // A tuning pass reaching for the ceiling to fix an empty band is reaching for
 // the wrong constant, and that is true by construction rather than by sample.
-export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2 }
+//
+// ── `lift`, ADDED 21 AUGUST 2026, AND THE ROUTE IS THE POINT ────────────────
+//
+// THE DEFECT IT CLOSES, WHICH IS ABOUT A TILE AND NOT ABOUT A DISTRIBUTION.
+// The results screen's AVG EXIT VELO tile is a rounded whole number. Session 1
+// always reads 82. Before this constant existed, on every goal at every later
+// session that tile was MORE LIKELY to read below 82 than above it: pooled
+// across the fifteen goal-and-session combinations, 44.1% to 44.3% below
+// against 33.5% to 33.7% above at five seeds. So a visitor
+// clicking through four sessions of a demo about a hitter improving was more
+// likely to finish lower than he started. That is backwards, and no
+// distribution-shaped target was ever going to catch it, because the
+// distribution was fine and the ROUNDED TILE was what a visitor read.
+//
+// THERE ARE TWO WAYS TO BUY A HIGHER SESSION AVERAGE AND THEY COST VERY
+// DIFFERENT AMOUNTS. This is the whole reason the constant is a separate field
+// rather than a bigger `improveMax`, and it was measured rather than reasoned
+// about, 8,000 sessions a cell at seed 20260821 and confirmed at 20,000 across
+// five seeds:
+//
+//   route              pooled step   swings on 94 mph   per-swing EV spread
+//   shipped                 +0.13              0.37%                   6.11
+//   MEAN SHIFT, this        +0.48              0.48%                   6.11
+//   widening the coin       +0.53              0.53%                   5.99
+//   mean shift to +0.9      +0.85              0.65%                   6.10
+//   widening to +0.9        +0.89              1.45%                   5.98
+//
+// Widening the coin buys mean by buying VARIANCE, and variance is what pushes
+// swings into the soft ceiling and stacks them on 94. A mean shift moves the
+// whole distribution and leaves its width alone, so it costs about a third as
+// much at the same step. Read the last two rows against each other: the same
+// +0.9 costs 0.65% one way and 1.45% the other.
+//
+// WHY +0.5 AND NOT MORE. Target 5 of this slice says nothing may hold more than
+// 0.5% of swings at either ceiling. A mean shift of 0.35 lands the step at
+// +0.48 and the ceiling at 0.48%, which is inside the guard with room to spare
+// at five seeds. A shift of 0.40 lands +0.53 and 0.50%, which is ON the line
+// rather than inside it, and sitting exactly on a guard is not the same as
+// clearing it. The product manager asked for about +0.5 and that is what the
+// free column tops out at; this constant stops just under it deliberately.
+//
+// WHAT IT COSTS, ALL THREE OF THEM, so nobody has to go looking. Every figure
+// here is from `node scripts/measure-swing-generation.mjs` at five seeds, which
+// is also where the tile numbers above come from: that script grew a subsection
+// for them in the same change, because a constant justified by a number no
+// instrument prints is a constant nobody can check.
+//
+//   A generated session beats Bill's frozen best of 92 mph more often, 39.4%
+//   of sessions against 34.6%, and 76.8% to 82.8% of visitors against 70.8% to
+//   77.8%.
+//
+//   Power's "Under 175" distance column, already its worst, empties on 26.0%
+//   to 26.4% of session 4s against 23.9% to 24.5%. That is the one genuine
+//   regression in the whole change.
+//
+//   The strike-versus-ball gap slips about two hundredths, which is nothing
+//   beside the pop-up ramp that moves it a tenth in the other direction.
+//
+// Against those: both empty target bands improve on every session, the "305+"
+// column improves on all four non-Power goals, and the tile reads above 82 more
+// often than below, 41.0% to 41.2% against 36.4% to 36.7%, which is what it was
+// bought for. Before this constant existed the same script printed the opposite
+// verdict off the same code path, 44.1% to 44.3% below against 33.5% to 33.7%
+// above, so both branches of that sentence have now been seen printing.
+//
+// IT IS NOT A SECOND STEP CONSTANT AND MUST NOT BECOME ONE. `min`,
+// `improveMax` and `declineMax` are the 65/35 coin, which is a settled product
+// decision about a session reading as a draw rather than a promise. This moves
+// where that coin is centred and changes nothing about its shape. A future pass
+// that wants a bigger step should move this and leave those three alone, which
+// is the opposite of what the first attempt at this task did.
+export const EV_SESSION_STEP = { min: 0.3, improveMax: 1.5, declineMax: 1.2, lift: 0.35 }
 
 // ── The thrower ─────────────────────────────────────────────────────────────
 //
@@ -1038,18 +1109,62 @@ const POP_UP_EV_DROP_MPH = { min: 6, max: 14 }
 // strikes purely because there are so many more of them, and the coaching
 // point ("you got under the high ones") would be false. Starting the ramp
 // above the middle of the zone is what keeps the majority of pop-ups on the
-// pitches the coach is going to blame: about seven in ten, against the one in
-// ten chance alone would give.
-const POP_UP_FROM_HEIGHT = 0.6
+// pitches the coach is going to blame.
+//
+// THE FOOT OF THE RAMP MOVED FROM 0.6 TO 0.8 ON 21 AUGUST 2026, TASK 9, and it
+// is the difference between "most" and "nearly all". Measured through the
+// generator at 8,000 sessions a cell and confirmed at 20,000 across five
+// seeds, with the chance below moved in the same change to hold the frequency
+// still:
+//
+//   foot 0.6, chance 0.22   65.0% of pop-ups on high pitches   6.1x chance
+//   foot 0.8, chance 0.22   79.0%                              7.5x, but the
+//                                                              rate falls to
+//                                                              0.32 a session
+//   foot 0.8, chance 0.30   80.9%                              7.6x, rate held
+//                                                              at 0.40
+//
+// "High" here means at or above the top of the strike zone, which is 10.6% of
+// the pitches this file throws. So roughly one pop-up in five used to land
+// somewhere the coach could not honestly blame, and now it is one in eight.
+// The coach's sentence is "you got under the high ones", and this is the
+// constant that decides how often that sentence is true.
+//
+// WHAT IT COST, AND WHO DECIDED. It pushes the strike-versus-ball exit velocity
+// gap from 4.50 to about 4.62, above the 4.5 the product manager adopted,
+// because a pop-up drawn from a higher pitch is drawn from further outside the
+// zone and the pop-up's own exit velocity drop then lands disproportionately on
+// the ball side of that comparison. He took it on 21 August 2026 on the
+// reasoning that "about 4.5" was adopted from a measured range rather than as a
+// precise target. Nothing else measured moved: both empty bands, the
+// distribution edges, the spreads, the Hit to All Fields bar and every distance
+// column came back inside their own five-seed bands.
+//
+// THE TWO CONSTANTS MOVE TOGETHER OR NOT AT ALL. Raising the foot without
+// raising the chance drops the rate to 0.32 a session, which is inside target
+// 4's 0.3-to-0.5 band but sitting on its floor, and it costs launch angle
+// spread as well, 6.81 degrees against 7.05 on the same measurement. Anybody
+// tuning one of these should re-read the row above before leaving the other.
+const POP_UP_FROM_HEIGHT = 0.8
 const POP_UP_FULL_HEIGHT = 1.4
 
 // The chance of getting under the very highest pitch this file throws. It
 // reads high for a single swing, and it is the number the frequency target
-// above actually lands on, because it applies to about an eighth of pitches
-// once the ramp is taken into account: 0.22 at the top of the ramp works out
-// at 0.027 per swing averaged over every pitch, which is 0.40 pop-ups in a
-// fifteen swing session, or one every two or three sessions.
-const POP_UP_MAX_CHANCE = 0.22
+// above actually lands on, because it applies to a small share of pitches once
+// the ramp is taken into account.
+//
+// IT MOVED FROM 0.22 TO 0.30 ON 21 AUGUST 2026, TASK 9, AND IT MOVED TO STAND
+// STILL. Raising the foot of the ramp from 0.6 to 0.8 narrows the band of
+// pitches this chance applies to, so the same 0.22 would have dropped the rate
+// from 0.40 pop-ups a session to 0.32. 0.30 puts it back: measured at 0.39 to
+// 0.41 a session on all four non-Power goals across five seeds, which is where
+// it was and is inside target 4's 0.3-to-0.5 band with room either side.
+//
+// So a reader comparing this against the version before it should not read the
+// rise as "more pop-ups". It is the same number of pop-ups landing on a
+// narrower and more deserving set of pitches. The ramp's own comment above
+// carries the measurement and the product decision behind it.
+const POP_UP_MAX_CHANCE = 0.30
 
 function popUpChance(pitch) {
   const { height } = normalisedPitch(pitch)
@@ -1097,8 +1212,15 @@ function generateOneSession(sessionNum, goalId, prevEV, prevLA, random) {
   // launch angle line below is untouched, arc and all. The exit velocity line
   // reads its bounds from EV_SESSION_STEP above, where the reasoning sits.
   const improving = random() < 0.65
+  // `lift` is added OUTSIDE the coin, on its own line, because that is exactly
+  // what makes it a mean shift rather than a wider bet: both branches move by
+  // the same amount and the distance between the best session and the worst is
+  // untouched. Fold it into either branch and it becomes a widening, which
+  // costs three times as much at the same step. The reasoning and the measured
+  // table are with the constant.
   const sessionEV =
     prevEV +
+    EV_SESSION_STEP.lift +
     (improving
       ? EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.improveMax - EV_SESSION_STEP.min)
       : -(EV_SESSION_STEP.min + random() * (EV_SESSION_STEP.declineMax - EV_SESSION_STEP.min)))

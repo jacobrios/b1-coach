@@ -670,6 +670,13 @@ function measureSlice11Cell(sessionNum, goalId) {
   const laCounter = new Map()
   const topEvCounter = new Map()
   const sessionAvgEvCounter = new Map()
+  // THE SAME QUANTITY ROUNDED THE WAY THE SCREEN ROUNDS IT, added 21 August
+  // 2026, Task 9. sessionAvgEvCounter above bins to a tenth, and deriving a
+  // whole-number tile from those bins is not the same arithmetic: a session
+  // averaging 81.45 bins to 81.5 and would read as 82, where the real tile
+  // reads 81. So the tile is counted from the raw mean, in its own counter,
+  // rather than computed from the other one.
+  const sessionTileCounter = new Map()
   const bucketTotals = DISTANCE_BUCKETS.map(() => 0)
   // Counted per column rather than only as "this session had an empty column
   // somewhere", because two goals turn out to fail at opposite ends of the
@@ -727,6 +734,7 @@ function measureSlice11Cell(sessionNum, goalId) {
     withinEvSquares += evs.reduce((s, x) => s + (x - meanEv) ** 2, 0)
     withinLaSquares += las.reduce((s, x) => s + (x - meanLa) ** 2, 0)
     bump(sessionAvgEvCounter, Math.round(meanEv * 10) / 10)
+    bump(sessionTileCounter, Math.round(meanEv))
     bump(topEvCounter, Math.max(...evs))
 
     const sessionSpray = sprayBreakdown(swings)
@@ -767,6 +775,7 @@ function measureSlice11Cell(sessionNum, goalId) {
     laCounter,
     topEvCounter,
     sessionAvgEvCounter,
+    sessionTileCounter,
     // Two different things, and the difference is the point. The first is how
     // full a column is on a typical session, out of fifteen swings. The second
     // is how often that column renders with nothing in it at all, which is what
@@ -2409,6 +2418,73 @@ if (reRolled.length > 0 && notReRolled.length > 0) {
   console.log('  empty-band re-roll is not separating them.')
 }
 
+// THE SAME STEP AS A VISITOR ACTUALLY READS IT, added 21 August 2026, Task 9.
+//
+// WHY THIS IS NOT THE TABLE ABOVE SAID TWICE. Everything above is a mean in
+// tenths of a mph. The AVG EXIT VELO tile on the results screen is a ROUNDED
+// WHOLE NUMBER, and a visitor comparing session 4 against session 1 is
+// comparing two whole numbers, not two means. A step of a tenth or two is
+// invisible in a mean and decides a whole tile a third of the time, so the two
+// readings can tell opposite stories about the same generator. This section
+// exists because they did: before Task 9 the mean step was positive on every
+// goal at every session and the TILE was still more likely to read below
+// session 1's than above it.
+//
+// Session 1's tile is fixed and this reads it rather than typing it, so a
+// change to those fifteen frozen swings cannot leave this comparing against a
+// number that has stopped being on the screen.
+const SESSION_ONE_TILE = Math.round(SESSION_ONE_AVG_EV)
+const tileCounters = SLICE11_CELLS.map((c) => c.sessionTileCounter)
+const tileShare = (counters, predicate) => counterShare(mergeCounters(counters), predicate)
+console.log('')
+console.log(`  The same thing as the screen shows it. AVG EXIT VELO is a whole number, and`)
+console.log(`  session 1's tile always reads ${SESSION_ONE_TILE}. How often a later session's tile reads`)
+console.log(`  below it, level with it, and above it:`)
+console.log('')
+console.log('  ' + 'goal'.padEnd(26) + 'session'.padStart(9) + 'below'.padStart(10) + 'level'.padStart(10) + 'above'.padStart(10))
+for (const goal of SLICE11_GOALS) {
+  for (const sessionNum of SESSIONS) {
+    const t = cell(sessionNum, goal.id).sessionTileCounter
+    console.log(
+      '  ' + (sessionNum === SESSIONS[0] ? goal.label : '').padEnd(26) +
+        String(sessionNum).padStart(9) +
+        pct(counterShare(t, (v) => v < SESSION_ONE_TILE)).padStart(10) +
+        pct(counterShare(t, (v) => v === SESSION_ONE_TILE)).padStart(10) +
+        pct(counterShare(t, (v) => v > SESSION_ONE_TILE)).padStart(10)
+    )
+  }
+}
+const tileBelow = tileShare(tileCounters, (v) => v < SESSION_ONE_TILE)
+const tileAbove = tileShare(tileCounters, (v) => v > SESSION_ONE_TILE)
+console.log('  ' + 'every goal pooled'.padEnd(35) +
+  pct(tileBelow).padStart(10) +
+  pct(tileShare(tileCounters, (v) => v === SESSION_ONE_TILE)).padStart(10) +
+  pct(tileAbove).padStart(10))
+console.log('')
+// A VERDICT WITH A FLOOR UNDER IT, like every other verdict in this report.
+// The two shares are read off the same 300,000 sessions, so the floor is the
+// larger of a share of a percent worth caring about and three standard errors,
+// the same rule section 8 uses for the same shape of question.
+const tileCells = SLICE11_CELLS.length * REPLAYS_PER_CELL
+const A_REAL_TILE_LEAN = floorForRate(Math.max(tileBelow, tileAbove), tileCells, A_REAL_SPREAD)
+if (Math.abs(tileAbove - tileBelow) < A_REAL_TILE_LEAN) {
+  say(
+    `The tile is as likely to read below session 1's ${SESSION_ONE_TILE} as above it, within ` +
+      `${pct(A_REAL_TILE_LEAN)}. A visitor clicking through is shown neither an improving hitter nor a declining one.`
+  )
+} else if (tileBelow > tileAbove) {
+  say(
+    `The tile reads BELOW session 1's ${SESSION_ONE_TILE} more often than above it, ${pct(tileBelow)} against ` +
+      `${pct(tileAbove)}. A visitor clicking through four sessions of a demo about a hitter improving is more ` +
+      'likely to finish lower than he started, which is backwards.'
+  )
+} else {
+  say(
+    `The tile reads ABOVE session 1's ${SESSION_ONE_TILE} more often than below it, ${pct(tileAbove)} against ` +
+      `${pct(tileBelow)}, which is the way round a demo about a hitter improving should read.`
+  )
+}
+
 // --- 8. Hit to All Fields against its own bar ------------------------------
 
 // THE BAR ITSELF IS A HAND-COPY, and this is the disclosure. "At least 3
@@ -2950,6 +3026,8 @@ const JUDGMENTS_NOT_MEASUREMENTS = [
   [6, 'Session 1\'s best ball is frozen, so a generated session that beats it is claiming the hitter got faster. That is what this demo decided session 1 is for, not something this run measured; the run only counts how often it is beaten.'],
   [7, 'Every generated session is built off session 1 rather than off the session before it, so the step is the same step every time rather than a run of improvement. That is a fact about what onNewSession in src/App.jsx passes, read from the app rather than from this run.'],
   [7, 'The lift on the re-rolled goals is the re-roll discarding weak sessions. Which goals are lifted and which have an empty band often enough to be re-rolled are both measured here; that a re-roll happens at all, and that it keeps the second attempt whatever it holds, is a fact about src/swingGenerator.js.'],
+  [7, "A visitor finishing on a lower AVG EXIT VELO tile than he started on is backwards for a demo about a hitter improving, finishing higher is the way round it should read, and a lean under the floor is called neither. All three branches of one opinion about what this demo is for."],
+  [7, 'That the AVG EXIT VELO tile is a rounded whole number, and that session 1 is the tile a visitor compares against, are facts about src/DebriefScreen.jsx and src/App.jsx read from the app rather than from this run. The shares themselves are counted here.'],
   [8, 'The bar this section measures, at least 3 swings pull side and at least 3 opposite field, is a sentence hand-copied out of the Hit to All Fields coaching instructions in src/coachApi.js. Reword it there to ask for four and this section goes on measuring three, silently.'],
   [9, 'The eight sections above are the eight things Slice 11 sets out to change, and this one is the ground it must not lose. That is the slice\'s intent. It is not a property of this run, and it stays true whether or not the run still shows a defect.'],
   [9, 'The guard named at the end of the distance-chart tables is a decision taken from numbers like these when they were first read, not a result this run produces. Which column and which goals it names ARE read from this run.'],
@@ -2982,6 +3060,7 @@ const THRESHOLDS_THAT_PICK_A_SENTENCE = [
   [7, `the empty-band re-roll "bites" above an empty-band rate of ${pct(RE_ROLL_BITES_ABOVE)}`],
   [7, `the re-rolled goals count as lifted above the rest by ${A_REAL_GAP_MPH} mph, the same floor section 1 uses for the same quantity`],
   [8, `the bar is "essentially never met" below ${pct(BAR_RARELY_MET)} and "met almost every time" above ${pct(BAR_USUALLY_MET)}, and stated plainly in between`],
+  [7, `the AVG EXIT VELO tile leans one way only when the two shares differ by ${pct(A_REAL_TILE_LEAN)}, the larger of ${pct(A_REAL_SPREAD)} and ${NOISE_SIGMAS} standard errors at this sample size; the same rule section 8 uses for the same shape of question`],
   [8, `the bar's rate has a direction only when it moves ${pct(barTrendFloor)} across sessions 2 to 4, which is whichever is larger of ${pct(A_REAL_SPREAD)} and ${NOISE_SIGMAS} standard errors at this sample size; a flat ${pct(A_REAL_SPREAD)} floor was not enough and the verdict still flipped with the seed`],
   [9, `a column fills reliably when it is empty on under ${pct(FILLS_RELIABLY_BELOW)} of sessions, and a goal only "runs out of" a column that clears the same floor`],
   [9, `the generated spread counts as the same as session 1's within ${pct(SPREAD_COUNTS_AS_SAME_WITHIN)} of it, in either direction`],
