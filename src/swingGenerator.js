@@ -237,10 +237,10 @@ const POWER_LIFT_PER_SESSION = 2
 //
 // THE DEFECT IT CLOSES, WHICH IS ABOUT A TILE AND NOT ABOUT A DISTRIBUTION.
 // The results screen's AVG EXIT VELO tile is a rounded whole number. Session 1
-// always reads 82. Before this constant existed, on every goal at every later
-// session that tile was MORE LIKELY to read below 82 than above it: pooled
-// across the fifteen goal-and-session combinations, 44.1% to 44.3% below
-// against 33.5% to 33.7% above at five seeds. So a visitor
+// always reads 82. Before this constant existed that tile was MORE LIKELY to
+// read below 82 than above it: POOLED across the fifteen goal-and-session
+// combinations, 44.1% to 44.3% below against 33.5% to 33.7% above at five
+// seeds. So a visitor
 // clicking through four sessions of a demo about a hitter improving was more
 // likely to finish lower than he started. That is backwards, and no
 // distribution-shaped target was ever going to catch it, because the
@@ -252,12 +252,31 @@ const POWER_LIFT_PER_SESSION = 2
 // about, 8,000 sessions a cell at seed 20260821 and confirmed at 20,000 across
 // five seeds:
 //
-//   route              pooled step   swings on 94 mph   per-swing EV spread
-//   shipped                 +0.13              0.37%                   6.11
-//   MEAN SHIFT, this        +0.48              0.48%                   6.11
-//   widening the coin       +0.53              0.53%                   5.99
-//   mean shift to +0.9      +0.85              0.65%                   6.10
-//   widening to +0.9        +0.89              1.45%                   5.98
+//   route                              pooled step   on 94 mph   EV spread
+//   shipped                                  +0.13       0.37%        6.02
+//   MEAN SHIFT, this one (lift 0.35)         +0.47       0.48%        6.00
+//   widening to a comparable step            +0.53       0.78%        5.97
+//   mean shift, as far as it goes            +0.85       0.65%        5.97
+//   widening to the same place               +0.89       1.46%        5.89
+//
+// WHICH HARNESS, because a second table of the same quantity lives in
+// docs/slice-11-plan.md finding 11 and the two read a few hundredths apart.
+// These five rows are all one run of a patched copy of this file at 8,000
+// sessions a cell, seed 20260821, spread read off the Open Session cell so no
+// goal lift or empty-band re-roll is in it. Finding 11's table is 20,000 a cell
+// at five seeds and reads the spread the way the measurement script does. Read
+// the DIFFERENCES down either column rather than any single figure, and quote
+// the script outside this file. Neither is wrong and neither is more
+// authoritative, which is the same caveat this file already carries beside its
+// other two hand-patched tables.
+//
+// TWO OF THESE ROWS WERE WRONG FOR PART OF 21 AUGUST 2026 and the way they were
+// wrong is worth keeping. The widening row read "+0.53 / 0.53%", which paired
+// one setting's step with a different setting's ceiling: an `improveMax` of 2.5
+// gives 0.53% at a step of +0.33, and reaching +0.53 needs 3.5, which costs
+// 0.78%. It made widening look half as expensive as it is, which is the same
+// direction as this task's original error and was found by reconciling this
+// table against the plan's rather than by re-running anything.
 //
 // Widening the coin buys mean by buying VARIANCE, and variance is what pushes
 // swings into the soft ceiling and stacks them on 94. A mean shift moves the
@@ -279,9 +298,15 @@ const POWER_LIFT_PER_SESSION = 2
 // for them in the same change, because a constant justified by a number no
 // instrument prints is a constant nobody can check.
 //
-//   A generated session beats Bill's frozen best of 92 mph more often, 39.4%
-//   of sessions against 34.6%, and 76.8% to 82.8% of visitors against 70.8% to
-//   77.8%.
+//   A generated session beats Bill's frozen best of 92 mph more often. Across
+//   five seeds, 39.3% to 39.4% of sessions against 34.5% to 34.6% before this
+//   constant, and 76.5% to 82.8% of visitors against 70.5% to 77.8%. (Those
+//   ranges are envelopes across the seeds, not one seed's spread of goals; the
+//   figures here read "39.4% against 34.6% and 76.8% to 82.8% against 70.8% to
+//   77.8%" for part of 21 August 2026, which was seed 20260821 alone quoted as
+//   though it were the envelope. The comparison is against the generator as it
+//   stood earlier the same day, after the pitch weight moved and before this
+//   constant existed, because that is the one thing this constant changed.)
 //
 //   Power's "Under 175" distance column, already its worst, empties on 26.0%
 //   to 26.4% of session 4s against 23.9% to 24.5%. That is the one genuine
@@ -296,6 +321,18 @@ const POWER_LIFT_PER_SESSION = 2
 // bought for. Before this constant existed the same script printed the opposite
 // verdict off the same code path, 44.1% to 44.3% below against 33.5% to 33.7%
 // above, so both branches of that sentence have now been seen printing.
+//
+// POOLED, AND ONLY POOLED, WHICH IS WHERE THIS CLAIM STOPS. It was written for
+// part of 21 August 2026 as "on every goal at every later session", and that is
+// not true in either direction. After this constant, four of five seeds have one
+// cell still reading below more often than above, almost always Hit to All
+// Fields session 2 (39.5% against 39.1% at seed 20260821). Before it, seed
+// 20260821 had Power session 2 reading 38.2% below against 39.0% above. Every
+// one of those misses is a few tenths of a point, against a per-cell floor of
+// about 1.9 points at 20,000 sessions, so the per-cell picture is noise and the
+// pooled one is not. The measurement script never made the per-cell claim: its
+// verdict sentence is pooled and correctly floored. This comment did, and it
+// does not any more.
 //
 // IT IS NOT A SECOND STEP CONSTANT AND MUST NOT BECOME ONE. `min`,
 // `improveMax` and `declineMax` are the 65/35 coin, which is a settled product
@@ -1153,21 +1190,44 @@ const POP_UP_EV_DROP_MPH = { min: 6, max: 14 }
 // so they lift the average launch angle of the ball side of that comparison and
 // close the gap from underneath.
 //
-// NO TARGET NAMES THE LAUNCH ANGLE GAP, so nothing here is off a guard. What it
-// is worth knowing for is the comparison against session 1, whose own gap is
-// 3.89 degrees: the generator used to bracket that figure across sessions 2 to
-// 4 and now sits below it at every session. Recorded rather than fixed, and it
-// is the first thing to look at if a future pass wants that comparison back.
+// NO TARGET NAMES THE LAUNCH ANGLE GAP, so nothing here is off a guard.
+//
+// WHAT THIS CONSTANT DID NOT DO, corrected 21 August 2026 the same day it was
+// written, because the first version of this paragraph claimed a cost that
+// belongs one block up and then gave advice that followed from the wrong owner.
+// It said the generator "used to bracket" session 1's 3.89 degrees "and now
+// sits below it at every session". Its own before-numbers four lines above are
+// 3.73 / 3.55 / 3.32, which are already all three below 3.89, so the sentence
+// disagreed with the table it was printed under.
+//
+// The bracketing was lost BEFORE this constant, by PITCH_QUALITY_WEIGHT going
+// from 0.8 to 0.74 earlier the same day. That transition is 4.10 / 3.87 / 3.62
+// to 3.75 / 3.53 / 3.31, and the block beside that constant already claims it,
+// correctly, as "the whole of what this move cost". This ramp owns the four
+// tenths below that and nothing above it.
+//
+// WHICH CHANGES THE ADVICE, AND THAT IS THE PART THAT MATTERED. Reverting this
+// ramp lands the gap at 3.75 / 3.53 / 3.31, still below session 1 at every
+// session, so a future pass that wants the bracketing back and reaches for this
+// constant would spend it and not get there. The lever is PITCH_QUALITY_WEIGHT,
+// and reaching for that one runs straight back into the 4.5 mph
+// strike-versus-ball gap the product manager decided on. Recorded rather than
+// fixed, and now pointing at the right constant.
 //
 // Everything else came back inside its own five-seed band: both empty target
 // bands, all four distribution edges, both per-swing spreads, the Hit to All
 // Fields bar and every distance column.
 //
 // THE TWO CONSTANTS MOVE TOGETHER OR NOT AT ALL. Raising the foot without
-// raising the chance drops the rate to 0.32 a session, which is inside target
-// 4's 0.3-to-0.5 band but sitting on its floor, and it costs launch angle
-// spread as well, 6.81 degrees against 7.05 on the same measurement. Anybody
-// tuning one of these should re-read the row above before leaving the other.
+// raising the chance drops the rate to about 0.29 pop-ups a session, 0.29 to
+// 0.31 across the four non-Power goals, which straddles target 4's floor of 0.3
+// rather than sitting comfortably inside it, and it costs launch
+// angle spread as well, 6.81 degrees against 7.05 on the same measurement.
+// (That figure read 0.32 for part of 21 August 2026, taken off a single cell
+// rather than the four non-Power goals the target is stated over. The corrected
+// number strengthens the warning rather than weakening it: the pairing is not a
+// nicety, it is what keeps the rate inside its band at all.) Anybody tuning one
+// of these should re-read the row above before leaving the other.
 const POP_UP_FROM_HEIGHT = 0.8
 const POP_UP_FULL_HEIGHT = 1.4
 

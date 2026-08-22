@@ -2465,6 +2465,20 @@ console.log('')
 // The two shares are read off the same 300,000 sessions, so the floor is the
 // larger of a share of a percent worth caring about and three standard errors,
 // the same rule section 8 uses for the same shape of question.
+//
+// ONE THING THIS FLOOR IS SLIGHTLY WRONG ABOUT, RECORDED RATHER THAN FIXED
+// because no printed conclusion depends on it. `floorForRate` is built for two
+// INDEPENDENT readings of one rate, and its `2 * rate * (1 - rate)` is the
+// variance of that difference. These two shares come from the same sessions:
+// a session's tile is below, level, or above, so they are multinomial and
+// negatively correlated, and the right variance is
+// `(below + above - (below - above)^2) / n`. At this sample that reads 0.48%
+// against the 0.38% this line computes, so the honest floor is the LARGER of
+// the two and this line understates it. It changes nothing printed, because
+// A_REAL_SPREAD's half a percent is above both and wins the Math.max either
+// way. It would start to matter if that product floor were ever lowered, or if
+// this verdict were ever taken per cell, where the same correction runs 1.47%
+// to 1.88%.
 const tileCells = SLICE11_CELLS.length * REPLAYS_PER_CELL
 const A_REAL_TILE_LEAN = floorForRate(Math.max(tileBelow, tileAbove), tileCells, A_REAL_SPREAD)
 if (Math.abs(tileAbove - tileBelow) < A_REAL_TILE_LEAN) {

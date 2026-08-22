@@ -1128,9 +1128,31 @@ have.
 *Added 21 August 2026, Task 9. **Rewritten the same day, after review, and the
 rewrite is the substantive one.** The first version priced the step from a
 single lever and got the answer wrong by a factor of three, which nearly cost
-the product manager a decision he then took the other way. The original is
-struck through below rather than deleted, because the wrong version is what a
-reader would otherwise reinvent.*
+the product manager a decision he then took the other way.*
+
+***And this header was itself wrong for part of the same day, which is worth
+more than the correction.** It said the original was "struck through below
+rather than deleted". It had been deleted: roughly thirty lines went, including
+its whole `improveMax` sweep table, and what was struck was a six-line
+paraphrase written after the fact. **This document's own rule is that records
+are append-only and corrections are annotations, never rewrites, and a
+strikethrough covering a summary of the deleted thing rather than the deleted
+thing is the failure that rule exists to prevent.** The original is now restored
+verbatim at the foot of this finding under its own heading. It is not struck
+line by line because it contains a table, which a strikethrough cannot mark
+legibly; the heading carries the supersession instead.*
+
+***One live observation went out with that deletion and appeared nowhere in the
+repository until it was restored**, which is the concrete cost: that the pop-up
+mechanism was eating 0.27 mph of the coin's own +0.32 expected step, so the
+demo's exit velocity arc was being spent on the pop-up mechanism rather than on
+a decision anybody took. It matters beyond bookkeeping, because decision 2 then
+raised `POP_UP_MAX_CHANCE` from 0.22 to 0.30. **Checked rather than assumed: it
+did not make the tax worse.** The ramp change alone steps +0.14 / +0.15 / +0.15
+pooled against +0.13 / +0.13 / +0.14 before it, because the frequency was held
+at 0.40 a session by design, so the exit velocity tax is a function of how many
+pop-ups there are rather than of where they come from. Nobody could have run
+that check from the record as it stood.*
 
 **Two instructions in this document contradict each other and both were
 approved.** Task 7's implementation bullet says the session step "shrinks so the
@@ -1162,12 +1184,17 @@ third as much.
 | +0.29, mean shift | 0.41% | 6.10 | 33.4% | 7.5 / 4.3 / 3.0 |
 | +0.48, mean shift | **0.48%** | 6.09 | 31.8% | 6.9 / 3.9 / 2.6 |
 | +0.51, mean shift | 0.49% | 6.09 | 31.5% | 6.8 / 3.8 / 2.6 |
-| +0.89, mean shift | **0.61%** | 6.06 | 28.5% | 5.8 / 3.0 / 1.7 |
+| +0.85, mean shift | **0.61%** | 6.06 | 28.5% | 5.8 / 3.0 / 1.7 |
 | +0.89, widening the coin | **1.45%** | 5.98 | 32.6% | 7.6 / 5.1 / 4.1 |
 
-**Read the last two rows against each other. That is the whole finding.** The
-same +0.9 costs 0.61% one way and 1.45% the other, and the cheap way also leaves
-the spread where target 6 wants it while the expensive way pulls it down.
+**Read the last two rows against each other. That is the whole finding.** They
+are +0.85 and +0.89 rather than the same number, because the mean-shift row was
+run at a round lift of 0.76 rather than solved for the exact step; the four
+hundredths between them are worth far less than the difference they are being
+used to show, which is 0.61% against 1.45%. The cheap route also leaves the
+spread where target 6 wants it while the expensive one pulls it down. *(That row
+was labelled "+0.89, mean shift" for part of 21 August 2026, which made the
+comparison look exact when it was not.)*
 
 **So the largest free step is about +0.5, not the +0.23 the struck paragraph
 said.** And at +0.9 the ceiling reads 0.61%, over the guard but by a fifth
@@ -1217,19 +1244,110 @@ in the way.
 product manager took it on the free column above and on one fact the first
 version of this finding never surfaced, which turned out to matter more than any
 of the distribution numbers. The AVG EXIT VELO tile on the results screen is a
-ROUNDED WHOLE NUMBER. Session 1 always reads 82. Before this change, on every
-goal at every later session, that tile read below 82 more often than above it,
-44.1% to 44.3% against 33.5% to 33.7% at five seeds, and on Open Session session
-4 it was 45 / 23 / 32. A visitor clicking through four sessions of a demo about a
-hitter improving was more likely to finish lower than he started. Shipped as
+ROUNDED WHOLE NUMBER. Session 1 always reads 82. Before this change that tile
+read below 82 more often than above it, **pooled across the fifteen
+goal-and-session combinations**, 44.1% to 44.3% against 33.5% to 33.7% at five
+seeds. A visitor clicking through four sessions of a demo about a hitter
+improving was more likely to finish lower than he started. Shipped as
 `EV_SESSION_STEP.lift`, measured after at 41.0% to 41.2% above against 36.4% to
 36.7% below.
+
+**Pooled is the only scope this claim holds at, and the word was missing here
+for part of 21 August 2026.** Per cell it fails in both directions and by a few
+tenths: after the change, four of five seeds have one cell still reading below
+more often than above, almost always Hit to All Fields session 2 at 39.5%
+against 39.1%; before it, seed 20260821 had Power session 2 reading 38.2% below
+against 39.0% above. The per-cell floor is about 1.9 points at 20,000 sessions,
+so none of those misses is a finding. Worth being exact about where the defect
+was: **the measurement script never made the per-cell claim.** Its verdict
+sentence is pooled and correctly floored. It was this document's prose and the
+task report that overreached.
 
 **The measurement script could not print that number and now can.** A subsection
 was added to section 7 in the same change, with its own verdict floor and both
 of its judgment branches on the disclosure list. Both branches have been seen
 printing: the "backwards" one off the generator as it stood this morning, the
 "way round it should read" one off the generator that shipped.
+
+### The original of this finding, 21 August 2026, restored verbatim and SUPERSEDED IN FULL
+
+**Nothing below is current.** It is kept because this document's records are
+append-only and because the wrong version is what a reader would otherwise
+reinvent: its central conclusion, that a useful session step could not be
+bought, is false, and it is false because every number in it was measured off
+one lever. The corrections are above, under the same heading. Two things in it
+are still true and are the reason restoring it was not merely bookkeeping: the
+paragraph beginning "What the step actually is today", whose 0.27 mph pop-up tax
+is the observation that went missing when this was deleted, and the sweep table,
+which remains a correct picture of what widening the coin costs.
+
+*Added 21 August 2026, Task 9. This is the escalation this task was told to
+make rather than resolve, and the decision is the product manager's.*
+
+**Two instructions in this document contradict each other and both were
+approved.** Task 7's implementation bullet says the session step "shrinks so the
+systematic component sits under the sampling noise of a fifteen-swing average",
+on the product argument that a hitter can change his launch angle inside one
+practice and cannot change his bat speed. Task 9's target 7 says the step should
+sit "near +0.9 off session 1's 81.6". Task 7 shipped first and shrank it.
+
+**What the step actually is today.** Pooled across five goals it is +0.12 to
++0.15 mph, and on the three goals whose target band never comes up empty, which
+is the step the dice really produce rather than one the empty-band re-roll has
+lifted, it is about +0.05. Never negative anywhere across five seeds. The
+constant's own expected value is +0.32; the pop-up mechanism eats 0.27 of it,
+because a pop-up comes off the bat 6 to 14 mph under the session average and
+about one swing in thirty-seven is one.
+
+**And +0.9 cannot be reached, which is a different objection from Task 7's.**
+Task 7's is a product argument. This one is arithmetic plus a guard. Measured
+through the shipped generator at 8,000 sessions a cell, seed 20260821, varying
+only `EV_SESSION_STEP` (`improveMax`, with `declineMax` held at 0.8 of it, which
+is the ratio the constant already carries):
+
+| improveMax | pooled step off 81.6 | share of swings sitting on 94 mph | Power "Under 175" empty, S4 | Contact "Under 175" empty, S4 |
+| --- | --- | --- | --- | --- |
+| 1.5, shipped | **+0.13** | **0.37%** | 23.3% | 4.2% |
+| 2.0 | +0.23 | 0.44% | 24.5% | 4.7% |
+| 2.5 | +0.33 | **0.53%** | 25.6% | 5.3% |
+| 3.5 | +0.53 | 0.78% | 28.5% | 6.5% |
+| 5.26, the value that reaches the target | **+0.89** | **1.46%** | 33.7% | 9.8% |
+| 6.24 | +1.10 | 2.00% | 36.2% | 12.3% |
+
+Pooled across all five goals, which is what target 7 names. On the three goals
+the re-roll never lifts the step is smaller throughout: +0.06 shipped, and +0.66
+at the setting whose pooled figure reads +0.89.
+
+**Target 5 says nothing may stack at either ceiling above 0.5%.** That line is
+crossed between `improveMax` 2.0 and 2.5, so the step has about a tenth of a mph
+of headroom above where it sits before it breaks the guard. Reaching +0.9 breaks
+it by three times over: a flat row of dots along the top of the exit velocity
+chart, which is the exact defect Task 6 was bought to remove.
+
+Two more targets go with it at that setting, so this is not one guard against
+one target. Per-swing exit velocity spread falls from 6.02 to 5.89 against a
+target of 6.11 (target 6), and the "Under 175" column, the one Power was already
+worst at, empties on a third of Power's session 4s and more than doubles on
+Contact (the distance-column guard).
+
+**What Task 9 did, and why that is not silently choosing.** Nothing. The step
+was left where Task 7 put it, because Task 7's decision is later than target 7,
+is recorded with its reasoning, and is the one this task was told stands. The
+price of the other answer is the table above. **If the product manager wants a
+visible session-over-session improvement in exit velocity, it is available, and
+what it costs is a flat row of dots on a chart.** That is his call and it is not
+taken here.
+
+**One thing worth separating out, because it is cheaper than the whole
+question.** The pop-up drop is eating five sixths of the step the coin already
+produces. Handing back that 0.27 would mean making pop-ups rarer or softer,
+both of which are constants set against targets that ARE met, so it was not
+done. But it does mean the demo's exit velocity arc is being spent on the
+pop-up mechanism rather than on a decision anybody took.
+
+*(End of the superseded original. It stops where it did on the day, with the
+step left where Task 7 put it. The product manager then took it to about +0.5,
+as a mean shift, on the frontier above.)*
 
 ## 12. What else the tuning pass swept and left, so nobody re-runs it
 
@@ -1335,3 +1453,73 @@ marked where they sit.
   ends were not swept at all**, deliberately. The first two are settled product
   decisions in this document's own front block, and the ceiling was proved inert
   for the empty bands before this task started.
+
+## 13. Target 5 is a pooled guard and a visitor looks at one cell, and those are not the same measurement
+
+*Added 21 August 2026, at the close of Task 9. Recorded rather than fixed, at
+the reviewer's direction, because no visible defect follows from it and because
+the honest version of the guard is a product question rather than a tuning one.*
+
+**Target 5 says "nothing stacked at either ceiling above 0.5%", and every report
+of it in this slice, including Task 9's, has been POOLED across all fifteen
+goal-and-session combinations.** A visitor does not look at a pooled
+distribution. He looks at one chart, which is one cell.
+
+Measured at 20,000 sessions a cell, seed 20260821, share of each cell's swings
+sitting on the 94 mph ceiling, with the value one step inside in brackets:
+
+| | session 2 | session 3 | session 4 |
+| --- | --- | --- | --- |
+| Power & Distance | **0.87%** (4.00%) | **0.50%** (3.28%) | 0.25% (2.51%) |
+| Line Drives & Contact | **0.72%** (3.53%) | 0.43% (2.83%) | 0.22% (2.28%) |
+| Hit to All Fields | **0.74%** (3.51%) | 0.44% (2.86%) | 0.24% (2.23%) |
+| Reduce Pop-Ups | **0.73%** (3.48%) | 0.44% (2.84%) | 0.23% (2.26%) |
+| Open Session | **0.75%** (3.44%) | 0.46% (2.84%) | 0.24% (2.23%) |
+| pooled | | **0.48%** | |
+
+**Six of the fifteen cells are over 0.5%, and the pooled figure that clears the
+guard is an average of cells that mostly do not.** Session 2 breaches it on all
+five goals.
+
+**This is not something Task 9 introduced, and saying so precisely matters.**
+The same measurement on the pre-Task-9 generator:
+
+| | session 2 | session 3 | session 4 |
+| --- | --- | --- | --- |
+| Power & Distance | **0.68%** | 0.38% | 0.18% |
+| Line Drives & Contact | **0.56%** | 0.32% | 0.16% |
+| Hit to All Fields | **0.59%** | 0.33% | 0.17% |
+| Reduce Pop-Ups | **0.57%** | 0.33% | 0.17% |
+| Open Session | **0.57%** | 0.34% | 0.17% |
+| pooled | | 0.37% | |
+
+Five of fifteen already over, at 0.56% to 0.68%. **So this slice widened an
+existing breach and pushed one more cell across it. It did not break a guard
+that was being held.**
+
+**No visible defect follows, and the reasoning is the script's own, not a
+hunch.** The worst cell is 0.87% of fifteen swings, which is 0.13 of a swing on
+a chart, against the 3.3% the measurement script derives as the line where a
+single value becomes a flat row on its own merits. And it is a thinning tail
+rather than a wall at every cell: 0.87% on the ceiling against 4.00% one step
+inside, a factor of four and a half. The script's per-cell verdict, which does
+test each of the fifteen cells against both the relative and the absolute rule,
+prints that none of them piles up. That verdict is right and this finding does
+not contradict it.
+
+**What is wrong is the guard, not the generator.** Target 5 was written as a
+number without a scope, and it has been evaluated at the one scope where it
+passes. The two candidate repairs are a product decision:
+
+- **Restate the target per cell** at a level the generator can hold, which today
+  would be something near 1%, and accept that the number looks worse while
+  measuring the thing a visitor sees.
+- **Leave it pooled and say so in the target**, on the argument that the 3.3%
+  flat-row line is the real defect threshold and 0.5% pooled is a wide margin
+  under it.
+
+**The practical consequence for whoever tunes next.** Task 9's report says the
+stacking guard now has "0.02 points of headroom", and that is a pooled
+statement. Per cell, Power session 2 is already at 0.87%, so anything that
+raises the session average again or widens the exit velocity spread will move
+that cell first and furthest, and the pooled number will keep understating it.
