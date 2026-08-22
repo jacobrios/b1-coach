@@ -570,21 +570,28 @@ read as ten targets all quietly met.** Eight of the ten were met and one target
 was struck and re-adopted before this task started (target 1, now about 4.5
 rather than 6.0). The two that were not:
 
-- **Target 7, the +0.9 session step, was not met and cannot be**, and it did not
-  bite where this section predicted. Contact's empty band against the zone gap
-  turned out to be a non-issue; the collision is target 7 against target 5.
-  Measured, in finding 11 below. It is also in direct contradiction with Task 7's
-  own instruction two sections up, which says to SHRINK the step, on a product
-  argument the same document approved. Task 9 did not reopen that; the
-  contradiction and the price of resolving it either way are recorded for the
-  product manager.
+- **Target 7, the +0.9 session step, was not met**, and it did not bite where
+  this section predicted. Contact's empty band against the zone gap turned out to
+  be a non-issue; the tension is target 7 against target 5, the stacking guard.
+  **The step went to about +0.5 instead, on the product manager's decision of 21
+  August 2026.** Finding 11 below carries the frontier both ways.
 - **Target 10, the correlation, was adjudicated and deliberately not acted on**,
   on evidence that came in after it was written. Finding 9 below carries a dated
   annotation with the measurement.
 
-**And this task moved exactly one constant**, which is not what a section headed
-"the tuning pass" leads a reader to expect. Everything else was swept and left
+**Four constants moved**, and the fourth is a new one: `PITCH_QUALITY_WEIGHT`
+0.8 to 0.74, `POP_UP_FROM_HEIGHT` 0.6 to 0.8, `POP_UP_MAX_CHANCE` 0.22 to 0.30,
+and a new `EV_SESSION_STEP.lift` of 0.35. Everything else was swept and left
 where it stood, with the sweep recorded in finding 12 so nobody re-runs it.
+
+**A correction to how this task ran, worth more than any of its numbers.** Its
+first pass priced target 7 from a single lever, widening the 65/35 coin, and
+concluded the step could not be bought at any useful size. Bought instead as a
+mean shift it costs about a third as much, and about +0.5 turned out to be free.
+The lesson generalises past this constant: **a frontier drawn from one lever is
+not a frontier, and reporting one as though it were nearly took a live decision
+away from the product manager.** Finding 11 keeps the wrong version struck
+through beside the right one.
 
 ## Task 10: free dry runs
 
@@ -1116,71 +1123,113 @@ lift, which is one of the constants Task 9 sets, and because a tuning harness
 that chains sessions for convenience would report a defect the app does not
 have.
 
-## 11. Target 7's +0.9 session step collides with target 5, and the collision is measured rather than argued
+## 11. Target 7's +0.9 session step: the frontier, and the two very different prices of buying one
 
-*Added 21 August 2026, Task 9. This is the escalation this task was told to
-make rather than resolve, and the decision is the product manager's.*
+*Added 21 August 2026, Task 9. **Rewritten the same day, after review, and the
+rewrite is the substantive one.** The first version priced the step from a
+single lever and got the answer wrong by a factor of three, which nearly cost
+the product manager a decision he then took the other way. The original is
+struck through below rather than deleted, because the wrong version is what a
+reader would otherwise reinvent.*
 
 **Two instructions in this document contradict each other and both were
 approved.** Task 7's implementation bullet says the session step "shrinks so the
-systematic component sits under the sampling noise of a fifteen-swing average",
-on the product argument that a hitter can change his launch angle inside one
-practice and cannot change his bat speed. Task 9's target 7 says the step should
-sit "near +0.9 off session 1's 81.6". Task 7 shipped first and shrank it.
+systematic component sits under the sampling noise of a fifteen-swing average".
+Task 9's target 7 says the step should sit "near +0.9 off session 1's 81.6".
+Task 7 shipped first and shrank it.
 
-**What the step actually is today.** Pooled across five goals it is +0.12 to
-+0.15 mph, and on the three goals whose target band never comes up empty, which
-is the step the dice really produce rather than one the empty-band re-roll has
-lifted, it is about +0.05. Never negative anywhere across five seeds. The
-constant's own expected value is +0.32; the pop-up mechanism eats 0.27 of it,
-because a pop-up comes off the bat 6 to 14 mph under the session average and
-about one swing in thirty-seven is one.
+~~**And +0.9 cannot be reached.** Measured through the shipped generator varying
+`EV_SESSION_STEP.improveMax` with `declineMax` held at 0.8 of it: reaching a
+pooled +0.89 needs `improveMax` near 5.26, at which 1.46% of swings sit on 94
+mph against a guard of 0.5%, per-swing spread falls to 5.89 against a target of
+6.11, and Power's "Under 175" empties on a third of session 4s. The guard line
+is crossed between `improveMax` 2.0 and 2.5, so the step has roughly a tenth of
+a mph of headroom, not eight tenths.~~
 
-**And +0.9 cannot be reached, which is a different objection from Task 7's.**
-Task 7's is a product argument. This one is arithmetic plus a guard. Measured
-through the shipped generator at 8,000 sessions a cell, seed 20260821, varying
-only `EV_SESSION_STEP` (`improveMax`, with `declineMax` held at 0.8 of it, which
-is the ratio the constant already carries):
+**Struck 21 August 2026. Every number in it is real and every conclusion drawn
+from it is wrong, because it priced the step from ONE lever and that lever is
+the expensive one.** Varying `improveMax` widens the 65/35 coin, which buys mean
+by buying VARIANCE, and variance is exactly what pushes swings into the soft
+ceiling and stacks them on 94. The same step bought as a MEAN SHIFT, a constant
+added to the session average that leaves the coin's width alone, costs about a
+third as much.
 
-| improveMax | pooled step off 81.6 | share of swings sitting on 94 mph | Power "Under 175" empty, S4 | Contact "Under 175" empty, S4 |
+**The frontier, both routes, 20,000 sessions a cell at five seeds:**
+
+| step | swings on 94 mph | per-swing EV spread | "305+" empty, worst non-Power goal | Power empty band, S2/S3/S4 |
 | --- | --- | --- | --- | --- |
-| 1.5, shipped | **+0.13** | **0.37%** | 23.3% | 4.2% |
-| 2.0 | +0.23 | 0.44% | 24.5% | 4.7% |
-| 2.5 | +0.33 | **0.53%** | 25.6% | 5.3% |
-| 3.5 | +0.53 | 0.78% | 28.5% | 6.5% |
-| 5.26, the value that reaches the target | **+0.89** | **1.46%** | 33.7% | 9.8% |
-| 6.24 | +1.10 | 2.00% | 36.2% | 12.3% |
+| +0.14, shipped this morning | 0.36% | 6.11 | 34.7% | 8.1 / 4.8 / 3.5 |
+| +0.29, mean shift | 0.41% | 6.10 | 33.4% | 7.5 / 4.3 / 3.0 |
+| +0.48, mean shift | **0.48%** | 6.09 | 31.8% | 6.9 / 3.9 / 2.6 |
+| +0.51, mean shift | 0.49% | 6.09 | 31.5% | 6.8 / 3.8 / 2.6 |
+| +0.89, mean shift | **0.61%** | 6.06 | 28.5% | 5.8 / 3.0 / 1.7 |
+| +0.89, widening the coin | **1.45%** | 5.98 | 32.6% | 7.6 / 5.1 / 4.1 |
 
-Pooled across all five goals, which is what target 7 names. On the three goals
-the re-roll never lifts the step is smaller throughout: +0.06 shipped, and +0.66
-at the setting whose pooled figure reads +0.89.
+**Read the last two rows against each other. That is the whole finding.** The
+same +0.9 costs 0.61% one way and 1.45% the other, and the cheap way also leaves
+the spread where target 6 wants it while the expensive way pulls it down.
 
-**Target 5 says nothing may stack at either ceiling above 0.5%.** That line is
-crossed between `improveMax` 2.0 and 2.5, so the step has about a tenth of a mph
-of headroom above where it sits before it breaks the guard. Reaching +0.9 breaks
-it by three times over: a flat row of dots along the top of the exit velocity
-chart, which is the exact defect Task 6 was bought to remove.
+**So the largest free step is about +0.5, not the +0.23 the struck paragraph
+said.** And at +0.9 the ceiling reads 0.61%, over the guard but by a fifth
+rather than by three times.
 
-Two more targets go with it at that setting, so this is not one guard against
-one target. Per-swing exit velocity spread falls from 6.02 to 5.89 against a
-target of 6.11 (target 6), and the "Under 175" column, the one Power was already
-worst at, empties on a third of Power's session 4s and more than doubles on
-Contact (the distance-column guard).
+**Three things the struck version got wrong beyond the number, all of which
+made the target look less reachable than it is.**
 
-**What Task 9 did, and why that is not silently choosing.** Nothing. The step
-was left where Task 7 put it, because Task 7's decision is later than target 7,
-is recorded with its reasoning, and is the one this task was told stands. The
-price of the other answer is the table above. **If the product manager wants a
-visible session-over-session improvement in exit velocity, it is available, and
-what it costs is a flat row of dots on a chart.** That is his call and it is not
-taken here.
+- **Target 6 is effectively met at +0.9, not broken.** 6.06 against 6.11 is 0.8
+  percent under, well inside the 5 percent the measurement script itself treats
+  as the same number. The struck version reported 5.89 and called it a break;
+  that 5.89 is the widening route's number, not the step's.
+- **The named "305+" guard IMPROVES all the way up the frontier**, from 34.7%
+  down to 28.5%, because a higher session average carries more balls past 305
+  feet. The struck version listed the distance columns as a cost without
+  separating the column the product manager actually guarded from the one he
+  did not.
+- **The single genuine regression is Power's own "Under 175" column**, which
+  goes from 24.5% empty at session 4 to 28.2% across the same frontier. It is
+  real, it is Power's worst column already, and it is the one thing on this list
+  that gets worse the further the step goes.
 
-**One thing worth separating out, because it is cheaper than the whole
-question.** The pop-up drop is eating five sixths of the step the coin already
-produces. Handing back that 0.27 would mean making pop-ups rarer or softer,
-both of which are constants set against targets that ARE met, so it was not
-done. But it does mean the demo's exit velocity arc is being spent on the
-pop-up mechanism rather than on a decision anybody took.
+**"A flat row of dots" was a claim the instrument does not make, and it is
+withdrawn.** The struck version said reaching +0.9 by widening "is a flat row of
+dots along the top of the exit velocity chart, which is the exact defect Task 6
+was bought to remove". Run at 1.45 percent, section 5 of the measurement script
+prints "NOT ONE of the 4 edges carries a pile-up" and "no chart this generator
+can draw carries a flat row of dots along an edge", because its own threshold is
+3.3 percent of a cell and 94 mph holds 1.45 against 4.42 one step inside, which
+is a thinning tail rather than a wall. The defect Task 6 removed was 2.16 percent
+pooled and 4.2 on Power session 4, sitting on a hard clamp. **The honest
+statement is that the guard is breached as a number, at three times its value,
+and that the picture the guard exists to prevent is not supported at that
+level.** This project's rule is that a claim its instruments cannot back does not
+ship, and that includes a claim made in a document rather than in the app.
+
+**And the Task 7 "direct contradiction" was overstated.** Task 7's stated TEST is
+that the systematic component sits under the sampling noise of a fifteen-swing
+average, and that noise is about 1.58 to 1.82 mph, so even +0.9 is 0.57 of it and
+passes the test as written. The real tension is with Task 7's product ARGUMENT,
+that the step should read as a draw rather than a promise. That distinction
+matters because the struck version offered the contradiction as a reason the
+question could not be settled here, when in fact only a product judgment stood
+in the way.
+
+**DECIDED, 21 August 2026: the step goes to about +0.5, as a mean shift.** The
+product manager took it on the free column above and on one fact the first
+version of this finding never surfaced, which turned out to matter more than any
+of the distribution numbers. The AVG EXIT VELO tile on the results screen is a
+ROUNDED WHOLE NUMBER. Session 1 always reads 82. Before this change, on every
+goal at every later session, that tile read below 82 more often than above it,
+44.1% to 44.3% against 33.5% to 33.7% at five seeds, and on Open Session session
+4 it was 45 / 23 / 32. A visitor clicking through four sessions of a demo about a
+hitter improving was more likely to finish lower than he started. Shipped as
+`EV_SESSION_STEP.lift`, measured after at 41.0% to 41.2% above against 36.4% to
+36.7% below.
+
+**The measurement script could not print that number and now can.** A subsection
+was added to section 7 in the same change, with its own verdict floor and both
+of its judgment branches on the disclosure list. Both branches have been seen
+printing: the "backwards" one off the generator as it stood this morning, the
+"way round it should read" one off the generator that shipped.
 
 ## 12. What else the tuning pass swept and left, so nobody re-runs it
 
@@ -1189,10 +1238,13 @@ session number through the shipped generator with one constant patched, seed
 20260821, and the point of writing them down is that the next person to wonder
 "what if we moved X" should read this before spending an afternoon.*
 
-The one constant that moved is `PITCH_QUALITY_WEIGHT`, 0.8 to 0.74, which lands
-the zone gap on the 4.5 the product manager adopted and costs nothing else
-measurable. Its own table is in `src/swingGenerator.js` beside the constant.
-Everything below was swept and left.
+**Four constants moved in the end, not one.** `PITCH_QUALITY_WEIGHT` 0.8 to
+0.74, which lands the zone gap on the 4.5 the product manager adopted; then, on
+his two decisions of 21 August 2026, a new `EV_SESSION_STEP.lift` of 0.35 and the
+pop-up ramp's `POP_UP_FROM_HEIGHT` 0.6 to 0.8 with `POP_UP_MAX_CHANCE` 0.22 to
+0.30 beside it. Each has its own table in `src/swingGenerator.js` beside the
+constant. Everything below was swept and left, with the two entries he ruled on
+marked where they sit.
 
 - **`EV_SPREAD_MPH`, 21.88.** It is the value that matches session 1's own
   spread, and it turns out to be pinned from both sides rather than just chosen.
@@ -1206,7 +1258,7 @@ Everything below was swept and left.
   6.79 against a target of 7.23. At 0.30 it is 0.55, over the ceiling, and the
   top launch angle value reaches 0.44% of swings, close to target 5's line.
   Centred where it is.
-- **`POP_UP_FROM_HEIGHT`, 0.6**, putting 65% of pop-ups on pitches at or above
+- ~~**`POP_UP_FROM_HEIGHT`, 0.6**, putting 65% of pop-ups on pitches at or above
   the top of the zone. **This is the one genuinely attractive move that was
   declined, so it is recorded in full.** At 0.8 paired with a chance of 0.30, the
   frequency is unchanged at 0.40 a session and the high-pitch share rises to
@@ -1215,17 +1267,44 @@ Everything below was swept and left.
   pushes the zone gap from 4.50 to 4.63, spending a target that is met on a
   target that is also already met: target 4 asks for a "clear majority" and 65%
   is one. Worth revisiting only if the coach is ever measured saying something
-  wrong about where a pop-up came from.
-- **`POWER_LIFT_PER_SESSION`, 2.** At 1.5, Power's worst distance column
-  improves materially, "Under 175" empty on 17.8% of session 4s rather than
-  23.3%, and Power's pop-up rate flattens from 0.44/0.52/0.67 to 0.42/0.45/0.49.
-  It costs Power's empty target band, 3.5% to 5.3% at session 4, which is still
-  far inside the 13.7% guard. Left alone because the lift is a settled product
-  feature with its own recorded reasoning: at 2 it lands session 4 at about 24.4
-  degrees against Power's 25-to-35 ask, and at 1.5 it lands at about 22.9, which
-  is a hitter making less progress on the goal he chose. **This is the second
-  real trade on the table and it belongs to the product manager, not to a tuning
-  pass.**
+  wrong about where a pop-up came from.~~
+
+  **TAKEN, 21 August 2026, by the product manager, and one number in the struck
+  paragraph was wrong.** The high-pitch share at foot 0.8 with a chance of 0.30
+  is **80.7 to 80.9 percent at five seeds, 7.6 times the base rate**, not 84 and
+  not 8.0. The 84 was this task's own session-2 figure quoted as though it were
+  the pooled one, which is the same class of error as reading a single seed as a
+  result. (For the record, since both were considered: 0.85 at the same chance is
+  what gives 84, and 0.8 at the UNCHANGED chance of 0.22 gives 78.7 but drops the
+  frequency to 0.32 a session, which is why the two constants moved together.)
+
+  He accepted the zone gap drifting from 4.50 to about 4.62, on the reasoning
+  that "about 4.5" was adopted from a measured range rather than as a precise
+  target. Shipped. Measured after at five seeds: pop-ups 0.39 to 0.42 a session
+  on all four non-Power goals, high-pitch share 80.7 to 80.9 percent, and nothing
+  else off its own five-seed band.
+
+  **One consequence that belongs here rather than only in the test that found
+  it.** The foot of the ramp is 0.8 of the zone's half height, which in feet is
+  3.30. So only the top TENTH of the strike zone can produce a pop-up now, 3.30
+  to 3.50 feet, where it was the top fifth from 3.10. A pitch at exactly 3.30
+  has a chance of zero, 3.40 is 5.00%, 3.50 is 10.00%, and everything at 3.90 or
+  above is at the ramp's full 30.00%. This turned `swingGenerator.test.js` red on
+  the assertion that proves the whole mechanism, because its "high in zone"
+  fixture is 3.30 exactly; the fixture moved to 3.46 and the describe carries the
+  measurement.
+- **`POWER_LIFT_PER_SESSION`, 2. DECLINED by the product manager, 21 August
+  2026, and the cost this entry first gave was only a third of it.** At 1.5,
+  Power's worst distance column improves materially, "Under 175" empty on 17.8%
+  of session 4s rather than 23.3%, and Power's pop-up rate flattens from
+  0.44/0.52/0.67 to 0.42/0.45/0.49. What this entry first said it cost was
+  "Power's empty target band, 3.5% to 5.3% at session 4". **It costs that band
+  at EVERY session, not just the fourth: 8.1 / 4.8 / 3.5 becomes 9.7 / 6.8 /
+  5.2.** Naming only the session-4 figure made a change that is worse on all
+  three look like one that is worse on one, and that is the number the decline
+  was taken on. It also remains true that the lift is a settled product feature:
+  at 2 it lands session 4 near 24.4 degrees against Power's 25-to-35 ask, and at
+  1.5 near 22.9, which is a hitter making less progress on the goal he chose.
 - **`LA_SPREAD_DEGREES`, 22**, giving 7.26 degrees at session 2 against session
   1's 7.23. At 20 it is 6.61 and at 24 it is 7.58. Dead on where it is.
 - **The two soft zones, 5 degrees and 3 mph.** An exit velocity soft zone of 2
