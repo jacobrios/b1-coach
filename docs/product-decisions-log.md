@@ -59,13 +59,32 @@ pop-up are that missing mechanism.
 *What shipped, measured and reproducible from a seeded script anyone can run.*
 The zone gap 0.00 to 4.6 mph. Pitches that miss the zone are near misses on one
 axis instead of implausible balls off on both, 100% to 0%. Pop-ups exist: none in
-4,500,000 swings before, 0.40 a session now, four in five off high pitches. The
-flat row of dots pinned to the top of a chart every visitor sees is gone, 4.138%
-of Power session-4 swings on exactly 35 degrees down to 1.385% on a smooth tail,
-and confirmed by eye in a browser. Two guards this was not allowed to break both
+4,500,000 swings before, ~~0.40 a session now~~ 0.43 a session now, four in five
+off high pitches. The flat row of dots pinned to the top of a chart every visitor
+sees is gone, ~~4.138% of Power session-4 swings on exactly 35 degrees down to
+1.385%~~ about 4% of Power session-4 swings on exactly 35 degrees down to about
+1.4%, on a smooth tail, and confirmed by eye in a browser. Two guards this was not allowed to break both
 improved: Power's empty target band 14.9 / 12.7 / 11.9 down to about 7 / 4 / 3,
 and Hit to All Fields now meets its own stated bar at a flat 72 to 73% instead of
 64 falling to 52.
+
+*Both struck numbers above were corrected the same day, 21 August 2026, by the
+whole-branch review, and where they went wrong is the same place four other
+numbers in this slice went wrong: measured along one path, then written down as a
+property of the thing itself. That makes it a fifth instance, committed inside
+the entry that confesses the other four a little further down.* The pop-up rate
+the seeded script prints is **0.43 a session averaged across every goal**;
+0.40 is the figure for the four non-Power goals with its qualifier dropped, and
+Power runs 0.43, 0.50 and 0.68 across sessions 2 to 4 because that goal lifts
+launch angle. Every one of those sits inside the 0.3 to 0.5 band this slice aimed
+at, so no product decision moves. The 35-degree figures are **about 4% down to
+about 1.4%**, and their three decimal places came from a one-off measurement in a
+working report that is not committed here, so a stranger reading this repository
+has no path to them. The seeded script cannot rerun them by construction: it
+counts the edges of the distribution, and 35 degrees is an interior value now
+that the highest angle reached is 47. An independent replication at the script's
+own seed got 4.08% and 1.44%, so the story is right in direction and magnitude
+and only the decimals were unbacked.
 
 *The coach did not get worse, and that is the whole claim.* 128 live debriefs
 across two seeds, against 64 re-graded from the last slice through the same

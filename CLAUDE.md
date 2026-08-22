@@ -997,17 +997,43 @@ any number in that file, because most of them only make sense against it.
    headline change of the slice. It was 0.00 mph across 4,500,000 swings before,
    so the coach's chase reasoning, which it has been handed since Slice 8c, was a
    coincidence on every generated session.
-4. **Pop-ups exist and come from getting under a high pitch.** About 0.40 a
-   session, four in five of them on pitches at or above the top of the zone,
-   which is 7.6 times chance. There were none at all before: the goal named a
+4. **Pop-ups exist and come from getting under a high pitch.** About ~~0.40~~
+   0.43 a session, four in five of them on pitches at or above the top of the
+   zone, which is 7.6 times chance. There were none at all before: the goal named a
    failure the hitter could not commit, and the coach was handed "0 swings"
    forever.
 5. **The hard clamps became soft compression.** A generator that refuses to let a
    swing past a limit has to put it somewhere, and it used to put it exactly on
-   the limit: 4.138% of Power session-4 swings sat on exactly 35 degrees, drawing
-   a flat row of dots along the top of a chart every visitor sees. Values now
+   the limit: ~~4.138%~~ about 4% of Power session-4 swings sat on exactly 35
+   degrees, drawing a flat row of dots along the top of a chart every visitor
+   sees. Values now
    compress smoothly toward the limits instead, and no cell of the fifteen piles
    up on any of its four edges.
+
+**Both struck numbers corrected 21 August 2026, by the whole-branch review, the
+same day they were written. The correction is the same in each case, and it is
+the same one the decision log's own closing paragraph confesses four of.** A
+number measured along one path, then written down as a property of the thing
+itself.
+
+- **The pop-up rate is 0.43 a session averaged across every goal**, which is what
+  `scripts/measure-swing-generation.mjs` prints, confirmed at two seeds. 0.40 is
+  the figure for the four non-Power goals with its qualifier dropped; Power runs
+  0.43, 0.50 and 0.68 across sessions 2 to 4, because that goal lifts launch
+  angle. Every one of those is inside the 0.3 to 0.5 band the slice aimed at, so
+  nothing about the product changes. **Where the four-goal number is the one
+  wanted, say "on the four non-Power goals" out loud.**
+- **The 35-degree pile-up is about 4% down to about 1.4%**, and the three decimal
+  places claimed a precision nobody outside this branch could check. Those
+  figures came from a one-off measurement inside a task report that is not
+  committed to this repository. The seeded script cannot reproduce them **by
+  construction**: it measures the edges of the distribution, and 35 degrees is
+  now an interior value, since the highest launch angle the generator reaches is
+  47. An independent replication at the script's own default seed, over 300,000
+  swings a side, got 4.08% and 1.44%. The story is right in direction and
+  magnitude; only the decimals were unbacked. The underlying limitation, that the
+  script sees edges and not interiors, is already recorded on the What's Next
+  list and is not new here.
 
 **Three more numbers this slice set deliberately, all of which move if you touch
 the file.** The exit velocity ceiling is 94, two above Bill's own best rather
@@ -2612,7 +2638,8 @@ rewritten, per the append-only rule.
   deliberately not fixed there.**~~ **SHIPPED 21 August 2026 as Slice 11, and it
   grew from three items to eight.** All three below are closed: the zone gap
   went from 0.00 mph to about 4.6, spray now leans pull and stops narrowing
-  every session, and pop-ups exist at about 0.40 a session with four in five of
+  every session, and pop-ups exist at about ~~0.40~~ 0.43 a session with four in
+  five of
   them off high pitches. The coupling this entry warned about was checked rather
   than assumed and did not bite: `carryDistance`'s shape term floors above 28
   degrees, but the highest angle the generator actually produces is 47 and the
@@ -2622,10 +2649,13 @@ rewritten, per the append-only rule.
   out-of-zone pitches were off on both axes at once 100% of the time; the exit
   velocity ceiling described a near-elite hitter; the generated hitter was 31%
   tighter than the session he is derived from; the session-to-session step was
-  dishonest; and the hard clamps parked 4.138% of Power session-4 swings on
+  dishonest; and the hard clamps parked ~~4.138%~~ about 4% of Power session-4
+  swings on
   exactly 35 degrees. See the decision log entry for 21 August 2026, the "data
   is synthetic" section above, and `docs/slice-11-plan.md`. The original entry
-  follows as written.
+  follows as written. *(Both struck numbers corrected 21 August 2026 by the
+  whole-branch review; the full correction, and why the decimals were unbacked,
+  is in the "data is synthetic" section above.)*
 
   All three change sessions 2 to 4, which is
   why they were kept out of a slice whose whole measurement depended on those
@@ -2973,8 +3003,13 @@ own self-checks, not the coach.*
 
   **Findings 1 and 2 both closed 21 August 2026 in Slice 11, and both were
   confirmed on screen rather than only in a table.** The flat row at 35 degrees
-  is gone: 4.138 percent of Power session-4 swings sat on exactly that value and
-  it is now 1.385 percent spread across a smooth tail, and the browser pass found
+  is gone: ~~4.138 percent~~ about 4 percent of Power session-4 swings sat on
+  exactly that value and
+  it is now ~~1.385 percent~~ about 1.4 percent spread across a smooth tail
+  *(both corrected 21 August 2026 by the whole-branch review, which found the
+  three decimal places came from an uncommitted task report and could not be
+  rerun from the seeded script; see the "data is synthetic" section)*,
+  and the browser pass found
   Power session 4 a clean cloud topping out at 33 with nothing on the edge. Hit
   to All Fields meets its own bar at a flat 72 to 73 percent at every session. The
   builder trap is closed too, by the frozen snapshot and its digest. The 50
@@ -3082,6 +3117,20 @@ because they are the ones a visitor could see; the tooling items follow.*
   "fixed" against a defect with a two-of-two base rate. What would close it: one
   seeded session that puts a pitch within a hundredth of a foot of an edge,
   captured.
+- **The chat prompt's two approved lines are guarded against being removed or
+  reworded and NOT against being MOVED, and one line closes it.** Found in Slice
+  11's Task 3 review, proven rather than argued: a reviewer relocated the two
+  lines into the per-session block, where they would repeat once per session
+  instead of appearing once at the top, and got a fully green suite. The drift
+  test at `src/coachApi.test.js:1408-1450` cannot catch it, because it uses
+  `toContain` plus a first-match regex, and `text.match(...)[0]` takes the first
+  hit wherever it sits. **The fix is one line: assert the chat setting line
+  occurs exactly once, and before the first "Session 1:".** It matters more than
+  its size because this is the chat prompt, which is where the last two browser
+  QA gates both caught a real defect. Recorded here on 21 August 2026 by the
+  whole-branch review, because it had reached no committed document at all: it
+  lived only in the slice's own gitignored controller ledger, which does not
+  survive the slice.
 - **The coach can be handed every count it needs and still get the arithmetic
   BETWEEN two counts wrong, and this is fresh evidence for a decision already
   waiting on the product manager.** Asked to total chases across two sessions, it
@@ -3116,7 +3165,9 @@ because they are the ones a visitor could see; the tooling items follow.*
   leaving it pooled and saying so in the target. Whoever tunes next should know
   that the pooled number will keep understating Power session 2.
 - **The mis-hit pop-up rate is chosen, not derived.** No real TrackMan pop-up
-  rate was consulted for the 0.40 a session this slice shipped. It reads
+  rate was consulted for the ~~0.40~~ 0.43 a session this slice shipped
+  *(corrected 21 August 2026; 0.40 was the four-non-Power-goals figure with its
+  qualifier dropped, see the "data is synthetic" section)*. It reads
   plausibly and it was tuned against the goal's own coaching prose rather than
   against the sport. Only worth revisiting if a real number ever turns up.
 - **Every count-line test in `src/coachApi.test.js` uses a single-session
