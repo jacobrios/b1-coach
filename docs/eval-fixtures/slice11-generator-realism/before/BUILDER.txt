@@ -1,0 +1,98 @@
+# WHAT THIS DIRECTORY IS, AND WHAT IT IS NOT.
+#
+# Written 21 August 2026, in Slice 11 Task 11, BEFORE the grading run was
+# started, which is the only moment the answers below are actually known.
+#
+# This directory holds a GRADING RUN, not bench records. No coaching call was
+# bought to produce it. The coach prose it grades was bought once already, in
+# Slice 10 on 20 August 2026, and lives at
+# ../../slice10-direction-key/after-spray/shipped-64.json. Nothing here is new
+# coach output and nothing here should ever be read as such.
+#
+# WHY A SECOND GRADING OF A ROUND THAT ALREADY HAS ONE.
+#
+# Slice 11 rewrites src/swingGenerator.js, so it owes a before-and-after on
+# whether the coach got less accurate. The after side is bought in Task 12.
+# The before side is this: the same 64 debriefs Slice 10 shipped, on the
+# pre-Slice-11 generator, re-graded on the same day and through the same
+# instrument as the after rounds. Quoting the older
+# ../../slice10-direction-key/after-spray/grading.json instead would compare
+# two rounds graded by two generations of the tool, which this project has
+# already been bitten by once (see the Slice 8b false positives).
+#
+# Re-grading is cheap because the grading model only EXTRACTS claims; every
+# verdict is computed in plain code from a rebuilt fact sheet. So a re-grade
+# buys a fresh extraction pass and nothing else.
+#
+# WHAT WAS GRADED, THROUGH WHAT, ON WHAT DAY.
+#
+#   graded        docs/eval-fixtures/slice10-direction-key/after-spray
+#                 (64 debriefs, seven cells, condition "shipped")
+#   command       node --env-file=.env.local scripts/grade-coach-accuracy.mjs
+#                   --input docs/eval-fixtures/slice10-direction-key/after-spray
+#                   --builder slice11-before
+#                   --out docs/eval-fixtures/slice11-generator-realism/before/grading.json
+#   date          21 August 2026
+#   output        grading.json (self-describing: its own meta names the era,
+#                 seed, model and builder), grading.txt (the printed report)
+#
+# THE BUILDER, AND WHY IT IS NOT "current".
+#
+# "slice11-before" means today's fifteen hand-written session-1 swings paired
+# with the swing generator FROZEN as it stood at commit 53315e5, snapshotted
+# at ../../frozen/swing-generator-pre-slice11.mjs and held to a committed
+# digest by npm test. That pair is what the coach in those 64 debriefs
+# actually saw. Grading them through "current" today would rebuild sessions
+# 2, 3 and 4 from the rewritten generator: a complete, entirely plausible
+# fact sheet describing swings no coach ever saw, on 40 of the 64 records,
+# with nothing appearing broken. The grader refuses that combination outright;
+# do not talk it out of the refusal by editing a marker.
+#
+# The seed is not a preference either. Session 1 is the same fifteen swings at
+# any seed, but sessions 2, 3 and 4 are GENERATED from it with a seeded PRNG,
+# so the seed alone decides what they contain. 20260814 is read from the
+# graded directory's own BUILDER.txt rather than passed as a flag.
+#
+# THE ATTRIBUTION CHECK THIS RUN OWED, DONE BEFORE THE MONEY WAS SPENT.
+#
+# Slice 11 added two prompt lines (SETTING_LINE and SESSIONS_LINE in
+# src/coachApi.js) and changed scripts/handedCounts.js to read the strike-zone
+# bounds from STRIKE_ZONE instead of two typed copies. None of the three
+# carries a count, so none should move which claims count as handed to the
+# coach versus derived by it. That was verified rather than assumed: all 543
+# claims stored in the Slice 10 grading were re-attributed through today's
+# handedCounts.js, and the split came back 371 handed / 121 derived / 51
+# carrying no flag, identical to the stored file, with 0 claims moving. The
+# separate offline replay of the same 543 claims through today's verdict code
+# returned identical verdict totals with 0 changes.
+#
+# So the ruling half of the instrument is provably unchanged since 20 August
+# 2026. Any difference between this grading and the older one is a fresh
+# extraction pass, which is a live model and is not deterministic.
+#
+# HOW THIS GOES STALE.
+#
+# First, if src/swingGenerator.js is rewritten AGAIN in some later slice,
+# nothing here breaks: "slice11-before" names a frozen file, not the working
+# tree, and that is the whole point of the name. What would go stale is the
+# assumption that "slice11-before" is the newest frozen pair; a later slice
+# freezing its own generator must give it its own name rather than reusing
+# this one.
+#
+# Second, if session 1's fifteen hand-written swings are rewritten again, the
+# session-1 half of "slice11-before" moves underneath this round, exactly as
+# it did to Slice 9's rounds. This round would then need a frozen snapshot of
+# session 1 of its own, in the shape of
+# ../../slice9-session-one/session-one-before.mjs, and the builder line below
+# would change to name it.
+#
+# Third, and the one this file cannot protect against on its own: the raw flag
+# counts in grading.json are LEADS, NOT FINDINGS. This tool's false-positive
+# rate has measured 11, 42, 12.5, 34.5, 40, 61.9 and 43.5 percent across seven
+# rounds. Task 13 hand-checks every flagged claim in this round and in both
+# after rounds together. Do not quote a flag count out of here as a coach
+# error rate without reading that hand-check.
+
+builder = slice11-before
+handed-era = current
+seed = 20260814
