@@ -1814,6 +1814,14 @@ on purpose: this file loads at the start of every session, so it is an index.
   Pop-Ups tag becomes `LA 10–25° · Level it out`, and the README's goal list must
   also pick up the Power goal's rename to "Power & Distance". Cheap, independent
   of each other, and all six are verifiable in one browser pass.
+
+  **Annotation, 24 August 2026: this is now five items, not six.** The Reduce
+  Pop-Ups card shipped on its own as a micro-PR that day, on the approved
+  wording above, with the range read from `src/goalTargets.js` rather than typed
+  out. The two README items also grew: they are now folded into a full README
+  audit, which has its own entry at the bottom of this list, because the parts
+  of that file nobody had flagged have aged further than the two lines that were
+  flagged.
 - **Coach fidelity. SCHEDULED AS THE NEXT SLICE, 17 August 2026, and it is Slice 8.**
   Four ways the coach can contradict the screen beside it, the largest being
   that it is never told the two tips it just gave. **Two of the four failed to
@@ -1941,6 +1949,16 @@ will not have been the session that found it.
    `src/App.jsx`; `launchAngleRangeLabel('popup')` in `src/goalTargets.js` already
    returns `10–25°` if a numeric range turns out to be what is wanted. Needs
    someone to decide the wording first.
+
+   **Annotation, 24 August 2026: every clause of that entry is now false, and
+   this one is kept only so nobody reads it as live.** The wording was decided
+   on 3 August 2026, the same day this was written, and recorded on the What's
+   Next list rather than here, which is how the two came to disagree. The card
+   shipped as a micro-PR on 24 August 2026: it reads `LA 10–25° · Level it out`,
+   and the range is read from `launchAngleRangeLabel('popup')` exactly as the
+   last sentence above suggests. Nothing is open, and nobody needs to decide
+   anything. See the entry at the bottom of this list, and `src/App.test.js` for
+   the three tests that hold it.
 
 3. **Hit to All Fields draws orange pull-side dots. Confirmed intended, no change
    needed.** Raised because Slice 4's own verification step said "no orange at
@@ -3325,6 +3343,120 @@ none is blocking.*
   never touched, and everything is correct after a few seconds or on any fresh
   load. Recorded so the next person to check a chart this way waits before
   believing the numbers, and screenshots rather than only measuring.
+
+*Added 24 August 2026, from the micro-PR that fixed the Reduce Pop-Ups goal
+card. The card itself is done and came off the Slice 6b list; these two are what
+that pass surfaced.*
+
+- ~~**The Reduce Pop-Ups goal card points the wrong way.**~~ **Done 24 August
+  2026.** The card read `LA < 0° ↓ · Drive more`, which described the opposite
+  of the goal it labelled, on the goal-picker screen a visitor sees second. It
+  now reads `LA 10–25° · Level it out`, the wording approved on 3 August 2026,
+  with the range read from `src/goalTargets.js` the way the Power and Contact
+  cards already read theirs. Kept here struck through rather than deleted
+  because the Slice 6b entry further up still lists it as one of its six items;
+  that entry is now five.
+
+- **The README needs a full audit and rewrite, not a line fix. Strongest
+  documentation candidate on this list.** It is the first thing a stranger
+  reads, it is the front door of a portfolio piece, and it has not been touched
+  since 30 July 2026, which is before six slices of work. Two of its problems
+  are already scoped as Slice 6b items 6 and 7 in `docs/queued-slices.md` (no
+  install line, no run line, no mention that local development needs a
+  differently-named API key than production; and a goal list naming Power, Line
+  Drives, Contact as separate goals when the screen shows "Power & Distance" and
+  a single "Line Drives & Contact" card, while omitting Full Dashboard
+  entirely). **Those two are the smallest part of it.** What has actually gone
+  stale is the description of the product: the README describes the coach and
+  the data in terms that predate the whole Slice 8 accuracy series, the Slice 9
+  rewrite of the fifteen session-1 swings, and the Slice 11 rewrite of the
+  generator, so a reader is told about a coach and a hitter this app no longer
+  has. It also carries a cold-start warning paragraph whose future depends on
+  the Vercel Pro item below. The honest scope is a fresh read of the repo and a
+  rewrite from what is now true, not a patch to the lines that are known wrong,
+  because the lines nobody has flagged are the ones that have quietly aged.
+
+  **One correction to make before starting, because two of this project's own
+  documents disagree.** CLAUDE.md's own Stack section, around line 234, says
+  "The README and the decisions log both advertise Tailwind, which overstates
+  it." The README half of that is stale and has been since 14 August 2026:
+  `README.md:24` reads "Tailwind is installed but used only minimally," which is
+  accurate, and both `docs/queued-slices.md` (item 6) and
+  `docs/product-decisions-log.md:1374` record that overclaim as already fixed
+  and verified on that date. The decisions log half is still true, at
+  `docs/product-decisions-log.md:5`, but that is a dated historical entry the
+  append-only rule protects, not a claim to correct. So the Tailwind work here
+  is one sentence in CLAUDE.md, and it is not a README job at all. Found on
+  24 August 2026 while scoping this entry.
+
+- **Find out whether the uptime pinger is still doing anything, once Vercel Pro
+  lands. The job is to find out, not to remove it.** The product manager is
+  upgrading to Vercel Pro for a different project, and Pro includes cold start
+  prevention. This app currently leans on a free external pinging service, set
+  up on Better Stack on 31 July 2026, hitting `/api/coach` every five minutes to
+  keep the serverless function awake. His own framing, which is the sharper one:
+  it is entirely possible the pinger never did much, because Vercel functions
+  may not sleep the way some other hosts do.
+
+  **The pinger's effect was never measured, and that is the fact this whole
+  item turns on.** Checked against the deployment and latency sections above on
+  24 August 2026, and they bear it out. What this repo holds is a cold-start
+  failure that survived eleven weeks in production, and three latency
+  measurements taken on three different days for three different reasons: 30
+  July (11 to 14 seconds a debrief), the 12 August audit (20 to 30 seconds, plus
+  one outright timeout), and a single 13 August run (12.06 seconds, on a warm
+  instance, explicitly recorded as one run rather than a refutation). None of
+  them is a before-and-after on the monitor. Only the 30 July reading predates
+  its install date, so it is the only possible "before", and pairing it against
+  either later reading fails to show the pinger helping: against 12 August the
+  numbers move the wrong way, with an unexcluded concurrency confound recorded
+  beside them, and against 13 August they are roughly flat, on a single warm
+  instance. So "the pinger does
+  nothing" and "the pinger is the only reason this works" are both live
+  positions today, and neither can be settled from what is written down.
+
+  **His order of work, which is deliberate and should be preserved.** First,
+  read how this app is actually deployed and what the cold start was in
+  practice. Second, establish what Pro's cold start prevention does for THIS
+  app, and whether it is automatic or a setting somebody has to switch on.
+  Third, get evidence it is working. Only then unwind the pinger. **Do not
+  cancel the pinger first and find out afterwards.** He also wants two things
+  answered up front rather than at the end: what evidence would show it working,
+  stated as a before and after rather than as a claim; and whether moving from
+  Hobby to Pro changes anything else about this app.
+
+  **Three consequences his framing does not name, all verified in the files on
+  24 August 2026.** (a) The README's cold-start warning paragraph
+  (`README.md:7`, "The demo runs on a server that sleeps when idle, so the first
+  load after a quiet spell can take a few extra seconds") becomes false the
+  moment this works, and it is the second line a stranger reads. Pair this with
+  the README item above rather than doing it twice. (b) CLAUDE.md's own
+  Deployment and cold starts section describes the cold start as the thing the
+  monitor exists to prevent, so that section needs rewriting, not annotating
+  away. (c) **The two staggered timeouts want re-deciding on purpose rather than
+  inheriting.** The server gives up on Anthropic at 40 seconds
+  (`UPSTREAM_DEADLINE_MS`, `api/coach.js:34`) and the browser at 50
+  (`REQUEST_TIMEOUT_MS`, `src/coachApi.js:198`), staggered so the server's more
+  specific failure reason wins the race, under a function limit pinned at 60 in
+  `vercel.json`. If Pro moves that limit, the stagger should be re-decided
+  deliberately. Note what makes that more than a constant change: the 40 seconds
+  is written out twice in approved user-facing copy in `src/failureCopy.js`, in
+  the `timeout` message and in `MID_WAIT_MESSAGE`, and that copy is not to be
+  reworded without the product manager. There is a third string in the same
+  file, `TIMEOUT_COLD_MESSAGE`, which tells a visitor the server was asleep; if
+  cold starts stop happening, that line is telling them something that no longer
+  occurs.
+
+  **This is a deploy-time obligation, so whatever slice does it appends to the
+  running pre-deploy checklist in the same pull request.** Changing a hosting
+  plan, switching on a platform setting, and cancelling an external monitor are
+  all things done outside this repository, and the only session that reliably
+  knows about them is the one that created them. **This project has no such
+  checklist file today**, checked on 24 August 2026, so the first slice to
+  create a deploy-time obligation creates the list as well rather than going
+  looking for one. That is not a reason to skip it: every step of this item
+  except reading the code happens outside the repo, which makes it the exact
+  case the rule was written for.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
