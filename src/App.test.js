@@ -40,24 +40,51 @@ describe('the Power goal label', () => {
 // ranges from goalTargets.js and left this one behind, because it was not a
 // numeric range at the time. It is one now, so it gets the same treatment and
 // the same guard.
+//
+// Three tests, each catching something the other two cannot. The first pins the
+// approved sentence, the second guards the meaning across a future approved
+// rewording, the third proves the number is computed rather than typed.
 describe('the Reduce Pop-Ups goal tag', () => {
-  it('names the goal\'s own launch angle range', () => {
+  // The wording was approved by the product manager on 3 August 2026 and is not
+  // to be reworded, which makes it approved copy in the same sense as every
+  // string in failureCopy.js. That file pins each of its messages with exact
+  // equality, and this tag is held to the same standard rather than a looser
+  // one.
+  //
+  // Exact equality, not a fragment. An earlier version of this test asserted
+  // only that the range appeared somewhere in the tag, and review showed three
+  // separate ways the original defect could come back with it still green:
+  // reverting the copy half to '· Drive more', rewording it to '· Aim below
+  // 0°, drive more', which is the same wrong-way advice carrying neither the
+  // '< 0' nor the arrow the test below looks for, and stripping the tag to a
+  // bare '10–25°'. All three now turn this red, seen failing on 24 August 2026.
+  //
+  // The range stays interpolated rather than written out, so that a deliberate
+  // change to the goal's target in goalTargets.js moves both sides together and
+  // this test keeps pinning the sentence instead of the number.
+  it('is the approved wording, exactly', () => {
     const popup = GOALS.find((g) => g.id === 'popup')
-    expect(popup.tag).toContain(launchAngleRangeLabel('popup'))
+    expect(popup.tag).toBe(`LA ${launchAngleRangeLabel('popup')} · Level it out`)
   })
 
+  // Not redundant against the test above, and the difference is what it
+  // survives. If the product manager approves different copy one day, that test
+  // gets updated to whatever he approved, which is the correct thing for it to
+  // do. This one keeps holding independently of the wording: whatever the card
+  // ends up saying, it must not tell a hitter to swing under the ball.
   it('does not point downward, which is the wrong way for a pop-up', () => {
     const popup = GOALS.find((g) => g.id === 'popup')
     expect(popup.tag).not.toMatch(/<\s*0|↓/)
   })
 
-  // The two tests above would both pass on a hand-typed '10–25°' that merely
-  // agrees with goalTargets.js rather than being computed from it, which is
-  // exactly the drift Slice 4 found in five other places. This one hands the
-  // card a different range and checks the tag follows, so a literal typed back
-  // in turns the suite red. Same question src/pitchChartWindow.test.js asks of
-  // the strike zone: is a number that agrees with its source actually derived
-  // from it?
+  // Neither test above can see the difference between a computed range and a
+  // hand-typed '10–25°' that happens to agree with goalTargets.js, because both
+  // sides of an equality check move together when the same literal is typed
+  // into each. That agreement-by-coincidence is exactly the drift Slice 4 found
+  // in five other places. This one hands the card a different range and checks
+  // the tag follows, so a literal typed back in turns the suite red. Same
+  // question src/pitchChartWindow.test.js asks of the strike zone: is a number
+  // that agrees with its source actually derived from it?
   it('reads that range from goalTargets.js rather than repeating it', async () => {
     vi.resetModules()
     vi.doMock('./goalTargets', async () => {
@@ -72,7 +99,10 @@ describe('the Reduce Pop-Ups goal tag', () => {
     try {
       const { GOALS: rebuilt } = await import('./App.jsx')
       const popup = rebuilt.find((g) => g.id === 'popup')
-      expect(popup.tag).toContain('99–100°')
+      // Exact here too, for the same reason as the first test: asserting only
+      // that the substituted range appears would let the copy half drift while
+      // this stayed green.
+      expect(popup.tag).toBe('LA 99–100° · Level it out')
     } finally {
       vi.doUnmock('./goalTargets')
       vi.resetModules()
