@@ -280,7 +280,7 @@ below is as Slice 10 left it and was not re-counted.
                              must never be hand-edited. The file's own header
                              says why; the reasoning is in `docs/slice-9-plan.md`
                              and the decision log entry for 19-20 August 2026.
-    src/DebriefScreen.jsx   1534 lines. The results screen, all six chart
+    src/DebriefScreen.jsx   1602 lines. The results screen, all six chart
                              components, the chat panel, the session summary's
                              scroll fade, and the shared axis-text style
                              constants, both added in Slice 7.
@@ -344,7 +344,7 @@ below is as Slice 10 left it and was not re-counted.
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
                              Added in Slice 6. See the ball flight section below.
-    src/pitchChartWindow.js   94 lines. The fixed window the Pitch Location vs
+    src/pitchChartWindow.js  175 lines. The fixed window the Pitch Location vs
                              Outcome chart draws, and what happens to a pitch
                              outside it. Added 24 August 2026 by the pitch-window
                              micro-PR, on the scrollFade.js precedent: the chart's
@@ -363,6 +363,23 @@ below is as Slice 10 left it and was not re-counted.
                              reads `STRIKE_ZONE` rather than copying it, so the
                              strike-zone census recorded further down this file is
                              unchanged at four copies in shipped code.
+                             *(Grew from 94 lines to 175 on 24 August 2026, in
+                             the fix round on the same change, and the reason is
+                             the useful part. The first version extracted the
+                             ARITHMETIC and left the RULES in the chart, so six
+                             one-line edits to `DebriefScreen.jsx` each broke the
+                             fix with the whole suite green: the tooltip could be
+                             pointed at the clamped number, the clamp could be
+                             dropped, the axis could be pointed back at the true
+                             value, the chevron branch could be deleted, and the
+                             chevron could be drawn outward into the clip. It now
+                             also owns `pitchChartRows`, which builds the chart's
+                             rows and is what guarantees the tooltip reads a true
+                             position; `chevronPoints`, whose inwardness is a
+                             correctness property rather than a style, because
+                             anything drawn past the edge is clipped away; and
+                             `chevronIsOnTarget`. All six edits now turn the suite
+                             red. Do not move any of it back inline.)*
     src/scrollFade.js         18 lines. Whether the session summary box's bottom
                              fade should show, as a pure function of scroll
                              position. Added in Slice 7 so the decision could
@@ -420,7 +437,7 @@ below is as Slice 10 left it and was not re-counted.
                              because it sits on the grader's `.js`-extension
                              import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           2954 lines across twelve files, beside what they test.
+    src/*.test.js           5122 lines across THIRTEEN files, beside what they test.
                              Slice 10 added 373 lines across coachApi.test.js,
                              sessionStats.test.js and goalCountSpecs.test.js:
                              the direction key reaching both prompts, the Power
@@ -3280,6 +3297,21 @@ none is blocking.*
   about one pitch in a thousand, which is about one session in seventy. Recorded
   rather than fixed because every alternative is worse: nudging the mark inward
   would be the false-position problem the chevron exists to avoid.
+
+  **Corrected 24 August 2026, by the review of this same change, and the
+  correction is a factor of five rather than a quibble.** The entry above framed
+  a continuous phenomenon as a discrete one. The clip rect is the plot area
+  exactly, so it cuts ANY mark whose centre sits within its own radius of the
+  edge, not only one centred on it. The marks are 5px circles and 10px squares
+  rotated 45 degrees, whose half-diagonal is a little over 7px. Re-measured over
+  900,000 pitches at the two plot widths this chart actually renders at in a
+  browser, 243px and 273px: **0.50% of swings and 7.2% of sessions** carry at
+  least one visibly cut mark, which is about one session in fourteen rather than
+  one in seventy. The two widths give the same answer because pitch positions are
+  rounded to the hundredth of a foot, so the band either takes a whole hundredth
+  or it does not. The severity tapers off, since a mark one hundredth inside the
+  edge loses a sliver rather than half of itself, so this stays cosmetic and the
+  decision not to fix it is unchanged. What was wrong was the size of it.
 - **Reading a Recharts chart's geometry straight after a synthetic viewport
   resize gives stale numbers, and it wasted time here.** Measuring the marks
   immediately after resizing the browser showed them apparently sitting outside

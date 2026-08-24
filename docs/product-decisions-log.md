@@ -6,6 +6,67 @@
 
 ---
 
+## Fix round on the pitch-window micro-PR (August 24, later the same day)
+
+*Four corrections and one product decision, all from the review of the entry
+below. Nothing was spent; no model call was made.*
+
+**The chevron was withholding wins, and the cost disclosure below is too narrow.**
+The entry below says the chevron overrides "the Pull / Center / Oppo colouring on
+Hit to All Fields" and describes that as the whole cost. It also overrode the
+ON-TARGET colouring on the three goals that have a target, which nobody had
+measured. Over 54,000 sessions on Power, Contact and Reduce Pop-Ups: **23.6% of
+chevrons are swings that met the goal**, and **7.36% of sessions, about one in
+fourteen, showed a success as a plain neutral arrow** on a chart headed "Pitch
+Location vs Outcome". A screen whose job is to tell a hitter what went right was
+quietly not telling him.
+
+*The decision.* Keep the chevron shape, paint it the on-target orange when the
+swing met the goal, and leave Hit to All Fields neutral. That goal has no target,
+so there is no success to report, and the original reason for keeping it neutral
+survives in a sharper form than it was first written: the arrow's direction means
+"the pitch was outside this way" while a spray colour would mean "the ball went
+that way", so a chevron coloured by spray would carry two different directions in
+one mark. Verified on a rendered screen, not only in code: a session-2 Power
+debrief drew an orange chevron for a swing at 88 mph and 26 degrees beside a
+neutral one for a swing at 82 and 11, and a single-chevron session drew the
+orange arrow in exactly the fill the on-target diamonds use.
+
+**One of the three reasons given below for that decision was wrong, and the
+correction matters more than the conclusion.** The entry below argues that
+colouring the chevron by direction "would have added `payload.direction`
+comparisons and broken" the spray text guard. That guard's own comment says a
+changed count "wants a person to look rather than a quietly green suite". It is a
+prompt to look, not a prohibition. Letting a tripwire settle a design question is
+backwards even when the answer it points at happens to be right, and the answer
+here was only right for the other two reasons.
+
+**The tests guarded the arithmetic and not the rule.** Six one-line edits to the
+chart each broke the fix while all 671 tests passed, and the worst of them was a
+one-word change making the tooltip report the clamped position, which destroys
+the entire honesty argument. The datum shaping, the chevron geometry and the
+colour rule all moved into the module, and three text-scoped tripwires now cover
+what can only live in the screen file. All six edits were re-run afterwards and
+all six now turn the suite red. One subtler edit still does not: reordering the
+Hit to All Fields branch above the chevron branch leaves the suite green, which
+is the honest limit of a text tripwire and is recorded rather than papered over.
+
+**A comment credited the wrong mechanism.** It said `allowDataOverflow` is what
+pins the horizontal window. It is not: because the plotted value is clamped, the
+domain comes out at exactly plus or minus 1.2 with or without the attribute. The
+clamp is the lock and the attribute is a second lock on the same door, which only
+starts doing work if the clamp is removed. What the attribute actually does here
+is impose the clip, and the clip is the cause of the correction below.
+
+**The clipped-mark note in CLAUDE.md understated itself about five times over.**
+It described a discrete case, a mark centred exactly on the edge, at one pitch in
+a thousand. The clip cuts any mark whose centre is within its own radius of the
+edge, so the real figure is 0.50% of swings and 7.2% of sessions, about one
+session in fourteen. Still cosmetic, since the severity tapers, and still not
+worth fixing. The number was simply wrong.
+
+---
+
 ## Micro-PR: the strike zone stops changing shape from one session to the next (August 24)
 
 *Not a slice.* One chart fix, approved by the product manager on rendered

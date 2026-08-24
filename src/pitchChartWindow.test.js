@@ -15,6 +15,10 @@ import {
   PITCH_WINDOW_PAD_FEET,
   sideBeyondWindow,
   plottedSide,
+  pitchChartRows,
+  chevronPoints,
+  chevronIsOnTarget,
+  CHEVRON_RISE_PX,
 } from './pitchChartWindow'
 import { STRIKE_ZONE } from './sessionStats'
 import { PITCH_MISS_MAX_FEET } from './swingGenerator'
@@ -184,5 +188,173 @@ describe('the pitch chart holds no window of its own', () => {
     const pitchChart = source.slice(start, end)
     const growsToFit = ['dataMin', 'dataMax'].filter((n) => pitchChart.includes(n))
     expect(growsToFit).toEqual([])
+  })
+})
+
+// ── The rules, not just the arithmetic ────────────────────────────────────
+//
+// Added 24 August 2026, in the fix round on this change. The first version of
+// this file tested the window and the clamp and stopped there, which left six
+// one-line edits to src/DebriefScreen.jsx that each broke the fix with all 671
+// tests still passing. The blocks below close what can be closed in code; the
+// text-scoped block at the end is a tripwire for the rest.
+
+describe('pitchChartRows', () => {
+  const swing = (side, height, launch = {}) => ({
+    plateLocSide: side,
+    plateLocHeight: height,
+    hit: { launch: { exitSpeed: 90, angle: 30, direction: 5, ...launch } },
+  })
+
+  it('keeps the pitch\'s real position on x and the drawable one on plotX', () => {
+    const [row] = pitchChartRows([swing(1.32, 2.79)], 'power')
+    expect({ x: row.x, plotX: row.plotX, beyond: row.beyond })
+      .toEqual({ x: 1.32, plotX: 1.2, beyond: 'right' })
+  })
+
+  // The one that matters most. A row whose `x` had been clamped would let the
+  // tooltip report 1.20 feet for a pitch thrown at 1.32, which is precisely the
+  // false statement the chevron exists to avoid making.
+  it('never clamps x, however far outside the window the pitch was', () => {
+    const rows = pitchChartRows([swing(1.5, 2), swing(-1.5, 2), swing(1.21, 2)], 'power')
+    expect(rows.map((r) => r.x)).toEqual([1.5, -1.5, 1.21])
+  })
+
+  it('leaves a pitch inside the window with x and plotX identical', () => {
+    const rows = pitchChartRows([swing(0.4, 2), swing(-1.2, 2), swing(1.2, 2)], 'power')
+    expect(rows.map((r) => r.x)).toEqual(rows.map((r) => r.plotX))
+    expect(rows.map((r) => r.beyond)).toEqual([null, null, null])
+  })
+
+  it('numbers swings from one, so the tooltip agrees with the Raw Data table', () => {
+    const rows = pitchChartRows([swing(0, 2), swing(0, 2), swing(0, 2)], 'power')
+    expect(rows.map((r) => r.swing)).toEqual([1, 2, 3])
+  })
+
+  it('judges each swing against the goal actually being shown', () => {
+    const onTargetForPower = swing(0, 2, { exitSpeed: 90, angle: 30 })
+    expect(pitchChartRows([onTargetForPower], 'power')[0].outcome).toBe(true)
+    // Same swing, different goal: 30 degrees is above Line Drives & Contact's band.
+    expect(pitchChartRows([onTargetForPower], 'contact')[0].outcome).toBe(false)
+  })
+})
+
+describe('chevronPoints', () => {
+  // The clip that pinning the axis brings with it cuts anything drawn past the
+  // plot edge, so an outward chevron is not a style variant, it is an invisible
+  // swing. Both directions are asserted because the sign is the easy thing to
+  // get backwards.
+  it('puts the tip exactly on the edge and both arms inside it, on the right', () => {
+    const pts = chevronPoints({ cx: 313, cy: 100, beyond: 'right' })
+      .split(' ').map((p) => p.split(',').map(Number))
+    expect(pts.map(([x]) => x)).toEqual([306, 313, 306])
+    expect(Math.max(...pts.map(([x]) => x))).toBe(313)
+  })
+
+  it('mirrors on the left, arms inside again', () => {
+    const pts = chevronPoints({ cx: 70, cy: 100, beyond: 'left' })
+      .split(' ').map((p) => p.split(',').map(Number))
+    expect(pts.map(([x]) => x)).toEqual([77, 70, 77])
+    expect(Math.min(...pts.map(([x]) => x))).toBe(70)
+  })
+
+  it('never reaches past the edge in either direction, at any height', () => {
+    for (const cy of [0, 50, 250]) {
+      const right = chevronPoints({ cx: 313, cy, beyond: 'right' })
+        .split(' ').map((p) => Number(p.split(',')[0]))
+      const left = chevronPoints({ cx: 70, cy, beyond: 'left' })
+        .split(' ').map((p) => Number(p.split(',')[0]))
+      expect(right.every((x) => x <= 313)).toBe(true)
+      expect(left.every((x) => x >= 70)).toBe(true)
+    }
+  })
+
+  it('is symmetrical about the swing\'s own height', () => {
+    const ys = chevronPoints({ cx: 313, cy: 100, beyond: 'right' })
+      .split(' ').map((p) => Number(p.split(',')[1]))
+    expect(ys).toEqual([100 - CHEVRON_RISE_PX, 100, 100 + CHEVRON_RISE_PX])
+  })
+})
+
+describe('chevronIsOnTarget', () => {
+  // The defect this rule fixes: a swing that MET its goal was being drawn as a
+  // plain neutral arrow on a chart headed "Pitch Location vs Outcome", because
+  // the chevron overrode the on-target colouring. Measured over 54,000 sessions
+  // on the three goals that have a target, 23.6% of chevrons were swings that
+  // met the goal and 7.36% of sessions, about one in fourteen, hid a win.
+  it('paints a successful swing in the on-target colour on a goal with a target', () => {
+    for (const goalId of ['power', 'contact', 'popup']) {
+      expect(chevronIsOnTarget({ goalId, outcome: true })).toBe(true)
+    }
+  })
+
+  it('leaves a missed swing neutral', () => {
+    expect(chevronIsOnTarget({ goalId: 'power', outcome: false })).toBe(false)
+  })
+
+  // Not an oversight. That goal has no target, so there is no success to
+  // report, and a chevron painted in a spray colour would carry two directions
+  // at once: the arrow says where the pitch went outside, the colour would say
+  // where the ball was hit.
+  it('leaves Hit to All Fields neutral even if something claims an outcome', () => {
+    expect(chevronIsOnTarget({ goalId: 'allfields', outcome: true })).toBe(false)
+  })
+
+  it('leaves a goal with no target at all neutral', () => {
+    expect(chevronIsOnTarget({ goalId: null, outcome: false })).toBe(false)
+  })
+})
+
+// Three rules that can only live in the screen file, guarded the one way this
+// project guards anything in there: by reading it as text. Same technique and
+// the same limits as the spray-cutoff guard in sessionStats.test.js. Nothing is
+// mounted and no DOM exists, so these are tripwires that catch an edit, not
+// proof that the chart draws correctly. What proves that is a person looking at
+// it, which is recorded in the decision log.
+describe('the rules the pitch chart holds on its own', () => {
+  const source = readFileSync(new URL('./DebriefScreen.jsx', import.meta.url), 'utf8')
+  const pitchChart = source.slice(
+    source.indexOf('function PitchLocation'),
+    source.indexOf('function ZoneBreakdown'),
+  )
+
+  // The honesty guarantee in one line. Switching this to the clamped value
+  // makes the tooltip report 1.20 feet for a pitch thrown at 1.32, which is the
+  // false position the whole design exists to prevent, and it is a one-word
+  // edit.
+  it('shows the pitch\'s true side and height in the tooltip, never the drawn one', () => {
+    const fields = [...pitchChart.matchAll(/Number\(d\.(\w+)\)\.toFixed\(2\)\}\s*ft\s*(Side|Height)/g)]
+      .map(([, field, label]) => ({ label, field }))
+    expect(fields).toEqual([{ label: 'Side', field: 'x' }, { label: 'Height', field: 'y' }])
+  })
+
+  // The other half of the same guarantee: the axis is the one thing that may
+  // read the clamped value. Pointing it back at the true one un-pins the window
+  // and, because the layer is clipped, silently deletes the wide pitch from a
+  // fifteen-swing chart instead of merely misplacing it.
+  it('plots the drawn side on the axis and nothing else', () => {
+    const keys = [...pitchChart.matchAll(/<XAxis[^>]*dataKey="(\w+)"/g)].map(([, k]) => k)
+    expect(keys).toEqual(['plotX'])
+  })
+
+  it('builds its rows from the shared module rather than shaping them inline', () => {
+    expect({
+      usesTheRowBuilder: pitchChart.includes('pitchChartRows('),
+      // `plateLocSide` is the raw swing field, and a `plotX:` key would mean
+      // an object literal is being built here again. `beyond:` is deliberately
+      // NOT a smell: it is a named argument to chevronPoints below.
+      shapesRowsInline: /plateLocSide|plotX:/.test(pitchChart),
+    }).toEqual({ usesTheRowBuilder: true, shapesRowsInline: false })
+  })
+
+  it('still draws an off-window pitch as a chevron, from the shared geometry', () => {
+    expect({
+      // Matched as the exact branch, not merely as text appearing somewhere.
+      // `if (false && payload.beyond)` disables the chevron while leaving the
+      // words in place, and a looser check passed straight over it.
+      branchesOnBeyond: /if \(payload\.beyond\) \{/.test(pitchChart),
+      usesSharedGeometry: pitchChart.includes('chevronPoints('),
+      usesTheColourRule: pitchChart.includes('chevronIsOnTarget('),
+    }).toEqual({ branchesOnBeyond: true, usesSharedGeometry: true, usesTheColourRule: true })
   })
 })
