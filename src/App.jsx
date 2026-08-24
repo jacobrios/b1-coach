@@ -53,7 +53,7 @@ export const GOALS = [
     label: 'Reduce Pop-Ups',
     subtitle: 'Launch angle · Direction · Exit velocity',
     type: 'popup',
-    tag: 'LA < 0° ↓ · Drive more',
+    tag: `LA ${launchAngleRangeLabel('popup')} · Level it out`,
     color: ACCENT,
     dashboard: false,
   },
