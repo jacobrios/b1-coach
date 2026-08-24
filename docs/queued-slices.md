@@ -260,6 +260,19 @@ if a numeric range turns out to be what is wanted.
 **This needs the wording decided before any code changes.** It has been open
 since Slice 4 for exactly that reason. Ask the product manager; do not pick copy.
 
+**Annotation, 24 August 2026: shipped, and do not act on anything above.** The
+wording had in fact been decided on 3 August 2026 and recorded on CLAUDE.md's
+What's Next list, so this item was already stale on the day it was written; a
+session following it would have gone to ask the product manager for a decision
+he had made three weeks earlier. The card shipped as a micro-PR on 24 August
+2026 and reads `LA 10–25° · Level it out`, with the range read from
+`launchAngleRangeLabel('popup')` as suggested above rather than typed out.
+
+Two pointer corrections while this is open, left here rather than edited into
+the text above, because this file is append-only. The tag is now at
+`src/App.jsx:56`, not the `src/App.jsx:54` cited above; it had already moved
+before this change. And this leaves Slice 6b at five items rather than six.
+
 ### 9. A judgment call, not a defect: the Power goal often shows nothing on target
 
 **Measured 12 August 2026 by replaying the app's own generator 20,000 times

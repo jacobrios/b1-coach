@@ -1950,6 +1950,16 @@ will not have been the session that found it.
    returns `10–25°` if a numeric range turns out to be what is wanted. Needs
    someone to decide the wording first.
 
+   **Annotation, 24 August 2026: every clause of that entry is now false, and
+   this one is kept only so nobody reads it as live.** The wording was decided
+   on 3 August 2026, the same day this was written, and recorded on the What's
+   Next list rather than here, which is how the two came to disagree. The card
+   shipped as a micro-PR on 24 August 2026: it reads `LA 10–25° · Level it out`,
+   and the range is read from `launchAngleRangeLabel('popup')` exactly as the
+   last sentence above suggests. Nothing is open, and nobody needs to decide
+   anything. See the entry at the bottom of this list, and `src/App.test.js` for
+   the three tests that hold it.
+
 3. **Hit to All Fields draws orange pull-side dots. Confirmed intended, no change
    needed.** Raised because Slice 4's own verification step said "no orange at
    all" for that goal, and the Slice 4 review flagged that a literal reader would
@@ -3396,9 +3406,12 @@ that pass surfaced.*
   July (11 to 14 seconds a debrief), the 12 August audit (20 to 30 seconds, plus
   one outright timeout), and a single 13 August run (12.06 seconds, on a warm
   instance, explicitly recorded as one run rather than a refutation). None of
-  them is a before-and-after on the monitor. The one pair that even spans its
-  install date, 30 July against 12 August, moves the wrong way and has an
-  unexcluded concurrency confound recorded beside it. So "the pinger does
+  them is a before-and-after on the monitor. Only the 30 July reading predates
+  its install date, so it is the only possible "before", and pairing it against
+  either later reading fails to show the pinger helping: against 12 August the
+  numbers move the wrong way, with an unexcluded concurrency confound recorded
+  beside them, and against 13 August they are roughly flat, on a single warm
+  instance. So "the pinger does
   nothing" and "the pinger is the only reason this works" are both live
   positions today, and neither can be settled from what is written down.
 
@@ -3429,7 +3442,7 @@ that pass surfaced.*
   deliberately. Note what makes that more than a constant change: the 40 seconds
   is written out twice in approved user-facing copy in `src/failureCopy.js`, in
   the `timeout` message and in `MID_WAIT_MESSAGE`, and that copy is not to be
-  reworded without the product manager. There is a fourth string in the same
+  reworded without the product manager. There is a third string in the same
   file, `TIMEOUT_COLD_MESSAGE`, which tells a visitor the server was asleep; if
   cold starts stop happening, that line is telling them something that no longer
   occurs.
