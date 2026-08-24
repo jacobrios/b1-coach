@@ -6,6 +6,77 @@
 
 ---
 
+## Micro-PR: the strike zone stops changing shape from one session to the next (August 24)
+
+*Not a slice.* One chart fix, approved by the product manager on rendered
+mockups before any code was written. No generator change, no prompt change, no
+model calls, nothing spent.
+
+*The problem.* The Pitch Location vs Outcome chart let both of its axes stretch
+to fit whatever the session happened to hold, so the drawn strike zone was a
+different shape every time a visitor looked at it. Usually it read roughly
+square; then one session in three arrived carrying a pitch well off the plate
+and the same zone rendered visibly narrow. Measured across 60,000 generated
+sessions on 24 August 2026, the horizontal axis spanned 2.03 feet in a typical
+session, 1.70 at its narrowest and 3.29 at its widest. It is now 2.40 on every
+session, on every goal. This is the same class of first-screen credibility
+defect as the impossible hit distances Slice 6 removed: nothing breaks, and a
+visitor who knows the sport quietly marks the app down.
+
+*The two windows were decided in opposite directions, and that is the point.*
+Sideways is pinned at exactly plus or minus 1.2 feet and is not derived from
+anything. A real strike zone is 17 inches wide and about 24 tall, so it is
+taller than it is wide, while the panel it is drawn in is wider than it is tall
+and has to carry a four-foot vertical range. The zone therefore comes out wider
+than tall whatever we choose: 1.63 times at a window of 1.0 feet, 1.36 times at
+1.2. Neither is faithful; 1.2 is the closer of the two and the product manager
+picked it to avoid the app looking like it does not know the sport. Vertically
+the opposite rule applies, because a pitch clipped off the top or the bottom is
+a swing the visitor simply cannot see, so that pair is computed from the strike
+zone and the furthest a pitch may miss it by rather than typed out.
+
+*The cost of pinning it, paid deliberately.* Because 1.2 sits inside what the
+generator can throw, about one session in three now holds a pitch the chart
+cannot place, and about one in twenty holds two. Those are drawn as an open
+chevron at the edge, pointing the way the ball went, never as a dot. A dot
+pulled back to the edge would be a false statement about position on a chart
+whose entire subject is position, and two of them side by side would be a small
+version of the flat row of dots Slice 11 spent nine tasks removing. The tooltip
+still reports the true coordinate, and that is what makes the chevron honest:
+the mark sits at the edge because it has to sit somewhere, it is visibly not a
+pitch location, and the real figure is one hover away.
+
+*One decision made during the build, worth recording because it loses something.*
+On Hit to All Fields the chart colours each mark by where the ball went. A
+chevron overrides that colouring rather than adopting it, so on that goal an
+off-window swing loses its Pull / Center / Oppo identity on this one chart. The
+alternative was a chevron in the Oppo colour, which invites reading it as the
+Oppo legend shape. Accepted: the swing number in the tooltip is how a reader
+finds that swing on the spray chart or in the Raw Data table. The legend has no
+entry for the chevron either, which is a small open question rather than a
+defect.
+
+*How a chart got tested in a project that has no rendering tests.* The geometry
+moved into `src/pitchChartWindow.js` for exactly the reason `scrollFade.js`
+moved out of this same screen: a decision that lives inside JSX cannot be
+checked by anything. Seventeen new tests, 654 to 671. The two that matter most
+are the ones proving the vertical window is computed from its sources rather
+than agreeing with them by coincidence: they hand the module different
+constants and check the window moves. Both were seen failing against a first
+version that typed 0.6 and 4.4 out, which is the only way to tell those two
+states apart.
+
+*Verified in a browser, on three sessions, at no cost.* Reaching a debrief needs
+a coach call, so the endpoint was stubbed in the page and the random source
+seeded, which made all three cases reproducible rather than hunted for. The
+same session 1 data renders -0.8 to 1.1 and 0.7 to 3.9 on the old code and
+-1.2 to 1.2 and 0.6 to 4.4 on the new. A one-chevron session and a
+two-chevrons-on-one-edge session both drew all fifteen swings, with the chevron
+tips flush on the plot edge and both arms inside it, and the tooltip on a
+chevron read 1.32 ft Side where the chart had drawn it at 1.20.
+
+---
+
 ## Slice 11: the generator stops lying about the hitter and the pitcher (August 21)
 
 *The problem.* Every number a visitor sees after the first screen is invented by

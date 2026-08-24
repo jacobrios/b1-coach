@@ -344,6 +344,25 @@ below is as Slice 10 left it and was not re-counted.
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
                              Added in Slice 6. See the ball flight section below.
+    src/pitchChartWindow.js   94 lines. The fixed window the Pitch Location vs
+                             Outcome chart draws, and what happens to a pitch
+                             outside it. Added 24 August 2026 by the pitch-window
+                             micro-PR, on the scrollFade.js precedent: the chart's
+                             axes used to grow to fit the session, so the drawn
+                             strike zone changed shape from one session to the
+                             next, and that decision could not be tested while it
+                             lived inside JSX. Two windows, decided in OPPOSITE
+                             directions, and do not "tidy" them into one rule.
+                             Sideways is a flat decision, plus or minus 1.2 feet,
+                             deliberately NARROWER than the widest pitch the
+                             generator can throw; widening it to cover 1.5 would
+                             undo the fix and make the chevron dead code.
+                             Vertically it is DERIVED from `STRIKE_ZONE` and
+                             `PITCH_MISS_MAX_FEET` plus a pad, because nothing may
+                             ever fall off the top or the bottom. Note this module
+                             reads `STRIKE_ZONE` rather than copying it, so the
+                             strike-zone census recorded further down this file is
+                             unchanged at four copies in shipped code.
     src/scrollFade.js         18 lines. Whether the session summary box's bottom
                              fade should show, as a pure function of scroll
                              position. Added in Slice 7 so the decision could
@@ -1095,7 +1114,23 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and at the close of Slice 11 on 21 August 2026 it is **654 tests
+   vitest, and after the pitch-window micro-PR on 24 August 2026 it is **671
+   tests across 24 files**, up from 654 across 23. The seventeen new ones are
+   `src/pitchChartWindow.test.js`, and two of them are worth knowing about
+   because they answer a question this project has usually had to leave open:
+   whether a number that AGREES with its source is actually computed from it.
+   They hand the module a different strike zone and a different pitch-miss
+   limit and check the window moves, and both were seen failing against a first
+   version that typed the right answers out. The same file also carries a
+   text-scoped guard on `src/DebriefScreen.jsx`, in the pattern
+   `src/sessionStats.test.js` already uses for the spray cutoffs: it reads the
+   `PitchLocation` component as plain text and fails if either axis goes back
+   to growing to fit the session. **It is not a rendering test and this project
+   still has none**; whether the chevron actually draws was checked by eye in a
+   browser and nowhere else.
+
+   *The paragraph below was true at the close of Slice 11 and is kept as
+   written.* At the close of Slice 11 on 21 August 2026 it is **654 tests
    across 23 files**, up from 573 across 22 at the close of Slice 10. The file
    count moved once, in that slice's first task; everything after it landed in
    files that already existed, mostly `src/swingGenerator.test.js`, which more
@@ -3224,6 +3259,35 @@ because they are the ones a visitor could see; the tooling items follow.*
   go unreported. It has also never rendered a chart. Both limits are printed in
   the script's own closing section; this line exists so nobody has to run it to
   find out.
+
+*Added 24 August 2026, from the pitch-window micro-PR. All three are small and
+none is blocking.*
+
+- **The pitch chart's chevron has no legend entry.** About one session in three
+  now draws at least one open chevron at the side of the Pitch Location chart,
+  meaning a pitch landed outside the window the chart draws. Hovering it gives
+  the true coordinate, so nothing is hidden, but a reader who does not hover has
+  to infer what the mark means, and on Hit to All Fields it sits beside a legend
+  showing three other shapes. Deliberately not solved on the way past, because
+  the chevron appears on every goal while that legend only exists on one, so a
+  fourth legend row is not the obvious answer and the right fix is a design
+  question rather than a code one.
+- **A pitch landing on exactly the edge of the window is drawn as a normal mark
+  half-clipped by the frame.** Pinning the horizontal axis also clips that chart
+  to its plot area, so a dot centred on exactly 1.20 feet loses its outer half.
+  This is a true statement about a pitch that really is at the edge, rather than
+  a mark moved there, and it is rare: measured over 900,000 generated pitches,
+  about one pitch in a thousand, which is about one session in seventy. Recorded
+  rather than fixed because every alternative is worse: nudging the mark inward
+  would be the false-position problem the chevron exists to avoid.
+- **Reading a Recharts chart's geometry straight after a synthetic viewport
+  resize gives stale numbers, and it wasted time here.** Measuring the marks
+  immediately after resizing the browser showed them apparently sitting outside
+  their own plot area, which looked like a real defect and was not: the chart had
+  not finished re-laying out. It reproduces on `main` and on charts this change
+  never touched, and everything is correct after a few seconds or on any fresh
+  load. Recorded so the next person to check a chart this way waits before
+  believing the numbers, and screenshots rather than only measuring.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
