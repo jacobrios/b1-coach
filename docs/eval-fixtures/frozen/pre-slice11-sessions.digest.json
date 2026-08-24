@@ -1,0 +1,1816 @@
+{
+  "whatThisIs": [
+    "What the coach grader's session builders produced on 20 August 2026, before Slice 11 changed",
+    "src/swingGenerator.js. Five committed rounds of debriefs describe these swings and no others.",
+    "Rebuilding those rounds against a later generator does not fail; it produces a complete and",
+    "entirely plausible set of swings the coach never saw, and nothing looks broken. This file is the",
+    "evidence that says which one you are looking at.",
+    "",
+    "DO NOT UPDATE THIS FILE to match anything. It is checked on every npm test by",
+    "scripts/frozenGenerator.test.js, which rebuilds every cell below through the frozen generator",
+    "snapshot in docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs. If that check goes red, the",
+    "answer is a change to the snapshot or the builders, never a change to these numbers.",
+    "",
+    "DATED CORRECTION, 20 August 2026. The paragraph above says FIVE committed rounds. It is six",
+    "committed fixture directories. The sixth is docs/eval-fixtures/slice7-debriefs, the 96-debrief",
+    "fixture the grading tool validates itself against, found by review after the rest of this file",
+    "was written. Its three cells are the \"frozen\" group below; see laterAdditions at the end of this",
+    "file. Nothing recorded before that group was touched, and the correction is appended here rather",
+    "than edited into the paragraph above, for the same reason none of these numbers may be edited."
+  ],
+  "producedOn": "2026-08-20",
+  "producedFromWorkingTreeAtCommit": "72fc2c1",
+  "producedBy": "node scripts/write-frozen-session-digest.mjs",
+  "swingLineFormat": "ev=<mph> la=<degrees> dir=<degrees> dist=<feet> height=<feet, 2dp> side=<feet, 2dp>",
+  "groups": {
+    "slice11-before": {
+      "producedByBuilder": "current",
+      "mustBeReproducedByBuilder": "slice11-before",
+      "seeds": {
+        "20260814": {
+          "power-s1": {
+            "goal": "power",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "power-s2": {
+            "goal": "power",
+            "viewingSessionNumber": 2,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 20.73,
+                "swings": [
+                  "ev=86 la=29 dir=27 dist=301 height=2.51 side=0.26",
+                  "ev=85 la=18 dir=11 dist=242 height=2.31 side=0.67",
+                  "ev=86 la=21 dir=-30 dist=266 height=2.77 side=-0.08",
+                  "ev=77 la=21 dir=-9 dist=208 height=4.05 side=-0.82",
+                  "ev=84 la=27 dir=23 dist=287 height=3.15 side=0.69",
+                  "ev=81 la=12 dir=18 dist=185 height=3.23 side=-0.34",
+                  "ev=88 la=25 dir=-20 dist=304 height=0.79 side=-0.98",
+                  "ev=80 la=17 dir=-5 dist=206 height=3.68 side=0.84",
+                  "ev=87 la=16 dir=11 dist=241 height=1.32 side=0.96",
+                  "ev=83 la=14 dir=23 dist=207 height=3.09 side=-0.50",
+                  "ev=90 la=23 dir=-29 dist=305 height=1.63 side=0.38",
+                  "ev=76 la=14 dir=-30 dist=169 height=1.54 side=-0.60",
+                  "ev=90 la=24 dir=-22 dist=312 height=2.52 side=0.67",
+                  "ev=81 la=28 dir=-30 dist=270 height=2.53 side=-0.03",
+                  "ev=83 la=22 dir=36 dist=252 height=1.26 side=1.01"
+                ]
+              }
+            ]
+          },
+          "contact-s1": {
+            "goal": "contact",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "contact-s4": {
+            "goal": "contact",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 81.53,
+                "avgAngle": 16.13,
+                "swings": [
+                  "ev=79 la=11 dir=13 dist=170 height=4.08 side=1.09",
+                  "ev=80 la=4 dir=33 dist=136 height=1.56 side=0.08",
+                  "ev=86 la=14 dir=-27 dist=223 height=1.52 side=0.24",
+                  "ev=86 la=18 dir=-2 dist=248 height=3.07 side=0.58",
+                  "ev=88 la=16 dir=-6 dist=247 height=3.07 side=0.17",
+                  "ev=87 la=25 dir=-23 dist=297 height=2.91 side=0.66",
+                  "ev=78 la=25 dir=25 dist=233 height=1.69 side=0.07",
+                  "ev=85 la=11 dir=-3 dist=199 height=1.66 side=0.24",
+                  "ev=76 la=15 dir=2 dist=173 height=2.45 side=0.22",
+                  "ev=74 la=22 dir=7 dist=192 height=0.58 side=1.08",
+                  "ev=76 la=13 dir=-6 dist=164 height=2.77 side=-0.46",
+                  "ev=78 la=7 dir=-24 dist=144 height=3.02 side=-0.66",
+                  "ev=86 la=25 dir=-22 dist=290 height=0.61 side=-0.89",
+                  "ev=84 la=16 dir=26 dist=224 height=3.42 side=-0.04",
+                  "ev=80 la=20 dir=-16 dist=222 height=2.78 side=-0.28"
+                ]
+              }
+            ]
+          },
+          "open-s4": {
+            "goal": "open",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          },
+          "allfields-s4": {
+            "goal": "allfields",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          },
+          "popup-s4": {
+            "goal": "popup",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          }
+        },
+        "20260819": {
+          "power-s1": {
+            "goal": "power",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "power-s2": {
+            "goal": "power",
+            "viewingSessionNumber": 2,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.4,
+                "avgAngle": 21.27,
+                "swings": [
+                  "ev=85 la=13 dir=20 dist=212 height=1.78 side=0.30",
+                  "ev=91 la=27 dir=16 dist=338 height=3.17 side=-0.11",
+                  "ev=87 la=21 dir=-1 dist=272 height=0.77 side=-0.97",
+                  "ev=77 la=24 dir=4 dist=222 height=4.02 side=-1.04",
+                  "ev=85 la=14 dir=12 dist=218 height=0.62 side=-1.07",
+                  "ev=87 la=24 dir=35 dist=291 height=2.37 side=-0.70",
+                  "ev=80 la=14 dir=-11 dist=191 height=1.76 side=0.40",
+                  "ev=82 la=19 dir=-22 dist=229 height=1.65 side=0.24",
+                  "ev=83 la=21 dir=34 dist=246 height=3.23 side=-0.29",
+                  "ev=81 la=30 dir=-26 dist=259 height=2.98 side=-0.25",
+                  "ev=84 la=25 dir=4 dist=276 height=1.26 side=0.92",
+                  "ev=84 la=21 dir=35 dist=253 height=2.16 side=-0.34",
+                  "ev=88 la=25 dir=-12 dist=304 height=2.69 side=0.07",
+                  "ev=82 la=18 dir=13 dist=224 height=2.42 side=0.19",
+                  "ev=90 la=23 dir=-22 dist=305 height=3.14 side=-0.03"
+                ]
+              }
+            ]
+          },
+          "contact-s1": {
+            "goal": "contact",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "contact-s4": {
+            "goal": "contact",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.4,
+                "avgAngle": 19.27,
+                "swings": [
+                  "ev=85 la=11 dir=20 dist=199 height=1.78 side=0.30",
+                  "ev=91 la=25 dir=16 dist=325 height=3.17 side=-0.11",
+                  "ev=87 la=19 dir=-1 dist=260 height=0.77 side=-0.97",
+                  "ev=77 la=22 dir=4 dist=212 height=4.02 side=-1.04",
+                  "ev=85 la=12 dir=12 dist=206 height=0.62 side=-1.07",
+                  "ev=87 la=22 dir=35 dist=279 height=2.37 side=-0.70",
+                  "ev=80 la=12 dir=-11 dist=180 height=1.76 side=0.40",
+                  "ev=82 la=17 dir=-22 dist=218 height=1.65 side=0.24",
+                  "ev=83 la=19 dir=34 dist=235 height=3.23 side=-0.29",
+                  "ev=81 la=28 dir=-26 dist=270 height=2.98 side=-0.25",
+                  "ev=84 la=23 dir=4 dist=264 height=1.26 side=0.92",
+                  "ev=84 la=19 dir=35 dist=241 height=2.16 side=-0.34",
+                  "ev=88 la=23 dir=-12 dist=291 height=2.69 side=0.07",
+                  "ev=82 la=16 dir=13 dist=213 height=2.42 side=0.19",
+                  "ev=90 la=21 dir=-22 dist=292 height=3.14 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 77,
+                "avgAngle": 17.27,
+                "swings": [
+                  "ev=76 la=12 dir=-10 dist=159 height=4.09 side=0.92",
+                  "ev=76 la=19 dir=10 dist=192 height=2.07 side=0.29",
+                  "ev=76 la=22 dir=35 dist=206 height=1.83 side=-0.56",
+                  "ev=71 la=10 dir=-25 dist=126 height=1.09 side=0.98",
+                  "ev=78 la=8 dir=31 dist=149 height=2.70 side=-0.24",
+                  "ev=86 la=18 dir=0 dist=248 height=2.98 side=0.37",
+                  "ev=80 la=21 dir=1 dist=227 height=2.78 side=-0.11",
+                  "ev=77 la=30 dir=-22 dist=230 height=2.03 side=-0.22",
+                  "ev=81 la=19 dir=-20 dist=223 height=3.40 side=0.45",
+                  "ev=72 la=15 dir=35 dist=151 height=3.12 side=0.16",
+                  "ev=74 la=19 dir=25 dist=180 height=3.27 side=0.52",
+                  "ev=79 la=19 dir=-1 dist=211 height=2.33 side=0.25",
+                  "ev=71 la=15 dir=-4 dist=145 height=2.03 side=0.49",
+                  "ev=81 la=15 dir=16 dist=201 height=1.97 side=0.58",
+                  "ev=77 la=17 dir=7 dist=189 height=3.61 side=-0.83"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 84.07,
+                "avgAngle": 17.87,
+                "swings": [
+                  "ev=81 la=12 dir=25 dist=185 height=1.98 side=0.53",
+                  "ev=83 la=11 dir=23 dist=189 height=2.29 side=0.03",
+                  "ev=83 la=21 dir=-21 dist=246 height=2.87 side=0.14",
+                  "ev=82 la=12 dir=-23 dist=190 height=3.19 side=-0.49",
+                  "ev=82 la=15 dir=17 dist=207 height=4.02 side=1.06",
+                  "ev=87 la=20 dir=27 dist=266 height=3.69 side=-0.99",
+                  "ev=87 la=19 dir=33 dist=260 height=3.74 side=-1.09",
+                  "ev=85 la=22 dir=3 dist=265 height=0.61 side=0.92",
+                  "ev=91 la=20 dir=-9 dist=292 height=3.91 side=-0.84",
+                  "ev=83 la=19 dir=-17 dist=235 height=1.89 side=-0.63",
+                  "ev=85 la=11 dir=-9 dist=199 height=1.96 side=0.25",
+                  "ev=88 la=28 dir=23 dist=323 height=4.08 side=1.07",
+                  "ev=81 la=17 dir=-2 dist=212 height=3.07 side=0.61",
+                  "ev=77 la=14 dir=-26 dist=174 height=2.98 side=-0.05",
+                  "ev=86 la=27 dir=-2 dist=302 height=3.10 side=-0.40"
+                ]
+              }
+            ]
+          },
+          "open-s4": {
+            "goal": "open",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.4,
+                "avgAngle": 19.27,
+                "swings": [
+                  "ev=85 la=11 dir=20 dist=199 height=1.78 side=0.30",
+                  "ev=91 la=25 dir=16 dist=325 height=3.17 side=-0.11",
+                  "ev=87 la=19 dir=-1 dist=260 height=0.77 side=-0.97",
+                  "ev=77 la=22 dir=4 dist=212 height=4.02 side=-1.04",
+                  "ev=85 la=12 dir=12 dist=206 height=0.62 side=-1.07",
+                  "ev=87 la=22 dir=35 dist=279 height=2.37 side=-0.70",
+                  "ev=80 la=12 dir=-11 dist=180 height=1.76 side=0.40",
+                  "ev=82 la=17 dir=-22 dist=218 height=1.65 side=0.24",
+                  "ev=83 la=19 dir=34 dist=235 height=3.23 side=-0.29",
+                  "ev=81 la=28 dir=-26 dist=270 height=2.98 side=-0.25",
+                  "ev=84 la=23 dir=4 dist=264 height=1.26 side=0.92",
+                  "ev=84 la=19 dir=35 dist=241 height=2.16 side=-0.34",
+                  "ev=88 la=23 dir=-12 dist=291 height=2.69 side=0.07",
+                  "ev=82 la=16 dir=13 dist=213 height=2.42 side=0.19",
+                  "ev=90 la=21 dir=-22 dist=292 height=3.14 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 77,
+                "avgAngle": 17.27,
+                "swings": [
+                  "ev=76 la=12 dir=-10 dist=159 height=4.09 side=0.92",
+                  "ev=76 la=19 dir=10 dist=192 height=2.07 side=0.29",
+                  "ev=76 la=22 dir=35 dist=206 height=1.83 side=-0.56",
+                  "ev=71 la=10 dir=-25 dist=126 height=1.09 side=0.98",
+                  "ev=78 la=8 dir=31 dist=149 height=2.70 side=-0.24",
+                  "ev=86 la=18 dir=0 dist=248 height=2.98 side=0.37",
+                  "ev=80 la=21 dir=1 dist=227 height=2.78 side=-0.11",
+                  "ev=77 la=30 dir=-22 dist=230 height=2.03 side=-0.22",
+                  "ev=81 la=19 dir=-20 dist=223 height=3.40 side=0.45",
+                  "ev=72 la=15 dir=35 dist=151 height=3.12 side=0.16",
+                  "ev=74 la=19 dir=25 dist=180 height=3.27 side=0.52",
+                  "ev=79 la=19 dir=-1 dist=211 height=2.33 side=0.25",
+                  "ev=71 la=15 dir=-4 dist=145 height=2.03 side=0.49",
+                  "ev=81 la=15 dir=16 dist=201 height=1.97 side=0.58",
+                  "ev=77 la=17 dir=7 dist=189 height=3.61 side=-0.83"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.8,
+                "avgAngle": 15.27,
+                "swings": [
+                  "ev=82 la=24 dir=-18 dist=256 height=2.20 side=0.00",
+                  "ev=75 la=21 dir=25 dist=195 height=3.03 side=0.44",
+                  "ev=78 la=14 dir=31 dist=180 height=2.60 side=0.17",
+                  "ev=80 la=12 dir=9 dist=180 height=3.08 side=0.49",
+                  "ev=81 la=9 dir=9 dist=168 height=2.26 side=0.22",
+                  "ev=72 la=11 dir=18 dist=135 height=3.76 side=1.07",
+                  "ev=80 la=18 dir=8 dist=212 height=2.53 side=0.11",
+                  "ev=79 la=9 dir=19 dist=159 height=2.69 side=0.51",
+                  "ev=78 la=18 dir=23 dist=199 height=3.43 side=0.69",
+                  "ev=78 la=11 dir=10 dist=165 height=1.97 side=0.37",
+                  "ev=79 la=23 dir=31 dist=230 height=3.78 side=0.92",
+                  "ev=78 la=18 dir=-20 dist=199 height=1.92 side=0.13",
+                  "ev=76 la=11 dir=28 dist=155 height=0.56 side=0.81",
+                  "ev=87 la=22 dir=18 dist=279 height=2.95 side=-0.52",
+                  "ev=79 la=8 dir=-12 dist=154 height=2.85 side=0.22"
+                ]
+              }
+            ]
+          },
+          "allfields-s4": {
+            "goal": "allfields",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.4,
+                "avgAngle": 19.27,
+                "swings": [
+                  "ev=85 la=11 dir=20 dist=199 height=1.78 side=0.30",
+                  "ev=91 la=25 dir=16 dist=325 height=3.17 side=-0.11",
+                  "ev=87 la=19 dir=-1 dist=260 height=0.77 side=-0.97",
+                  "ev=77 la=22 dir=4 dist=212 height=4.02 side=-1.04",
+                  "ev=85 la=12 dir=12 dist=206 height=0.62 side=-1.07",
+                  "ev=87 la=22 dir=35 dist=279 height=2.37 side=-0.70",
+                  "ev=80 la=12 dir=-11 dist=180 height=1.76 side=0.40",
+                  "ev=82 la=17 dir=-22 dist=218 height=1.65 side=0.24",
+                  "ev=83 la=19 dir=34 dist=235 height=3.23 side=-0.29",
+                  "ev=81 la=28 dir=-26 dist=270 height=2.98 side=-0.25",
+                  "ev=84 la=23 dir=4 dist=264 height=1.26 side=0.92",
+                  "ev=84 la=19 dir=35 dist=241 height=2.16 side=-0.34",
+                  "ev=88 la=23 dir=-12 dist=291 height=2.69 side=0.07",
+                  "ev=82 la=16 dir=13 dist=213 height=2.42 side=0.19",
+                  "ev=90 la=21 dir=-22 dist=292 height=3.14 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 77,
+                "avgAngle": 17.27,
+                "swings": [
+                  "ev=76 la=12 dir=-10 dist=159 height=4.09 side=0.92",
+                  "ev=76 la=19 dir=10 dist=192 height=2.07 side=0.29",
+                  "ev=76 la=22 dir=35 dist=206 height=1.83 side=-0.56",
+                  "ev=71 la=10 dir=-25 dist=126 height=1.09 side=0.98",
+                  "ev=78 la=8 dir=31 dist=149 height=2.70 side=-0.24",
+                  "ev=86 la=18 dir=0 dist=248 height=2.98 side=0.37",
+                  "ev=80 la=21 dir=1 dist=227 height=2.78 side=-0.11",
+                  "ev=77 la=30 dir=-22 dist=230 height=2.03 side=-0.22",
+                  "ev=81 la=19 dir=-20 dist=223 height=3.40 side=0.45",
+                  "ev=72 la=15 dir=35 dist=151 height=3.12 side=0.16",
+                  "ev=74 la=19 dir=25 dist=180 height=3.27 side=0.52",
+                  "ev=79 la=19 dir=-1 dist=211 height=2.33 side=0.25",
+                  "ev=71 la=15 dir=-4 dist=145 height=2.03 side=0.49",
+                  "ev=81 la=15 dir=16 dist=201 height=1.97 side=0.58",
+                  "ev=77 la=17 dir=7 dist=189 height=3.61 side=-0.83"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.8,
+                "avgAngle": 15.27,
+                "swings": [
+                  "ev=82 la=24 dir=-18 dist=256 height=2.20 side=0.00",
+                  "ev=75 la=21 dir=25 dist=195 height=3.03 side=0.44",
+                  "ev=78 la=14 dir=31 dist=180 height=2.60 side=0.17",
+                  "ev=80 la=12 dir=9 dist=180 height=3.08 side=0.49",
+                  "ev=81 la=9 dir=9 dist=168 height=2.26 side=0.22",
+                  "ev=72 la=11 dir=18 dist=135 height=3.76 side=1.07",
+                  "ev=80 la=18 dir=8 dist=212 height=2.53 side=0.11",
+                  "ev=79 la=9 dir=19 dist=159 height=2.69 side=0.51",
+                  "ev=78 la=18 dir=23 dist=199 height=3.43 side=0.69",
+                  "ev=78 la=11 dir=10 dist=165 height=1.97 side=0.37",
+                  "ev=79 la=23 dir=31 dist=230 height=3.78 side=0.92",
+                  "ev=78 la=18 dir=-20 dist=199 height=1.92 side=0.13",
+                  "ev=76 la=11 dir=28 dist=155 height=0.56 side=0.81",
+                  "ev=87 la=22 dir=18 dist=279 height=2.95 side=-0.52",
+                  "ev=79 la=8 dir=-12 dist=154 height=2.85 side=0.22"
+                ]
+              }
+            ]
+          },
+          "popup-s4": {
+            "goal": "popup",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=86 la=22 dir=13 dist=272 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=11 dist=122 height=1.20 side=-0.30",
+                  "ev=76 la=19 dir=-24 dist=192 height=3.10 side=-0.50",
+                  "ev=75 la=13 dir=-9 dist=159 height=2.30 side=0.90",
+                  "ev=92 la=27 dir=29 dist=346 height=2.60 side=0.40",
+                  "ev=81 la=24 dir=-9 dist=249 height=3.80 side=0.10",
+                  "ev=89 la=15 dir=-22 dist=246 height=2.10 side=-0.60",
+                  "ev=87 la=20 dir=24 dist=266 height=2.90 side=0.30",
+                  "ev=74 la=24 dir=21 dist=201 height=1.40 side=0.50",
+                  "ev=78 la=22 dir=-6 dist=219 height=3.30 side=-0.40",
+                  "ev=87 la=14 dir=-5 dist=229 height=2.70 side=0.60",
+                  "ev=78 la=2 dir=17 dist=117 height=0.80 side=-0.20",
+                  "ev=89 la=25 dir=7 dist=311 height=2.40 side=-0.30",
+                  "ev=78 la=19 dir=8 dist=204 height=3.60 side=0.80",
+                  "ev=82 la=6 dir=-20 dist=156 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.4,
+                "avgAngle": 19.27,
+                "swings": [
+                  "ev=85 la=11 dir=20 dist=199 height=1.78 side=0.30",
+                  "ev=91 la=25 dir=16 dist=325 height=3.17 side=-0.11",
+                  "ev=87 la=19 dir=-1 dist=260 height=0.77 side=-0.97",
+                  "ev=77 la=22 dir=4 dist=212 height=4.02 side=-1.04",
+                  "ev=85 la=12 dir=12 dist=206 height=0.62 side=-1.07",
+                  "ev=87 la=22 dir=35 dist=279 height=2.37 side=-0.70",
+                  "ev=80 la=12 dir=-11 dist=180 height=1.76 side=0.40",
+                  "ev=82 la=17 dir=-22 dist=218 height=1.65 side=0.24",
+                  "ev=83 la=19 dir=34 dist=235 height=3.23 side=-0.29",
+                  "ev=81 la=28 dir=-26 dist=270 height=2.98 side=-0.25",
+                  "ev=84 la=23 dir=4 dist=264 height=1.26 side=0.92",
+                  "ev=84 la=19 dir=35 dist=241 height=2.16 side=-0.34",
+                  "ev=88 la=23 dir=-12 dist=291 height=2.69 side=0.07",
+                  "ev=82 la=16 dir=13 dist=213 height=2.42 side=0.19",
+                  "ev=90 la=21 dir=-22 dist=292 height=3.14 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 77,
+                "avgAngle": 17.27,
+                "swings": [
+                  "ev=76 la=12 dir=-10 dist=159 height=4.09 side=0.92",
+                  "ev=76 la=19 dir=10 dist=192 height=2.07 side=0.29",
+                  "ev=76 la=22 dir=35 dist=206 height=1.83 side=-0.56",
+                  "ev=71 la=10 dir=-25 dist=126 height=1.09 side=0.98",
+                  "ev=78 la=8 dir=31 dist=149 height=2.70 side=-0.24",
+                  "ev=86 la=18 dir=0 dist=248 height=2.98 side=0.37",
+                  "ev=80 la=21 dir=1 dist=227 height=2.78 side=-0.11",
+                  "ev=77 la=30 dir=-22 dist=230 height=2.03 side=-0.22",
+                  "ev=81 la=19 dir=-20 dist=223 height=3.40 side=0.45",
+                  "ev=72 la=15 dir=35 dist=151 height=3.12 side=0.16",
+                  "ev=74 la=19 dir=25 dist=180 height=3.27 side=0.52",
+                  "ev=79 la=19 dir=-1 dist=211 height=2.33 side=0.25",
+                  "ev=71 la=15 dir=-4 dist=145 height=2.03 side=0.49",
+                  "ev=81 la=15 dir=16 dist=201 height=1.97 side=0.58",
+                  "ev=77 la=17 dir=7 dist=189 height=3.61 side=-0.83"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.8,
+                "avgAngle": 15.27,
+                "swings": [
+                  "ev=82 la=24 dir=-18 dist=256 height=2.20 side=0.00",
+                  "ev=75 la=21 dir=25 dist=195 height=3.03 side=0.44",
+                  "ev=78 la=14 dir=31 dist=180 height=2.60 side=0.17",
+                  "ev=80 la=12 dir=9 dist=180 height=3.08 side=0.49",
+                  "ev=81 la=9 dir=9 dist=168 height=2.26 side=0.22",
+                  "ev=72 la=11 dir=18 dist=135 height=3.76 side=1.07",
+                  "ev=80 la=18 dir=8 dist=212 height=2.53 side=0.11",
+                  "ev=79 la=9 dir=19 dist=159 height=2.69 side=0.51",
+                  "ev=78 la=18 dir=23 dist=199 height=3.43 side=0.69",
+                  "ev=78 la=11 dir=10 dist=165 height=1.97 side=0.37",
+                  "ev=79 la=23 dir=31 dist=230 height=3.78 side=0.92",
+                  "ev=78 la=18 dir=-20 dist=199 height=1.92 side=0.13",
+                  "ev=76 la=11 dir=28 dist=155 height=0.56 side=0.81",
+                  "ev=87 la=22 dir=18 dist=279 height=2.95 side=-0.52",
+                  "ev=79 la=8 dir=-12 dist=154 height=2.85 side=0.22"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "slice9-before": {
+      "producedByBuilder": "slice9-before",
+      "mustBeReproducedByBuilder": "slice9-before",
+      "seeds": {
+        "20260814": {
+          "power-s1": {
+            "goal": "power",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "power-s2": {
+            "goal": "power",
+            "viewingSessionNumber": 2,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 20.73,
+                "swings": [
+                  "ev=86 la=29 dir=27 dist=301 height=2.51 side=0.26",
+                  "ev=85 la=18 dir=11 dist=242 height=2.31 side=0.67",
+                  "ev=86 la=21 dir=-30 dist=266 height=2.77 side=-0.08",
+                  "ev=77 la=21 dir=-9 dist=208 height=4.05 side=-0.82",
+                  "ev=84 la=27 dir=23 dist=287 height=3.15 side=0.69",
+                  "ev=81 la=12 dir=18 dist=185 height=3.23 side=-0.34",
+                  "ev=88 la=25 dir=-20 dist=304 height=0.79 side=-0.98",
+                  "ev=80 la=17 dir=-5 dist=206 height=3.68 side=0.84",
+                  "ev=87 la=16 dir=11 dist=241 height=1.32 side=0.96",
+                  "ev=83 la=14 dir=23 dist=207 height=3.09 side=-0.50",
+                  "ev=90 la=23 dir=-29 dist=305 height=1.63 side=0.38",
+                  "ev=76 la=14 dir=-30 dist=169 height=1.54 side=-0.60",
+                  "ev=90 la=24 dir=-22 dist=312 height=2.52 side=0.67",
+                  "ev=81 la=28 dir=-30 dist=270 height=2.53 side=-0.03",
+                  "ev=83 la=22 dir=36 dist=252 height=1.26 side=1.01"
+                ]
+              }
+            ]
+          },
+          "contact-s1": {
+            "goal": "contact",
+            "viewingSessionNumber": 1,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              }
+            ]
+          },
+          "contact-s4": {
+            "goal": "contact",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 81.53,
+                "avgAngle": 16.13,
+                "swings": [
+                  "ev=79 la=11 dir=13 dist=170 height=4.08 side=1.09",
+                  "ev=80 la=4 dir=33 dist=136 height=1.56 side=0.08",
+                  "ev=86 la=14 dir=-27 dist=223 height=1.52 side=0.24",
+                  "ev=86 la=18 dir=-2 dist=248 height=3.07 side=0.58",
+                  "ev=88 la=16 dir=-6 dist=247 height=3.07 side=0.17",
+                  "ev=87 la=25 dir=-23 dist=297 height=2.91 side=0.66",
+                  "ev=78 la=25 dir=25 dist=233 height=1.69 side=0.07",
+                  "ev=85 la=11 dir=-3 dist=199 height=1.66 side=0.24",
+                  "ev=76 la=15 dir=2 dist=173 height=2.45 side=0.22",
+                  "ev=74 la=22 dir=7 dist=192 height=0.58 side=1.08",
+                  "ev=76 la=13 dir=-6 dist=164 height=2.77 side=-0.46",
+                  "ev=78 la=7 dir=-24 dist=144 height=3.02 side=-0.66",
+                  "ev=86 la=25 dir=-22 dist=290 height=0.61 side=-0.89",
+                  "ev=84 la=16 dir=26 dist=224 height=3.42 side=-0.04",
+                  "ev=80 la=20 dir=-16 dist=222 height=2.78 side=-0.28"
+                ]
+              }
+            ]
+          },
+          "open-s4": {
+            "goal": "open",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          },
+          "allfields-s4": {
+            "goal": "allfields",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          },
+          "popup-s4": {
+            "goal": "popup",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.6,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=78 la=12 dir=2 dist=170 height=2.80 side=0.20",
+                  "ev=72 la=8 dir=-18 dist=122 height=1.20 side=-0.30",
+                  "ev=88 la=26 dir=1 dist=310 height=3.10 side=-0.50",
+                  "ev=75 la=6 dir=-10 dist=126 height=2.30 side=0.90",
+                  "ev=91 la=28 dir=3 dist=345 height=2.60 side=0.40",
+                  "ev=82 la=18 dir=-15 dist=224 height=3.80 side=0.10",
+                  "ev=76 la=10 dir=6 dist=150 height=2.10 side=-0.60",
+                  "ev=85 la=24 dir=-1 dist=277 height=2.90 side=0.30",
+                  "ev=79 la=14 dir=22 dist=185 height=1.40 side=0.50",
+                  "ev=83 la=20 dir=5 dist=241 height=3.30 side=-0.40",
+                  "ev=87 la=22 dir=-3 dist=279 height=2.70 side=0.60",
+                  "ev=70 la=4 dir=12 dist=97 height=0.80 side=-0.20",
+                  "ev=86 la=25 dir=-24 dist=290 height=2.40 side=-0.30",
+                  "ev=80 la=16 dir=18 dist=201 height=3.60 side=0.80",
+                  "ev=92 la=27 dir=1 dist=346 height=2.50 side=0.10"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=86 la=27 dir=27 dist=302 height=2.51 side=0.26",
+                  "ev=85 la=16 dir=11 dist=230 height=2.31 side=0.67",
+                  "ev=86 la=19 dir=-30 dist=254 height=2.77 side=-0.08",
+                  "ev=77 la=19 dir=-9 dist=198 height=4.05 side=-0.82",
+                  "ev=84 la=25 dir=23 dist=276 height=3.15 side=0.69",
+                  "ev=81 la=10 dir=18 dist=174 height=3.23 side=-0.34",
+                  "ev=88 la=23 dir=-20 dist=291 height=0.79 side=-0.98",
+                  "ev=80 la=15 dir=-5 dist=196 height=3.68 side=0.84",
+                  "ev=87 la=14 dir=11 dist=229 height=1.32 side=0.96",
+                  "ev=83 la=12 dir=23 dist=195 height=3.09 side=-0.50",
+                  "ev=90 la=21 dir=-29 dist=292 height=1.63 side=0.38",
+                  "ev=76 la=12 dir=-30 dist=159 height=1.54 side=-0.60",
+                  "ev=90 la=22 dir=-22 dist=298 height=2.52 side=0.67",
+                  "ev=81 la=26 dir=-30 dist=260 height=2.53 side=-0.03",
+                  "ev=83 la=20 dir=36 dist=241 height=1.26 side=1.01"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83,
+                "avgAngle": 19.4,
+                "swings": [
+                  "ev=77 la=15 dir=-27 dist=179 height=1.97 side=0.26",
+                  "ev=82 la=30 dir=7 dist=266 height=0.60 side=-1.00",
+                  "ev=79 la=12 dir=33 dist=175 height=2.66 side=-0.63",
+                  "ev=78 la=13 dir=-24 dist=175 height=3.36 side=0.30",
+                  "ev=80 la=16 dir=0 dist=201 height=2.00 side=-0.69",
+                  "ev=83 la=19 dir=-13 dist=235 height=1.80 side=0.09",
+                  "ev=86 la=24 dir=15 dist=284 height=0.51 side=0.99",
+                  "ev=83 la=17 dir=11 dist=224 height=3.68 side=0.95",
+                  "ev=84 la=27 dir=0 dist=287 height=3.74 side=-0.81",
+                  "ev=84 la=24 dir=22 dist=270 height=2.97 side=0.61",
+                  "ev=77 la=8 dir=20 dist=145 height=3.63 side=-0.85",
+                  "ev=90 la=17 dir=19 dist=265 height=2.34 side=0.00",
+                  "ev=86 la=16 dir=-28 dist=236 height=2.05 side=0.43",
+                  "ev=90 la=27 dir=7 dist=331 height=2.60 side=-0.23",
+                  "ev=86 la=26 dir=5 dist=296 height=2.86 side=0.13"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 78.93,
+                "avgAngle": 16.53,
+                "swings": [
+                  "ev=75 la=6 dir=26 dist=126 height=3.96 side=-1.06",
+                  "ev=78 la=15 dir=33 dist=185 height=2.06 side=0.37",
+                  "ev=82 la=19 dir=3 dist=229 height=1.84 side=-0.47",
+                  "ev=80 la=18 dir=-25 dist=212 height=2.10 side=-0.70",
+                  "ev=82 la=20 dir=-19 dist=235 height=2.24 side=-0.69",
+                  "ev=81 la=23 dir=18 dist=244 height=1.84 side=0.43",
+                  "ev=74 la=17 dir=-4 dist=171 height=3.91 side=-0.88",
+                  "ev=80 la=23 dir=22 dist=237 height=3.42 side=0.36",
+                  "ev=78 la=20 dir=4 dist=209 height=0.70 side=0.85",
+                  "ev=79 la=9 dir=14 dist=159 height=2.08 side=0.70",
+                  "ev=83 la=22 dir=1 dist=252 height=3.13 side=0.21",
+                  "ev=75 la=5 dir=1 dist=121 height=1.92 side=0.17",
+                  "ev=78 la=10 dir=2 dist=159 height=4.04 side=-0.97",
+                  "ev=81 la=13 dir=12 dist=191 height=2.78 side=-0.05",
+                  "ev=78 la=28 dir=24 dist=248 height=3.36 side=0.07"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "frozen": {
+      "producedByBuilder": "frozen",
+      "mustBeReproducedByBuilder": "frozen",
+      "seeds": {
+        "20260814": {
+          "power-s2": {
+            "goal": "power",
+            "viewingSessionNumber": 2,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.4,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=79 la=10 dir=34 dist=164 height=2.85 side=0.47",
+                  "ev=83 la=22 dir=9 dist=252 height=2.11 side=0.14",
+                  "ev=79 la=24 dir=-11 dist=235 height=3.61 side=0.99",
+                  "ev=78 la=10 dir=18 dist=159 height=2.95 side=0.65",
+                  "ev=79 la=15 dir=20 dist=190 height=2.92 side=0.38",
+                  "ev=83 la=23 dir=-3 dist=258 height=1.69 side=0.30",
+                  "ev=87 la=15 dir=34 dist=235 height=2.42 side=-0.47",
+                  "ev=78 la=17 dir=-24 dist=195 height=2.66 side=-0.43",
+                  "ev=78 la=21 dir=15 dist=214 height=2.67 side=-0.53",
+                  "ev=85 la=13 dir=11 dist=212 height=1.32 side=0.96",
+                  "ev=82 la=11 dir=23 dist=185 height=3.09 side=-0.50",
+                  "ev=88 la=21 dir=-29 dist=279 height=1.63 side=0.38",
+                  "ev=74 la=12 dir=-30 dist=149 height=1.54 side=-0.60",
+                  "ev=89 la=21 dir=-22 dist=285 height=2.52 side=0.67",
+                  "ev=79 la=25 dir=-30 dist=240 height=2.53 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.93,
+                "avgAngle": 22.4,
+                "swings": [
+                  "ev=92 la=24 dir=28 dist=325 height=3.74 side=-0.86",
+                  "ev=79 la=18 dir=-29 dist=205 height=1.97 side=0.26",
+                  "ev=84 la=34 dir=7 dist=257 height=0.60 side=-1.00",
+                  "ev=81 la=15 dir=35 dist=201 height=2.66 side=-0.63",
+                  "ev=79 la=16 dir=-26 dist=195 height=3.36 side=0.30",
+                  "ev=81 la=19 dir=0 dist=223 height=2.00 side=-0.69",
+                  "ev=84 la=22 dir=-13 dist=259 height=1.80 side=0.09",
+                  "ev=88 la=28 dir=15 dist=323 height=0.51 side=0.99",
+                  "ev=85 la=20 dir=12 dist=254 height=3.68 side=0.95",
+                  "ev=86 la=31 dir=0 dist=289 height=3.74 side=-0.81",
+                  "ev=86 la=28 dir=23 dist=308 height=2.97 side=0.61",
+                  "ev=78 la=11 dir=21 dist=165 height=3.63 side=-0.85",
+                  "ev=92 la=20 dir=20 dist=298 height=2.34 side=0.00",
+                  "ev=88 la=20 dir=-29 dist=273 height=2.05 side=0.43",
+                  "ev=91 la=30 dir=8 dist=331 height=2.60 side=-0.23"
+                ]
+              }
+            ]
+          },
+          "contact-s4": {
+            "goal": "contact",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.4,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=79 la=10 dir=34 dist=164 height=2.85 side=0.47",
+                  "ev=83 la=22 dir=9 dist=252 height=2.11 side=0.14",
+                  "ev=79 la=24 dir=-11 dist=235 height=3.61 side=0.99",
+                  "ev=78 la=10 dir=18 dist=159 height=2.95 side=0.65",
+                  "ev=79 la=15 dir=20 dist=190 height=2.92 side=0.38",
+                  "ev=83 la=23 dir=-3 dist=258 height=1.69 side=0.30",
+                  "ev=87 la=15 dir=34 dist=235 height=2.42 side=-0.47",
+                  "ev=78 la=17 dir=-24 dist=195 height=2.66 side=-0.43",
+                  "ev=78 la=21 dir=15 dist=214 height=2.67 side=-0.53",
+                  "ev=85 la=13 dir=11 dist=212 height=1.32 side=0.96",
+                  "ev=82 la=11 dir=23 dist=185 height=3.09 side=-0.50",
+                  "ev=88 la=21 dir=-29 dist=279 height=1.63 side=0.38",
+                  "ev=74 la=12 dir=-30 dist=149 height=1.54 side=-0.60",
+                  "ev=89 la=21 dir=-22 dist=285 height=2.52 side=0.67",
+                  "ev=79 la=25 dir=-30 dist=240 height=2.53 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.93,
+                "avgAngle": 20.4,
+                "swings": [
+                  "ev=92 la=22 dir=28 dist=312 height=3.74 side=-0.86",
+                  "ev=79 la=16 dir=-29 dist=195 height=1.97 side=0.26",
+                  "ev=84 la=32 dir=7 dist=269 height=0.60 side=-1.00",
+                  "ev=81 la=13 dir=35 dist=191 height=2.66 side=-0.63",
+                  "ev=79 la=14 dir=-26 dist=185 height=3.36 side=0.30",
+                  "ev=81 la=17 dir=0 dist=212 height=2.00 side=-0.69",
+                  "ev=84 la=20 dir=-13 dist=247 height=1.80 side=0.09",
+                  "ev=88 la=26 dir=15 dist=310 height=0.51 side=0.99",
+                  "ev=85 la=18 dir=12 dist=242 height=3.68 side=0.95",
+                  "ev=86 la=29 dir=0 dist=301 height=3.74 side=-0.81",
+                  "ev=86 la=26 dir=23 dist=296 height=2.97 side=0.61",
+                  "ev=78 la=9 dir=21 dist=154 height=3.63 side=-0.85",
+                  "ev=92 la=18 dir=20 dist=284 height=2.34 side=0.00",
+                  "ev=88 la=18 dir=-29 dist=260 height=2.05 side=0.43",
+                  "ev=91 la=28 dir=8 dist=345 height=2.60 side=-0.23"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=82 la=23 dir=10 dist=251 height=3.91 side=-0.92",
+                  "ev=85 la=22 dir=23 dist=265 height=1.29 side=0.89",
+                  "ev=88 la=9 dir=-11 dist=201 height=3.81 side=-0.95",
+                  "ev=77 la=10 dir=30 dist=155 height=2.15 side=-0.63",
+                  "ev=82 la=11 dir=-4 dist=185 height=3.67 side=0.91",
+                  "ev=80 la=17 dir=35 dist=206 height=3.69 side=0.95",
+                  "ev=81 la=12 dir=30 dist=185 height=2.75 side=-0.65",
+                  "ev=88 la=13 dir=10 dist=228 height=1.36 side=0.87",
+                  "ev=91 la=22 dir=31 dist=305 height=1.94 side=0.36",
+                  "ev=77 la=21 dir=-5 dist=208 height=1.88 side=-0.29",
+                  "ev=94 la=27 dir=9 dist=360 height=2.33 side=0.44",
+                  "ev=80 la=22 dir=-20 dist=232 height=2.36 side=-0.41",
+                  "ev=80 la=25 dir=1 dist=247 height=3.21 side=0.59",
+                  "ev=84 la=26 dir=0 dist=281 height=2.20 side=0.19",
+                  "ev=88 la=21 dir=31 dist=279 height=3.46 side=0.45"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 86.33,
+                "avgAngle": 20.8,
+                "swings": [
+                  "ev=88 la=18 dir=4 dist=260 height=1.76 side=0.23",
+                  "ev=90 la=30 dir=31 dist=324 height=1.32 side=-1.09",
+                  "ev=81 la=21 dir=20 dist=234 height=0.53 side=0.80",
+                  "ev=92 la=24 dir=-13 dist=325 height=2.64 side=0.40",
+                  "ev=92 la=31 dir=-15 dist=331 height=2.79 side=0.40",
+                  "ev=88 la=28 dir=28 dist=323 height=1.62 side=0.29",
+                  "ev=92 la=20 dir=25 dist=298 height=0.59 side=0.94",
+                  "ev=86 la=23 dir=11 dist=278 height=2.84 side=-0.14",
+                  "ev=82 la=16 dir=-16 dist=213 height=2.81 side=-0.12",
+                  "ev=86 la=15 dir=20 dist=229 height=1.68 side=0.32",
+                  "ev=84 la=24 dir=11 dist=270 height=1.68 side=0.19",
+                  "ev=80 la=14 dir=-25 dist=191 height=2.68 side=0.36",
+                  "ev=84 la=19 dir=23 dist=241 height=3.41 side=-0.16",
+                  "ev=80 la=11 dir=32 dist=175 height=1.78 side=0.51",
+                  "ev=90 la=18 dir=-2 dist=272 height=2.99 side=-0.41"
+                ]
+              }
+            ]
+          },
+          "open-s4": {
+            "goal": "open",
+            "viewingSessionNumber": 4,
+            "sessions": [
+              {
+                "sessionNumber": 1,
+                "swingCount": 15,
+                "avgExitSpeed": 81.4,
+                "avgAngle": 17.33,
+                "swings": [
+                  "ev=79 la=10 dir=34 dist=164 height=2.85 side=0.47",
+                  "ev=83 la=22 dir=9 dist=252 height=2.11 side=0.14",
+                  "ev=79 la=24 dir=-11 dist=235 height=3.61 side=0.99",
+                  "ev=78 la=10 dir=18 dist=159 height=2.95 side=0.65",
+                  "ev=79 la=15 dir=20 dist=190 height=2.92 side=0.38",
+                  "ev=83 la=23 dir=-3 dist=258 height=1.69 side=0.30",
+                  "ev=87 la=15 dir=34 dist=235 height=2.42 side=-0.47",
+                  "ev=78 la=17 dir=-24 dist=195 height=2.66 side=-0.43",
+                  "ev=78 la=21 dir=15 dist=214 height=2.67 side=-0.53",
+                  "ev=85 la=13 dir=11 dist=212 height=1.32 side=0.96",
+                  "ev=82 la=11 dir=23 dist=185 height=3.09 side=-0.50",
+                  "ev=88 la=21 dir=-29 dist=279 height=1.63 side=0.38",
+                  "ev=74 la=12 dir=-30 dist=149 height=1.54 side=-0.60",
+                  "ev=89 la=21 dir=-22 dist=285 height=2.52 side=0.67",
+                  "ev=79 la=25 dir=-30 dist=240 height=2.53 side=-0.03"
+                ]
+              },
+              {
+                "sessionNumber": 2,
+                "swingCount": 15,
+                "avgExitSpeed": 84.93,
+                "avgAngle": 20.4,
+                "swings": [
+                  "ev=92 la=22 dir=28 dist=312 height=3.74 side=-0.86",
+                  "ev=79 la=16 dir=-29 dist=195 height=1.97 side=0.26",
+                  "ev=84 la=32 dir=7 dist=269 height=0.60 side=-1.00",
+                  "ev=81 la=13 dir=35 dist=191 height=2.66 side=-0.63",
+                  "ev=79 la=14 dir=-26 dist=185 height=3.36 side=0.30",
+                  "ev=81 la=17 dir=0 dist=212 height=2.00 side=-0.69",
+                  "ev=84 la=20 dir=-13 dist=247 height=1.80 side=0.09",
+                  "ev=88 la=26 dir=15 dist=310 height=0.51 side=0.99",
+                  "ev=85 la=18 dir=12 dist=242 height=3.68 side=0.95",
+                  "ev=86 la=29 dir=0 dist=301 height=3.74 side=-0.81",
+                  "ev=86 la=26 dir=23 dist=296 height=2.97 side=0.61",
+                  "ev=78 la=9 dir=21 dist=154 height=3.63 side=-0.85",
+                  "ev=92 la=18 dir=20 dist=284 height=2.34 side=0.00",
+                  "ev=88 la=18 dir=-29 dist=260 height=2.05 side=0.43",
+                  "ev=91 la=28 dir=8 dist=345 height=2.60 side=-0.23"
+                ]
+              },
+              {
+                "sessionNumber": 3,
+                "swingCount": 15,
+                "avgExitSpeed": 83.8,
+                "avgAngle": 18.73,
+                "swings": [
+                  "ev=82 la=23 dir=10 dist=251 height=3.91 side=-0.92",
+                  "ev=85 la=22 dir=23 dist=265 height=1.29 side=0.89",
+                  "ev=88 la=9 dir=-11 dist=201 height=3.81 side=-0.95",
+                  "ev=77 la=10 dir=30 dist=155 height=2.15 side=-0.63",
+                  "ev=82 la=11 dir=-4 dist=185 height=3.67 side=0.91",
+                  "ev=80 la=17 dir=35 dist=206 height=3.69 side=0.95",
+                  "ev=81 la=12 dir=30 dist=185 height=2.75 side=-0.65",
+                  "ev=88 la=13 dir=10 dist=228 height=1.36 side=0.87",
+                  "ev=91 la=22 dir=31 dist=305 height=1.94 side=0.36",
+                  "ev=77 la=21 dir=-5 dist=208 height=1.88 side=-0.29",
+                  "ev=94 la=27 dir=9 dist=360 height=2.33 side=0.44",
+                  "ev=80 la=22 dir=-20 dist=232 height=2.36 side=-0.41",
+                  "ev=80 la=25 dir=1 dist=247 height=3.21 side=0.59",
+                  "ev=84 la=26 dir=0 dist=281 height=2.20 side=0.19",
+                  "ev=88 la=21 dir=31 dist=279 height=3.46 side=0.45"
+                ]
+              },
+              {
+                "sessionNumber": 4,
+                "swingCount": 15,
+                "avgExitSpeed": 86.33,
+                "avgAngle": 20.8,
+                "swings": [
+                  "ev=88 la=18 dir=4 dist=260 height=1.76 side=0.23",
+                  "ev=90 la=30 dir=31 dist=324 height=1.32 side=-1.09",
+                  "ev=81 la=21 dir=20 dist=234 height=0.53 side=0.80",
+                  "ev=92 la=24 dir=-13 dist=325 height=2.64 side=0.40",
+                  "ev=92 la=31 dir=-15 dist=331 height=2.79 side=0.40",
+                  "ev=88 la=28 dir=28 dist=323 height=1.62 side=0.29",
+                  "ev=92 la=20 dir=25 dist=298 height=0.59 side=0.94",
+                  "ev=86 la=23 dir=11 dist=278 height=2.84 side=-0.14",
+                  "ev=82 la=16 dir=-16 dist=213 height=2.81 side=-0.12",
+                  "ev=86 la=15 dir=20 dist=229 height=1.68 side=0.32",
+                  "ev=84 la=24 dir=11 dist=270 height=1.68 side=0.19",
+                  "ev=80 la=14 dir=-25 dist=191 height=2.68 side=0.36",
+                  "ev=84 la=19 dir=23 dist=241 height=3.41 side=-0.16",
+                  "ev=80 la=11 dir=32 dist=175 height=1.78 side=0.51",
+                  "ev=90 la=18 dir=-2 dist=272 height=2.99 side=-0.41"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "laterAdditions": [
+    {
+      "group": "frozen",
+      "addedOn": "2026-08-20",
+      "fromWorkingTreeAtCommit": "e47c528",
+      "by": "node scripts/write-frozen-session-digest.mjs --add-group frozen",
+      "why": "Not captured in the original write because nobody had noticed this fixture was exposed. Every group already in this file was left untouched."
+    }
+  ]
+}

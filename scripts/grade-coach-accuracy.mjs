@@ -56,6 +56,12 @@
 //   --input docs/eval-fixtures/slice9-session-one/before  --builder slice9-before --seed 20260814
 //   --input docs/eval-fixtures/slice9-session-one/after-a --builder current       --seed 20260814
 //   --input docs/eval-fixtures/slice9-session-one/after-b --builder current       --seed 20260819
+// (Dated correction, 20 August 2026, Slice 11: the two "current" lines above
+// are what was run on the day and are left standing as the record of it, but
+// they are no longer the right command. Both rounds now take
+// --builder slice11-before, because "current" has since come to mean a
+// different swing generator. So do Slice 10's two rounds. See the fourth
+// section of the session-builders comment below.)
 // NOTE THE THIRD SEED. Round B was generated at a different seed from the
 // other two and from this script's own default. Each of those directories
 // carries a BUILDER.txt naming its own builder AND its own seed, so both
@@ -88,7 +94,7 @@
 // collected.
 
 import { register } from 'node:module'
-import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import path from 'node:path'
 
@@ -126,6 +132,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const REPO_ROOT = path.resolve(__dirname, '..')
 const FIXTURE_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice7-debriefs')
 const SLICE9_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice9-session-one')
+const SLICE10_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/slice10-direction-key')
+// Snapshots that belong to no single round, because more than one round
+// depends on them. The pre-Slice-11 generator is the first of them.
+const FROZEN_DIR = path.join(REPO_ROOT, 'docs/eval-fixtures/frozen')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Model, pricing, cost guardrails
@@ -158,7 +168,7 @@ const FALLBACK_PRICING = PRICING['claude-haiku-4-5-20251001']
 const MAX_PLANNED_CALLS = 100
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Session builders: frozen, slice9-before, current
+// Session builders: frozen, slice9-before, slice11-before, current
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // This is the subtlest part of the task, so the mechanism is spelled out
@@ -171,10 +181,14 @@ const MAX_PLANNED_CALLS = 100
 // could load it). docs/eval-fixtures/slice7-debriefs/rebuild.mjs is a
 // frozen, deliberately-unmaintained copy of that exact stand-in generator,
 // kept exactly as it was so it keeps reconstructing what those 96 debriefs
-// actually saw. Grading them against anything else, including today's real
-// session-1 swings, would silently invalidate every verdict: the swing
-// numbers and values in the coach's own prose would no longer match the
-// "current" fact sheet's per-swing table at all.
+// actually saw. (DATED CORRECTION, 20 August 2026: "kept exactly as it was"
+// was true of the code written in that file and false of the swing generator
+// it called, which it imported from the working tree until today. See the
+// section headed "A BUILDER IS A PAIR NOW", and the dated correction inside
+// it naming the fourth builder.) Grading them against anything else,
+// including today's real session-1 swings, would silently invalidate every
+// verdict: the swing numbers and values in the coach's own prose would no
+// longer match the "current" fact sheet's per-swing table at all.
 //
 // A bench run from today onward uses the REAL session-1 swings
 // (src/sessionOneSwings.js, extracted in this same slice's earlier task),
@@ -196,11 +210,20 @@ const MAX_PLANNED_CALLS = 100
 // the current builder and differs in nothing but which fifteen swings it
 // starts from.
 //
+// *** AND IT RECURRED AGAIN, IN A NEW PLACE, 20 AUGUST 2026. ***
+// See the section headed "A BUILDER IS A PAIR NOW". Everything above
+// this line is about WHICH FIFTEEN SWINGS a round started from. That turned
+// out to be only half of what the working tree contributes.
+//
 // Which builder goes with which records:
-//   frozen         docs/eval-fixtures/slice7-debriefs (the 96-debrief fixture)
-//   slice9-before  docs/eval-fixtures/slice9-session-one/before
-//   current        anything produced by the bench against today's working
-//                  tree, including slice9-session-one/after-*
+//   frozen          docs/eval-fixtures/slice7-debriefs (the 96-debrief fixture)
+//   slice9-before   docs/eval-fixtures/slice9-session-one/before
+//   slice11-before  docs/eval-fixtures/slice9-session-one/after-a and after-b,
+//                   docs/eval-fixtures/slice10-direction-key/after and
+//                   after-spray. All four said "current" until 20 August 2026;
+//                   see below for what changed and why it is not a rename.
+//   current         anything produced by the bench against today's working
+//                   tree, and nothing that is already committed
 //
 // The flag design makes the choice unavoidable rather than defaulted:
 //   - No --records flag (the default: grade the 96-debrief fixture) locks
@@ -222,6 +245,95 @@ const MAX_PLANNED_CALLS = 100
 //     The marker is committed beside the records by whoever generated them,
 //     which is the one moment the answer is actually known. See
 //     readBuilderMarker below.
+//
+// *** A BUILDER IS A PAIR NOW, NOT A BASELINE. 20 AUGUST 2026, SLICE 11. ***
+//
+// Every paragraph above this one treats a builder as an answer to one
+// question: which fifteen session-1 swings did this round start from. That
+// framing was wrong, and it was wrong from the day the second builder was
+// added; it simply could not be noticed while only session 1 ever moved.
+//
+// Sessions 2, 3 and 4 are not stored anywhere either. They are GENERATED
+// from session 1, by src/swingGenerator.js, read out of the working tree.
+// So a builder has always depended on two moving parts, and only one of them
+// was pinned. Slice 11 rewrites the generator (the link between where a
+// pitch was and how well it was struck, the pull and opposite-field bias,
+// and the pop-up ceiling). The moment it lands, four committed rounds that
+// said "current" would rebuild sessions 2 to 4 from the new generator while
+// their session 1 stayed correct: a complete, entirely plausible fact sheet
+// covering 40 of every 64 records, describing swings no coach ever saw, with
+// nothing appearing broken. This is the identical failure the two sections
+// above describe, arriving through the other door.
+//
+// So a builder is now a PAIR: which baseline, and which generator.
+//
+//   current          live baseline, live generator
+//   slice11-before   live baseline, frozen generator
+//   slice9-before    frozen baseline, frozen generator
+//
+// *** DATED CORRECTION, 20 August 2026, LATER THE SAME DAY. THE TABLE ABOVE
+// *** LISTS THREE BUILDERS AND THIS SCRIPT HAS FOUR. The missing row is the
+// *** oldest one, "frozen", and its absence is not a typo: it is what let this
+// *** whole problem hide from six passes of review.
+//
+//   frozen           frozen baseline, LIVE GENERATOR until today
+//                    frozen baseline, frozen generator from today
+//
+// Read that row against the provenance list a dozen lines above this section,
+// which has mapped "frozen" to docs/eval-fixtures/slice7-debriefs since the day
+// it was written. Everything needed to see the gap was already on this screen.
+// What stopped anybody seeing it was that this section's own summary omitted
+// the row, and a reader checking whether the pairs were right checked the
+// summary.
+//
+// The exposure was the worst of the six rather than the mildest.
+// docs/eval-fixtures/slice7-debriefs/rebuild.mjs froze its own stand-in for
+// session 1 in August and then generated sessions 2 and later by importing the
+// generator out of the working tree, and all three of its cells are session 2
+// or later. Meanwhile the flag rules below FORCE this builder for every
+// --validate run, and --validate against those 96 debriefs is the entire basis
+// on which this tool's ability to catch a real coach error was established. A
+// generator rewrite would have re-graded that fixture against a complete,
+// plausible fact sheet no coach in it ever saw, and the tool would then have
+// been "revalidated" against it.
+//
+// It is repaired: rebuild.mjs now imports the same frozen snapshot the two rows
+// above it use, its three cells are recorded in the committed digest, and two
+// tests in scripts/frozenGenerator.test.js hold it there.
+//
+// TWO IMPORTS IN THAT FILE ARE STILL LIVE, deliberately, and the honest
+// statement is in its own header rather than summarised away here. computeStats
+// for the same reason every other builder keeps it. carryDistance because the
+// snapshot's copy is module-private inside a pinned hash region, so reaching it
+// would force a re-pin; that one is a real residual and its header measures
+// exactly which carryDistance changes the digest can and cannot see.
+//
+// THE LESSON FOR WHOEVER ADDS THE FIFTH BUILDER: the summary table above is the
+// thing people read. If a builder is not in it, the builder does not exist as
+// far as review is concerned.
+//
+// The frozen generator is
+// docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs, recovered from
+// commit 53315e5. It imports nothing from src/ at all, carrying its own
+// frozen copies of the carry formula and the goal target table, because a
+// snapshot that reaches into the live app for half its behaviour would drift
+// the first time a target band moved by a degree. Exactly what it produces,
+// for every cell at every seed, is written down in
+// docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json and re-checked
+// on every npm test by scripts/frozenGenerator.test.js.
+//
+// slice9-before was REPOINTED, not renamed, and the distinction matters if
+// you are reading its marker. That builder's meaning was always "what that
+// round was written against", and what that round was written against now
+// requires the frozen generator too. Its BUILDER.txt still says
+// slice9-before and always will; only its meaning was completed.
+//
+// THE NEXT QUESTION A READER ASKS: what about computeStats? It still comes
+// from the working tree, in every builder, deliberately. computeStats is not
+// part of the generator; it summarises swings that have already been
+// decided, and src/sessionStats.js is not touched by this slice. If a future
+// slice does change how a session is summarised, that is a third moving part
+// and it needs its own answer, not a quiet extension of this one.
 
 function mulberry32(seed) {
   let a = seed >>> 0
@@ -262,24 +374,81 @@ export const CURRENT_CELLS = [
   { key: 'contact-s1', goal: { id: 'contact', label: 'Line Drives & Contact' }, session: 1 },
 ]
 
-let _generatorDeps = null
-async function loadGeneratorDeps() {
-  if (_generatorDeps) return _generatorDeps
+// The live generator: what a bench round run today is written about.
+let _currentGenerator = null
+async function loadCurrentGenerator() {
+  if (_currentGenerator) return _currentGenerator
   const { generateSwings } = await import(`${REPO_ROOT}/src/swingGenerator.js`)
-  const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
-  _generatorDeps = { generateSwings, computeStats }
-  return _generatorDeps
+  _currentGenerator = generateSwings
+  return _currentGenerator
 }
 
-// The one piece of session-construction logic behind both baseline-driven
-// builders. Deliberately not forked per builder: the seeding, the generator
-// call and the stats are identical for the before round and the after
-// rounds, and the whole point of the before/after comparison is that the
-// fifteen baseline swings are the ONLY thing that differs. Two copies of
-// this loop would let something else drift into the difference without
-// anyone noticing.
-async function buildSessionsFromBaseline({ baseline, goalId, upTo, seed }) {
-  const { generateSwings, computeStats } = await loadGeneratorDeps()
+// The frozen pre-Slice-11 generator: what every round committed before
+// 20 August 2026 is written about. A committed snapshot, never the working
+// tree, for the reason its own header spells out at length.
+//
+// THE PATH IS AN EXPORTED CONSTANT RATHER THAN A STRING INSIDE THE LOADER,
+// AND THAT IS LOAD-BEARING RATHER THAN TIDINESS.
+//
+// scripts/frozenGenerator.test.js hashes this snapshot to prove it has not
+// moved. It computes the path to hash itself. Until 20 August 2026 nothing
+// tied the two together, so the test hashed a path it worked out and the
+// loader imported a path IT worked out, and a change to one was invisible to
+// the other. Measured, not argued: repointing this loader at a copy of the
+// snapshot carrying a mutated carryDistance floor left `npm test` reporting
+// 597 passed across 23 files, while the file actually being imported ran
+// 0.40 and the file being hashed ran 0.55. The hash was guarding a file
+// nothing read.
+//
+// The realistic way that happens is not tampering. It is a future slice
+// adding a second snapshot beside this one and repointing this loader, while
+// the test's own copy of the path stays exactly where it is.
+//
+// So the test now imports this constant and asserts it equals the path it
+// resolved independently. Same shape src/sessionStats.test.js already uses to
+// hold src/DebriefScreen.jsx's hardcoded cutoffs to SPRAY_CUTOFFS: two
+// independent definitions, held equal by a test, so a drift is loud.
+export const PRE_SLICE11_SNAPSHOT_PATH = path.join(
+  FROZEN_DIR,
+  'swing-generator-pre-slice11.mjs',
+)
+
+let _preSlice11Generator = null
+async function loadPreSlice11Generator() {
+  if (_preSlice11Generator) return _preSlice11Generator
+  const url = pathToFileURL(PRE_SLICE11_SNAPSHOT_PATH).href
+  const { generateSwingsPreSlice11 } = await import(url)
+  if (typeof generateSwingsPreSlice11 !== 'function') {
+    throw new Error(`${url} did not export generateSwingsPreSlice11.`)
+  }
+  _preSlice11Generator = generateSwingsPreSlice11
+  return _preSlice11Generator
+}
+
+// How a session is SUMMARISED, as opposed to how it is made. This one stays
+// on the working tree in every builder, on purpose; see the note at the end
+// of the builder comment block above for why it is not a third frozen part.
+let _computeStats = null
+async function loadComputeStats() {
+  if (_computeStats) return _computeStats
+  const { computeStats } = await import(`${REPO_ROOT}/src/sessionStats.js`)
+  _computeStats = computeStats
+  return _computeStats
+}
+
+// The one piece of session-construction logic behind all three
+// baseline-driven builders. Deliberately not forked per builder: the seeding,
+// the generator call and the stats are identical for the before round and
+// the after rounds, and the whole point of a before/after comparison is that
+// exactly one thing differs. Two copies of this loop would let something
+// else drift into the difference without anyone noticing.
+//
+// The generator arrives as a parameter rather than being fetched in here,
+// which is the Slice 11 change: this function used to reach for the working
+// tree itself, which is precisely how four committed rounds came to depend
+// on a file nobody thought of as part of their provenance.
+async function buildSessionsFromBaseline({ baseline, generateSwings, goalId, upTo, seed }) {
+  const computeStats = await loadComputeStats()
   const random = mulberry32(seed)
   const sessions = [{ sessionNumber: 1, swings: baseline, stats: computeStats(baseline) }]
   for (let n = 2; n <= upTo; n++) {
@@ -302,6 +471,27 @@ async function loadCurrentBaseline() {
 // The frozen pre-rewrite session 1: what Slice 9's before round is written
 // about. A committed snapshot, never the working tree, for the reason its own
 // header spells out at length.
+//
+// THIS PATH IS HARDCODED AND NOTHING BINDS IT, AND THAT IS CLOSED RATHER THAN
+// OUTSTANDING. Recorded 20 August 2026 so nobody reopens it.
+//
+// It looks like the gap that was closed one loader up, where the snapshot's
+// path became an exported constant so a test could hold it to the file it
+// hashes. It is not the same gap, and the asymmetry is the reason. That file
+// needed a hash because the digest is measurably blind to parts of it: four
+// clamps and the whole above-28-degrees branch of the carry formula can change
+// without moving a single recorded swing, so "has this file moved" had to be
+// asked separately. A baseline has no blind spot at all. Its fifteen swings go
+// into the digest whole and are compared element by element on every npm test,
+// so any change to this file, or any repointing of this loader, shows up as
+// different swings immediately.
+//
+// Measured both ways rather than argued, first by review and then re-run
+// against the file as it stands on 20 August 2026 rather than carried over as
+// a number: mutating one exitSpeed in place, and repointing this loader at a
+// mutated copy outside the repository, each turn the same seven tests red,
+// every slice9-before cell and nothing else. A hash here would restate what the
+// digest already proves. No second definition is wanted.
 let _slice9BeforeBaseline = null
 async function loadSlice9BeforeBaseline() {
   if (_slice9BeforeBaseline) return _slice9BeforeBaseline
@@ -314,22 +504,48 @@ async function loadSlice9BeforeBaseline() {
   return _slice9BeforeBaseline
 }
 
-// builder name -> how to get its fifteen baseline swings. Adding a fourth
-// generation of session 1 means adding one line here and one frozen
-// snapshot, not another copy of the loop above.
-const BASELINE_LOADERS = {
-  current: loadCurrentBaseline,
-  'slice9-before': loadSlice9BeforeBaseline,
+// builder name -> the PAIR it stands for: which fifteen baseline swings, and
+// which generator builds sessions 2 to 4 off them. Adding a fourth generation
+// means adding one line here and one frozen snapshot, not another copy of the
+// loop above.
+//
+// Read the rows against each other rather than one at a time. Each frozen
+// half is a thing the working tree has already moved on from, and the
+// combinations that exist are exactly the combinations some committed round
+// was actually written against.
+const BUILDERS = {
+  current: { baseline: loadCurrentBaseline, generator: loadCurrentGenerator },
+  'slice11-before': { baseline: loadCurrentBaseline, generator: loadPreSlice11Generator },
+  'slice9-before': { baseline: loadSlice9BeforeBaseline, generator: loadPreSlice11Generator },
 }
-const BUILDER_NAMES = ['frozen', ...Object.keys(BASELINE_LOADERS)]
+const BUILDER_NAMES = ['frozen', ...Object.keys(BUILDERS)]
 // The prompt eras --handed-era accepts. One list, so a value arriving from a
 // marker is checked against exactly what a value arriving from the flag is.
 const HANDED_ERAS = ['slice8b', 'current']
 
+// THE 96-DEBRIEF FIXTURE'S REBUILD SCRIPT, AS AN EXPORTED PATH RATHER THAN A
+// STRING BUILT INSIDE THE LOADER. Same reasoning as PRE_SLICE11_SNAPSHOT_PATH
+// above, one level up, and it was reintroduced here by the change that repointed
+// that script at the frozen snapshot.
+//
+// scripts/frozenGenerator.test.js reads this file as text to prove it loads the
+// frozen generator rather than the working tree. It works out its own path to
+// read. Until this constant existed, this loader worked out ITS own path too,
+// so the test inspected one file while the grader imported another. Measured
+// rather than argued: repointing FIXTURE_DIR at a copy of the directory whose
+// rebuild.mjs reads src/ left `npm test` reporting 604 passed across 23 files,
+// with the fixture rebuilt from the live generator and the test reading the
+// untouched original.
+//
+// So the test now imports this constant and asserts it equals the path it
+// resolved independently. Two definitions held equal by a test, so a drift is
+// loud.
+export const FIXTURE_REBUILD_PATH = path.join(FIXTURE_DIR, 'rebuild.mjs')
+
 let _frozenRebuild = null
 async function loadFrozenRebuild() {
   if (_frozenRebuild) return _frozenRebuild
-  _frozenRebuild = await import(path.join(FIXTURE_DIR, 'rebuild.mjs'))
+  _frozenRebuild = await import(FIXTURE_REBUILD_PATH)
   return _frozenRebuild
 }
 
@@ -347,17 +563,19 @@ export async function resolveSessions({ builder, cellKey, seed = 20260814 }) {
     }
     return { sessions: sessionsForCell(cellKey), goal: cell.goal, viewingSessionNumber: cell.session }
   }
-  const loadBaseline = BASELINE_LOADERS[builder]
-  if (loadBaseline) {
+  const pair = BUILDERS[builder]
+  if (pair) {
     const cell = CURRENT_CELLS.find((c) => c.key === cellKey)
     if (!cell) {
       throw new Error(
         `Unknown cell "${cellKey}" for the ${builder} builder. Known: ${CURRENT_CELLS.map((c) => c.key).join(', ')}`,
       )
     }
-    const baseline = await loadBaseline()
+    const baseline = await pair.baseline()
+    const generateSwings = await pair.generator()
     const sessions = await buildSessionsFromBaseline({
       baseline,
+      generateSwings,
       goalId: cell.goal.id,
       upTo: cell.session,
       seed,
@@ -436,7 +654,11 @@ function loadInputDirectory(dir) {
 // --builder is required and nothing can be cross-checked.
 const BUILDER_MARKER_FILENAME = 'BUILDER.txt'
 
-function readBuilderMarker(dir) {
+// Exported since Slice 11 so scripts/replay-grading.mjs can read the same
+// provenance marker rather than trusting a saved run's record of which flag
+// was passed on the day. Those two answers came apart the moment four
+// markers were repointed; see the fourth section of the builder comment.
+export function readBuilderMarker(dir) {
   const markerPath = path.join(dir, BUILDER_MARKER_FILENAME)
   let text
   try {
@@ -594,6 +816,75 @@ function reconcileWithMarker({ dir, args, missingBuilderMessage }) {
   }
 }
 
+// THE 96-DEBRIEF FIXTURE IS GRADED BY "frozen" AND NOTHING ELSE, WHICHEVER
+// DOOR YOU COME IN BY.
+//
+// The --validate default path below already refuses any other builder for these
+// records. That rule only applies when no --records flag is given, so naming the
+// fixture's own files explicitly walked straight round it. Measured on 20 August
+// 2026: --records docs/eval-fixtures/slice7-debriefs/baseline-records.json
+// --builder current was accepted and exited 0.
+//
+// A BUILDER.txt was added beside those records the same day and refuses it. This
+// check exists because that file can be deleted, and when it was, nothing
+// noticed: the whole suite stayed green, the dry run's own guardrail self-check
+// still passed, and the wrong-builder run went back to exiting 0. A marker is a
+// record of what somebody knew; an invariant that only one builder can ever
+// grade this directory is a fact about the code, and it belongs in the code.
+//
+// Both are kept. The marker still carries the provenance a reader wants and
+// answers when no --builder is passed. This is what survives its deletion.
+//
+// CALLED TWICE PER BRANCH, ON THE FLAG AND THEN ON THE RESOLVED ANSWER, AND THE
+// SECOND CALL IS NOT BELT AND BRACES.
+//
+// The first version was called only on args.builder, which meant it returned
+// early whenever no --builder was passed and left reconcileWithMarker free to
+// adopt whatever the marker said. So the marker was a second door into the same
+// fixture: changing one word in its committed BUILDER.txt to "current" and
+// passing no flag at all was accepted, printed "builder: current", and exited 0,
+// with the whole suite green and the dry run's own self-check passing. That is
+// this fixture graded through the working-tree generator from a one-word edit,
+// which is the outcome this entire task exists to prevent.
+//
+// The marker being deletable and the marker being editable are two different
+// doors, and closing only the first was worse than it looked: this directory is
+// also the one marker the dry run's markerCases list does not check, so nothing
+// anywhere was watching the value in that file. Checking the RESOLVED builder is
+// what makes the code the authority regardless of which door is used.
+//
+// Why the stakes here are unlike any other directory: those 96 debriefs are the
+// only evidence this project has that its grading tool catches a real coach
+// error, so a run graded through the wrong builder does not merely produce a
+// wrong answer, it produces a wrong answer about whether the instrument works.
+function assertFixtureBuilder(dir, builder) {
+  if (!builder || builder === 'frozen') return
+  // Real paths, not logical ones, so a symlink pointing into the fixture from
+  // outside it does not walk round this. realpathSync throws on a path that does
+  // not exist, and the dry run below deliberately passes made-up paths, so a
+  // failure falls back to the logical answer rather than becoming an error of
+  // its own; a path that does not exist cannot be a symlink into anything.
+  const resolveReal = (p) => {
+    const logical = path.resolve(REPO_ROOT, p)
+    try {
+      return realpathSync(logical)
+    } catch {
+      return logical
+    }
+  }
+  const relative = path.relative(resolveReal(FIXTURE_DIR), resolveReal(dir))
+  const insideFixture = relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
+  if (!insideFixture) return
+  throw new Error(
+    `These records live in ${path.relative(REPO_ROOT, FIXTURE_DIR)}, the 96-debrief fixture, which was ` +
+    `written against the frozen stand-in session 1 and its own frozen generator. --builder ${builder} ` +
+    'would grade them against the wrong swings, which does not fail: it produces a complete, ' +
+    'plausible-looking fact sheet for swings no coach in that fixture ever saw. Pass --builder frozen, ' +
+    'or omit the flag. This refusal is in the code and does not depend on the BUILDER.txt beside the ' +
+    'records, which can be deleted.',
+  )
+}
+
 function resolveRecordsAndBuilder(args) {
   if (args.records && args.input) {
     throw new Error('Pass --records (one file) or --input (a directory), not both.')
@@ -605,15 +896,21 @@ function resolveRecordsAndBuilder(args) {
     // mistake with no error message to catch it. A bench round produced
     // today wants --builder current. A committed BUILDER.txt beside the
     // records answers this without a flag; see reconcileWithMarker above.
+    assertFixtureBuilder(args.input, args.builder)
     const reconciled = reconcileWithMarker({
       dir: args.input,
       args,
       missingBuilderMessage:
         '--input was given without --builder, and the directory carries no BUILDER.txt. There is no default: ' +
         'pass --builder current for anything produced by the bench against today\'s working tree, ' +
+        '--builder slice11-before for a round committed before the Slice 11 generator rewrite, ' +
         '--builder slice9-before for Slice 9\'s pre-rewrite round, or --builder frozen only if the directory ' +
         'holds records generated against the old stand-in session 1 (rare, and you should know why).',
     })
+    // AND AGAIN ON WHAT CAME OUT. The call above checks the FLAG; this one
+    // checks the answer. See assertFixtureBuilder's own comment for the door
+    // this closes, which is a one-word edit to a committed marker.
+    assertFixtureBuilder(args.input, reconciled.builder)
     const { records, skippedFailed, skippedFiles } = loadInputDirectory(args.input)
     return {
       records,
@@ -647,15 +944,20 @@ function resolveRecordsAndBuilder(args) {
   }
   // A single --records file is reconciled against a BUILDER.txt sitting in
   // the same directory, on the same terms as --input.
+  assertFixtureBuilder(path.dirname(args.records), args.builder)
   const reconciled = reconcileWithMarker({
     dir: path.dirname(args.records),
     args,
     missingBuilderMessage:
       '--records was given without --builder, and no BUILDER.txt sits beside it. There is no default: pass ' +
       '--builder frozen only if this file was generated against the old stand-in session 1 (rare, and you ' +
-      'should know why), --builder slice9-before for Slice 9\'s pre-rewrite round, or --builder current for ' +
+      'should know why), --builder slice9-before for Slice 9\'s pre-rewrite round, --builder slice11-before ' +
+      'for a round committed before the Slice 11 generator rewrite, or --builder current for ' +
       'anything produced by the bench against today\'s working tree.',
   })
+  // AND AGAIN ON WHAT CAME OUT. The call above checks the FLAG; this one checks
+  // the answer. See assertFixtureBuilder's own comment for the door this closes.
+  assertFixtureBuilder(path.dirname(args.records), reconciled.builder)
   const records = JSON.parse(readFileSync(args.records, 'utf8'))
   if (!Array.isArray(records)) throw new Error(`${args.records} did not parse to a JSON array of records.`)
   return {
@@ -1237,6 +1539,27 @@ async function dryRun(args) {
   }
   console.log('  ok: the two builders disagree, which is the whole point of the second one')
 
+  // 1c. The two GENERATORS, reported rather than asserted, and the asymmetry
+  // is deliberate. 1b above is a hard failure because those two builders must
+  // ALWAYS differ. These two must differ EVENTUALLY: they are the same code
+  // until Slice 11 rewrites src/swingGenerator.js, so a hard check either way
+  // would be wrong on one side of that change. What is asserted, permanently
+  // and on every npm test, is that slice11-before still reproduces the
+  // committed digest; see scripts/frozenGenerator.test.js.
+  console.log('')
+  console.log('The two generators (power-s2, session 2, seed 20260814)')
+  console.log('-'.repeat(70))
+  const liveS2 = await resolveSessions({ builder: 'current', cellKey: 'power-s2', seed: 20260814 })
+  const frozenS2 = await resolveSessions({ builder: 'slice11-before', cellKey: 'power-s2', seed: 20260814 })
+  const generatorsAgree =
+    JSON.stringify(liveS2.sessions[1].swings) === JSON.stringify(frozenS2.sessions[1].swings)
+  console.log(
+    generatorsAgree
+      ? '  current and slice11-before produce identical swings: the generator has not been rewritten yet'
+      : '  current and slice11-before now differ: the generator has been rewritten, and every committed round ' +
+        'correctly reads the frozen one',
+  )
+
   // 2. Builder-selection guardrails, exercised without ever making a real call.
   console.log('')
   console.log('Builder-selection guardrails')
@@ -1270,15 +1593,112 @@ async function dryRun(args) {
     guardOk++
     console.log(`  ok: --records and --input together refused ("${err.message.slice(0, 60)}...")`)
   }
+  // The fifth, added 20 August 2026, and it is the only one of these five that
+  // checks WHY it threw rather than merely that something did.
+  //
+  // It exists because the hole it guards was closed twice and neither closure
+  // was watched. The BUILDER.txt beside those records refuses this combination,
+  // and deleting that file put the whole thing back to exiting 0 with the suite
+  // green and this very self-check still passing. So the refusal now also lives
+  // in code, in assertFixtureBuilder, and this line is what notices if either
+  // half goes away.
+  //
+  // Asserting on the message is what makes it bite for the right reason. A bare
+  // catch here would pass on the marker's error, or on a typo in the path, and
+  // would therefore stay green in exactly the case worth catching: somebody
+  // deleting the code check and leaving the deletable file to do the job.
+  try {
+    resolveRecordsAndBuilder({
+      records: path.join(FIXTURE_DIR, 'baseline-records.json'),
+      builder: 'current',
+    })
+    console.log('  FAILED: expected an error for the 96-debrief fixture + --builder current')
+  } catch (err) {
+    if (err.message.includes('does not depend on the BUILDER.txt')) {
+      guardOk++
+      console.log('  ok: the 96-debrief fixture named by --records refused --builder current, in code')
+    } else {
+      console.log(
+        '  FAILED: the 96-debrief fixture + --builder current threw, but not from the code-level ' +
+        `refusal. A deletable marker may be all that is left. Got: "${err.message.slice(0, 80)}..."`,
+      )
+    }
+  }
+  // The sixth, and it watches a VALUE rather than a refusal.
+  //
+  // The code now refuses the wrong builder for this fixture whether it arrives
+  // from a flag or from the marker, so a marker edited to say "current" can no
+  // longer produce a wrong grade. It can still produce a wrong SENTENCE: that
+  // file is read by people as the record of what these debriefs were written
+  // against, and nothing was checking what it says. This directory is also the
+  // one marker markerCases below does not cover, so without this line nothing
+  // anywhere watches that value.
+  const fixtureMarker = readBuilderMarker(FIXTURE_DIR)
+  if (fixtureMarker && fixtureMarker.builder === 'frozen') {
+    guardOk++
+    console.log(`  ok: ${path.relative(REPO_ROOT, FIXTURE_DIR)} is marked "frozen"`)
+  } else {
+    console.log(
+      `  FAILED: ${path.relative(REPO_ROOT, FIXTURE_DIR)} should carry a ${BUILDER_MARKER_FILENAME} ` +
+      `reading "builder = frozen", and reads ${fixtureMarker ? `"${fixtureMarker.builder}"` : 'nothing'}`,
+    )
+  }
   // The provenance marker, exercised against the real committed fixtures
   // rather than a made-up directory, so a marker that goes missing or gets
   // edited to the wrong value fails a free dry run.
+  //
+  // 20 August 2026, Slice 11: the four rounds that used to be marked
+  // "current" are now marked "slice11-before", and Slice 10's two rounds
+  // joined this list. Every committed round in this repository is now
+  // exercised here, which is the state it should have been in already: the
+  // two Slice 10 rounds were missing from this check for no reason anyone
+  // recorded, and a marker nothing looks at is a marker nobody notices going
+  // wrong.
+  //
+  // DATED CORRECTION, LATER THE SAME DAY. "Every committed round in this
+  // repository is now exercised here" was already generous and this list has
+  // since become LESS complete, not more. Two things are true of it:
+  //
+  //   docs/eval-fixtures/slice7-debriefs got a marker that same day and is not
+  //   in this list. It is deliberately absent rather than forgotten: every case
+  //   here asserts a seed, and that marker carries none, because the fixture
+  //   seeds itself and ignores what it is handed. Loosening the case shape to
+  //   admit it was judged the wrong change to make at the end of a task. What
+  //   covers that directory instead is the fifth flag-shape guard above, which
+  //   is stronger for the purpose anyway, since it survives the marker being
+  //   deleted.
+  //
+  //   DATED CORRECTION, 20 August 2026, and the reasoning above was wrong in a
+  //   way worth keeping visible. "Stronger for the purpose anyway" was not true
+  //   when it was written. That guard covered the FLAG door. The marker door was
+  //   the one left unwatched, and because this is also the one marker this list
+  //   does not check, those two gaps COMPOSED: editing one word of that
+  //   committed marker to "current" and passing no flag was accepted and exited
+  //   0, with the suite green and this self-check passing, which is the fixture
+  //   graded through the working-tree generator from a one-word edit.
+  //
+  //   Two things closed it, both above. assertFixtureBuilder is now called on
+  //   the RESOLVED builder as well as on the flag, so the code is the authority
+  //   whichever door is used. And the sixth guard asserts what that marker
+  //   actually says, so its value is watched even though this list does not
+  //   cover it. With both in place, leaving this directory out of the list is
+  //   defensible on its own terms rather than by the argument above. The general
+  //   lesson is the one worth carrying: two gaps each dismissed as narrow can
+  //   compose into one that is not.
+  //
+  //   Seven further directories under docs/eval-fixtures hold records and carry
+  //   no marker at all, among them the Slice 8b, 8c and 8d rounds, several of
+  //   which contain multi-session cells. Nothing here reaches those, and the
+  //   honest reading is that this list covers every committed round that HAS a
+  //   marker, which is a smaller claim than the one above.
   const markerCases = [
     { dir: path.join(SLICE9_DIR, 'before'), expected: 'slice9-before', wrong: 'current', seed: 20260814 },
-    { dir: path.join(SLICE9_DIR, 'after-a'), expected: 'current', wrong: 'slice9-before', seed: 20260814 },
+    { dir: path.join(SLICE9_DIR, 'after-a'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
     // Not the default seed, and nothing but this marker says so. See its own
     // BUILDER.txt.
-    { dir: path.join(SLICE9_DIR, 'after-b'), expected: 'current', wrong: 'slice9-before', seed: 20260819 },
+    { dir: path.join(SLICE9_DIR, 'after-b'), expected: 'slice11-before', wrong: 'current', seed: 20260819 },
+    { dir: path.join(SLICE10_DIR, 'after'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
+    { dir: path.join(SLICE10_DIR, 'after-spray'), expected: 'slice11-before', wrong: 'current', seed: 20260814 },
   ]
   for (const c of markerCases) {
     const rel = path.relative(REPO_ROOT, c.dir)
@@ -1357,7 +1777,23 @@ async function dryRun(args) {
       console.log(`  ok: ${rel} resolved seed ${c.seed} with no --seed passed (from ${adopted.seedSource})`)
     }
   }
-  if (guardOk !== 13) throw new Error('Builder-selection guardrail self-check failed.')
+  // Six guards before the marker cases, plus three checks on each committed
+  // round's marker. (Four until 20 August 2026, when the fixture-directory
+  // refusal and then the fixture-marker value check were added. Neither is a
+  // marker case: the first must pass with the marker DELETED, and the second
+  // asserts only a builder, because that marker deliberately carries no seed.)
+  // Derived from markerCases rather than written out as a number,
+  // since Slice 11 grew that list from three rounds to five and a hand-typed
+  // total is one more thing to forget. It still bites for the failure it was
+  // put here to catch: a guard that prints FAILED instead of throwing does
+  // not increment, so the total comes up short and the dry run stops.
+  const expectedGuards = 6 + markerCases.length * 3
+  if (guardOk !== expectedGuards) {
+    throw new Error(
+      `Builder-selection guardrail self-check failed: ${guardOk} of ${expectedGuards} passed. ` +
+      'Read the FAILED lines above rather than adjusting this count.',
+    )
+  }
 
   // 3. Build the real fact sheet and the real prompt for one record, report sizes.
   console.log('')

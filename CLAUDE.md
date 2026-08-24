@@ -249,6 +249,20 @@ touched are stale by a line or two, `ballFlight.js` and `DebriefScreen.jsx`
 among them, and were left alone rather than churned out of lane; correct one on
 the way past if you open the file for another reason.
 
+**Re-measured 21 August 2026, at the close of Slice 11.** The rows that moved,
+and only these were re-counted: `src/swingGenerator.js` 180 lines to **1474**,
+which is the slice in one number, since the rewrite is far more comment than
+code and the file now explains every constant beside itself;
+`src/swingGenerator.test.js` to **1558**; `src/ballFlight.js` 228 to **312**,
+comments only, no behaviour touched anywhere on the branch;
+`src/coachApi.js` 643 to **667**; the `src/*.test.js` aggregate to **4762**
+across twelve files; `scripts/*.mjs` to **8276** across eight, and the biggest
+single mover in there is `measure-swing-generation.mjs` at 3372, which is the
+slice's actual evidence base; the tested `scripts/*.js` modules to **3674**
+across eight; `scripts/*.test.js` to **2319** across eight; and the
+`docs/eval-fixtures/` directory count to **ten**, not nine. Everything else
+below is as Slice 10 left it and was not re-counted.
+
     src/App.jsx             1029 lines. Screen routing, player and session state,
                              and debrief orchestration. The fifteen hand-written
                              session-1 swings moved out to src/sessionOneSwings.js
@@ -334,9 +348,19 @@ the way past if you open the file for another reason.
                              fade should show, as a pure function of scroll
                              position. Added in Slice 7 so the decision could
                              be tested without a browser.
-    src/swingGenerator.js    180 lines. Generates a session's fifteen swings.
+    src/swingGenerator.js   1474 lines. Generates a session's fifteen swings.
                              Carved out of App.jsx in Slice 6 so the re-roll
                              could be tested. Takes an injectable random source.
+                             Rewritten end to end in Slice 11 on 21 August 2026,
+                             which is where the jump from 180 lines comes from;
+                             most of the new length is the reasoning for each
+                             constant written beside it, including a sweep table
+                             showing what the alternatives cost. Read the file's
+                             own header before changing anything in it, and read
+                             the "data is synthetic" section below, which is the
+                             product-level summary of what it now does. Its
+                             constants are deliberately exported so the tests and
+                             the measurement script read them rather than copies.
     src/failureCopy.js        74 lines. What the app says when a call fails. See
                              the failure vocabulary section below.
     src/goalTargets.js        66 lines. What each goal asks of a swing. The single
@@ -528,12 +552,79 @@ the way past if you open the file for another reason.
                              `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.)
     scripts/*.test.js       1599 lines across seven files, testing those seven
                              modules. Not counted in the rows above.
-    docs/eval-fixtures/      Committed ground truth, not code. Eight directories:
+                             *(Slice 11, 20 August 2026: an eighth file,
+                             `frozenGenerator.test.js`, which is not a module
+                             test at all. It rebuilds every bench cell at every
+                             seed through the frozen pre-Slice-11 generator and
+                             holds the result against
+                             `docs/eval-fixtures/frozen/pre-slice11-sessions.digest.json`.
+                             Read its header before touching anything under
+                             `docs/eval-fixtures/frozen/`; if it goes red the
+                             answer is never to regenerate the digest.)*
+                             Two more untested modules landed in the same task
+                             and belong with the row above rather than here:
+                             `sessionDigest.js`, the one definition of what a
+                             digest of a session is, shared by the writer and
+                             the guard so the two cannot drift; and the hand-run
+                             `write-frozen-session-digest.mjs`, an eighth script
+                             that produced the digest once, from live code,
+                             before the snapshot existed, and refuses to
+                             overwrite it.
+    docs/eval-fixtures/      Committed ground truth, not code. ~~Nine~~ **TEN
+                             directories, corrected 21 August 2026 at the close
+                             of Slice 11.** The tenth is
+                             `slice11-generator-realism/` (1.5 MB): the three
+                             64-debrief rounds behind this slice, one re-grading
+                             of Slice 10's shipped round as the before side and
+                             two fresh after rounds at two different seeds, plus
+                             `HAND-CHECK.md` adjudicating every flagged claim in
+                             all three. Read its README before quoting any number
+                             out of it; it says in its own first paragraph that it
+                             is a non-inferiority guard rather than the evidence
+                             the slice worked, and that the evidence the slice
+                             worked is free, deterministic, and lives in
+                             `scripts/measure-swing-generation.mjs`.
+                             The ninth is `frozen/` (124 KB), added in Slice 11
+                             and belonging to no single round because more than
+                             one round depends on it: a snapshot of the swing
+                             generator as it stood at commit 53315e5, plus a
+                             record of exactly what it produced for every bench
+                             cell at every seed. It is what stops the five
+                             rounds listed below being silently re-graded
+                             against swings their coaches never saw once the
+                             generator is rewritten. *(Dated correction, 20
+                             August 2026, later the same day: SIX directories,
+                             not five rounds. Review found that
+                             `slice7-debriefs/` had the same exposure and the
+                             worst consequence, since the grading tool's own
+                             validation run is forced onto that fixture. It
+                             reads the snapshot now and its three cells are in
+                             the digest. See the correction on its row below.)*
+                             The snapshot imports
+                             nothing from `src/`, carrying its own frozen copies
+                             of the carry formula and the goal targets, because
+                             a half-frozen snapshot drifts the first time a
+                             target band moves by a degree. The eight that
+                             predate it:
                                `slice7-debriefs/` (360 KB) holds the 96 real
                                debriefs from Slice 7's measurement round, 8 of
                                them known wrong by hand verification, plus the
                                scripts that rebuild the session data they were
-                               written about. `slice7b-parse-failure/` (112 KB)
+                               written about. *(Dated correction, 20 August
+                               2026: "rebuild the session data they were written
+                               about" was half true. `rebuild.mjs` froze its own
+                               first session and then took the generator that
+                               makes sessions 2 to 4 from the live app, and all
+                               three of its cells are later sessions. Slice 11's
+                               Task 1b repointed it at `frozen/` and put its
+                               three cells in the digest. One live import is
+                               left, the carry formula, because the frozen copy
+                               of it sits inside a pinned hash and reaching it
+                               would mean re-pinning; that residual is measured
+                               in that file's own header. This is the sixth
+                               exposed directory and it was found only after the
+                               other five were repaired and signed off.)*
+                               `slice7b-parse-failure/` (112 KB)
                                holds the before/after records behind Slice 7b's
                                parse-failure fix, 36 calls each.
                                `slice8-grader-validation/` (1.2 MB) holds the
@@ -852,11 +943,126 @@ the re-roll is switched off without touching shipped code. Rerun it rather than
 citing this file; earlier drafts of this paragraph quoted a "9.7% to 16.8%"
 nobody could reproduce.
 
-`varianceFactor` and the 65/35 improve-or-decline split were left alone by Slice
+~~`varianceFactor` and the 65/35 improve-or-decline split were left alone by Slice
 6 and remain a separate open question. Note that **no test can currently see
 `varianceFactor`**: a reviewer changed it six-fold and all 22 generator tests
 still passed, because they drive noise at a neutral value. Whoever retunes the
-improvement arc is working without a safety net there.
+improvement arc is working without a safety net there.~~
+
+**The `varianceFactor` blind spot was closed in Slice 11 on 21 August 2026**, and
+the way it was closed is worth a sentence, because the obvious version of the
+test does not work. The constant multiplies two readings on one line each, and
+the natural argument is that proving it on one proves its reach. That argument
+was run rather than reread and it is false: deleting it from the exit velocity
+line leaves the first configuration green. It takes two fixtures, one that
+resolves each reading, and either deletion now turns something red. What neither
+covers is stated beside them: both read whole numbers, so a change to the 0.05
+of roughly minus 2 to plus 8 percent is still absorbed by rounding. That band
+was swept, not derived, because the derived figure first written there was
+wrong.
+
+---
+
+## THE GENERATOR AS IT NOW STANDS, 21 August 2026, Slice 11
+
+**Everything above this heading in this section describes the generator Slice 6
+left behind, and that generator no longer exists.** The three numbered "nudges"
+are all still in the file and all still true, so nothing above is struck out. But
+they are now three items on a longer list, and the empty-band percentages quoted
+up there belong to a hitter this slice replaced. Read the two together: above is
+why the file has re-rolls and a Power lift at all, below is what it actually
+does. `src/swingGenerator.js`'s own header is the fuller version, and
+`node scripts/measure-swing-generation.mjs` is the thing to rerun rather than
+citing either.
+
+**Who the hitter is, written down for the first time.** Bill is a varsity high
+school junior, sixteen, with good bat-to-ball skills, real but not elite bat
+speed, who chases too much. Session 1's frozen 81.6 average and 92 mph best ARE
+that hitter rather than a sample near him. This had never been stated anywhere
+outside the coach's own voice, and two constants were being set without it. It is
+a settled product decision; do not relitigate it, and do read it before touching
+any number in that file, because most of them only make sense against it.
+
+**Five things the generator does, replacing the three above.**
+
+1. **The pitch is drawn before the swing.** Roughly 65% of pitches are strikes,
+   which is Bill's chase rate rather than the thrower's accuracy, since every row
+   in this app is a batted ball.
+2. **A missed pitch is a near miss on ONE axis.** Low, high or wide, never off on
+   both height and side at once, which is what a real thrower produces. It was
+   100% off on both before this slice and is 0% now. Nothing bounces any more
+   either: the lowest pitch is 0.70 feet where it used to be 0.50.
+3. **Where the pitch was thrown decides part of how well it was struck**, at
+   about 4.6 mph between a swing at a strike and a swing at a ball. This is the
+   headline change of the slice. It was 0.00 mph across 4,500,000 swings before,
+   so the coach's chase reasoning, which it has been handed since Slice 8c, was a
+   coincidence on every generated session.
+4. **Pop-ups exist and come from getting under a high pitch.** About ~~0.40~~
+   0.43 a session, four in five of them on pitches at or above the top of the
+   zone, which is 7.6 times chance. There were none at all before: the goal named a
+   failure the hitter could not commit, and the coach was handed "0 swings"
+   forever.
+5. **The hard clamps became soft compression.** A generator that refuses to let a
+   swing past a limit has to put it somewhere, and it used to put it exactly on
+   the limit: ~~4.138%~~ about 4% of Power session-4 swings sat on exactly 35
+   degrees, drawing a flat row of dots along the top of a chart every visitor
+   sees. Values now
+   compress smoothly toward the limits instead, and no cell of the fifteen piles
+   up on any of its four edges.
+
+**Both struck numbers corrected 21 August 2026, by the whole-branch review, the
+same day they were written. The correction is the same in each case, and it is
+the same one the decision log's own closing paragraph confesses four of.** A
+number measured along one path, then written down as a property of the thing
+itself.
+
+- **The pop-up rate is 0.43 a session averaged across every goal**, which is what
+  `scripts/measure-swing-generation.mjs` prints, confirmed at two seeds. 0.40 is
+  the figure for the four non-Power goals with its qualifier dropped; Power runs
+  0.43, 0.50 and 0.68 across sessions 2 to 4, because that goal lifts launch
+  angle. Every one of those is inside the 0.3 to 0.5 band the slice aimed at, so
+  nothing about the product changes. **Where the four-goal number is the one
+  wanted, say "on the four non-Power goals" out loud.**
+- **The 35-degree pile-up is about 4% down to about 1.4%**, and the three decimal
+  places claimed a precision nobody outside this branch could check. Those
+  figures came from a one-off measurement inside a task report that is not
+  committed to this repository. The seeded script cannot reproduce them **by
+  construction**: it measures the edges of the distribution, and 35 degrees is
+  now an interior value, since the highest launch angle the generator reaches is
+  47. An independent replication at the script's own default seed, over 300,000
+  swings a side, got 4.08% and 1.44%. The story is right in direction and
+  magnitude; only the decimals were unbacked. The underlying limitation, that the
+  script sees edges and not interiors, is already recorded on the What's Next
+  list and is not new here.
+
+**Three more numbers this slice set deliberately, all of which move if you touch
+the file.** The exit velocity ceiling is 94, two above Bill's own best rather
+than the old 97. The swing-to-swing spread now matches session 1's, where the
+generated hitter used to be about 31% tighter than the session he is derived
+from, which nobody had chosen. And the session-to-session bat speed step is about
+half a mile an hour, bought as a straight shift rather than by widening the
+improvement dice, because the AVG EXIT VELO tile is a rounded whole number and a
+visitor used to be more likely to finish below session 1's 82 than above it.
+
+**Spray leans pull and stops narrowing.** The pull and opposite-field bias ran
+the wrong way against the 65/35 rule, and direction was being multiplied by the
+shrinking variance factor, so Hit to All Fields met its own stated bar less often
+every session: 64% at session 2 falling to 52% at session 4. It is now a flat 72
+to 73%.
+
+**One thing to know before tuning anything here.** The app never chains sessions.
+`src/App.jsx` builds sessions 2, 3 and 4 each from session 1 independently, so a
+visitor's fourth session is not the end of a chain. A tuning harness that chains
+them for convenience will report defects the app does not have; the Power lift in
+particular compounds, putting a quarter of session 4 in the pop-up band. Finding
+10 in `docs/slice-11-plan.md` has the measurement.
+
+**What is still not true of it, recorded rather than fixed.** Launch angle is not
+monotone in pitch height across the population and it inverts against session 1:
+a ball chased above the zone comes out about two degrees flatter than a strike
+down the middle, where session 1 says it should be the steepest thing on the
+chart. It is structural rather than a tuning slip and no weight fixes it inside
+this structure. Finding 8 in `docs/slice-11-plan.md` carries the arithmetic.
 
 ---
 
@@ -889,7 +1095,149 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and as of the close of Slice 10 on 20 August 2026 it is 573
+   vitest, and at the close of Slice 11 on 21 August 2026 it is **654 tests
+   across 23 files**, up from 573 across 22 at the close of Slice 10. The file
+   count moved once, in that slice's first task; everything after it landed in
+   files that already existed, mostly `src/swingGenerator.test.js`, which more
+   than doubled. **What the 81 new tests do NOT do is watch a distribution.**
+   Slice 11 changed how a hitter's numbers are shaped, and a shape is not
+   something a seeded unit test can hold: the suite tests the deterministic
+   seams, and every claim about what the generator produces is measured by
+   `node scripts/measure-swing-generation.mjs`, which is seeded so the same
+   command gives the same report. A green suite says the plumbing is intact and
+   says nothing about whether the hitter is believable.
+
+   *The paragraph below describes the state after that first task and is kept
+   as written, because the reasoning in it is what the guard rests on. The 604
+   it opens with was true on 20 August 2026.* After Slice 11's first task on 20
+   August 2026 it is 604 tests
+   across 23 files, up from the 599 that task first landed the same day and
+   the 573 across 22 at the close of Slice 10. The 31 new tests are
+   `scripts/frozenGenerator.test.js`, and they
+   answer three different questions that a reader should not merge. Twenty-four
+   of them rebuild one bench cell each through the frozen pre-Slice-11
+   generator and hold the result against a committed digest, so six committed
+   fixture directories cannot quietly start being graded against swings their
+   coaches never saw; a twenty-fifth rebuilds nothing and instead checks
+   that the list of cells being rebuilt has not silently shrunk. Fourteen
+   of the twenty-four are every cell at each of two seeds, seven are the
+   same cells at one seed for the pre-Slice-9 baseline, and three are the
+   96-debrief fixture's own three cells at the one seed it runs itself at.
+   Two more ask a different question, whether the snapshot FILE has moved,
+   by hashing every line of code in it. The last four ask whether the guard
+   itself still works: whether the rule about what may sit above the hash
+   boundary still refuses every line terminator, whether the two scripts that
+   load the snapshot are reading the file this test is hashing, and whether
+   the digest's own claim about which seed it covers is honest. *(Those counts
+   read 22, 2 and 2 until a review pass late on 20 August 2026 found a sixth
+   exposed directory; see the "six, not five" correction on the
+   `docs/eval-fixtures/` row further up.)*
+   The first two questions are both needed, which was measured rather than
+   assumed: an independent review mutated the snapshot five ways, one line
+   each, and four of the five (all the clamps, and the whole
+   above-28-degrees branch of the
+   carry formula) changed no swing in any cell at either seed, so the data
+   checks stayed green while the file had plainly moved.
+
+   **Note what "every line of code" is load-bearing about, because the first
+   version of this guard got it wrong and this paragraph described the wrong
+   thing for a few hours.** The hash originally started at the snapshot's
+   "recovered file begins here" marker, which left the frozen copies of
+   `carryDistance` and the goal targets outside it, since those came from
+   other files and sit above that marker. Review caught it by moving
+   `carryDistance`'s high-angle floor from 0.55 to 0.40 and watching all 23
+   tests stay green. That constant is not an idle one: it is the coupling
+   this file names further up as the thing to re-check if the pop-up ceiling
+   is raised, and raising the pop-up ceiling is one of the three things Slice
+   11 does. The boundary is now a marked line with only prose above it, and
+   the test refuses any line above it that is not blank or a single-line
+   comment, so behaviour cannot be walked back out of the hash. The prose
+   header stays outside on purpose, so it can be corrected without tempting
+   anybody to re-pin the number. If a hash test goes red, the file is wrong;
+   re-pinning turns the snapshot into a copy of whatever the generator has
+   become.
+
+   **One more round of review found the "not blank or a comment" half of that
+   sentence was still cheatable, and the fix is worth knowing about because
+   the reasoning generalises.** The check split the file on newlines and
+   accepted any line starting with `//`. JavaScript also ends a `//` comment
+   at U+2028 LINE SEPARATOR, which `split('\n')` does not, so a single
+   physical line reading as a harmless note could carry a live statement
+   after an invisible character: prose to the guard, code to Node. Review
+   demonstrated it with a line that patched `Math.min` only when not running
+   under vitest, and got a fully green suite while the frozen generator's
+   exit velocity ceiling read 90 instead of 97 everywhere else, which is how
+   the grading script actually loads it. **Calibrate it honestly, though:
+   nobody types U+2028 by accident and no search and replace produces one.
+   That was a hole in the tamper-evidence claim, not in the drift protection
+   the guard does for a living.** It was worth a one-line fix because three
+   committed documents assert the stronger claim, and an assertion this
+   project cannot back is the exact thing the whole task exists to remove.
+   The same fix stopped the check calling an indented comment "behaviour",
+   which was a live false-red trap in a header that had already been edited
+   three times in a day.
+
+   **Dated annotation, 20 August 2026, later the same day: that calibration
+   is true of U+2028 and does not carry over to the character the fix was
+   still missing.** The check excluded U+2028 and U+2029 and not U+000D
+   CARRIAGE RETURN, which JavaScript also treats as ending a `//` comment.
+   Review built the identical attack with a CR in place of the U+2028 and
+   measured it rather than arguing it: `npm test` reported 597 passed across
+   23 files, fully green, while loading the snapshot the way the grading
+   script actually loads it made 5 of the 21 digest cells rebuild to
+   different swings, the first being `slice11-before` at seed 20260819 on
+   `power-s2`. **The sentence that no longer holds is the sweeping one.**
+   Nobody types a U+2028 by accident, but ordinary tooling produces a
+   carriage return without anybody intending one: an editor set to CRLF
+   endings, a checkout on Windows, a `core.autocrlf` setting, a paste that
+   mixes line endings. So this class of hole is not tamper-only, and filing
+   it that way was more comfortable than the facts supported.
+
+   **The accidental-drift risk stays low all the same, and the reason is
+   worth keeping rather than dropping with the claim.** A CRLF conversion of
+   the whole file is caught anyway by the byte-count and hash checks below
+   the boundary, so the file has to be LF-only for this guard to be green at
+   all. The fix does mean a CRLF-converted file now also fails the purity
+   check above the boundary, which is correct rather than a cost: it is the
+   same fact arriving one check earlier, in a message that names the line.
+   What the fix buys is that the set is now closed: ECMAScript defines
+   exactly four LineTerminators, LF is the one the check splits the file on,
+   and CR, U+2028 and U+2029 are the three the character class excludes, so
+   there is no fifth character left to be found later.
+
+   **Dated correction, 20 August 2026: the paragraph above is right that a
+   CRLF file cannot be green and wrong about which check catches it.** Both
+   cases were run rather than reasoned about, because that sentence was
+   written from reading the pattern instead of from output. A **whole-file**
+   conversion never reaches the purity check at all: the boundary line itself
+   picks up a carriage return, the lookup for it fails, and the test dies on
+   its first assertion instead. What fires is `the snapshot must carry exactly
+   one hash boundary line: expected +0 to be 1`, alongside `the hashed region
+   changed size: expected +0 to be 14093`. Neither names an offending line and
+   the carriage return exclusion contributes nothing to either. The claim is
+   true of a **partial or mixed-ending** file, where the boundary line
+   survives: there the purity check does run and does name the lines. That is
+   also the realistic accident, a few lines pasted in with Windows endings
+   rather than a whole file converted, so the substantive point stands. What
+   was wrong was the mechanism, which is the same defect class this passage
+   has now been corrected for twice.
+
+   **Two further guards were added the same day, both proven by reopening the
+   hole they close.** The prose rule was hoisted into one named function that
+   the boundary check calls, with a test that drives it directly using
+   characters built from their codes, because the boundary check can only
+   exercise the exclusion if the snapshot carries a terminator and the
+   snapshot must never carry one. Dropping the carriage return from the class
+   now fails with `CR must be refused`, where before it left the suite green.
+   And the grading script's snapshot path became an exported constant that
+   the test asserts equals the path it resolves independently, the same shape
+   `src/sessionStats.test.js` uses to hold `src/DebriefScreen.jsx`'s cutoffs
+   to `SPRAY_CUTOFFS`. Before that, the test hashed one path and the loader
+   imported another with nothing tying them together: repointing the loader
+   at a copy carrying a mutated carry-distance floor left the suite reporting
+   597 passed while the hash guarded a file nothing read.
+
+   Earlier counts, for the record. It was 573
    tests across 22
    files, up from 570 before that slice's final review added the guard holding
    the spray chart's own four cutoff literals to `SPRAY_CUTOFFS`, up from 535
@@ -950,6 +1298,13 @@ specific to this repo:
    app in a real browser and look at it. This project's whole value is what a
    stranger sees, so "the code looks right" is not evidence here, and the suite
    does not reach it.
+4. **This app is for a desktop or an iPad, so the standing real-phone rule does
+   not apply.** Owner, 20 August 2026, recorded here because it had come up
+   before and was re-raised as a blocker at the start of Slice 11. Item 3's
+   rendered check is a desktop check; an iPad width is worth a look when a
+   layout moves; a phone pass is neither required nor a deviation to declare.
+   Do not add `--host` on the strength of that rule, and do not read the 390px
+   chat-panel item on What's Next as a defect.
 
 Failure paths need to be seen failing, not reasoned about. Force the error
 rather than describing what would happen.
@@ -1281,10 +1636,39 @@ owner's own use explains. Do not build rate limiting without that signal.
   chart and both coach prompts. Not because a third drift appeared, but because
   making the distances honest meant moving all three copies anyway, so leaving
   two of them behind would have been the drift rather than avoiding it. **The
-  strike-zone bounds are the last unconsolidated set**, still in six places, and
+  strike-zone bounds are the last unconsolidated set**, ~~still in six places~~,
+  and
   the original trigger stands for them unchanged. One caveat carried forward: the
   test that holds the buckets together reaches both coach prompts and not the
   chart, so this is consolidation plus partial enforcement, not the full thing.
+
+  **"Six places" was never checked and was an undercount, and Slice 11
+  enumerated it by hand rather than by memory on 21 August 2026.** Two copies
+  were closed on the way past, both under the standing "worth doing when the
+  file is open anyway" trigger rather than as a tidy-up: `src/swingGenerator.js`,
+  which was rewriting those exact literals and where two copies would have meant
+  the generator aiming at a zone the rest of the app does not recognise, and
+  `scripts/handedCounts.js`, which already imported the neighbouring constant
+  from the same module and argued in its own comment for doing it.
+
+  **The current count, and say which one you mean when you quote it: FOUR copies
+  in shipped code, FIVE counting tooling, SIX sites including the definition.**
+  The definition is `SPRAY_CUTOFFS`'s neighbour `STRIKE_ZONE` in
+  `src/sessionStats.js`. The four shipped copies are all in
+  `src/DebriefScreen.jsx` (the drawn zone rectangle, `ZoneBreakdown`'s
+  predicate, the raw data table's predicate) and `src/coachApi.js` (the zone
+  written into the prompt's prose). The one remaining tooling copy is in
+  `scripts/bench-coach-brevity.mjs`.
+
+  **The census deliberately EXCLUDES the two frozen snapshots**, and excluding
+  them is correct rather than convenient: they are frozen copies on purpose,
+  they exist precisely so they cannot follow a change in `src/`, and counting
+  them as drift risk would argue for the one edit their own headers forbid. A
+  future reader grepping for the bounds will find them there and should not add
+  them back to the list. Two other grep hits are not copies either and were
+  checked: `scripts/factSheet.js` names the bounds inside a comment while
+  importing the constant, and `scripts/measure-swing-generation.mjs` holds an
+  unrelated 1.5. Full census in `docs/slice-11-plan.md`, finding 3.
 - Chat history inside a session grows without bound, roughly 0.9 KB per turn on
   top of a 13.7 KB session 4 debrief. The 128 KB request cap leaves room for
   well over a hundred turns, so nothing a real visitor does should reach it, but
@@ -1639,12 +2023,19 @@ rewritten, per the append-only rule.
 - **A committed reviewer config.** Slice 3 added tests and hooks but not this,
   so every code review here is still a session choosing to run one. Reviews have
   found real defects in each of the last two slices, which is the argument.
-- **Consolidate the rules that still exist in several copies.** The strike-zone
-  boundary lives in six places and the distance buckets in three. They agree
+- **Consolidate the rules that still exist in several copies.** ~~The strike-zone
+  boundary lives in six places and the distance buckets in three.~~ They agree
   today, rechecked 3 August 2026. The goal thresholds were the same shape of
   problem, had already drifted, and were consolidated in Slice 4, which leaves
   these two as the odd ones out. Still worth doing only if a third drift shows
   up; otherwise it is churn.
+
+  *(Struck 21 August 2026. The distance buckets were consolidated in Slice 6,
+  and the strike-zone count was an unchecked undercount. Slice 11 enumerated it
+  by hand and closed two of the copies: it is now four in shipped code, five
+  with tooling, six including the definition. The full census, and which sites
+  they are, is in the known-debt entry above. The "only if a third drift shows
+  up" trigger is unchanged and still governs the remaining four.)*
 - **Rate limiting.** Deliberately deferred, see the cost section above. Only if
   the prepaid balance starts moving faster than the owner's own use explains.
 
@@ -1698,11 +2089,18 @@ rewritten, per the append-only rule.
   August 2026, and the coach was measured across 192 live debriefs before and
   after (`docs/eval-fixtures/slice9-session-one/`), coming out neither better
   nor worse overall, with one real win on the Contact first screen.
-- **`varianceFactor` has no test that can see it.** Now that the generator is its
+- ~~**`varianceFactor` has no test that can see it.**~~ **Closed 21 August 2026
+  in Slice 11.** Now that the generator is its
   own module, a reviewer changed that constant six-fold and all 22 generator
   tests still passed, because every test drives noise at a neutral value. This
   does not matter until someone retunes the improvement arc, which is the queued
   item two above this one, and at that point it matters a lot. Worth pairing.
+  *(Two fixtures now cover it, one resolving each of the two readings it
+  multiplies, because the obvious single-fixture version was run rather than
+  reread and proved not to catch a deletion from the exit velocity line. What is
+  still blind is stated beside the tests: both read whole numbers, so a change
+  to the 0.05 inside roughly minus 2 to plus 8 percent is absorbed by rounding.
+  That band was swept, not derived.)*
 - ~~**The coach is long-winded, and the type is too small, and these are one
   problem.**~~ **Shipped 14 August 2026 as Slice 7.** A concrete word budget
   (45/30/12/50) plus the eval bench this item asked for, both described above;
@@ -1785,11 +2183,17 @@ rewritten, per the append-only rule.
   been seen failing for absence (the constant not existing yet), never for
   drift (the constant existing but having changed). Worth one deliberate
   mutation to prove a future edit to the prompt would turn it red.
-- **The dev server cannot be reached from a phone.** Vite binds to localhost
+- ~~**The dev server cannot be reached from a phone.** Vite binds to localhost
   only; neither `vite.config.js` nor `.claude/launch.json` passes `--host`.
   Separate from the layout question below: even a real phone on the same
   network could not currently load this app at all, so the standing
-  real-phone-before-QA rule cannot be honoured for this project as configured.
+  real-phone-before-QA rule cannot be honoured for this project as
+  configured.~~ **Closed as declined, 20 August 2026**, at the start of Slice
+  11, where it had been written into the plan as a task needing approval. The
+  owner: this app is consumed on a desktop or an iPad and does not need to work
+  on a phone at all. So there is nothing to fix and nothing to declare. See the
+  fourth verification norm above, which is where the rule now lives rather than
+  being re-decided each time it surfaces.
 - **At 390px wide, the chat panel's send button is entirely off-canvas, with
   no horizontal scroll to reach it.** Found during this slice's browser pass,
   pre-existing and not something this slice introduced. Worse than
@@ -1797,6 +2201,11 @@ rewritten, per the append-only rule.
   right edge with no way to bring them into view. Matches CLAUDE.md's
   standing note that this app has no mobile layout, but this is the first
   time the specific failure was measured rather than assumed.
+  *(Annotation, 20 August 2026: downgraded, not closed. 390px is a phone
+  width, and this app is not asked to work on a phone. The measurement stands
+  and is worth keeping, because it is the sharpest evidence of where the
+  layout gives out, but it is no longer a defect to fix. The width worth
+  checking is an iPad's, and nobody has measured that.)*
 - **Three small cosmetic issues on the new summary-box fade**, none blocking:
   its gradient interpolates between two slightly different background
   colours rather than one colour fading to transparent; it sits on top of
@@ -2225,8 +2634,30 @@ rewritten, per the append-only rule.
   claim" framing above still stands and the second round did not change it, but
   the defect the second round was bought to check IS measurably fixed. See the
   second decision log entry for 20 August 2026.
-- **A generator-realism slice, carrying three things measured in Slice 9 and
-  deliberately not fixed there.** All three change sessions 2 to 4, which is
+- ~~**A generator-realism slice, carrying three things measured in Slice 9 and
+  deliberately not fixed there.**~~ **SHIPPED 21 August 2026 as Slice 11, and it
+  grew from three items to eight.** All three below are closed: the zone gap
+  went from 0.00 mph to about 4.6, spray now leans pull and stops narrowing
+  every session, and pop-ups exist at about ~~0.40~~ 0.43 a session with four in
+  five of
+  them off high pitches. The coupling this entry warned about was checked rather
+  than assumed and did not bite: `carryDistance`'s shape term floors above 28
+  degrees, but the highest angle the generator actually produces is 47 and the
+  carry values at 47, 48, 49 and 50 are still distinct, so `src/ballFlight.js`
+  needed no behaviour change and has none anywhere on the branch. The five items
+  that were added alongside them, all measured defects rather than scope creep:
+  out-of-zone pitches were off on both axes at once 100% of the time; the exit
+  velocity ceiling described a near-elite hitter; the generated hitter was 31%
+  tighter than the session he is derived from; the session-to-session step was
+  dishonest; and the hard clamps parked ~~4.138%~~ about 4% of Power session-4
+  swings on
+  exactly 35 degrees. See the decision log entry for 21 August 2026, the "data
+  is synthetic" section above, and `docs/slice-11-plan.md`. The original entry
+  follows as written. *(Both struck numbers corrected 21 August 2026 by the
+  whole-branch review; the full correction, and why the decimals were unbacked,
+  is in the "data is synthetic" section above.)*
+
+  All three change sessions 2 to 4, which is
   why they were kept out of a slice whose whole measurement depended on those
   sessions not moving. **Before touching `src/swingGenerator.js`, read the
   fixture-marker item added at the close of Slice 10 below: repairing four
@@ -2270,20 +2701,29 @@ rewritten, per the append-only rule.
   turned a planned $0.15 measurement in Slice 9 into a $1.11 one. Worth adding
   the next time a live round is being bought anyway; not worth a slice of its
   own.
-- **`CONTACT_CORRELATION` does not hold a correlation.** The constant reads
-  `0.6` but it is applied to both readings, so the correlation it actually
-  produces is 0.36, confirmed by measurement (median 0.36 across generated
-  sessions). Anyone retuning it toward "0.5" would get 0.25. One comment line
-  in `src/swingGenerator.js`; left undone in Slice 9 only because that slice
-  did not touch the generator, and it should ride along with the
-  generator-realism slice above.
-- **`scripts/search-session-one-swings.mjs` hand-copies the generator's own
-  exit-velocity and launch-angle clamps** rather than importing them, and its
-  comment calls them "the clamps the generator obeys" without saying they are a
-  copy. Harmless today because the numbers agree, and it is a hand-run script
-  rather than shipped code, but a silent copy of a shipped number is the exact
-  failure mode this project consolidates hard against everywhere else. Cheap to
-  close if that script is ever opened again.
+- ~~**`CONTACT_CORRELATION` does not hold a correlation.**~~ **Closed 21 August
+  2026 in Slice 11**, and the number moved while it was being written down. The
+  constant reads `0.6`, is applied to both readings, and so produced 0.36; the
+  shipped figure is now 0.23, because the pop-up pairs a high launch angle with
+  a soft exit velocity and pulls against the blend. Both numbers, and the fact
+  that the pop-up rather than the constant is what changed, are recorded beside
+  the constant in `src/swingGenerator.js`. **Whether the 0.23 was worth spending
+  a constant on was asked and answered no**: session 1's own 0.361 sits at the
+  65th percentile of the generated per-session distribution, whose interquartile
+  width is 0.49, so on a fifteen-dot scatter the move is invisible. The reasoning
+  is finding 9 in `docs/slice-11-plan.md`, and the statistic to use if anyone
+  revisits it is where session 1 sits in that distribution, not the gap between
+  two medians.
+- ~~**`scripts/search-session-one-swings.mjs` hand-copies the generator's own
+  exit-velocity and launch-angle clamps**~~ **Resolved 21 August 2026 in Slice
+  11, deliberately as a frozen copy rather than as an import.** That script's job
+  is to reproduce one historical search, the Slice 9 search that chose the
+  fifteen swings that shipped, and pointed at today's generator it would search a
+  different space and could not reproduce that result. Both values are now named
+  `FROZEN_EV_CLAMP` and `FROZEN_LA_CLAMP`, so the warning travels in the
+  identifier rather than in a comment nobody opens, and the header says plainly
+  that the generator has no hard clamps at all any more. Do not make either track
+  the live generator.
 - **Every prior session's individual swings are printed into the coach's
   prompt in full**, so a session-4 debrief carries session 1's fifteen swings
   verbatim. Not a defect and nothing is asked here; it is recorded because it
@@ -2414,6 +2854,79 @@ own self-checks, not the coach.*
   the Slice 10 round a frozen generator snapshot at the same time. The full
   statement of the trap is in
   `docs/eval-fixtures/slice10-direction-key/after/BUILDER.txt`.
+
+  **Closed 20 August 2026, in Slice 11's first task, before the generator was
+  touched.** All five markers repaired as dated annotations, with the old
+  `builder = current` line left struck through above the new one on the four
+  that changed. The generator itself is now snapshotted at
+  `docs/eval-fixtures/frozen/swing-generator-pre-slice11.mjs`, and a builder
+  names a pair (which fifteen session-1 swings, which generator) instead of
+  just a baseline. What makes this stick rather than rely on somebody
+  remembering: a record of exactly what the old generator produced, for every
+  cell at every seed, was written from the live code and committed on its own
+  first, and `npm test` now rebuilds all of it and fails if a single swing
+  moves. The trap is not closed by a comment; it is closed by a test that
+  cannot be green and wrong at the same time.
+
+  **Corrected again later the same day, and this correction is the useful one:
+  it was six directories, not five, and the sixth was the one that mattered
+  most.** Six review passes over the repair above all counted five. The missing
+  one is `docs/eval-fixtures/slice7-debriefs`, the 96 saved debriefs this
+  project uses to check that its grading tool can actually spot a coach error.
+  The tool is pointed at that fixture automatically every time that check runs,
+  so a generator rewrite would have re-checked the tool against a set of swings
+  no coach in the fixture ever saw, and then reported that the tool was fine.
+  It hid because that directory had already frozen its own first session and its
+  own list of cases, so it read to everyone as a directory that had solved this
+  problem; it had solved half of it, and took the part that builds sessions 2 to
+  4 from the live app. Closed the same day as Task 1b: it reads the frozen copy
+  now, its swings are in the same record as everything else, and two more tests
+  hold it there. **One residual, which Task 4 will meet**: that fixture still
+  asks the live app how far a ball carried, because the frozen copy of that
+  formula cannot be reached without weakening a different guard. It is watched
+  rather than prevented, and exactly what the watch does and does not catch is
+  measured in that file's own header. If Slice 11 ends up touching
+  `src/ballFlight.js`, freeze the carry formula; never adjust the record.
+
+  **Corrected later the same day, and the corrected version is the one Task 4
+  needs.** Two things above are wrong in the reassuring direction. "Cannot be
+  reached without weakening a different guard" was a decision, not a
+  constraint: what the pinning rule blocks is reaching into the frozen file
+  itself, and a separate frozen copy of the carry formula beside it would need
+  no such weakening. It was declined because this project consolidates hard
+  against a second copy of a live formula and the fixture is covered today, and
+  that is a judgment Task 4 may revisit. And "watched rather than prevented"
+  undersells the watch: measured both ways, the only carry changes the record
+  cannot see are ones this fixture never exercises, because its first session is
+  built at a fixed seed and none of its forty-five balls is hit steeply enough
+  to reach the uncovered part of the formula.
+
+- **A carry-formula cover that comes from the data, not from the wiring, and
+  nothing would announce it going away.** Added 20 August 2026, from the item
+  above. The 96-debrief fixture's protection against a change to how far a ball
+  carries holds only because its stand-in first session is built at a fixed seed
+  and happens to contain no steeply hit ball. ~~Change how that stand-in session
+  is built, its seed, or its limits, and the cover quietly stops applying with
+  every test still green.~~ Nothing guards that today. The fix, if it is ever
+  wanted, is a frozen copy of the carry formula for that fixture to read, which
+  turns an accident into a guarantee. Small, and only worth doing if
+  `src/ballFlight.js` is being opened anyway.
+
+  **Struck sentence corrected 21 August 2026, by review, and the correction
+  matters because that sentence was the whole warning.** It was false, and
+  false about its own named mechanism: changing that stand-in's seed turns
+  four tests red, loudly, because the record pins all forty-five of its balls
+  individually. Raising its angle limit does stay green, but only because no
+  ball reaches the limit, which means the cover did not change either. The
+  sentence had confused what CREATES the cover (a fixed seed, and a record
+  that pins every ball) with what creates the gap (no ball hit steeply). What
+  is true:
+
+  the cover is complete for the shallow half of the carry formula and absent
+  for the steep half, because none of the fixture's forty-five stand-in balls
+  exceeds 28 degrees. That absence is a property of the data rather than a
+  stated requirement, so a future slice that legitimately re-pins the record
+  could change which half is covered without any test saying so.
 - ~~**Pre-count pull, centre and opposite field on every goal. A candidate slice,
   now with live evidence behind it, and it is a product expansion rather than a
   fix.**~~ **Shipped the same day, 20 August 2026, in the second half of Slice
@@ -2487,6 +3000,20 @@ own self-checks, not the coach.*
   goal. The other four cover a free stopping point at 50 degrees in
   `carryDistance`, session 1 having zero pop-ups, the builder trap Slice 9's
   markers do not anticipate, and why the before-baseline was free.
+
+  **Findings 1 and 2 both closed 21 August 2026 in Slice 11, and both were
+  confirmed on screen rather than only in a table.** The flat row at 35 degrees
+  is gone: ~~4.138 percent~~ about 4 percent of Power session-4 swings sat on
+  exactly that value and
+  it is now ~~1.385 percent~~ about 1.4 percent spread across a smooth tail
+  *(both corrected 21 August 2026 by the whole-branch review, which found the
+  three decimal places came from an uncommitted task report and could not be
+  rerun from the seeded script; see the "data is synthetic" section)*,
+  and the browser pass found
+  Power session 4 a clean cloud topping out at 33 with nothing on the edge. Hit
+  to All Fields meets its own bar at a flat 72 to 73 percent at every session. The
+  builder trap is closed too, by the frozen snapshot and its digest. The 50
+  degree stopping point in `carryDistance` was checked and needed nothing.
 
 *Added 20 August 2026, later the same day, from the second round of Slice 10
 work, the one that happened after the browser QA gate rejected the slice. All of
@@ -2573,6 +3100,130 @@ these came out of the round that measured the prompt that actually shipped.*
   for a prompt fix twice now. Only worth closing if the screen file is being
   opened for another reason; the tripwire is the cheap 90% and the remaining
   10% costs a browser pass.
+
+*Added at the close of Slice 11, 21 August 2026. The generator items sit first
+because they are the ones a visitor could see; the tooling items follow.*
+
+- **The chat coach's chased-pitch fix is "did not reproduce", not "fixed", and
+  the difference is the whole entry.** Slice 11's browser gate caught the chat
+  coach contradicting both the pitch chart beside it and its own debrief text
+  above it, twice out of two attempts. The four approved zone count lines were
+  moved into the chat prompt and it then answered three replies correctly. But
+  **session 1, the only independently reproducible check, carries no pitch within
+  0.05 feet of a zone edge**, and a near-boundary pitch is exactly the condition
+  the gate identified as the trigger. The second check did exercise it and was
+  right, on a generated session with no seed recorded, no payload captured and no
+  screenshot archived, so it rests on narration. Three replies cannot carry
+  "fixed" against a defect with a two-of-two base rate. What would close it: one
+  seeded session that puts a pitch within a hundredth of a foot of an edge,
+  captured.
+- **The chat prompt's two approved lines are guarded against being removed or
+  reworded and NOT against being MOVED, and one line closes it.** Found in Slice
+  11's Task 3 review, proven rather than argued: a reviewer relocated the two
+  lines into the per-session block, where they would repeat once per session
+  instead of appearing once at the top, and got a fully green suite. The drift
+  test at `src/coachApi.test.js:1408-1450` cannot catch it, because it uses
+  `toContain` plus a first-match regex, and `text.match(...)[0]` takes the first
+  hit wherever it sits. **The fix is one line: assert the chat setting line
+  occurs exactly once, and before the first "Session 1:".** It matters more than
+  its size because this is the chat prompt, which is where the last two browser
+  QA gates both caught a real defect. Recorded here on 21 August 2026 by the
+  whole-branch review, because it had reached no committed document at all: it
+  lived only in the slice's own gitignored controller ledger, which does not
+  survive the slice.
+- **The coach can be handed every count it needs and still get the arithmetic
+  BETWEEN two counts wrong, and this is fresh evidence for a decision already
+  waiting on the product manager.** Asked to total chases across two sessions, it
+  gave both per-session breakdowns correctly and then reported their sum as 5
+  where 2 plus 2 is 4. No count line spans sessions, so a sum over two handed
+  counts is still something the coach derives. Pre-counting fixes miscounts and
+  does not do arithmetic. This is not a new proposal: it is evidence for the open
+  "let the app write the figure and the coach write the sentence" decision whose
+  trigger this file already records as fired. Slice 10 produced the other half of
+  the same evidence, a handed count attached to the wrong side of its own
+  threshold.
+- **Launch angle is not monotone in pitch height, and it inverts against session
+  1.** A ball chased above the zone comes out about two degrees flatter than a
+  strike down the middle, where the hand-written session the whole demo is
+  calibrated to says it should be the steepest thing on the chart. Structural
+  rather than a tuning slip: two effects reach launch angle from the pitch at
+  fixed relative strength, and making the top of the zone beat the middle needs a
+  weight near 1.14, which cannot exist. Fixing it means a different structure and
+  would want its own reasoning. Recorded rather than fixed, in
+  `docs/slice-11-plan.md` finding 8, and the pop-up mechanism was built to create
+  the high-pitch pop-up outright rather than lean on this tendency, which is why
+  nothing visible follows from it today.
+- **The "nothing stacked above 0.5 percent" guard is measured pooled, and a
+  visitor looks at one chart.** Per cell the share of swings on the 94 mph
+  ceiling runs 0.22 to 0.87 percent and six of the fifteen goal-and-session cells
+  are over the line, worst on Power session 2. Five were already over before this
+  slice at 0.56 to 0.68, so it widened an existing breach rather than breaking a
+  held guard, and no visible defect follows: 0.87 percent is 0.13 of a swing on a
+  fifteen-dot chart, against 4.00 percent one step inside. **What is wrong is the
+  guard, not the generator**, and repairing it is a product choice between
+  restating it per cell at a level this generator can hold, near 1 percent, or
+  leaving it pooled and saying so in the target. Whoever tunes next should know
+  that the pooled number will keep understating Power session 2.
+- **The mis-hit pop-up rate is chosen, not derived.** No real TrackMan pop-up
+  rate was consulted for the ~~0.40~~ 0.43 a session this slice shipped
+  *(corrected 21 August 2026; 0.40 was the four-non-Power-goals figure with its
+  qualifier dropped, see the "data is synthetic" section)*. It reads
+  plausibly and it was tuned against the goal's own coaching prose rather than
+  against the sport. Only worth revisiting if a real number ever turns up.
+- **Every count-line test in `src/coachApi.test.js` uses a single-session
+  fixture**, so a multi-session corruption of any of them, zone, spray or goal
+  counts alike, passes the suite. Measured rather than assumed: computing the
+  chat zone lines from the first session for every session block, and emitting
+  them only on the session 1 block, each leave 96 of 96 passing. Pre-existing and
+  uniform across the file. Cheap to close and worth doing next time that file is
+  open for another reason.
+- **Two grading-tool bugs from this slice's hand-check are deterministic, sit in
+  the verdict path, and are therefore free to validate by offline replay.** The
+  larger: a signed pitch-side coordinate is ruled against a coach quoting an
+  unsigned distance off the plate, five occurrences in one round, every one of
+  them on a correct sentence. The other: an "N out of fifteen" denominator is
+  absorbed as a fabricated fifteen-element list of named swings, which walks
+  straight through the guard Slice 9 added for the empty-list case. Both are the
+  cheapest instrument fixes available and neither costs a live call. Detail in
+  `docs/eval-fixtures/slice11-generator-realism/HAND-CHECK.md`.
+- **The tool's false-positive rate set a new record at 64.0 percent, and five of
+  the mechanisms behind it had never been seen before.** The series now reads 11,
+  42, 12.5, 34.5, 40, 61.9, 43.5, 36.8, 30.0, 64.0 percent. **Four of the five
+  new mechanisms are about pitch location**, which is exactly what this slice
+  made the coach write about more, so the tool's blind spots moved with the
+  product. The standing rule is unchanged and only firmer: a raw flag is a lead,
+  not a finding, and a raw flag-count delta between two rounds is not usable
+  without a hand-check. Five genuine coach errors also went UNFLAGGED and were
+  found in passing, three of them sharing a shape the tool cannot see, a correct
+  fact and a wrong pitch-location characterisation in one sentence.
+- **Seven committed record directories carry no `BUILDER.txt` at all**, including
+  the Slice 8b, 8c and 8d rounds, which have the same multi-session exposure this
+  slice spent its first two tasks repairing elsewhere. Nobody has checked whether
+  those rounds are stranded. Small each, and the honest first step is to find out
+  rather than to write markers.
+- **`docs/eval-fixtures/slice7-debriefs/diag-12-14.mjs` has been broken since
+  Slice 7b**, pointing at a scratch directory that no longer exists. Either fix
+  the path or delete the file; a script that cannot run is worse than no script,
+  because it reads as available.
+- **Four pre-existing lint errors**, three unused parameters in
+  `scripts/claimVerdict.js` and an undefined `Buffer` in
+  `scripts/frozenGenerator.test.js`. Confirmed pre-existing by stash and left out
+  of lane. They ride along with the lint-wall item already queued in Slice 6b.
+- **`rebuild.mjs`'s own binding to the frozen snapshot has never been
+  demonstrated to bite.** The experiment that proved a builder reaching for the
+  wrong generator turns the suite red covered one loading route; the three
+  `slice7-debriefs` cells reach the snapshot through their own separate binding
+  and stayed green throughout it. That binding is covered by the data digest, so
+  this is a gap in the proof rather than a known hole, but anybody citing that
+  experiment must say which route they mean. Cheap, and worth doing next time
+  anything opens that directory.
+- **The measurement script counts the EDGES of a distribution and not its
+  middle.** Proven by fixture: 18 percent of all swings piled on one interior
+  launch angle and the report correctly stayed quiet, because its claim is scoped
+  to edges. So an interior pile-up at a knee rather than a saturation point would
+  go unreported. It has also never rendered a chart. Both limits are printed in
+  the script's own closing section; this line exists so nobody has to run it to
+  find out.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

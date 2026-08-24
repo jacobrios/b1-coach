@@ -253,57 +253,57 @@ function mulberry32(seed) {
 }
 
 const EXPECTED_SESSION_2 = [
-  { plateLocHeight: 3.23, plateLocSide: -0.04, hit: { launch: { exitSpeed: 81, angle: 22, direction: -12 }, landing: { distance: 239 } } },
-  { plateLocHeight: 2.5, plateLocSide: 0.26, hit: { launch: { exitSpeed: 86, angle: 21, direction: -10 }, landing: { distance: 266 } } },
-  { plateLocHeight: 2.68, plateLocSide: -0.66, hit: { launch: { exitSpeed: 79, angle: 20, direction: 27 }, landing: { distance: 216 } } },
-  { plateLocHeight: 1.55, plateLocSide: -0.46, hit: { launch: { exitSpeed: 76, angle: 11, direction: 23 }, landing: { distance: 155 } } },
-  { plateLocHeight: 1.57, plateLocSide: -0.63, hit: { launch: { exitSpeed: 87, angle: 30, direction: -9 }, landing: { distance: 302 } } },
-  { plateLocHeight: 2.11, plateLocSide: 0.33, hit: { launch: { exitSpeed: 86, angle: 16, direction: 14 }, landing: { distance: 236 } } },
-  { plateLocHeight: 1.65, plateLocSide: 0.22, hit: { launch: { exitSpeed: 87, angle: 19, direction: -12 }, landing: { distance: 260 } } },
-  { plateLocHeight: 1.35, plateLocSide: -0.83, hit: { launch: { exitSpeed: 88, angle: 29, direction: -25 }, landing: { distance: 316 } } },
-  { plateLocHeight: 1.15, plateLocSide: 0.88, hit: { launch: { exitSpeed: 78, angle: 13, direction: 11 }, landing: { distance: 175 } } },
-  { plateLocHeight: 3.49, plateLocSide: 0.09, hit: { launch: { exitSpeed: 82, angle: 23, direction: 26 }, landing: { distance: 251 } } },
-  { plateLocHeight: 2.15, plateLocSide: 0.32, hit: { launch: { exitSpeed: 87, angle: 26, direction: -8 }, landing: { distance: 303 } } },
-  { plateLocHeight: 3.82, plateLocSide: 0.89, hit: { launch: { exitSpeed: 81, angle: 23, direction: 17 }, landing: { distance: 244 } } },
-  { plateLocHeight: 0.93, plateLocSide: 0.84, hit: { launch: { exitSpeed: 83, angle: 11, direction: 24 }, landing: { distance: 189 } } },
-  { plateLocHeight: 2.33, plateLocSide: -0.47, hit: { launch: { exitSpeed: 84, angle: 29, direction: 17 }, landing: { distance: 287 } } },
-  { plateLocHeight: 1.21, plateLocSide: -0.84, hit: { launch: { exitSpeed: 83, angle: 16, direction: 13 }, landing: { distance: 218 } } },
+  { plateLocHeight: 3.57, plateLocSide: -0.32, hit: { launch: { exitSpeed: 89, angle: 22, direction: -24 }, landing: { distance: 292 } } },
+  { plateLocHeight: 2.5, plateLocSide: 0.26, hit: { launch: { exitSpeed: 79, angle: 24, direction: 23 }, landing: { distance: 235 } } },
+  { plateLocHeight: 1.62, plateLocSide: -0.44, hit: { launch: { exitSpeed: 85, angle: 12, direction: -30 }, landing: { distance: 206 } } },
+  { plateLocHeight: 2.4, plateLocSide: -0.65, hit: { launch: { exitSpeed: 80, angle: 17, direction: -24 }, landing: { distance: 206 } } },
+  { plateLocHeight: 4.1, plateLocSide: -0.41, hit: { launch: { exitSpeed: 73, angle: 10, direction: 9 }, landing: { distance: 135 } } },
+  { plateLocHeight: 3.39, plateLocSide: -0.1, hit: { launch: { exitSpeed: 81, angle: 20, direction: -43 }, landing: { distance: 228 } } },
+  { plateLocHeight: 3.37, plateLocSide: -0.75, hit: { launch: { exitSpeed: 77, angle: 22, direction: 22 }, landing: { distance: 212 } } },
+  { plateLocHeight: 3.69, plateLocSide: -0.23, hit: { launch: { exitSpeed: 79, angle: 26, direction: -20 }, landing: { distance: 245 } } },
+  { plateLocHeight: 4.14, plateLocSide: 0.06, hit: { launch: { exitSpeed: 70, angle: 21, direction: -19 }, landing: { distance: 162 } } },
+  { plateLocHeight: 3.14, plateLocSide: -0.52, hit: { launch: { exitSpeed: 82, angle: 29, direction: 12 }, landing: { distance: 272 } } },
+  { plateLocHeight: 1.37, plateLocSide: 0.18, hit: { launch: { exitSpeed: 82, angle: 24, direction: -13 }, landing: { distance: 256 } } },
+  { plateLocHeight: 2.97, plateLocSide: 0.19, hit: { launch: { exitSpeed: 93, angle: 22, direction: 4 }, landing: { distance: 318 } } },
+  { plateLocHeight: 1.07, plateLocSide: -0.31, hit: { launch: { exitSpeed: 70, angle: 7, direction: 35 }, landing: { distance: 109 } } },
+  { plateLocHeight: 2.62, plateLocSide: -0.29, hit: { launch: { exitSpeed: 84, angle: 21, direction: 11 }, landing: { distance: 253 } } },
+  { plateLocHeight: 2.49, plateLocSide: 0.16, hit: { launch: { exitSpeed: 90, angle: 21, direction: -18 }, landing: { distance: 292 } } },
 ]
 
 const EXPECTED_SESSION_3 = [
-  { plateLocHeight: 2.71, plateLocSide: -0.02, hit: { launch: { exitSpeed: 85, angle: 29, direction: 30 }, landing: { distance: 294 } } },
-  { plateLocHeight: 2.05, plateLocSide: -0.23, hit: { launch: { exitSpeed: 73, angle: 20, direction: 17 }, landing: { distance: 177 } } },
-  { plateLocHeight: 0.65, plateLocSide: 0.89, hit: { launch: { exitSpeed: 74, angle: 22, direction: 8 }, landing: { distance: 192 } } },
-  { plateLocHeight: 2.17, plateLocSide: 0.55, hit: { launch: { exitSpeed: 80, angle: 17, direction: 16 }, landing: { distance: 206 } } },
-  { plateLocHeight: 1.97, plateLocSide: -0.24, hit: { launch: { exitSpeed: 80, angle: 20, direction: 6 }, landing: { distance: 222 } } },
-  { plateLocHeight: 2.89, plateLocSide: -0.26, hit: { launch: { exitSpeed: 77, angle: 20, direction: -15 }, landing: { distance: 203 } } },
-  { plateLocHeight: 2.46, plateLocSide: -0.17, hit: { launch: { exitSpeed: 76, angle: 8, direction: 8 }, landing: { distance: 140 } } },
-  { plateLocHeight: 3.24, plateLocSide: 0.04, hit: { launch: { exitSpeed: 88, angle: 28, direction: -1 }, landing: { distance: 323 } } },
-  { plateLocHeight: 3.12, plateLocSide: -0.41, hit: { launch: { exitSpeed: 89, angle: 24, direction: -20 }, landing: { distance: 305 } } },
-  { plateLocHeight: 3.97, plateLocSide: -0.82, hit: { launch: { exitSpeed: 81, angle: 27, direction: 3 }, landing: { distance: 265 } } },
-  { plateLocHeight: 3.92, plateLocSide: 1.06, hit: { launch: { exitSpeed: 79, angle: 19, direction: 21 }, landing: { distance: 211 } } },
-  { plateLocHeight: 2.2, plateLocSide: 0.61, hit: { launch: { exitSpeed: 81, angle: 20, direction: 28 }, landing: { distance: 228 } } },
-  { plateLocHeight: 1.54, plateLocSide: -0.58, hit: { launch: { exitSpeed: 81, angle: 27, direction: -20 }, landing: { distance: 265 } } },
-  { plateLocHeight: 2.91, plateLocSide: -0.5, hit: { launch: { exitSpeed: 86, angle: 30, direction: 29 }, landing: { distance: 295 } } },
-  { plateLocHeight: 2.64, plateLocSide: 0.3, hit: { launch: { exitSpeed: 75, angle: 10, direction: -11 }, landing: { distance: 145 } } },
+  { plateLocHeight: 1.75, plateLocSide: -0.26, hit: { launch: { exitSpeed: 80, angle: 13, direction: -5 }, landing: { distance: 185 } } },
+  { plateLocHeight: 1.31, plateLocSide: 0.51, hit: { launch: { exitSpeed: 85, angle: 23, direction: -8 }, landing: { distance: 271 } } },
+  { plateLocHeight: 2.28, plateLocSide: 0.06, hit: { launch: { exitSpeed: 90, angle: 36, direction: 23 }, landing: { distance: 284 } } },
+  { plateLocHeight: 2.51, plateLocSide: 0.25, hit: { launch: { exitSpeed: 93, angle: 33, direction: 7 }, landing: { distance: 324 } } },
+  { plateLocHeight: 2.39, plateLocSide: 0.53, hit: { launch: { exitSpeed: 82, angle: 31, direction: 6 }, landing: { distance: 261 } } },
+  { plateLocHeight: 1.54, plateLocSide: -0.58, hit: { launch: { exitSpeed: 85, angle: 26, direction: 26 }, landing: { distance: 289 } } },
+  { plateLocHeight: 1.78, plateLocSide: -0.63, hit: { launch: { exitSpeed: 78, angle: 19, direction: 13 }, landing: { distance: 204 } } },
+  { plateLocHeight: 3.75, plateLocSide: -0.04, hit: { launch: { exitSpeed: 74, angle: 43, direction: -19 }, landing: { distance: 152 } } },
+  { plateLocHeight: 2.6, plateLocSide: 0.21, hit: { launch: { exitSpeed: 79, angle: 18, direction: -32 }, landing: { distance: 205 } } },
+  { plateLocHeight: 2.5, plateLocSide: -0.56, hit: { launch: { exitSpeed: 78, angle: 24, direction: -26 }, landing: { distance: 228 } } },
+  { plateLocHeight: 3.97, plateLocSide: 0.41, hit: { launch: { exitSpeed: 75, angle: 39, direction: -30 }, landing: { distance: 176 } } },
+  { plateLocHeight: 2.84, plateLocSide: 0.24, hit: { launch: { exitSpeed: 93, angle: 19, direction: -12 }, landing: { distance: 297 } } },
+  { plateLocHeight: 1.91, plateLocSide: 0.62, hit: { launch: { exitSpeed: 81, angle: 24, direction: 25 }, landing: { distance: 249 } } },
+  { plateLocHeight: 3.62, plateLocSide: 0.35, hit: { launch: { exitSpeed: 84, angle: 24, direction: -0 }, landing: { distance: 270 } } },
+  { plateLocHeight: 2.76, plateLocSide: 0.24, hit: { launch: { exitSpeed: 87, angle: 35, direction: -19 }, landing: { distance: 271 } } },
 ]
 
 const EXPECTED_SESSION_4 = [
-  { plateLocHeight: 2.35, plateLocSide: -0.24, hit: { launch: { exitSpeed: 79, angle: 22, direction: 1 }, landing: { distance: 226 } } },
-  { plateLocHeight: 2.6, plateLocSide: 0.21, hit: { launch: { exitSpeed: 72, angle: 18, direction: -12 }, landing: { distance: 163 } } },
-  { plateLocHeight: 1.28, plateLocSide: -0.95, hit: { launch: { exitSpeed: 73, angle: 12, direction: -19 }, landing: { distance: 144 } } },
-  { plateLocHeight: 2.91, plateLocSide: 0.09, hit: { launch: { exitSpeed: 78, angle: 9, direction: -5 }, landing: { distance: 154 } } },
-  { plateLocHeight: 4, plateLocSide: 0.85, hit: { launch: { exitSpeed: 80, angle: 20, direction: 13 }, landing: { distance: 222 } } },
-  { plateLocHeight: 2.84, plateLocSide: 0.09, hit: { launch: { exitSpeed: 69, angle: 9, direction: -12 }, landing: { distance: 112 } } },
-  { plateLocHeight: 3.17, plateLocSide: 0.05, hit: { launch: { exitSpeed: 76, angle: 25, direction: -7 }, landing: { distance: 219 } } },
-  { plateLocHeight: 3.22, plateLocSide: 0.61, hit: { launch: { exitSpeed: 80, angle: 24, direction: -12 }, landing: { distance: 242 } } },
-  { plateLocHeight: 3, plateLocSide: 0.07, hit: { launch: { exitSpeed: 80, angle: 28, direction: -9 }, landing: { distance: 263 } } },
-  { plateLocHeight: 3.75, plateLocSide: 1, hit: { launch: { exitSpeed: 80, angle: 24, direction: 33 }, landing: { distance: 242 } } },
-  { plateLocHeight: 0.81, plateLocSide: 1.05, hit: { launch: { exitSpeed: 80, angle: 31, direction: -8 }, landing: { distance: 247 } } },
-  { plateLocHeight: 3.42, plateLocSide: -0.02, hit: { launch: { exitSpeed: 83, angle: 25, direction: -19 }, landing: { distance: 269 } } },
-  { plateLocHeight: 1.26, plateLocSide: 0.96, hit: { launch: { exitSpeed: 77, angle: 22, direction: 18 }, landing: { distance: 212 } } },
-  { plateLocHeight: 2.34, plateLocSide: -0.08, hit: { launch: { exitSpeed: 73, angle: 20, direction: 28 }, landing: { distance: 177 } } },
-  { plateLocHeight: 1.7, plateLocSide: -0.53, hit: { launch: { exitSpeed: 81, angle: 22, direction: -26 }, landing: { distance: 239 } } },
+  { plateLocHeight: 1.09, plateLocSide: -0.3, hit: { launch: { exitSpeed: 85, angle: 24, direction: 6 }, landing: { distance: 277 } } },
+  { plateLocHeight: 3.19, plateLocSide: 0.56, hit: { launch: { exitSpeed: 84, angle: 24, direction: -4 }, landing: { distance: 270 } } },
+  { plateLocHeight: 2.73, plateLocSide: 0.3, hit: { launch: { exitSpeed: 81, angle: 28, direction: -36 }, landing: { distance: 270 } } },
+  { plateLocHeight: 1.1, plateLocSide: -0.65, hit: { launch: { exitSpeed: 82, angle: 17, direction: 24 }, landing: { distance: 218 } } },
+  { plateLocHeight: 1.7, plateLocSide: 0.18, hit: { launch: { exitSpeed: 83, angle: 23, direction: -23 }, landing: { distance: 258 } } },
+  { plateLocHeight: 1.72, plateLocSide: 0.39, hit: { launch: { exitSpeed: 92, angle: 23, direction: -39 }, landing: { distance: 319 } } },
+  { plateLocHeight: 3.48, plateLocSide: 0.11, hit: { launch: { exitSpeed: 85, angle: 36, direction: -41 }, landing: { distance: 252 } } },
+  { plateLocHeight: 3.07, plateLocSide: 0.01, hit: { launch: { exitSpeed: 78, angle: 34, direction: -9 }, landing: { distance: 218 } } },
+  { plateLocHeight: 1.43, plateLocSide: 0.07, hit: { launch: { exitSpeed: 81, angle: 32, direction: -25 }, landing: { distance: 248 } } },
+  { plateLocHeight: 1.91, plateLocSide: 0.59, hit: { launch: { exitSpeed: 88, angle: 21, direction: 33 }, landing: { distance: 279 } } },
+  { plateLocHeight: 2.92, plateLocSide: 0.37, hit: { launch: { exitSpeed: 90, angle: 29, direction: -29 }, landing: { distance: 331 } } },
+  { plateLocHeight: 1.44, plateLocSide: 0.69, hit: { launch: { exitSpeed: 79, angle: 22, direction: 6 }, landing: { distance: 226 } } },
+  { plateLocHeight: 0.93, plateLocSide: -0.41, hit: { launch: { exitSpeed: 85, angle: 21, direction: -5 }, landing: { distance: 259 } } },
+  { plateLocHeight: 3.65, plateLocSide: -0.35, hit: { launch: { exitSpeed: 76, angle: 33, direction: -39 }, landing: { distance: 209 } } },
+  { plateLocHeight: 3.55, plateLocSide: 0.07, hit: { launch: { exitSpeed: 84, angle: 31, direction: -8 }, landing: { distance: 275 } } },
 ]
 describe('sessions 2, 3 and 4 regenerate bit-for-bit identical from a seeded random', () => {
   // This is the point of the whole Option A decision, made concrete. Option
@@ -324,6 +324,153 @@ describe('sessions 2, 3 and 4 regenerate bit-for-bit identical from a seeded ran
   // the mutation (session 1's average exit velocity shifted by 1 mph, via
   // +15 on one swing so the 15-swing sum moves by exactly 15) and the
   // observed failure.
+  //
+  // RE-CAPTURED 21 AUGUST 2026, AND WHAT IT PROVES HAS NARROWED. Slice 11
+  // moved the pitch draw to the front of each swing, so the fifteen numbers
+  // now come off the shared random source in a different order and every
+  // generated session at a given seed changed with it. That was the expected
+  // and intended consequence of the change, not a regression: it is why the
+  // pre-Slice-11 generator was snapshotted under docs/eval-fixtures/frozen/
+  // before the generator was touched at all, so no committed round of coach
+  // evaluations is quietly re-checked against swings its coach never saw.
+  //
+  // The numbers below therefore describe the NEW generator. They still pin
+  // exactly what the old ones pinned, which is that nothing downstream moves
+  // for a reason nobody chose, but a reader should not read a green run here
+  // as evidence that sessions 2 to 4 are unchanged since Slice 9. They are
+  // not, deliberately. The old values are in this file's git history at the
+  // commit before this one.
+  //
+  // RE-CAPTURED A SECOND TIME, 21 AUGUST 2026, for Task 5, and this one moved
+  // less than the note above describes. Task 5 links the pitch to how well the
+  // ball was struck; it adds no draw and reorders none, so at this seed every
+  // pitch location and every spray direction below is byte-identical to the
+  // capture it replaces. What moved is exit velocity, launch angle and the
+  // carry distance that follows from them, on the swings whose pitch was not
+  // an average one. That is the change itself showing up, and it is the last
+  // re-capture Slice 11 currently expects: Task 6 replaces the two clamps and
+  // Task 9 retunes the constants, and both will move these numbers again.
+  //
+  // RE-CAPTURED A THIRD TIME, 21 AUGUST 2026, for Task 6, exactly as the note
+  // above predicted. Task 6 spends three more draws on every swing, so from
+  // the second swing of session 2 onward the stream is offset and every number
+  // below moves. Two things in the new capture are the change itself and are
+  // worth pointing at rather than scrolling past:
+  //
+  //   Session 3 now holds two pop-ups, 43 degrees at 76 mph and 39 degrees at
+  //   78 mph, off pitches at 3.75 and 3.97 feet. Both are above the top of the
+  //   strike zone, which is the mechanism: the hitter got under a high one.
+  //   Before this task a launch angle above 35 was arithmetically impossible.
+  //   ^^^ TWO EXIT VELOCITIES IN THAT SENTENCE ARE STALE, 21 August 2026: they
+  //   read 74 and 75 in the capture below, not 76 and 78. The angles and the
+  //   pitch heights are still right. Marked here rather than only at the foot
+  //   of this comment, because this is the paragraph a reader stops at and it
+  //   is how the wrong pair gets quoted again. Full note with the two captures
+  //   that moved them is under the fifth re-capture below.
+  //
+  //   Session 3 and session 4 also carry ordinary swings at 36 degrees, which
+  //   is not a pop-up band draw but a swing that used to be parked on the wall
+  //   at 35 and is now allowed past it.
+  //
+  // THE NEGATIVE ZERO NOTE THAT USED TO SIT INSIDE SESSION 3 IS GONE, and its
+  // deletion is deliberate rather than the accident that note itself records.
+  // No direction in this capture is a negative zero, so a comment explaining
+  // one would have pointed at nothing. What it said is still true of the
+  // generator and worth keeping here in one line: Math.round of a small
+  // negative number returns -0, which reaches the coach as "0" and reads as up
+  // the middle on every chart, and if one lands in a future capture it has to
+  // be written as -0 rather than 0 or this test fails.
+  //
+  // RE-CAPTURED A FOURTH TIME, 21 AUGUST 2026, for Task 7, and this one moves
+  // every number for three reasons at once rather than one. The step off the
+  // previous session shrank, the exit velocity spread widened from 16 to 21.88,
+  // and the ceiling came down from 97 to 94, so exit velocity and the carry
+  // distance that follows from it move on every swing. Spray direction moves on
+  // every swing too, from its own separate change: it no longer runs through
+  // the variance factor and it now leans to the pull side rather than the
+  // opposite field. Pitch locations are the one thing byte-identical to the
+  // capture this replaces, because Task 7 adds no draw and reorders none.
+  //
+  // Two things in the new capture are the change itself:
+  //
+  //   The hardest ball in each of the three sessions is now 93, 93 and 92 mph,
+  //   against 94, 95 and 94 before. The old ceiling let a generated session
+  //   beat Bill's frozen best of 92; this one approaches it.
+  //
+  //   THE NEGATIVE ZERO IS BACK, and it is session 3's fourteenth swing. The
+  //   note above says what to do about it and this is the case it was written
+  //   for: it is written as -0 below, deliberately, and writing it as 0 turns
+  //   this test red. That is the only reason the note above survived a capture
+  //   in which it pointed at nothing.
+  //
+  // RE-CAPTURED A FIFTH TIME, 21 AUGUST 2026, for Task 9, which is the tuning
+  // pass and the last one Slice 11 expects. It moved exactly one constant,
+  // PITCH_QUALITY_WEIGHT from 0.8 to 0.74, so this is the smallest of the five
+  // re-captures and the easiest to say precisely what it did: 23 of the 45
+  // swings moved, and on every one of those 23 the pitch location and the
+  // spray direction are byte-identical to the capture this replaces. Exit
+  // velocity moved on 15 swings and launch angle on 10, and the carry distance
+  // followed wherever either did. That is the change itself: the generator now
+  // blames the pitch slightly less for how the ball came off the bat, so the
+  // swings whose pitch was not an average one are the ones that moved, and
+  // nothing else about a swing had any reason to.
+  //
+  // Three things a reader might expect to have moved and which did NOT, all
+  // checked rather than assumed:
+  //
+  //   The hardest ball in each session is still 93, 93 and 92 mph. The point
+  //   the Task 7 note makes about approaching Bill's frozen 92 rather than
+  //   beating it survives this capture unchanged.
+  //
+  //   The negative zero is still session 3's fourteenth swing, so the note
+  //   above still points at something real.
+  //
+  //   Session 3 still holds the same two MIS-HIT pop-ups, byte-identical: 43
+  //   degrees at 73 mph off a pitch at 3.75 feet and 39 degrees at 75 mph off
+  //   one at 3.97. **Counted the way this project counts, session 3 holds
+  //   THREE swings above 35 degrees, not two**, because Reduce Pop-Ups defines
+  //   a pop-up as anything above 35 and the third is the ordinary 36 degree
+  //   swing named in the Task 6 note. Both readings are used in this file and
+  //   they are not the same number; the measurement script counts the goal's
+  //   way. Sessions 3 and 4 still carry those ordinary 36 degree swings.
+  //
+  // ONE STALE PAIR OF NUMBERS FOUND WHILE CHECKING THAT, ANNOTATED RATHER THAN
+  // REWRITTEN. The Task 6 note above says session 3's two pop-ups are "43
+  // degrees at 76 mph and 39 degrees at 78 mph". That was true of the Task 6
+  // capture and stopped being true at the Task 7 one, which moved them without
+  // saying so. The angles and the pitch heights in that sentence are still
+  // right; the two exit velocities have been out of date since. Left in place
+  // because it records what was true when it was written, marked at the
+  // paragraph itself so a reader who stops there sees it, and flagged here
+  // because a reader comparing it against the numbers below would otherwise
+  // conclude a later capture moved something it did not.
+  //
+  // RE-CAPTURED A SIXTH TIME, 21 AUGUST 2026, still Task 9, after the product
+  // manager took two decisions on the round-1 numbers. It is the cleanest of
+  // the six and the shape says which decision did what:
+  //
+  //   15 of the 45 swings moved. On every one of the 15 the pitch location,
+  //   the spray direction and the LAUNCH ANGLE are byte-identical, and exit
+  //   velocity moved on all 15 and on nothing else. That is the mean shift,
+  //   `EV_SESSION_STEP.lift`, doing exactly what a mean shift does: every
+  //   session's average up by the same amount, nothing about a swing's angle
+  //   or its spread touched.
+  //
+  //   The other decision, moving the foot of the pop-up ramp from 0.6 to 0.8,
+  //   moved NOTHING here, which is worth stating so nobody reads the clean
+  //   result as evidence it did nothing anywhere. At this seed no swing changed
+  //   pop-up status: the two mis-hit pop-ups in session 3 are off pitches at
+  //   3.75 and 3.97 feet, deep enough inside the ramp that raising its foot
+  //   RAISED their chance rather than removing it, and no other swing's mis-hit
+  //   draw fell in the band the change opened up. Its real effect is
+  //   distributional and is in the measurement script, not here.
+  //
+  //   The three fixed points hold for a third capture running: the hardest ball
+  //   is still 93, 93 and 92, the negative zero is still session 3's fourteenth
+  //   swing, and the two mis-hit pop-ups are still the same two. Both of those
+  //   pop-ups came off the bat 1 mph harder, 73 to 74 and unchanged at 75,
+  //   which is the mean shift reaching the session average a pop-up is
+  //   subtracted from.
   it('matches the stored snapshot', () => {
     const random = mulberry32(42)
     const session2 = generateSwings({ sessionNum: 2, goalId: null, baselineSwings: SESSION_ONE_SWINGS, random })

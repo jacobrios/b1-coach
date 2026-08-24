@@ -301,6 +301,17 @@ because they were written believing session 1 was the only moving part. Repairin
 all five markers, and giving both Slice 10 rounds a frozen generator snapshot, is
 Slice 11's first task.
 
+**Dated correction, 20 August 2026, after that task was done.** Five markers was
+right; five exposed directories was not. A sixth, `../slice7-debriefs`, had the
+same problem and no marker at all, and it is the one carrying the most weight:
+the grading tool's own check that it can spot a real coach error is pointed at
+that fixture automatically, so a rewritten generator would have re-run that check
+against swings no coach in it ever saw and reported the tool healthy. It went
+unnoticed through six review passes because that directory freezes its own first
+session, which made it look like a solved case. Closed the same day; it reads the
+frozen copy now and its swings are in the same committed record as everything
+else here.
+
 ## The exact commands
 
 ```
