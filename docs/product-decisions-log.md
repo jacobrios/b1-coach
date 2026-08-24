@@ -30,7 +30,10 @@ that way", so a chevron coloured by spray would carry two different directions i
 one mark. Verified on a rendered screen, not only in code: a session-2 Power
 debrief drew an orange chevron for a swing at 88 mph and 26 degrees beside a
 neutral one for a swing at 82 and 11, and a single-chevron session drew the
-orange arrow in exactly the fill the on-target diamonds use.
+orange arrow in the same colour the on-target diamonds use. Same hue exactly,
+and a shade stronger on the screen: the diamonds are filled at 0.9 opacity and
+the chevron is stroked at full, which suits a thin outline beside a solid shape
+but is worth saying rather than calling them identical.
 
 **One of the three reasons given below for that decision was wrong, and the
 correction matters more than the conclusion.** The entry below argues that
@@ -41,15 +44,34 @@ prompt to look, not a prohibition. Letting a tripwire settle a design question i
 backwards even when the answer it points at happens to be right, and the answer
 here was only right for the other two reasons.
 
-**The tests guarded the arithmetic and not the rule.** Six one-line edits to the
-chart each broke the fix while all 671 tests passed, and the worst of them was a
-one-word change making the tooltip report the clamped position, which destroys
-the entire honesty argument. The datum shaping, the chevron geometry and the
-colour rule all moved into the module, and three text-scoped tripwires now cover
-what can only live in the screen file. All six edits were re-run afterwards and
-all six now turn the suite red. One subtler edit still does not: reordering the
-Hit to All Fields branch above the chevron branch leaves the suite green, which
-is the honest limit of a text tripwire and is recorded rather than papered over.
+**The tests guarded the arithmetic and not the rule.** Six one-line edits each
+broke the fix while all 671 tests passed. All six were lines in
+`src/DebriefScreen.jsx` as it then stood, and naming them is more use than
+counting them: the tooltip pointed at the clamped position instead of the true
+one, the axis pointed back at the true one instead of the clamped one, the
+chevron branch disabled, the clamp dropped, `beyond` forced to null, and the
+chevron drawn outward into the clip. The worst is the first, a one-word change
+that makes the chart report a position the pitch never had, which destroys the
+entire honesty argument. The row building, the chevron geometry and the colour
+rule moved into `src/pitchChartWindow.js`, which is why three of those six lines
+now live there and are covered by real tests; the other three stayed in the
+screen and are covered by text tripwires. All six were re-run afterwards and all
+six turn the suite red. One subtler edit still does not: reordering the Hit to
+All Fields branch above the chevron branch leaves the suite green, which is the
+honest limit of a text tripwire and is recorded rather than papered over.
+
+**One thing seen while checking the colour on screen, recorded and deliberately
+not listed as work.** Two chevrons at nearly the same height cross their strokes
+and read as a scribble rather than as two marks. Measured at the chart's own
+vertical scale, taken off a live render at 51.06 pixels per foot: strokes cross
+in 0.584% of sessions, about one in 171, and the pair merges into a single mark
+in 0.274%, about one in 365. That is well under the one-in-fourteen rate at which
+the clipped-mark note above earned a line on the What's Next list, so it stays
+off it on frequency. The reason first given for leaving it off was the weaker
+half of the argument and is corrected here: calling it "a property of the scatter
+generally" understates it, because two overlapping dots still read as a dot,
+while two overlapping arrows read as neither. The chevron changed that failure in
+kind and not only in size.
 
 **A comment credited the wrong mechanism.** It said `allowDataOverflow` is what
 pins the horizontal window. It is not: because the plotted value is clamped, the

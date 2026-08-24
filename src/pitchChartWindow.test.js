@@ -347,6 +347,20 @@ describe('the rules the pitch chart holds on its own', () => {
     }).toEqual({ usesTheRowBuilder: true, shapesRowsInline: false })
   })
 
+  // The colour rule was added to fix a defect and arrived with the same hole
+  // the chevron branch above had: asserting that `chevronIsOnTarget(` appears
+  // somewhere lets both arms of the ternary be swapped, which does not merely
+  // switch the fix off, it makes the chart report the missed swings as the good
+  // ones. Hardcoding the goal to 'allfields' turns every chevron neutral and
+  // reinstates the original defect. Both are one token, both left the suite
+  // green, so this asserts the whole expression rather than a fragment of it.
+  it('paints the chevron on-target through the shared rule, and not the other way round', () => {
+    const stroke = pitchChart.split('\n').map((l) => l.trim())
+      .find((l) => l.startsWith('stroke={chevronIsOnTarget'))
+    expect(stroke).toBe(
+      'stroke={chevronIsOnTarget({ goalId, outcome: payload.outcome }) ? ACCENT : CHEVRON_STROKE}')
+  })
+
   it('still draws an off-window pitch as a chevron, from the shared geometry', () => {
     expect({
       // Matched as the exact branch, not merely as text appearing somewhere.

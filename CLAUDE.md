@@ -344,7 +344,7 @@ below is as Slice 10 left it and was not re-counted.
                              distance buckets the chart and both prompts share,
                              and the spray chart's distance-to-radius scale.
                              Added in Slice 6. See the ball flight section below.
-    src/pitchChartWindow.js  175 lines. The fixed window the Pitch Location vs
+    src/pitchChartWindow.js  181 lines. The fixed window the Pitch Location vs
                              Outcome chart draws, and what happens to a pitch
                              outside it. Added 24 August 2026 by the pitch-window
                              micro-PR, on the scrollFade.js precedent: the chart's
@@ -363,16 +363,21 @@ below is as Slice 10 left it and was not re-counted.
                              reads `STRIKE_ZONE` rather than copying it, so the
                              strike-zone census recorded further down this file is
                              unchanged at four copies in shipped code.
-                             *(Grew from 94 lines to 175 on 24 August 2026, in
+                             *(Grew from 94 lines to 181 on 24 August 2026, in
                              the fix round on the same change, and the reason is
                              the useful part. The first version extracted the
                              ARITHMETIC and left the RULES in the chart, so six
-                             one-line edits to `DebriefScreen.jsx` each broke the
-                             fix with the whole suite green: the tooltip could be
-                             pointed at the clamped number, the clamp could be
-                             dropped, the axis could be pointed back at the true
-                             value, the chevron branch could be deleted, and the
-                             chevron could be drawn outward into the clip. It now
+                             one-line edits each broke the fix with the whole
+                             suite green. All six were lines in
+                             `DebriefScreen.jsx` as it then stood: the tooltip
+                             pointed at the clamped number; the axis pointed back
+                             at the true one; the chevron branch disabled; the
+                             clamp dropped; `beyond` forced to null; and the
+                             chevron drawn outward into the clip. THREE of those
+                             lines now live in this module (the clamp, `beyond`
+                             and the chevron's direction) and are covered by real
+                             tests; the other three are still in the screen and
+                             are covered by text tripwires. It now
                              also owns `pitchChartRows`, which builds the chart's
                              rows and is what guarantees the tooltip reads a true
                              position; `chevronPoints`, whose inwardness is a
@@ -437,7 +442,7 @@ below is as Slice 10 left it and was not re-counted.
                              because it sits on the grader's `.js`-extension
                              import path and `coachApi.js` does not.
     api/coach.js             191 lines. The serverless proxy. See the trap below.
-    src/*.test.js           5122 lines across THIRTEEN files, beside what they test.
+    src/*.test.js           5136 lines across THIRTEEN files, beside what they test.
                              Slice 10 added 373 lines across coachApi.test.js,
                              sessionStats.test.js and goalCountSpecs.test.js:
                              the direction key reaching both prompts, the Power

@@ -99,12 +99,18 @@ export function plottedSide(side) {
 // Everything below this line was moved out of DebriefScreen.jsx on 24 August
 // 2026, in the fix round on this same change, and the reason is worth stating
 // because the first version of this module got it wrong. That version extracted
-// the ARITHMETIC and left the RULES in the chart, so six one-line edits to the
-// screen file each broke the fix while the whole suite stayed green: the
-// tooltip could be switched to read the clamped number, the chevron branch
-// could be deleted, the clamp could be dropped, the axis could be pointed back
-// at the true value, and the chevron could be drawn outward into the clip. A
-// test that cannot see any of those is guarding the easy half.
+// the ARITHMETIC and left the RULES in the chart, so six one-line edits each
+// broke the fix while the whole suite stayed green. All six were lines in
+// DebriefScreen.jsx as it then stood, and they are worth naming rather than
+// summarising, because a later reader will want to check them: the tooltip
+// pointed at the clamped number instead of the true one; the axis pointed back
+// at the true number instead of the clamped one; the chevron branch disabled;
+// the clamp dropped from plotX; `beyond` forced to null; and the chevron drawn
+// outward into the clip. Three of those six lines now live in THIS file (the
+// clamp, `beyond`, and the chevron's direction), which is exactly why they are
+// covered by real tests below rather than by a text tripwire. The other three
+// are still in the screen and are covered by tripwires. A test that cannot see
+// any of them is guarding the easy half.
 
 
 // One row per swing, in the shape the chart reads.
