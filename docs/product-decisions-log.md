@@ -6,6 +6,160 @@
 
 ---
 
+## Fix round on the pitch-window micro-PR (August 24, later the same day)
+
+*Four corrections and one product decision, all from the review of the entry
+below. Nothing was spent; no model call was made.*
+
+**The chevron was withholding wins, and the cost disclosure below is too narrow.**
+The entry below says the chevron overrides "the Pull / Center / Oppo colouring on
+Hit to All Fields" and describes that as the whole cost. It also overrode the
+ON-TARGET colouring on the three goals that have a target, which nobody had
+measured. Over 54,000 sessions on Power, Contact and Reduce Pop-Ups: **23.6% of
+chevrons are swings that met the goal**, and **7.36% of sessions, about one in
+fourteen, showed a success as a plain neutral arrow** on a chart headed "Pitch
+Location vs Outcome". A screen whose job is to tell a hitter what went right was
+quietly not telling him.
+
+*The decision.* Keep the chevron shape, paint it the on-target orange when the
+swing met the goal, and leave Hit to All Fields neutral. That goal has no target,
+so there is no success to report, and the original reason for keeping it neutral
+survives in a sharper form than it was first written: the arrow's direction means
+"the pitch was outside this way" while a spray colour would mean "the ball went
+that way", so a chevron coloured by spray would carry two different directions in
+one mark. Verified on a rendered screen, not only in code: a session-2 Power
+debrief drew an orange chevron for a swing at 88 mph and 26 degrees beside a
+neutral one for a swing at 82 and 11, and a single-chevron session drew the
+orange arrow in the same colour the on-target diamonds use. Same hue exactly,
+and a shade stronger on the screen: the diamonds are filled at 0.9 opacity and
+the chevron is stroked at full, which suits a thin outline beside a solid shape
+but is worth saying rather than calling them identical.
+
+**One of the three reasons given below for that decision was wrong, and the
+correction matters more than the conclusion.** The entry below argues that
+colouring the chevron by direction "would have added `payload.direction`
+comparisons and broken" the spray text guard. That guard's own comment says a
+changed count "wants a person to look rather than a quietly green suite". It is a
+prompt to look, not a prohibition. Letting a tripwire settle a design question is
+backwards even when the answer it points at happens to be right, and the answer
+here was only right for the other two reasons.
+
+**The tests guarded the arithmetic and not the rule.** Six one-line edits each
+broke the fix while all 671 tests passed. All six were lines in
+`src/DebriefScreen.jsx` as it then stood, and naming them is more use than
+counting them: the tooltip pointed at the clamped position instead of the true
+one, the axis pointed back at the true one instead of the clamped one, the
+chevron branch disabled, the clamp dropped, `beyond` forced to null, and the
+chevron drawn outward into the clip. The worst is the first, a one-word change
+that makes the chart report a position the pitch never had, which destroys the
+entire honesty argument. The row building, the chevron geometry and the colour
+rule moved into `src/pitchChartWindow.js`, which is why three of those six lines
+now live there and are covered by real tests; the other three stayed in the
+screen and are covered by text tripwires. All six were re-run afterwards and all
+six turn the suite red. One subtler edit still does not: reordering the Hit to
+All Fields branch above the chevron branch leaves the suite green, which is the
+honest limit of a text tripwire and is recorded rather than papered over.
+
+**One thing seen while checking the colour on screen, recorded and deliberately
+not listed as work.** Two chevrons at nearly the same height cross their strokes
+and read as a scribble rather than as two marks. Measured at the chart's own
+vertical scale, taken off a live render at 51.06 pixels per foot: strokes cross
+in 0.584% of sessions, about one in 171, and the pair merges into a single mark
+in 0.274%, about one in 365. That is well under the one-in-fourteen rate at which
+the clipped-mark note above earned a line on the What's Next list, so it stays
+off it on frequency. The reason first given for leaving it off was the weaker
+half of the argument and is corrected here: calling it "a property of the scatter
+generally" understates it, because two overlapping dots still read as a dot,
+while two overlapping arrows read as neither. The chevron changed that failure in
+kind and not only in size.
+
+**A comment credited the wrong mechanism.** It said `allowDataOverflow` is what
+pins the horizontal window. It is not: because the plotted value is clamped, the
+domain comes out at exactly plus or minus 1.2 with or without the attribute. The
+clamp is the lock and the attribute is a second lock on the same door, which only
+starts doing work if the clamp is removed. What the attribute actually does here
+is impose the clip, and the clip is the cause of the correction below.
+
+**The clipped-mark note in CLAUDE.md understated itself about five times over.**
+It described a discrete case, a mark centred exactly on the edge, at one pitch in
+a thousand. The clip cuts any mark whose centre is within its own radius of the
+edge, so the real figure is 0.50% of swings and 7.2% of sessions, about one
+session in fourteen. Still cosmetic, since the severity tapers, and still not
+worth fixing. The number was simply wrong.
+
+---
+
+## Micro-PR: the strike zone stops changing shape from one session to the next (August 24)
+
+*Not a slice.* One chart fix, approved by the product manager on rendered
+mockups before any code was written. No generator change, no prompt change, no
+model calls, nothing spent.
+
+*The problem.* The Pitch Location vs Outcome chart let both of its axes stretch
+to fit whatever the session happened to hold, so the drawn strike zone was a
+different shape every time a visitor looked at it. Usually it read roughly
+square; then one session in three arrived carrying a pitch well off the plate
+and the same zone rendered visibly narrow. Measured across 60,000 generated
+sessions on 24 August 2026, the horizontal axis spanned 2.03 feet in a typical
+session, 1.70 at its narrowest and 3.29 at its widest. It is now 2.40 on every
+session, on every goal. This is the same class of first-screen credibility
+defect as the impossible hit distances Slice 6 removed: nothing breaks, and a
+visitor who knows the sport quietly marks the app down.
+
+*The two windows were decided in opposite directions, and that is the point.*
+Sideways is pinned at exactly plus or minus 1.2 feet and is not derived from
+anything. A real strike zone is 17 inches wide and about 24 tall, so it is
+taller than it is wide, while the panel it is drawn in is wider than it is tall
+and has to carry a four-foot vertical range. The zone therefore comes out wider
+than tall whatever we choose: 1.63 times at a window of 1.0 feet, 1.36 times at
+1.2. Neither is faithful; 1.2 is the closer of the two and the product manager
+picked it to avoid the app looking like it does not know the sport. Vertically
+the opposite rule applies, because a pitch clipped off the top or the bottom is
+a swing the visitor simply cannot see, so that pair is computed from the strike
+zone and the furthest a pitch may miss it by rather than typed out.
+
+*The cost of pinning it, paid deliberately.* Because 1.2 sits inside what the
+generator can throw, about one session in three now holds a pitch the chart
+cannot place, and about one in twenty holds two. Those are drawn as an open
+chevron at the edge, pointing the way the ball went, never as a dot. A dot
+pulled back to the edge would be a false statement about position on a chart
+whose entire subject is position, and two of them side by side would be a small
+version of the flat row of dots Slice 11 spent nine tasks removing. The tooltip
+still reports the true coordinate, and that is what makes the chevron honest:
+the mark sits at the edge because it has to sit somewhere, it is visibly not a
+pitch location, and the real figure is one hover away.
+
+*One decision made during the build, worth recording because it loses something.*
+On Hit to All Fields the chart colours each mark by where the ball went. A
+chevron overrides that colouring rather than adopting it, so on that goal an
+off-window swing loses its Pull / Center / Oppo identity on this one chart. The
+alternative was a chevron in the Oppo colour, which invites reading it as the
+Oppo legend shape. Accepted: the swing number in the tooltip is how a reader
+finds that swing on the spray chart or in the Raw Data table. The legend has no
+entry for the chevron either, which is a small open question rather than a
+defect.
+
+*How a chart got tested in a project that has no rendering tests.* The geometry
+moved into `src/pitchChartWindow.js` for exactly the reason `scrollFade.js`
+moved out of this same screen: a decision that lives inside JSX cannot be
+checked by anything. Seventeen new tests, 654 to 671. The two that matter most
+are the ones proving the vertical window is computed from its sources rather
+than agreeing with them by coincidence: they hand the module different
+constants and check the window moves. Both were seen failing against a first
+version that typed 0.6 and 4.4 out, which is the only way to tell those two
+states apart.
+
+*Verified in a browser, on three sessions, at no cost.* Reaching a debrief needs
+a coach call, so the endpoint was stubbed in the page and the random source
+seeded, which made all three cases reproducible rather than hunted for. The
+same session 1 data renders -0.8 to 1.1 and 0.7 to 3.9 on the old code and
+-1.2 to 1.2 and 0.6 to 4.4 on the new. A one-chevron session and a
+two-chevrons-on-one-edge session both drew all fifteen swings, with the chevron
+tips flush on the plot edge and both arms inside it, and the tooltip on a
+chevron read 1.32 ft Side where the chart had drawn it at 1.20.
+
+---
+
 ## Slice 11: the generator stops lying about the hitter and the pitcher (August 21)
 
 *The problem.* Every number a visitor sees after the first screen is invented by

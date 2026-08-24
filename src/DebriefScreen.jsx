@@ -6,6 +6,7 @@ import { goalTarget, hasTarget, meetsTarget } from './goalTargets'
 import { distanceBucketCounts, sprayRadius, SPRAY_RINGS, SPRAY_FAIR_RADIUS } from './ballFlight'
 import { failureCopy } from './failureCopy'
 import { shouldShowScrollFade } from './scrollFade'
+import { PITCH_CHART_WINDOW, pitchChartRows, chevronPoints, chevronIsOnTarget } from './pitchChartWindow'
 import {
   ScatterChart, Scatter, LineChart, Line, BarChart, Bar, LabelList,
   XAxis, YAxis, CartesianGrid,
@@ -21,6 +22,24 @@ const ACCENT = '#FF6B1A'
 // Session visitor used to see.
 const NEUTRAL_SWING_FILL = 'rgba(255,255,255,0.55)'
 const NEUTRAL_SWING_OPACITY = 0.85
+
+// How a pitch that landed off the side of the Pitch Location chart is drawn: an
+// open chevron pinned to the edge, pointing the way the pitch went. The window
+// it can fall outside of is fixed on purpose (see src/pitchChartWindow.js), and
+// this is what stops that costing the visitor a swing. It is deliberately not a
+// dot: a dot pulled back to the edge would be a false statement about position
+// on a chart whose only subject is position, and two of them side by side would
+// be a small version of the flat row of dots the generator work just finished
+// removing. A chevron is visibly not a pitch location, and the tooltip still
+// gives the true coordinate. One colour for every goal, strong enough to read
+// against the panel without competing with the orange on-target marks.
+// The neutral colour. A chevron on a goal that HAS a target and a swing that
+// met it is painted ACCENT instead, like every other on-target mark, because
+// the chevron overrides the outcome colouring and a session should never
+// withhold a success from the player. `chevronIsOnTarget` in
+// src/pitchChartWindow.js owns that rule and says why Hit to All Fields is
+// excluded from it. The geometry lives there too.
+const CHEVRON_STROKE = 'rgba(255,255,255,0.75)'
 
 // Axis title and tick text, shared across all six charts below. Before this,
 // each chart wrote its own copy: axis titles were nine separate objects at
@@ -769,12 +788,35 @@ function PitchLocation({ swings, goalId }) {
   // single pitch as a grey "you missed it" dot, judged against Power's target,
   // which reads to a visitor as the app being broken.
   const showsOutcome = hasTarget(goalId)
-  const data = swings.map((sw, i) => {
-    const { exitSpeed, angle } = sw.hit.launch
-    return { x: sw.plateLocSide, y: sw.plateLocHeight, exitSpeed, angle, direction: sw.hit.launch.direction, outcome: meetsTarget(goalId, sw.hit.launch), swing: i + 1 }
-  })
+  // Each row carries the pitch's real position on `x`, which is what the
+  // tooltip reads, and the drawable one on `plotX`, which is all the axis
+  // reads. Built in src/pitchChartWindow.js so that split can be tested; it
+  // is the difference between a tooltip telling the truth about a pitch the
+  // chart could not place and one repeating the edge it was drawn at.
+  const data = pitchChartRows(swings, goalId)
 
   const renderShape = ({ cx, cy, payload }) => {
+    // A pitch off the side of the window is drawn as an arrow rather than a dot,
+    // because the chart cannot honestly place it and a dot pulled to the edge
+    // would claim a position the pitch never had. This branch runs first, so it
+    // replaces whatever styling the swing would otherwise have had.
+    //
+    // What it must NOT replace is the news that the swing was good. It used to:
+    // on the three goals with a target, a swing that met its goal came out as a
+    // plain neutral arrow on a chart headed "Pitch Location vs Outcome", which
+    // is this screen withholding a win. So the arrow keeps the shape and takes
+    // the on-target colour. Hit to All Fields stays neutral for a different
+    // reason, recorded beside the rule itself.
+    if (payload.beyond) {
+      return (
+        <polyline
+          points={chevronPoints({ cx, cy, beyond: payload.beyond })}
+          fill="none"
+          stroke={chevronIsOnTarget({ goalId, outcome: payload.outcome }) ? ACCENT : CHEVRON_STROKE}
+          strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+        />
+      )
+    }
     if (goalId === 'allfields') {
       if (payload.direction < -15)
         return <circle cx={cx} cy={cy} r={5} fill={ACCENT} fillOpacity={0.85} />
@@ -797,12 +839,33 @@ function PitchLocation({ swings, goalId }) {
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 20, bottom: 30, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-            <XAxis dataKey="x" type="number" domain={[dataMin => Math.min(dataMin - 0.15, -0.85), dataMax => Math.max(dataMax + 0.15, 0.85)]}
+            {/* Both windows fixed, so the strike zone below is drawn at the
+                same shape on every session.
+
+                What actually pins the horizontal window is the CLAMP on
+                plotX, not the attribute. Recharts treats a given domain as a
+                minimum and widens it to cover the data, so a fixed domain
+                alone would not have fixed anything; but the clamp means no
+                value can ask it to widen, and the domain comes out at exactly
+                plus or minus 1.2 with or without allowDataOverflow. The
+                attribute is a second lock on the same door, and only starts
+                doing work if the clamp is ever removed.
+
+                What it does do here and now is impose a clip on this layer at
+                exactly the plot area, which is why the chevron is drawn inward
+                from the edge, and which also means a mark sitting within its
+                own radius of the edge loses the outer sliver of itself. That
+                trade was made knowingly; see the decision log for 24 August
+                2026. The vertical axis carries no such attribute, so no
+                vertical clip, because nothing can fall outside its window. */}
+            <XAxis dataKey="plotX" type="number" allowDataOverflow
+              domain={[PITCH_CHART_WINDOW.side.min, PITCH_CHART_WINDOW.side.max]}
               tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
               label={{ value: 'Side (ft)', position: 'insideBottom', offset: -15, style: AXIS_TITLE_STYLE }}
             />
-            <YAxis dataKey="y" type="number" domain={[dataMin => Math.min(dataMin - 0.15, 1.35), dataMax => Math.max(dataMax + 0.15, 3.65)]}
+            <YAxis dataKey="y" type="number"
+              domain={[PITCH_CHART_WINDOW.height.min, PITCH_CHART_WINDOW.height.max]}
               tick={AXIS_TICK_STYLE}
               tickFormatter={(v) => v.toFixed(1)}
               label={{ value: 'Height (ft)', angle: -90, position: 'insideLeft', offset: 15, style: AXIS_TITLE_STYLE }}
