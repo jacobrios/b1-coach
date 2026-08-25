@@ -68,13 +68,17 @@ call, which is why nobody ever asked.
 curl -sS -D - -o /dev/null -w '\ntotal: %{time_total}s\n' https://b1-coach.vercel.app/api/coach
 ```
 
-**Before trusting this for the first time, note what it rests on.** The header
+~~**Before trusting this for the first time, note what it rests on.** The header
 was added in Slice 12 and is covered by unit tests only; this project's suite
 cannot reach the deployed function at all. **The first run of this command
 against production after Slice 12 merged is an outstanding obligation**, not a
 routine check: it is the only thing that proves the header exists on a real
 response. Record the result in the dated entries at the bottom of this file when
-it is done, and strike this paragraph then.
+it is done, and strike this paragraph then.~~
+
+**Discharged 25 August 2026**, minutes after Slice 12 merged. See the dated entry
+at the bottom of this file. The header is now observed on real responses, so this
+command is a routine check rather than an unproven one.
 
 Read `x-coach-cold` in the output:
 
@@ -173,6 +177,21 @@ gone permanently.
   12's finding 3. Cost measured at roughly $0.006 a month.
 - **The function region was left at `iad1`**, deliberately. This app has no
   database, so the usual reason to move a function closer does not apply here.
+- **The warmth probe was run against production and works**, which was Slice 12's
+  one outstanding verification. Two requests, moments after the merge deployed:
+  the first returned `HTTP/2 200` with `x-coach-cold: true` in 0.299s, the second
+  `x-coach-cold: false` in 0.211s. So the header reaches real responses and
+  distinguishes the two states rather than merely existing.
+
+  **One observation, recorded as a lead and not as a finding.** That cold
+  response still came back in 0.299 seconds against 0.211 warm, about 90
+  milliseconds apart, where this project's records describe a cold start as
+  "several extra seconds". Do not read it as showing cold starts are gone. It is
+  a single sample on the liveness path, which does no work at all: it loads no
+  session, builds no prompt and calls nothing. A cold start on the POST path also
+  pays for whatever the real handler has to do before it can answer. What would
+  settle it is the `x-coach-cold` header on a real debrief, which the POST path
+  has carried since Slice 5 and which nobody has collected.
 - **An on-demand budget of $5 was set**, down from Vercel's default of $200,
   which was a number nobody chose. Notifications on, **Pause Production
   Deployments deliberately off**: that switch pauses every project on the team
