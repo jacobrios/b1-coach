@@ -19,10 +19,21 @@ const MAX_INPUT_BYTES = 128 * 1024
 // records what the handler did instead of writing it to a socket.
 function makeRes() {
   const res = { statusCode: null, body: undefined, ended: false, headers: {} }
+  // Node refuses setHeader once the response has been sent, and this file is the
+  // only thing standing between api/coach.js and production, so the double
+  // enforces that rule rather than quietly recording a header the real runtime
+  // would have thrown over. Added 25 August 2026 after review pointed out that
+  // reordering a handler to set a header AFTER res.json() left every test green
+  // while production would have raised ERR_HTTP_HEADERS_SENT or dropped it.
+  let sent = false
+  res.json = (payload) => { sent = true; res.body = payload; return res }
+  res.end = () => { sent = true; res.ended = true; return res }
   res.status = (code) => { res.statusCode = code; return res }
-  res.json = (payload) => { res.body = payload; return res }
-  res.end = () => { res.ended = true; return res }
-  res.setHeader = (k, v) => { res.headers[k] = v; return res }
+  res.setHeader = (k, v) => {
+    if (sent) throw new Error(`setHeader('${k}') called after the response was sent`)
+    res.headers[k] = v
+    return res
+  }
   return res
 }
 
@@ -528,5 +539,39 @@ describe('cold instance detection', () => {
     const res = makeRes()
     await handlerFn({ method: 'POST', body: validBody() }, res)
     expect(res.body.error.cold).toBe(false)
+  })
+
+  // Added 25 August 2026. The POST path has carried this header since Slice 5,
+  // but a POST costs an Anthropic call, so the only way to ask "was this
+  // instance asleep?" was to pay for the answer. These put the same header on
+  // the free liveness path, which is what makes the question answerable for
+  // nothing, repeatably, by anyone with curl. See the decision record for
+  // 25 August 2026: Vercel's own cold start prevention now does the same job
+  // as the uptime monitor, and nothing in this project was measuring either.
+  it('a liveness GET reports cold on a fresh instance, without calling Anthropic', async () => {
+    const handlerFn = await freshHandler()
+    const res = makeRes()
+    await handlerFn({ method: 'GET' }, res)
+    expect(res.headers['x-coach-cold']).toBe('true')
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ ok: true })
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('a second liveness GET reports warm', async () => {
+    const handlerFn = await freshHandler()
+    await handlerFn({ method: 'GET' }, makeRes())
+    const res = makeRes()
+    await handlerFn({ method: 'GET' }, res)
+    expect(res.headers['x-coach-cold']).toBe('false')
+  })
+
+  it('a liveness HEAD reports cold too, and still sends no body', async () => {
+    const handlerFn = await freshHandler()
+    const res = makeRes()
+    await handlerFn({ method: 'HEAD' }, res)
+    expect(res.headers['x-coach-cold']).toBe('true')
+    expect(res.body).toBeUndefined()
+    expect(res.ended).toBe(true)
   })
 })

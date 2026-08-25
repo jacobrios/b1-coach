@@ -6,6 +6,81 @@
 
 ---
 
+## Slice 12: the uptime monitor stays, and now we can tell why (August 25)
+
+*No model calls, no spend. One line of shipped code, three tests, and four
+documents.*
+
+**The question.** The owner moved his Vercel account to the Pro plan for a
+different project. Pro includes cold start prevention, which sounds like a
+replacement for the free external monitor this app has pinged itself with since
+31 July 2026. The slice was framed carefully as "find out whether the monitor is
+still doing anything", not "remove the workaround", and that framing turned out
+to matter.
+
+**The answer is keep it, for a reason nobody had anticipated.** Vercel keeps a
+Pro production deployment warm only *if it was invoked in the last 14 days*.
+(That condition is a careful reading of one sentence in Vercel's own "Scale to
+one" post, read 25 August 2026, rather than of a specification. The hedge is
+recorded here and in CLAUDE.md because the conclusion below rests on it.) A
+visitor loading the app does not invoke anything; the screen comes from a CDN.
+Only a debrief, a chat reply or a ping counts. A portfolio demo can easily go
+fourteen quiet days between job applications, which is exactly when the Pro
+feature would stop covering it. The monitor's 8,640 pings a month make that gap
+impossible. So the monitor is not a redundant backup to the paid feature; it is
+what keeps this app qualified for it. Cancelling it as newly redundant would have
+quietly removed the thing making the replacement work.
+
+Two weaker reasons point the same way, both the owner's own: Pro is expected to
+last three to six months, so trading a free permanent net for a paid temporary
+feature is a poor bargain; and the monitor's second job, telling him the site is
+down, is something cold start prevention does not do at all. Cost works out at
+roughly $0.006 a month, which is arithmetic from Vercel's published prices rather
+than a figure read off a bill; nobody has isolated the monitor's own line on an
+invoice, and at this size nobody will.
+
+**The uncomfortable finding.** Whether the monitor ever helped is unknown, and
+that can no longer be recovered. It needed a measurement taken before the plan
+changed, and the plan changed first. Three latency readings exist across three
+dates, none of them that comparison, and pairing the only pre-install reading
+against either later one fails to show the monitor helping. This is recorded as a
+gap rather than papered over with a number.
+
+**What shipped, and why it is one line.** The app has tracked whether an instance
+was asleep since Slice 5, but only reported it on a successful debrief, which
+costs an Anthropic call. So the question had a price on it and nobody ever asked.
+That header now also rides on the free liveness ping, which makes "is the app
+asleep?" answerable with one free command, forever, by a session holding none of
+this conversation's context. That matters most in the case this slice exists to
+protect: a future downgrade back to Hobby, where cold starts return.
+
+**Two things deliberately left alone.** The function region stays in Virginia;
+the owner asked because moving another project to Ohio had helped, but that
+reasoning depends on sitting beside a database, and this app has none. Its wait
+is almost entirely Anthropic thinking. And the timeouts stay untouched: Pro
+raises the platform ceiling, but `vercel.json` pins 60 seconds and wins, so the
+40 and 50 second stagger and the approved "40 seconds" copy need no decision.
+
+**Two things kept on purpose that a tidier reading would have deleted.** The
+"server was asleep" failure message and the README's cold-start warning both
+survive, because sleeping has not become impossible, and if Pro is temporary then
+"no longer happens" has an expiry date. Deleting either would mean rebuilding it.
+
+**The obligation this created, and the file it created with it.** Changing a
+plan, switching on a platform setting and cancelling a monitor all happen outside
+this repository, where no code will ever mention them. This project had no
+pre-deploy checklist, so the slice wrote one: `docs/pre-deploy-checklist.md` now
+carries the external state, the free warmth probe and its baseline, an experiment
+that was designed and deliberately not run, and the note telling a future session
+what to do if the plan goes back to Hobby.
+
+**A spending limit was set**, because this project's recorded cost posture ("a
+runaway bill is impossible, the Anthropic balance is prepaid") never covered
+Vercel and is actively wrong on a metered plan. Vercel's default was to say
+nothing until $200 in a billing cycle, a number nobody chose.
+
+---
+
 ## Fix round on the pitch-window micro-PR (August 24, later the same day)
 
 *Four corrections and one product decision, all from the review of the entry

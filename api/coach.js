@@ -56,7 +56,21 @@ export default async function handler(req, res) {
 
   // Liveness only, for the uptime monitor that keeps this function warm. It must
   // never read the body or call Anthropic, so a ping every five minutes is free.
+  //
+  // It carries the same warmth header the success path sets below, and that is
+  // the whole point of it being here: a POST costs an Anthropic call, so before
+  // this line the only way to ask whether an instance had been asleep was to pay
+  // for the answer, which meant nobody ever asked. Here the question is free,
+  // repeatable, and answerable with curl by a session that has none of this
+  // conversation's context.
+  //
+  // Read it precisely. The ping itself is what warms the instance, so this
+  // reports whether the instance serving THIS request was already awake when it
+  // arrived, not whether some other instance is warm now. On an app with this
+  // little traffic that is the question worth asking; on a busy one it would not
+  // be. See docs/pre-deploy-checklist.md for what to do with the answer.
   if (req.method === 'GET' || req.method === 'HEAD') {
+    res.setHeader('x-coach-cold', String(wasCold))
     res.status(200)
     return req.method === 'HEAD' ? res.end() : res.json({ ok: true })
   }
