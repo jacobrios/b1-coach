@@ -529,4 +529,38 @@ describe('cold instance detection', () => {
     await handlerFn({ method: 'POST', body: validBody() }, res)
     expect(res.body.error.cold).toBe(false)
   })
+
+  // Added 25 August 2026. The POST path has carried this header since Slice 5,
+  // but a POST costs an Anthropic call, so the only way to ask "was this
+  // instance asleep?" was to pay for the answer. These put the same header on
+  // the free liveness path, which is what makes the question answerable for
+  // nothing, repeatably, by anyone with curl. See the decision record for
+  // 25 August 2026: Vercel's own cold start prevention now does the same job
+  // as the uptime monitor, and nothing in this project was measuring either.
+  it('a liveness GET reports cold on a fresh instance, without calling Anthropic', async () => {
+    const handlerFn = await freshHandler()
+    const res = makeRes()
+    await handlerFn({ method: 'GET' }, res)
+    expect(res.headers['x-coach-cold']).toBe('true')
+    expect(res.statusCode).toBe(200)
+    expect(res.body).toEqual({ ok: true })
+    expect(sentToAnthropic).toBeNull()
+  })
+
+  it('a second liveness GET reports warm', async () => {
+    const handlerFn = await freshHandler()
+    await handlerFn({ method: 'GET' }, makeRes())
+    const res = makeRes()
+    await handlerFn({ method: 'GET' }, res)
+    expect(res.headers['x-coach-cold']).toBe('false')
+  })
+
+  it('a liveness HEAD reports cold too, and still sends no body', async () => {
+    const handlerFn = await freshHandler()
+    const res = makeRes()
+    await handlerFn({ method: 'HEAD' }, res)
+    expect(res.headers['x-coach-cold']).toBe('true')
+    expect(res.body).toBeUndefined()
+    expect(res.ended).toBe(true)
+  })
 })

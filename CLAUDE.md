@@ -1136,8 +1136,12 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and after the pitch-window micro-PR on 24 August 2026 it is **671
-   tests across 24 files**, up from 654 across 23. The seventeen new ones are
+   vitest, and after the pitch-window micro-PR on 24 August 2026 it is **695 tests across 24 files**.
+   *(Corrected 25 August 2026 in Slice 12: this line read 671, which the
+   Reduce Pop-Ups micro-PR left stale. The measured baseline at the start of
+   Slice 12 was **692 across 24**, and that slice added three, all seen
+   failing first, covering the warmth header on the free liveness path.)*
+   Before the micro-PR it was 654 across 23. The seventeen new ones are
    `src/pitchChartWindow.test.js`, and two of them are worth knowing about
    because they answer a question this project has usually had to leave open:
    whether a number that AGREES with its source is actually computed from it.
@@ -1482,17 +1486,52 @@ proven paths.
 ## Deployment and cold starts
 
 Vercel. The static app is served from a CDN and is always instant. The
-serverless function sleeps when idle and takes several extra seconds to wake,
+serverless function can sleep when idle and takes several extra seconds to wake,
 which reads to a visitor as a hang or a broken app.
 
-The prevention is a free external uptime monitor pinging `/api/coach` every five
-minutes with a plain GET, which the handler answers with a bare 200 before ever
-reading the body or calling Anthropic, so it wakes the function and costs
-nothing. HEAD is answered the same way, since some monitors use it instead.
-Anything that is not GET, HEAD, or POST still gets a 405. Slice 2 changed the
-GET from a 405 on 30 July 2026, because most monitors read anything outside the
-200 range as the site being down and alert on it, which made the warmer useless
-as an uptime check.
+**Rewritten 25 August 2026 in Slice 12. This section used to describe the uptime
+monitor as the one thing preventing a cold start. There are now two things, and
+the useful finding is that they are complementary rather than redundant.**
+
+**One: Vercel's own cold start prevention.** The account moved to the Pro plan on
+24 August 2026, for a different project. Pro keeps the current production
+deployment's instance warm automatically, with nothing to configure. Confirmed
+enabled on this project by dashboard screenshot on 25 August 2026, alongside
+Fluid Compute, which was also already on. **It carries a condition that decides
+the rest of this section: the deployment stays warm only if it was invoked in
+the last 14 days.**
+
+**Two: a free external uptime monitor** pinging `/api/coach` every five minutes
+with a plain GET, which the handler answers with a bare 200 before ever reading
+the body or calling Anthropic, so it wakes the function and costs nothing. HEAD
+is answered the same way, since some monitors use it instead. Anything that is
+not GET, HEAD, or POST still gets a 405. Slice 2 changed the GET from a 405 on
+30 July 2026, because most monitors read anything outside the 200 range as the
+site being down and alert on it, which made the warmer useless as an uptime
+check.
+
+**Do not cancel the monitor on the grounds that Pro now does its job.** A visitor
+loading the static app does not invoke the function; that is served from a CDN.
+Only a debrief, a chat reply or a ping counts as an invocation. So on a portfolio
+demo that can plausibly go fourteen quiet days between job applications, **the
+monitor is what keeps this app qualified for the Pro feature**, rather than a
+backup to it. It also does a second job Pro does not do at all: telling the owner
+the site is down. Cost, measured in Slice 12 rather than assumed, is roughly
+$0.006 a month.
+
+**What was never measured, and now never can be.** Whether the monitor ever
+helped on the Hobby plan is unknown and unrecoverable: answering it needed a
+before-and-after across the upgrade, and the upgrade happened first. The three
+latency measurements below were each taken for some other reason and not one of
+them is that comparison. Do not construct one out of them; Slice 12 tried, and
+the honest answer is that it cannot be done.
+
+**How to ask whether the app is asleep, for free.** Since Slice 12 the
+`x-coach-cold` header is set on the GET and HEAD liveness responses as well as on
+a successful POST, so the question no longer costs an Anthropic call. The exact
+command, the warm baseline to read it against, and the what-if-I-downgrade note
+all live in `docs/pre-deploy-checklist.md`, which is this project's record of
+everything that keeps the app working from outside the repository.
 
 The function timeout is pinned in `vercel.json` at 60 seconds, and the repo is
 the source of truth for that value: once `vercel.json` exists the file wins, so a
@@ -3389,8 +3428,23 @@ that pass surfaced.*
   is one sentence in CLAUDE.md, and it is not a README job at all. Found on
   24 August 2026 while scoping this entry.
 
-- **Find out whether the uptime pinger is still doing anything, once Vercel Pro
-  lands. The job is to find out, not to remove it.** The product manager is
+- ~~**Find out whether the uptime pinger is still doing anything, once Vercel Pro
+  lands. The job is to find out, not to remove it.**~~ **CLOSED 25 August 2026 in
+  Slice 12, and the answer is that the pinger stays.** Everything the entry asked
+  for was checked in the order it asked: Pro's cold start prevention was already
+  enabled and needed no setting switched on, and b1-coach was confirmed to sit on
+  the Pro team rather than a personal Hobby scope, which was the check that could
+  have invalidated the rest. The finding that decided it: Pro keeps a deployment
+  warm only if it was invoked in the last 14 days, and the pinger is what makes a
+  fourteen day gap impossible, so it is what qualifies this app for the feature
+  rather than a redundant backup. This entry's own suspicion was right in one
+  respect and it is worth carrying: **the pinger's effect was never measured and
+  cannot now be reconstructed.** Costs $0.006 a month, measured. The region
+  question the product manager raised alongside it was answered no: this app has
+  no database, so the reason to move a function closer does not apply. Full
+  reasoning in `docs/slice-12-plan.md`, external state in the new
+  `docs/pre-deploy-checklist.md`. The original entry follows as written. The
+  product manager is
   upgrading to Vercel Pro for a different project, and Pro includes cold start
   prevention. This app currently leans on a free external pinging service, set
   up on Better Stack on 31 July 2026, hitting `/api/coach` every five minutes to
