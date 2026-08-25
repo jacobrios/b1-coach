@@ -8,7 +8,7 @@ An AI coaching layer for TrackMan B1 baseball hitting data. Proof of concept.
 
 TrackMan already does collection and visualization well. B1 Coach is the interpretation layer. It takes per-session hitting metrics and delivers them the way a coach would after batting practice: a few observations grounded in the actual numbers, two concrete tips, and a chat coach the player can ask follow-up questions.
 
-Coaching is generated live, so the first response after a quiet spell can take a few extra seconds while the server wakes. The page itself always loads instantly.
+The coaching is generated live, so a debrief takes a few seconds to come back, and occasionally longer if the server has been idle.
 
 ## What it does
 
@@ -34,7 +34,7 @@ The generator is built around one hitter, written down deliberately: **Bill, a s
 - **A pitch outside the zone misses on one axis, not both.** Low, high or wide, rather than wild in two directions at once. Never both, which is tidier than a real arm.
 - **Nothing piles up on a limit.** Values compress toward the edges of what is possible rather than stopping dead on them, so no chart draws a flat row of dots along its own ceiling.
 
-**What it is not is validated against real baseball.** The pop-up rate was chosen because it reads plausibly, not derived from a published figure. Launch angle still does not vary correctly with pitch height, which is a known structural limitation and is written up rather than hidden. This is deliberately modelled synthetic data with the reasoning recorded, not a simulation anyone should trust as a model of hitting.
+**What it is not is validated against real baseball.** The pop-up rate was chosen because it reads plausibly, not derived from a published figure. And the relationship between pitch height and launch angle, while real, bends the wrong way at the very top of the zone: a ball chased above the letters comes out about two degrees flatter than one down the middle, where it should be steeper. That is written up rather than hidden. This is deliberately modelled synthetic data with the reasoning recorded, not a simulation anyone should trust as a model of hitting.
 
 ## Keeping an AI coach honest
 
@@ -44,7 +44,7 @@ A language model writing about numbers will confidently get them wrong. Three th
 - **The model's chart choices are validated.** Claude names which charts to render. An invented or duplicated name is rejected and replaced with a real chart on real data, so a bad pick cannot reach the screen.
 - **Failure messages say what actually failed.** A drained API balance, a timeout, trouble at the API end and an unreachable server are four different messages, because one vague apology is a guess presented as a fact.
 
-Not everything worked. Pre-counting removed the error it was aimed at and barely moved overall accuracy. Shortening the coach cost roughly 28% of the real numbers it used to quote, and shipped anyway, because the audience is a sixteen-year-old's attention span rather than a completeness score. Both are in the decisions log with the numbers.
+Some of it was a deliberate trade. Making the coach shorter cost about 28% of the real numbers it used to quote. Kept anyway, because short and focused is what gets read, and a player who wants more can just ask the chat coach. The reasoning is in the decisions log.
 
 ## Running it locally
 
@@ -74,13 +74,13 @@ Styling is mostly inline styles. Tailwind is installed but used only minimally.
 
 ## What this repo does and does not show
 
-I built this fast and by feel across ten sessions in April and May 2026, learning what AI-assisted building was as I went. No tests, no pull requests, no code review. A reviewer can confirm that in about thirty seconds, so it is worth saying first.
+The product work is the part I stand behind, and it was there from day one: the design, the prompt engineering, the audience thinking, and a decision log recording the reasoning behind every call, starting with session one and never dropped.
 
-What was there from the start is the decision log, beginning on day one. That is the habit I brought from product work and never dropped.
+What was not there is engineering discipline. I built this fast and by feel across ten sessions in April and May 2026, learning what AI-assisted building was as I went. No tests, no pull requests, no code review. A reviewer can confirm that in about thirty seconds, so it is worth saying plainly.
 
-At the end of July I came back to a finished app, and spent the next month putting discipline around it: safety nets first, then an audit that found real defects, then evaluation harnesses that measured whether the coaching was factually right rather than merely fluent. One slice was rejected by its own QA gate, and the record says so.
+At the end of July I came back to a finished app and spent the next month adding what was missing: safety nets first, then an audit that found real defects, then evaluation harnesses that measured whether the coaching was factually right rather than merely fluent. One slice was rejected by its own QA gate, and the record says so.
 
-I am not an engineer and this is not an engineering showcase. What it shows is that I could tell something was missing and go get it. The product judgment is the part I stand behind, and it is all in the log.
+I am not an engineer and this is not an engineering showcase. What it shows is that I could tell something was missing and go get it.
 
 ## Documentation
 

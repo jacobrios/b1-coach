@@ -100,6 +100,32 @@ seeded search on purpose; the `trouble` failure message was called a refusal
 upstream when it is also the catch-all and so is not proof the API did anything
 wrong; and "in July" was doing the work of a month that was mostly August.
 
+**The product manager's read of the draft changed five things, and one of them
+was a factual error nobody else had caught.** The draft said launch angle "does
+not vary correctly with pitch height," which he questioned because Slice 11 had
+plainly made pitch location drive contact. He was right and the sentence was
+badly wrong in effect: launch angle varies across eight degrees from below the
+zone up to the middle third, and the defect is confined to the top two bands,
+where it flattens and dips about two degrees instead of continuing to climb.
+Reading "no relationship" for "a strong relationship with one wrong bend at the
+top" was underselling the generator inside the section written to explain it.
+The README now names the bend precisely and proportionately.
+
+**The other four.** The cold-start sentence was doing the wrong job: it warned
+that the first page load is slow, when what is always true is that a debrief is a
+live AI call taking several seconds, and sleeping is now the rare case rather
+than the main one. A sentence about pre-counting was cut as detail with no
+context. The section on the coach's brevity was reframed: it had justified the
+trade as being for "a sixteen-year-old's attention span rather than a
+completeness score," which talks down about the user in a README about an app
+built for them. The measured 28% cost was kept, because a decision with its price
+attached is the whole reason this README claims judgment rather than credentials,
+but the reason is now that short and focused is what gets read and a player who
+wants more can ask the chat coach, which is also the truer account of why the
+chat coach exists. And "What this repo does and does not show" was reordered to
+lead with the product work rather than with the gap, on his instruction, with
+the gap still stated plainly in the paragraph that follows rather than softened.
+
 *What this slice deliberately did not do:* touch `docs/proof-of-concept.md`,
 which has aged the same way and needs its own slice; fix any of the Slice 6b
 surface-polish items; or change any app code, prompt or approved failure copy.
