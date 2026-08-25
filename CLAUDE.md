@@ -45,6 +45,18 @@ was finished. A reviewer can confirm all of that in about thirty seconds. So
 never present this repo as an example of engineering process, in its README, in
 a pull request, or anywhere else.
 
+**Clarified 25 August 2026, in Slice 13, because a session reading the rule cold
+read it more broadly than it was meant.** This rule bans the *claim*, not the
+*disclosure*. Naming the gap plainly and saying what was done about it later is
+allowed, and is what `README.md` now does under "What this repo does and does not
+show": built by feel with no tests or review in April and May, decision log kept
+throughout, discipline retrofitted onto a finished app in July and August. The
+test for any future wording is whether the sentence claims engineering
+competence, which is forbidden, or reports a judgment call, which is the thing
+this project is allowed to show. The product manager approved that framing on
+25 August 2026, and its own closing line is what keeps it on the right side:
+"I am not an engineer and this is not an engineering showcase."
+
 What b1-coach does demonstrate is product judgment, and that part is real and
 substantial: the design work, the prompt engineering, the use case and audience
 thinking, and the reasoning recorded across all ten build sessions in
@@ -231,8 +243,14 @@ No database, no auth, no backend state of any kind.
 
 **Styling is inline style objects, not Tailwind.** Tailwind is installed and
 imported in `src/index.css`, but the codebase uses it almost nowhere: roughly 3
-`className` uses against roughly 198 inline `style={{...}}` objects. The README
-and the decisions log both advertise Tailwind, which overstates it. Match the
+`className` uses against roughly 198 inline `style={{...}}` objects. ~~The README
+and the decisions log both advertise Tailwind, which overstates it.~~ **Corrected
+25 August 2026, in Slice 13: only the decisions log does.** The README half has
+been stale since 14 August 2026, when `README.md` was changed to read "Tailwind
+is installed but used only minimally," which is accurate and was carried through
+the Slice 13 rewrite unchanged. The decisions log half is still true, at
+`docs/product-decisions-log.md:5`, but that is a dated historical entry the
+append-only rule protects rather than a claim to correct. Match the
 surrounding code and write inline styles. Do not introduce Tailwind classes into
 a file that does not already use them, and do not "migrate" anything to Tailwind
 as a side effect of other work.
@@ -1137,7 +1155,10 @@ specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
    vitest, and at the close of Slice 12 on 25 August 2026 it is **695 tests
-   across 24 files**.
+   across 24 files**. *(Unchanged at the close of Slice 13 later the same day,
+   which is the expected result rather than a missing update: that slice was
+   documentation plus one template file, and Markdown cannot move the suite. A
+   move would have meant something else was touched.)*
 
    *(Corrected 25 August 2026 in Slice 12, and the first attempt at this
    correction was itself wrong, which is why the whole chain is now written out
@@ -3454,8 +3475,22 @@ that pass surfaced.*
   because the Slice 6b entry further up still lists it as one of its six items;
   that entry is now five.
 
-- **The README needs a full audit and rewrite, not a line fix. Strongest
-  documentation candidate on this list.** It is the first thing a stranger
+- ~~**The README needs a full audit and rewrite, not a line fix. Strongest
+  documentation candidate on this list.**~~ **SHIPPED 25 August 2026 as Slice
+  13**, and it took the whole-rewrite scope this entry argued for rather than the
+  two flagged lines. The goal list, the missing install and run lines, the
+  differently-named API keys and the stale description of the coach and the
+  hitter are all closed, and `.env.example` now exists. Five further defects this
+  entry had not named were found and fixed: no unaffiliated-with-TrackMan
+  disclaimer, a cold-start warning pointing at the page load rather than at the
+  coaching response, nothing about what the app says when a call fails, nothing
+  about the model's chart choices being validated, and Line Drives and Contact
+  listed as two goals. The CLAUDE.md Tailwind sentence this entry ends by naming
+  is corrected too. **The product decision inside it, which was the real work:**
+  the README tells the whole arc, product discipline throughout and engineering
+  discipline retrofitted late, rather than staying quiet about it. See the
+  decision log entry for 25 August 2026 and `docs/slice-13-plan.md`. The original
+  entry follows as written. It is the first thing a stranger
   reads, it is the front door of a portfolio piece, and it has not been touched
   since 30 July 2026, which is before six slices of work. Two of its problems
   are already scoped as Slice 6b items 6 and 7 in `docs/queued-slices.md` (no
@@ -3485,6 +3520,35 @@ that pass surfaced.*
   append-only rule protects, not a claim to correct. So the Tailwind work here
   is one sentence in CLAUDE.md, and it is not a README job at all. Found on
   24 August 2026 while scoping this entry.
+
+*Added at the close of Slice 13, 25 August 2026:*
+
+- **`docs/proof-of-concept.md` has aged the same way the README had, and nothing
+  has been done about it.** It is the second document a curious reader opens, it
+  is linked from the README's own Documentation section, and it was last touched
+  before the whole Slice 8 accuracy series, the Slice 9 rewrite of session 1 and
+  the Slice 11 rewrite of the generator. Two things in it are now visibly stale:
+  it says hallucination risk is managed by pre-computing "key swing counts and
+  summaries", which is true but describes an early version of a mechanism that
+  four later slices measured, corrected and measured again; and its "what comes
+  next" section predates everything those slices found. Deliberately left out of
+  Slice 13, which was scoped to the README. Its own slice, and a smaller one than
+  the README turned out to be, because the product thesis in it has not changed.
+- **Nothing checks the README's claims, and five of them are generator numbers
+  that a future tuning slice would move silently.** The chase rate, the mph gap
+  between a swing at a strike and a swing at a ball, the pop-up rate, the
+  one-axis miss and the no-pile-up claim were all verified against a fresh seeded
+  run of `scripts/measure-swing-generation.mjs` on 25 August 2026. They are prose
+  in a Markdown file, so no test can see them. **The cheap version of a guard, if
+  this is ever wanted, is not a test but a line on this list**: anyone reopening
+  `src/swingGenerator.js` re-reads the README's synthetic-data section. Recorded
+  rather than built, because guarding prose costs more than it returns on a proof
+  of concept, and because the same drift is what put the README six slices behind
+  in the first place.
+- **`.env.example` is a third place the two API key names are written**, beside
+  `vite.config.js` and `api/coach.js`. It carries no values, so a drift there is
+  cosmetic rather than dangerous, and it is the file the README now tells a
+  stranger to copy. Recorded so nobody is surprised to find a third copy.
 
 - ~~**Find out whether the uptime pinger is still doing anything, once Vercel Pro
   lands. The job is to find out, not to remove it.**~~ **CLOSED 25 August 2026 in

@@ -6,6 +6,132 @@
 
 ---
 
+## Slice 13: the front door stops describing an app we no longer have (August 25)
+
+*No model calls, no spend. One rewritten README, one new template file, two
+corrections to the project's own rules.*
+
+*What we built:* A full rewrite of `README.md`, the first thing a stranger reads
+about this project. It had not been touched since 30 July 2026, which is before
+six slices of work, so it described a coach and a hitter this app no longer has.
+It also could not be run from: no install line, no run line, and no mention that
+local development needs a differently-named API key than production does.
+
+*Key product decisions and the thinking behind them:*
+
+**The README tells the whole arc, and that was the product manager's call over
+two safer options.** This project's own rules say never present this repo as an
+example of engineering process, because everything before 30 July 2026 went
+straight to main with no pull requests, no tests and no review, and a reviewer
+can confirm that in about thirty seconds. Two options respected that by staying
+quiet: describe only the product, or show decisions and their costs without
+explaining where the discipline came from. He chose the third, and gave the
+reason that made it work. He has always followed a product process; what he had
+not done early was engineering discipline, and he added it later deliberately.
+So the arc is not a claim about engineering, it is a claim about noticing a gap.
+The section closes on the line that keeps it honest: "I am not an engineer and
+this is not an engineering showcase."
+
+**The temptation this had to survive was naming the machinery.** The most
+flattering recent material in this repo is process material: evaluation benches,
+hand-checked grading rounds, pre-registered measurement bands. The README
+mentions none of it by name. It says what was decided and what the decision cost,
+which is a judgment claim rather than a credential, and for a reader who knows
+the domain a measured tradeoff is the more persuasive thing anyway.
+
+**The synthetic data got promoted from one sentence to a section, because the
+values are where the work went.** The old README said only that the mock data is
+"structured to match the real TrackMan B1 API." That sentence is true and was
+kept: it says the shape is right, which means integration would be a swap rather
+than a rebuild. But it is silent on the numbers, and a reader who knows baseball
+will not ask whether the field names are right, they will look at a chart and ask
+whether it looks like a real hitter. So the README now names Bill, the
+sixteen-year-old the generator was rebuilt around in Slice 11, and says what the
+generator does: the chase rate, the pitch predicting the contact, pop-ups with a
+cause, misses on one axis rather than two, and nothing piling up on a limit.
+
+**And then says plainly that none of it is validated against real baseball.**
+The pop-up rate was chosen because it reads plausibly, not derived from any
+published figure, and launch angle still does not vary correctly with pitch
+height. Both are in the README. The reasoning is that the intended reader is
+exactly the person who would catch an overclaim, and deliberately modelled
+synthetic data with the reasoning written down reads as rigour, where an
+unearned claim of realism reads as the opposite.
+
+**Five defects were found beyond the five the product manager supplied.** No
+disclaimer that this is unaffiliated with TrackMan, where the proof-of-concept
+document has carried one all along. A cold-start warning pointing at the wrong
+thing: it warned that the first page load is slow, when the page is served from
+a CDN and is always instant, and it is the coaching response that waits. Nothing
+at all about what the app says when a call fails, which was a whole slice of
+work. Nothing about the model's chart choices being validated before they can
+reach the screen. And "Line Drives" and "Contact" listed as two goals when they
+are one card.
+
+**Every number in the README was checked against its source rather than against
+this project's own notes.** CLAUDE.md's generator section carries two dated
+corrections for exactly the mistake of measuring a figure along one path and then
+writing it down as a property of the thing itself, so the seeded measurement
+script was rerun and the fifteen hand-written swings were computed from the
+module directly. Three claims were tightened as a result: a pop-up rate written
+as a decimal that this project has already had to correct twice became "about one
+every couple of sessions", which is the script's own unambiguous phrasing; "about
+a quarter" of lost citations became the measured 28%; and "left overall accuracy
+flat" became "barely moved overall accuracy", because a later correction in the
+record found a modest real improvement hiding under the raw figure.
+
+**One of the two rule corrections matters beyond this slice.** The
+engineering-process constraint was read cold by this session as broader than it
+was written to be, and the product manager did not remember making it. It bans
+the claim, not the disclosure. That is now written into the rule with the test
+for any future wording, because a rule nobody remembers, applied more widely than
+intended, works against the sessions it was meant to help.
+
+**The independent review changed four sentences, and one of them mattered.** The
+README had said a pitch outside the zone misses on one axis "the way a real arm
+misses." The generator misses on one axis 100% of the time, which is not what a
+real arm does and is in fact further from session 1's own six pitches than the
+old generator was. Claiming realism for a property that is absolute in a way real
+pitching is not, inside the one section whose credibility rests on not
+overclaiming, was the exact failure that section exists to avoid. It now says
+"never both, which is tidier than a real arm." The other three: session 1's
+fifteen swings were described as placed by hand when Slice 9 chose them with a
+seeded search on purpose; the `trouble` failure message was called a refusal
+upstream when it is also the catch-all and so is not proof the API did anything
+wrong; and "in July" was doing the work of a month that was mostly August.
+
+**The product manager's read of the draft changed five things, and one of them
+was a factual error nobody else had caught.** The draft said launch angle "does
+not vary correctly with pitch height," which he questioned because Slice 11 had
+plainly made pitch location drive contact. He was right and the sentence was
+badly wrong in effect: launch angle varies across eight degrees from below the
+zone up to the middle third, and the defect is confined to the top two bands,
+where it flattens and dips about two degrees instead of continuing to climb.
+Reading "no relationship" for "a strong relationship with one wrong bend at the
+top" was underselling the generator inside the section written to explain it.
+The README now names the bend precisely and proportionately.
+
+**The other four.** The cold-start sentence was doing the wrong job: it warned
+that the first page load is slow, when what is always true is that a debrief is a
+live AI call taking several seconds, and sleeping is now the rare case rather
+than the main one. A sentence about pre-counting was cut as detail with no
+context. The section on the coach's brevity was reframed: it had justified the
+trade as being for "a sixteen-year-old's attention span rather than a
+completeness score," which talks down about the user in a README about an app
+built for them. The measured 28% cost was kept, because a decision with its price
+attached is the whole reason this README claims judgment rather than credentials,
+but the reason is now that short and focused is what gets read and a player who
+wants more can ask the chat coach, which is also the truer account of why the
+chat coach exists. And "What this repo does and does not show" was reordered to
+lead with the product work rather than with the gap, on his instruction, with
+the gap still stated plainly in the paragraph that follows rather than softened.
+
+*What this slice deliberately did not do:* touch `docs/proof-of-concept.md`,
+which has aged the same way and needs its own slice; fix any of the Slice 6b
+surface-polish items; or change any app code, prompt or approved failure copy.
+
+---
+
 ## Slice 12: the uptime monitor stays, and now we can tell why (August 25)
 
 *No model calls, no spend. One line of shipped code, three tests, and four
