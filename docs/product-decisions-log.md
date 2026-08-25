@@ -19,7 +19,10 @@ still doing anything", not "remove the workaround", and that framing turned out
 to matter.
 
 **The answer is keep it, for a reason nobody had anticipated.** Vercel keeps a
-Pro production deployment warm only *if it was invoked in the last 14 days*. A
+Pro production deployment warm only *if it was invoked in the last 14 days*.
+(That condition is a careful reading of one sentence in Vercel's own "Scale to
+one" post, read 25 August 2026, rather than of a specification. The hedge is
+recorded here and in CLAUDE.md because the conclusion below rests on it.) A
 visitor loading the app does not invoke anything; the screen comes from a CDN.
 Only a debrief, a chat reply or a ping counts. A portfolio demo can easily go
 fourteen quiet days between job applications, which is exactly when the Pro
@@ -31,8 +34,10 @@ quietly removed the thing making the replacement work.
 Two weaker reasons point the same way, both the owner's own: Pro is expected to
 last three to six months, so trading a free permanent net for a paid temporary
 feature is a poor bargain; and the monitor's second job, telling him the site is
-down, is something cold start prevention does not do at all. Cost was checked
-rather than assumed, at roughly $0.006 a month.
+down, is something cold start prevention does not do at all. Cost works out at
+roughly $0.006 a month, which is arithmetic from Vercel's published prices rather
+than a figure read off a bill; nobody has isolated the monitor's own line on an
+invoice, and at this size nobody will.
 
 **The uncomfortable finding.** Whether the monitor ever helped is unknown, and
 that can no longer be recovered. It needed a measurement taken before the plan

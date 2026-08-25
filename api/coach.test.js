@@ -19,10 +19,21 @@ const MAX_INPUT_BYTES = 128 * 1024
 // records what the handler did instead of writing it to a socket.
 function makeRes() {
   const res = { statusCode: null, body: undefined, ended: false, headers: {} }
+  // Node refuses setHeader once the response has been sent, and this file is the
+  // only thing standing between api/coach.js and production, so the double
+  // enforces that rule rather than quietly recording a header the real runtime
+  // would have thrown over. Added 25 August 2026 after review pointed out that
+  // reordering a handler to set a header AFTER res.json() left every test green
+  // while production would have raised ERR_HTTP_HEADERS_SENT or dropped it.
+  let sent = false
+  res.json = (payload) => { sent = true; res.body = payload; return res }
+  res.end = () => { sent = true; res.ended = true; return res }
   res.status = (code) => { res.statusCode = code; return res }
-  res.json = (payload) => { res.body = payload; return res }
-  res.end = () => { res.ended = true; return res }
-  res.setHeader = (k, v) => { res.headers[k] = v; return res }
+  res.setHeader = (k, v) => {
+    if (sent) throw new Error(`setHeader('${k}') called after the response was sent`)
+    res.headers[k] = v
+    return res
+  }
   return res
 }
 

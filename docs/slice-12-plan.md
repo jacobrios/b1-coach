@@ -39,8 +39,15 @@ workaround". The findings settled six things, each with the owner:
   `expected undefined to be 'true'`, then passing.
 - The full suite before and after, with both counts reported in the PR.
 - A free `curl` against production after merge, showing the header present and
-  reporting warm. This is the end-to-end proof, and it lands after merge rather
-  than before, because local development never runs `api/coach.js`.
+  reporting warm. This is the end-to-end proof and it lands after merge.
+  **Say why honestly: local development cannot run `api/coach.js` at all, but a
+  Vercel preview can, and CLAUDE.md's own trap section names the preview as the
+  normal way to verify a change to this file.** Using it means toggling
+  Deployment Protection off and back on for a few minutes. That was judged
+  disproportionate for a one line header on the liveness path, with the POST path
+  untouched and the same header already proven there. It is a choice, not a
+  constraint, and the residual risk is that the header is unit-tested and
+  unobserved until the first curl after merge.
 - The platform settings confirmed by dashboard screenshot rather than by
   assumption, which is what caught that all three were already enabled.
 
@@ -153,8 +160,16 @@ Even wrong by a factor of ten, it is under six cents a month. The owner's
 assumption that this was negligible was correct, and it is now checked.
 
 **One genuine harm, which is not cost.** While the monitor runs, nothing ever
-goes cold, so the owner cannot tell whether the platform is doing its job. That
-is exactly what the code change in this slice fixes.
+goes cold, so the owner cannot tell whether the platform is doing its job.
+
+**The code change in this slice does NOT fix that, and an earlier draft of this
+paragraph claimed it did.** The header makes the question free to *ask*; it does
+nothing about the confound. With the monitor running, `x-coach-cold` reads false
+forever whether or not Vercel's cold start prevention is doing anything at all.
+The only thing that separates the two is pausing the monitor, which finding 5
+deliberately declines to do. What the header actually buys is that the experiment
+in finding 5, and the downgrade check in the checklist, cost nothing to run when
+somebody wants them.
 
 ## Finding 5: what evidence would show the Pro feature working, and why it was not gathered
 
@@ -254,8 +269,12 @@ reports warm, and a HEAD carries the header while still sending no body. Suite
 went 692 to 695.
 
 **What this does not prove.** The suite cannot reach the deployed function at
-all, so the end-to-end evidence is a curl against production after merge, and it
-is in the QA script rather than here.
+all, so the end-to-end evidence is a curl against production after merge. That
+obligation is written into `docs/pre-deploy-checklist.md` as well as handed over
+in the PR's QA script, deliberately: in this project the QA script is a block
+pasted into a chat message and does not survive the pull request, and an
+obligation that lives only there is the exact failure the checklist was created
+in this same commit to prevent.
 
 **How to read the answer, precisely.** The ping itself warms the instance, so the
 header reports whether the instance that served *this* request was already awake

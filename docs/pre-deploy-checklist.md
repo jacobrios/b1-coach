@@ -12,7 +12,10 @@ created it. This is where those obligations are written down so they survive.
 here, in the same pull request that creates it.
 
 This file is append-only in the same spirit as the decision log. Correct an entry
-with a dated annotation or a strikethrough, never by rewriting it.
+with a dated annotation or a strikethrough, never by rewriting it. Note it orders
+its dated entries **newest last**, which is the opposite of the decision log's
+newest-first; this is an operating checklist meant to be read top to bottom, not
+a history meant to be skimmed from the front.
 
 ---
 
@@ -41,7 +44,11 @@ Confirmed by dashboard screenshot on that date, not by assumption.
   and a visitor loading the static app does not invoke the function. The
   monitor's 8,640 pings a month are what make a fourteen day gap impossible. Do
   not cancel it on the grounds that Vercel now does the same job. See Slice 12's
-  finding 3.
+  finding 3. **The hedge that finding carries travels with it:** the 14 day
+  condition is a careful reading of one sentence in Vercel's "Scale to one" blog
+  post, read 25 August 2026, not of a specification, and no Vercel document says
+  what happens on day fifteen. Firming it up needs Vercel support, not another
+  read of the same page.
 - **`vercel.json` pins the function at 60 seconds and beats the dashboard.** Two
   deadlines are staggered against that number on purpose (40 seconds server side
   in `api/coach.js`, 50 seconds browser side in `src/coachApi.js`), and the 40 is
@@ -61,6 +68,14 @@ call, which is why nobody ever asked.
 curl -sS -D - -o /dev/null -w '\ntotal: %{time_total}s\n' https://b1-coach.vercel.app/api/coach
 ```
 
+**Before trusting this for the first time, note what it rests on.** The header
+was added in Slice 12 and is covered by unit tests only; this project's suite
+cannot reach the deployed function at all. **The first run of this command
+against production after Slice 12 merged is an outstanding obligation**, not a
+routine check: it is the only thing that proves the header exists on a real
+response. Record the result in the dated entries at the bottom of this file when
+it is done, and strike this paragraph then.
+
 Read `x-coach-cold` in the output:
 
 - `x-coach-cold: false` means the instance that served this request was already
@@ -70,8 +85,11 @@ Read `x-coach-cold` in the output:
   deployment is always cold on its first request.
 
 The `total` figure is the cross-check. **The warm baseline, measured 25 August
-2026: 0.157, 0.158, 0.163, 0.168 and 0.283 seconds** over five requests. A cold
-start reads as seconds, not tenths.
+2026: 0.157 to 0.283 seconds** over five requests (0.157, 0.158, 0.163, 0.168,
+0.283). Compare against the whole range, not the fastest of them: the slowest is
+1.8 times the fastest on a sample of five, so anything inside a few tenths of a
+second is indistinguishable from warm. A cold start reads as seconds, not tenths,
+which is why the range being loose does not matter for the question being asked.
 
 **Read the header precisely.** The ping itself warms the instance, so it reports
 whether the instance serving *that* request was already awake, not whether some
@@ -93,7 +111,8 @@ Do these in order:
    kept it. **Confirm the Better Stack monitor is still running and still hitting
    `/api/coach` every five minutes** before anything else.
 2. **Probe warmth** with the curl above, after a genuinely quiet spell rather
-   than straight after a deploy. Compare against the 0.157 second baseline.
+   than straight after a deploy. Compare against the 0.157 to 0.283 second
+   baseline.
 3. **The commercial-use question comes back.** Vercel's Hobby terms restrict
    commercial use, and a portfolio piece whose purpose is getting the owner hired
    sits in a grey area. Pro removed that ambiguity; a downgrade restores it.
