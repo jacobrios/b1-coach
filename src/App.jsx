@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import LiveSessionScreen from './LiveSessionScreen'
 import DebriefScreen from './DebriefScreen'
-import { generateDebrief, sendChatMessage, CoachError } from './coachApi'
+import { generateDebrief, CoachError } from './coachApi'
 import { computeStats, topExitVelocity } from './sessionStats'
 import { launchAngleRangeLabel } from './goalTargets'
 import { failureCopy, MID_WAIT_MESSAGE, RETRYING_MESSAGE } from './failureCopy'

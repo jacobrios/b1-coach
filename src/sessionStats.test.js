@@ -7,7 +7,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import {
-  computeStats, topExitVelocity, inStrikeZone, pitchZoneBreakdown, STRIKE_ZONE,
+  computeStats, topExitVelocity, inStrikeZone, pitchZoneBreakdown,
   sprayBreakdown, SPRAY_CUTOFFS,
 } from './sessionStats.js'
 import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
