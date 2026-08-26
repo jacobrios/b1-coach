@@ -6,7 +6,7 @@ An AI coaching layer for TrackMan B1 baseball hitting data. Proof of concept.
 
 *Built independently for demonstration. Not affiliated with TrackMan.*
 
-TrackMan already does collection and visualization well. B1 Coach is the interpretation layer. It takes per-session hitting metrics and delivers them the way a coach would after batting practice: a few observations grounded in the actual numbers, two concrete tips, and a chat coach the player can ask follow-up questions.
+Collecting hitting data and interpreting it are two different jobs. B1 Coach is the interpretation layer. It takes per-session hitting metrics and delivers them the way a coach would after batting practice: a few observations grounded in the actual numbers, two concrete tips, and a chat coach the player can ask follow-up questions.
 
 The coaching is generated live, so a debrief takes a few seconds to come back, and occasionally longer if the server has been idle.
 
@@ -84,5 +84,5 @@ I am not an engineer and this is not an engineering showcase. What it shows is t
 
 ## Documentation
 
-- [Proof of Concept](docs/proof-of-concept.md): the product thesis, the findings and what comes next
+- [Proof of Concept](docs/proof-of-concept.md): the product thesis, the verdict, and nine things I learned about making an AI coach trustworthy enough to put in front of a player
 - [Product Decisions Log](docs/product-decisions-log.md): every decision and its reasoning, newest first
