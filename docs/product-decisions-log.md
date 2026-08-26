@@ -9,6 +9,92 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: the browser tab carries the app's own mark (August 26)
+
+*No model calls, no spend. One image, one rename, three documents.*
+
+*What we built:* The browser tab showed Vite's own scaffolding logo, a purple
+lightning bolt, untouched since the first commit. It now shows the radar mark
+this app already draws in its own header, from `public/radar-mark.svg`. The same
+change renamed the component that draws that mark.
+
+*Key product decisions and the thinking behind them:*
+
+**This reverses a decision made earlier the same day, and the reversal is the
+first thing to record.** That morning the product manager closed this item
+deliberately: a generic build-tool logo makes it obvious this is a personal
+project, and he did not want a real company's mark in the tab. He reversed it
+hours later. The reasoning that closed it was never contradicted, because the
+mark that shipped is original to this project and is not TrackMan's. What
+changed is the weight given to the other half, that a build tool's default logo
+reads as generated-from-a-template-and-never-finished on the very first thing a
+stranger sees. Both positions are on the record so neither gets re-argued.
+
+**The colour was picked to match the product, and the plate was picked to stop
+the browser choosing for us.** The mark is the app's own accent, the same
+`ACCENT` the header draws it in, on a plate in the app's own background colour.
+The plate is not decoration. Without it the mark sits directly on whatever
+colour the browser paints its tab strip, and the two arcs carry deliberately
+reduced opacity, so on a light tab strip they would wash out to pale peach
+while looking fine on a dark one. The plate makes the tab read the same in both.
+
+**The mark was simplified for the tab, and the simplification is disclosed
+rather than quiet.** The on-screen version has three arcs at decreasing
+opacity. At 16 pixels the innermost of them has a radius smaller than the centre
+dot plus its own stroke, so it renders as a smudge on the dot rather than as a
+third ring. It is dropped; the two survivors are spread apart and brightened.
+This was measured rather than judged by eye: the file was loaded into a real
+browser engine, drawn to a 16 by 16 canvas, and its pixel values read back out.
+The row through the centre goes dot, dark gap, inner arc, dark gap, outer arc:
+three separate elements, with real unlit pixels between them.
+
+**The icon file changed its name too, and that came out of the product
+manager's QA pass rather than the plan.** He found Safari still showing the
+lightning bolt after the swap, and had already ruled out the obvious answer by
+trying a private window, where it also showed the bolt. That detail is what
+pointed at the cause instead of away from it: Safari keeps a favicon database
+separate from its ordinary web cache, stores a rasterised copy of the icon keyed
+by the icon's URL, and private windows read from that same database. So a
+private window gives a fresh web cache and a stale icon, which is exactly what
+he saw, and it means private browsing cannot be used to test a favicon at all.
+Confirmed rather than assumed: the identical file served on a host and port
+Safari had never seen showed the new mark immediately.
+
+**The reason that mattered is not the local annoyance.** This app has been live
+since April and its link has been sent to people. Every one of them who opened
+it in Safari has the bolt cached against the old URL, and those entries are
+long-lived. Keeping the filename would have meant the returning visitor, who on
+a portfolio piece is the audience that matters most, went on seeing the build
+tool's logo. A new filename is a new cache key. It also drops a name that Vite
+generated, which is the same scaffolding smell this whole change exists to
+remove. The file's own comment says not to rename it back.
+
+**The rename went one step further than asked, and the reason matters.** The
+component was called `TrackManLogo`, which was wrong about the artwork, since
+the radar mark is this project's own. But renaming the whole component to
+`RadarMark` would have been wrong in the other direction, because that component
+also renders the words "Powered by TrackMan". So it is now two: `RadarMark`
+draws the mark, and `PoweredByTrackMan` is the badge that pairs it with the
+wordmark. Identical output on screen, verified in a browser.
+
+*What we did not do, and the distinction is worth being precise about:* the
+16x16 rendering above was done by a real browser, and the component rename was
+confirmed by loading the app and looking at the header. No photograph of the
+mark sitting in an actual browser tab strip was ever taken here, because the
+extension that drives a real Chrome window was not connected in this session and
+the screen capture tool had no permission. The product manager's own QA pass is
+what covered that gap, in Chrome and then in Safari, and it is what found the
+caching problem; the tab strip remains the one thing this session could not see
+for itself. **The filename fix in particular rests on his confirmation plus the
+mechanism above, not on anything measured here.**
+
+*One thing deliberately left alone:* `design/` still contains a frozen HTML
+prototype that defines its own `TrackManLogo`. It is a snapshot of the original
+mockups, is not part of the app, and is not reached by any visitor path, so it
+was not renamed. Found by this change's review rather than assumed.
+
+---
+
 ## Slice 14: the proof of concept says what the bet actually returned (August 25)
 
 *No model calls, no spend. One rewritten document, one line of the README.*

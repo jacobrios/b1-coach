@@ -3589,13 +3589,42 @@ that pass surfaced.*
   `trackman_original dashboard.png`. The product manager confirmed on 26 August
   2026 that he pulled that screenshot from TrackMan's public site. Recorded so
   the confidentiality pass of the same week does not get re-run against it.
-- **The Vite favicon stays, decided again on 26 August 2026** and for a better
+- ~~**The Vite favicon stays, decided again on 26 August 2026** and for a better
   reason than the first time. The product manager: a generic build-tool bolt
   makes it obvious this is a personal project, and he would not want a real
   company mark there. Note for anyone reading the older entry in
   `docs/queued-slices.md`: that item never proposed using TrackMan's logo, it
   proposed the radar mark the app already draws in its own header. The decision
-  is the same either way. **This item is now closed, not deferred.**
+  is the same either way. **This item is now closed, not deferred.**~~
+
+  **Reversed by the product manager later the same day, 26 August 2026, and the
+  reversal is recorded rather than the entry rewritten, because a decision that
+  lasted a few hours is itself worth seeing.** The favicon is now the app's own
+  radar mark. The reasoning that closed it was not contradicted: the concern was
+  never to put a real company's mark in the tab, and this mark is original to
+  this project. What changed is the weighing of the other half, that a build
+  tool's default logo reads as generated-from-a-template-and-never-finished on
+  the first thing a stranger sees. Nobody needs to re-argue either side.
+
+  **Two things the swap settled that were not part of the decision.** The mark
+  in the tab is simplified: three arcs at 16x16 put the innermost one inside the
+  centre dot's own stroke, so it is dropped and the two survivors are spread and
+  brightened. And the favicon carries a dark plate in the app's own background
+  colour, so it renders the same on a light and a dark browser tab strip rather
+  than depending on which chrome the visitor runs. Both are written out in
+  `public/radar-mark.svg`'s own comment.
+
+  **And the file is no longer called `favicon.svg`, which is a fix rather than
+  a preference.** The product manager's own QA pass found Safari still showing
+  the Vite bolt, in a private window too. Safari keeps a favicon database apart
+  from its web cache, stores a rasterised copy keyed by the icon's URL, and
+  private windows read from that same database, so a private window proves
+  nothing about it. Confirmed by serving the identical file on a host and port
+  Safari had never seen, where the new mark appeared at once. Reusing the URL
+  would have left the bolt in the tab of every returning Safari visitor, which
+  on a portfolio piece is the audience that has already been sent the link. A
+  new filename is a new cache key. **Do not rename it back to `favicon.svg`,
+  and if the mark is ever redrawn again, change the filename with it.**
 
 *Added at the close of Slice 14, 25 August 2026:*
 

@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <!--
+    The app's own radar mark, the same one RadarMark draws in src/App.jsx.
+    Original artwork for this project. It is not TrackMan branding.
+
+    The filename is deliberately NOT favicon.svg. Safari keeps a favicon
+    database separate from its web cache, keyed by the icon's URL, and a
+    private window reads from it too, so anyone who had loaded this site
+    before would have kept seeing the old Vite bolt at the old URL for a
+    long time. A new filename is a new key. Do not rename this back.
+
+    Everything below is heavier, brighter or further apart than the on-screen
+    version, for one reason: a favicon renders at 16x16, where a 2.5-wide stroke
+    on a 32 viewBox is 1.25 real pixels and anything faint or fine disappears.
+    Five differences, all deliberate:
+      - The innermost arc (radius 2 on screen) is dropped entirely. At 16x16 its
+        radius is 1px while the centre dot plus its own stroke reaches 1.6px, so
+        it sat inside the dot and read as a smudge rather than a third ring.
+      - The middle arc comes in from radius 7 to 6.5, and its opacity from 0.6
+        to 1, so a visible dark gap survives between it and the outer arc.
+      - The outer arc's opacity goes from 0.35 to 0.55. Its geometry (radius 12)
+        is the only thing here carried over from the screen untouched.
+      - The centre dot grows from radius 2 to 2.5, and the sweep line from
+        stroke 2 to 2.5 and opacity 0.5 to 0.75.
+      - The sweep line starts at 5.5,26.5 rather than 4,28. Both fit inside the
+        plate; the inset one simply does not crowd the rounded corner.
+
+    The dark plate is the app's own background (#141518) and the mark is its own
+    accent (#FF6B1A, ACCENT in src/App.jsx). The plate earns its place on a
+    LIGHT tab strip, where the reduced-opacity arcs would otherwise blend toward
+    white; on a dark strip it is near-invisible and the mark carries alone.
+  -->
+  <rect width="32" height="32" rx="7" fill="#141518"/>
+  <path
+    d="M16 28C22.627 28 28 22.627 28 16S22.627 4 16 4"
+    stroke="#FF6B1A" stroke-width="2.5" stroke-linecap="round" opacity="0.55"
+  />
+  <path
+    d="M16 22.5C19.59 22.5 22.5 19.59 22.5 16S19.59 9.5 16 9.5"
+    stroke="#FF6B1A" stroke-width="2.5" stroke-linecap="round"
+  />
+  <circle cx="16" cy="16" r="2.5" fill="#FF6B1A"/>
+  <line
+    x1="5.5" y1="26.5" x2="16" y2="16"
+    stroke="#FF6B1A" stroke-width="2.5" stroke-linecap="round" opacity="0.75"
+  />
+</svg>
