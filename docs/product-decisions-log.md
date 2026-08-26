@@ -6,6 +6,79 @@
 
 ---
 
+## Slice 14: the proof of concept says what the bet actually returned (August 25)
+
+*No model calls, no spend. One rewritten document, one line of the README.*
+
+*What we built:* A rewrite of `docs/proof-of-concept.md`, the second document a
+curious reader opens and the first link in the README's Documentation section.
+It was last touched before the Slice 8 accuracy series, the Slice 9 rewrite of
+session 1 and the Slice 11 rewrite of the generator, so it described a coach and
+a set of findings this project had moved well past.
+
+*Key product decisions and the thinking behind them:*
+
+**The document's job changed, because the README took over half of it.** Before
+Slice 13 the README was thin and this document carried everything. Now the README
+explains the app, the synthetic hitter and the honesty of the record. Rewriting
+this one the same way would have made a reader read the same thing twice. So it
+moved to the job the README cannot do: the README says what the thing is, this
+says whether the bet paid off.
+
+**Then the product manager pushed it further, and he was right.** His framing:
+the real takeaway is that AI can be the interpretation layer, but you have to do
+a lot of work on top of it to stop hallucinations and miscounts, all of which
+destroy trust. So the document should be readable by anyone building a virtual
+coach, as the lessons they would otherwise learn the hard way. That is a better
+document than a verdict alone, and it is also the one that uses what this project
+actually has, which is four months of incidents with numbers attached.
+
+**One guard was set before drafting: every lesson carries its own incident and
+its own number.** A generic best-practices list would have been unfalsifiable and
+is exactly the slop failure mode this project's rules name. Nine survived that
+test: never let the model do arithmetic on your data; a handed number is safer
+rather than safe; pre-counting does not do arithmetic between counts; validate
+model output that drives the interface, not just the words; tell the model what
+its numbers mean and check the answer against the rest of the screen; you cannot
+fix what you have not measured; your measuring instrument is also wrong and
+flatteringly so; fake data has to be believable or the coaching on it is not;
+and say what actually failed.
+
+**The verdict was wrong in the flattering direction, and review caught it before
+it shipped.** The draft opened with the coach making a factual error in roughly
+one debrief in twelve, then said the nine lessons were what closing that gap
+required. That is not supported. The one-in-twelve figure is a baseline measured
+on 15 August and never re-run with the same instrument, and every hand-checked
+round since reads 12% to 22% of debriefs carrying a genuine error, on a different
+tool and different sessions. **This is the exact mistake the document's own
+seventh lesson warns about, made inside the document that warns about it.** It
+now states both numbers, says plainly they are not comparable, and reports the
+real shape: every error class we aimed at got measurably better, and the overall
+error rate never visibly moved, because each fix closes one way of being wrong
+and reveals the next.
+
+**Nine other corrections came from the same review, and three are worth naming.**
+A sentence claiming every measurement round was hand-adjudicated before any
+conclusion was drawn from it was false: Slice 8b's headline was published from
+raw grader flags and had to be corrected afterwards, and hand-adjudication became
+the standard after that rather than before it. The document said the error
+classes it aimed at were gone, when two of three are and the third went from six
+wrong claims to three. And the section arguing that fake data must be believable
+did not disclose that this project's own fake data still bends the wrong way
+between pitch height and launch angle, which is precisely what a baseball reader
+would catch. All three now say the harder thing.
+
+**The eighth-grade reading level is now stated as an instruction rather than a
+result**, because nothing has ever measured it. Leaving it as a claim would have
+sat fourteen lines above a lesson saying instructions alone do not hold.
+
+*What this slice deliberately did not do:* touch any app code, prompt or approved
+copy; fix the generator's launch-angle bend, which the product manager declined
+the same day as diminishing returns after Slice 11; or clear the remaining Slice
+6b surface polish.
+
+---
+
 ## Slice 13: the front door stops describing an app we no longer have (August 25)
 
 *No model calls, no spend. One rewritten README, one new template file, two

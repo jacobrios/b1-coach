@@ -3523,8 +3523,18 @@ that pass surfaced.*
 
 *Added at the close of Slice 13, 25 August 2026:*
 
-- **`docs/proof-of-concept.md` has aged the same way the README had, and nothing
-  has been done about it.** It is the second document a curious reader opens, it
+- ~~**`docs/proof-of-concept.md` has aged the same way the README had, and nothing
+  has been done about it.**~~ **SHIPPED 25 August 2026 as Slice 14**, and it took
+  a larger reframe than this entry proposed. Rather than refreshing the stale
+  parts, the document moved to the job the README cannot do: the README says what
+  the app is, this says whether the bet paid off. Its centre is now nine lessons
+  for anyone building a virtual coach, each carrying its own incident and number
+  from this project. **What review caught before it shipped is the part worth
+  remembering:** the draft used the one-in-twelve error rate as a before-and-after
+  when it is only a never-re-run baseline, which is the exact flattering-direction
+  mistake the document's own seventh lesson warns about. See the decision log
+  entry for 25 August 2026 and `docs/slice-14-plan.md`. The original entry follows
+  as written. It is the second document a curious reader opens, it
   is linked from the README's own Documentation section, and it was last touched
   before the whole Slice 8 accuracy series, the Slice 9 rewrite of session 1 and
   the Slice 11 rewrite of the generator. Two things in it are now visibly stale:
@@ -3549,6 +3559,36 @@ that pass surfaced.*
   `vite.config.js` and `api/coach.js`. It carries no values, so a drift there is
   cosmetic rather than dangerous, and it is the file the README now tells a
   stranger to copy. Recorded so nobody is surprised to find a third copy.
+
+*Added at the close of Slice 14, 25 August 2026:*
+
+- **The generator's launch-angle bend was DECLINED, 25 August 2026, and this is
+  the record of that decision rather than a proposal.** A ball chased above the
+  top of the zone comes out about two degrees flatter than a strike down the
+  middle, where session 1 says it should be steeper. The product manager's
+  reasoning: Slice 11 already delivered the large improvements to the generator,
+  this is two degrees in the two bands holding the fewest swings, and nothing a
+  visitor sees is wrong because of it, so it is chasing diminishing returns. **Do
+  not re-propose it.** The full arithmetic, including why no weight can fix it
+  inside the current structure, is finding 8 in `docs/slice-11-plan.md`. It is
+  disclosed in both `README.md` and `docs/proof-of-concept.md`, which is the
+  answer this project chose instead of the fix.
+- **The coach is instructed to write at an eighth-grade reading level and nobody
+  has ever measured whether it does.** Found by the Slice 14 review. The
+  instruction is real, at `src/coachApi.js:92` and `:172`. Nothing in the repo
+  checks the output against it, which is awkward next to this project's own
+  finding that prompt instructions alone do not hold, proven twice on brevity.
+  `docs/proof-of-concept.md` now states it as an instruction rather than a
+  result, which is honest and also makes the gap public. Cheap to close if
+  wanted: a readability score over the committed debrief fixtures costs no live
+  spend, since 96 real debriefs are already sitting in
+  `docs/eval-fixtures/slice7-debriefs/`.
+- **Two documents now make checkable claims that nothing tests.** Same class of
+  debt as the README's, doubled. The same answer applies: recorded rather than
+  guarded, because guarding prose costs more than it returns here. The practical
+  version stays a line on this list rather than a test: anyone reopening
+  `src/swingGenerator.js` or `src/coachApi.js` re-reads what these two documents
+  claim about it.
 
 - ~~**Find out whether the uptime pinger is still doing anything, once Vercel Pro
   lands. The job is to find out, not to remove it.**~~ **CLOSED 25 August 2026 in
