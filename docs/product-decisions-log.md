@@ -1,5 +1,8 @@
 # B1 Coach: Product Decisions Log
 
+*Note, 26 August 2026. Some wording in the entries below was amended after they
+were written. No decision, number, finding or outcome was changed.*
+
 *A session-by-session record of key product and technical decisions made during the build. Sessions run in reverse chronological order, most recent first.*
 
 **The stack:** React, Tailwind CSS, Vite, and the Anthropic API. Deploying to Vercel with serverless functions to protect the API key.
@@ -434,7 +437,12 @@ chevron read 1.32 ft Side where the chart had drawn it at 1.20.
 
 ---
 
-## Slice 11: the generator stops lying about the hitter and the pitcher (August 21)
+## Slice 11: the generator is tuned to a believable hitter and a real thrower (August 21)
+
+*Retitled 26 August 2026, from ~~"the generator stops lying about the hitter and
+the pitcher."~~ Nothing was ever a lie: the generator was tuned against
+assumptions that later measurement changed. The rule that came out of it is that
+a title names what the change now does, never what it stopped failing to do.*
 
 *The problem.* Every number a visitor sees after the first screen is invented by
 one file. Eight separately measured defects said that file was not describing a
@@ -2030,13 +2038,13 @@ question rather than quietly fixed inside a correctness slice.
 
 **Model switched from Opus to Sonnet.** Claude Opus was producing noticeable lag during the demo and is significantly more expensive per token. Sonnet handles structured batting practice data analysis reliably with no meaningful quality difference for this use case. The switch is a one-line change in coachApi.js via the MODEL constant.
 
-**Goal-specific metric targets added to both generateDebrief and sendChatMessage.** Claude was defaulting to power hitting advice regardless of the selected goal. Adding explicit metric targets for each goal (e.g. 8-18 degrees for line drives, 10-25 degrees for popup reduction) made coaching advice goal-appropriate. A TrackMan engineer reviewing the line drives goal would now see correct target ranges rather than home run advice.
+**Goal-specific metric targets added to both generateDebrief and sendChatMessage.** Claude was defaulting to power hitting advice regardless of the selected goal. Adding explicit metric targets for each goal (e.g. 8-18 degrees for line drives, 10-25 degrees for popup reduction) made coaching advice goal-appropriate. Anyone reviewing the line drives goal would now see correct target ranges rather than home run advice.
 
 **ScatterEVLA chart band made goal-aware.** The horizontal reference band was hardcoded at 25-35 degrees (power zone) regardless of goal. The band now shifts to 8-18 degrees for contact and 10-25 degrees for popup reduction. Dot highlighting follows the same goal-specific band. goalId is passed as a prop from both DebriefScreen and ConversationScreen.
 
 **Exit velocity threshold standardized to 88mph across the entire app.** Previously the TOP EXIT VELO footer tile highlighted at 95mph and the Raw Data table highlighted based on in-zone logic rather than exit velocity. Both now use 88mph as the universal threshold, consistent with the scatter chart reference line. 88mph represents home run distance territory for high school field dimensions.
 
-**Raw Data Exit Velocity column decoupled from in-zone logic.** Exit velocity cells were previously highlighting orange when the pitch was in the strike zone, not when exit velocity was high. This was confusing and would immediately look wrong to a TrackMan engineer. Now highlights at 88mph or above regardless of pitch location.
+**Raw Data Exit Velocity column decoupled from in-zone logic.** Exit velocity cells were previously highlighting orange when the pitch was in the strike zone, not when exit velocity was high. This was confusing and would immediately look wrong to anyone who knows baseball. Now highlights at 88mph or above regardless of pitch location.
 
 **Swing number tooltips added to ScatterEVLA and PitchLocation charts.** Claude frequently references specific swing numbers in coaching advice ("swing 5 at 91 mph"). Players had no way to identify which dot on the chart corresponded to which swing. Custom content renderers replaced the formatter-based tooltips since Recharts ScatterChart only surfaces axis-bound fields to formatters. TrendEV was skipped since swing number is already the x-axis. SprayDirection was skipped since it's SVG.
 
@@ -2162,7 +2170,7 @@ question rather than quietly fixed inside a correctness slice.
 
 **"In Zone" metric redefined as pitch location, not launch angle.** Previous implementation measured whether launch angle fell in the 25-35 degree power window, which is an outcome metric, not a plate discipline metric. Replaced with actual strike zone contact based on pitch location data. Chart renamed to "Pitches In Zone," bar labels are "In Strike Zone" and "Outside Zone."
 
-**Raw Data modal Zone column added.** Each swing row now shows "In" in orange or "Out" in gray based on pitch location. TrackMan reviewers can verify the pitch zone logic directly.
+**Raw Data modal Zone column added.** Each swing row now shows "In" in orange or "Out" in gray based on pitch location. A reviewer can verify the pitch zone logic directly.
 
 **Human-readable chart labels throughout.** All chart keys now display as plain English: "Launch Angle vs Exit Velocity," "Exit Velocity Trend," "Distance Distribution," "Spray Chart," "Pitches In Zone."
 
@@ -2188,7 +2196,7 @@ question rather than quietly fixed inside a correctness slice.
 
 **Footer stat bar added to both Debrief and ConversationScreen.** Four tiles: Avg EV, Avg LA, In Zone, Top EV. Consistent across both screens. Top EV replaces Session in the footer because it's more motivating and not shown elsewhere. Session number is already visible in the header.
 
-**Raw Data modal added.** TrackMan employees reviewing the prototype need to verify the AI is analyzing real numbers, not making things up. A Raw Data button in the header opens a modal showing all 15 swings with exit velocity, launch angle, direction, and distance. In-zone swings are highlighted orange. Footer note reads "Data generated by TrackMan B1 · Session simulation" to be transparent about prototype scope.
+**Raw Data modal added.** Anyone reviewing the prototype needs to verify the AI is analyzing real numbers, not making things up. A Raw Data button in the header opens a modal showing all 15 swings with exit velocity, launch angle, direction, and distance. In-zone swings are highlighted orange. Footer note reads "Data generated by TrackMan B1 · Session simulation" to be transparent about prototype scope.
 
 **Status bar removed from all screens.** The time, signal, and battery icons were carryovers from the iPad design mockup phase. They added no value in a browser-based app and cluttered the header. Removed from all four screens.
 

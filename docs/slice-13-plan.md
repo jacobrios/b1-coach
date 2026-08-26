@@ -22,8 +22,8 @@ work started; only the transcription lagged.
   log kept throughout, discipline retrofitted onto a finished app in July and
   August. Its closing line is what keeps it inside this project's own
   constraint: "I am not an engineer and this is not an engineering showcase."
-- **Universal audience.** A TrackMan contact is the next reader, not the only
-  one. Nothing is addressed to TrackMan.
+- **Universal audience.** Written for any reader, whether or not they know
+  baseball. Nothing is addressed to a particular company or person. *(Reworded 26 August 2026.)*
 - **The early-history paragraph keeps its own heading, near the end.** Its job is
   to name the gap before a reader finds it themselves.
 - **The cold-start warning stays**, per Slice 12. Its wording was open.
