@@ -9,6 +9,64 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: the last of the scaffolding leaves the source folder (August 26)
+
+*No model calls, no spend. One file deleted.*
+
+*What we built:* `src/App.css` is gone. It was 184 lines of the build tool's
+demo-counter styles, shipped on day one and imported by nothing since. It was
+the last survivor of the five scaffolding files item 4 of the credibility-polish
+scope named, and with it Slice 6b is complete.
+
+*Key product decisions and the thinking behind them:*
+
+**Deleting a file nobody imports still deserves proof, and the proof here is
+better than the usual one.** Two of the three checks are weak on their own: no
+import exists anywhere in `src/` or `index.html`, and none of the file's
+thirteen selectors (nine classes and four IDs, counting the nested ones) appears
+in any source file, which is reinforced by the app carrying no `id=` attribute at
+all outside `#root`. Both of those say only that nobody *meant* to use it. The
+check that actually settles it is the built CSS bundle, captured before and after
+the deletion and byte-identical, same hash, both builds run with `dist/` and
+`node_modules/.vite` cleared first. That says the file contributed nothing to
+what a visitor downloads, which is the claim worth making. Recorded because this
+project has previously been caught reasoning from the code rather than from
+output, and a build is cheap.
+
+**Review challenged that bundle claim and it survived, which is worth recording
+because the challenge was a good one.** Tailwind v4 scans source files for
+class-name candidates, and a CSS file containing `flex-grow: 1` and
+`flex-wrap: wrap` could in principle have contributed `.flex-grow` and
+`.flex-wrap` utilities that would vanish with it. The reviewer reconstructed both
+builds by calling Tailwind's compiler directly and reported a 37-byte difference.
+Rerunning the real Vite build with caches cleared reproduced the identical hash,
+and neither bundle contains either utility: the only match in either is
+`.grow{flex-grow:1}`, which is Tailwind's own and is present both times. The
+lesson is not about Tailwind. It is that a reconstruction of a build is not the
+build, and the reviewer's own report noted their model differed from the real
+`dist/` by 18 bytes, which was the tell.
+
+**Slice 6b is complete and never ran as a slice, which is the finding worth
+keeping.** Getting the count right matters here, because an earlier draft of this
+entry said eight and review caught it. Credibility polish was scoped on 14 August
+as nine items. Items 1, 2 and 9 were the data-model half and *did* run as a
+proper slice, Slice 6, with its own branch and plan. Items 3 to 8 became Slice
+6b, six items, later five when the Reduce Pop-Ups card shipped early. It is
+those six that never ran as a slice: the two README items were absorbed into
+Slice 13's full rewrite, the lint wall and the Pop-Ups card went as micro-PRs,
+the favicon went as a micro-PR earlier the same day, and this closes the rest.
+The pattern to carry forward is that a list of small independent defects is a
+list, not a slice, and forcing them into one bundles a browser pass they do not
+share. Note that the half of the original nine which had a shared subject, the
+data model, is exactly the half that did work as a slice.
+
+*What we did not do:* No deeper click-through than the goal picker. The debrief
+screen costs a live model call and the byte-identical bundle already covers every
+screen, so paying for one to look at a stylesheet that was never loaded would
+have bought nothing.
+
+---
+
 ## Micro-PR: the browser tab carries the app's own mark (August 26)
 
 *No model calls, no spend. One image, one rename, three documents.*
