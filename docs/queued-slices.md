@@ -200,6 +200,21 @@ impression this project cannot afford:
 Keep `src/index.css`, which is the real stylesheet. Build once after deleting to
 confirm nothing broke.
 
+**Closed 26 August 2026, and with it the whole of Slice 6b.** Four of the five
+went in the repo cleanup micro-PR (#41); `src/App.css` survived it and came out
+on its own the same day. It was 184 lines of the build tool's demo-counter
+styles, imported by nothing. Proven dead three ways rather than assumed: no
+import anywhere in `src/` or `index.html`; none of its thirteen selectors used
+in any source file, which is nine classes and four IDs once the nested ones are
+counted, and the app carries no `id=` attribute at all outside `#root`; and the
+built CSS bundle byte-identical before and after deletion, same hash, with
+`dist/` and `node_modules/.vite` cleared before each build. That last one is the
+real evidence; the first two only say nobody meant to use it. Review challenged
+the bundle result on the grounds that Tailwind v4 scans CSS files for candidates
+and the file contained `flex-grow` and `flex-wrap`; rerunning the real build
+showed neither utility in either bundle, and the challenge came from a
+reconstruction of the build rather than the build.
+
 ### 5. The project's own code-quality check fails
 
 An engineer gut-checking this repo runs install, then test, then lint. Tests come

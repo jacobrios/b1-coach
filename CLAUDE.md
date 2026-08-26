@@ -1922,7 +1922,17 @@ on purpose: this file loads at the start of every session, so it is an index.
   Power goal's own name, which was "Power & Home Runs" until a live debrief showed
   the coach reconstructing "out of the park" from the label alone.
 
-- **Slice 6b, surface polish. The remaining six items, and the next slice.**
+- ~~**Slice 6b, surface polish. The remaining six items, and the next slice.**~~
+  **COMPLETE, 26 August 2026.** All six shipped, none as a slice of its own:
+  items 6 and 7 (the README) went in Slice 13; item 8 (the Reduce Pop-Ups card)
+  and item 5 (the lint wall) as micro-PRs on 24 and 26 August; item 3 (the Vite
+  favicon) and the last of item 4 (`src/App.css`) as micro-PRs on 26 August.
+  Worth noting how it ended, because the shape recurs: these six were the
+  surface half of credibility polish, split off from the three data-model items
+  that ran as Slice 6 proper, and every one of the six shipped attached to
+  something else or alone. Nothing about the surface half needed to be a slice.
+  The half with a shared subject is the half that worked as one. The original
+  entry follows.
   Items 3 to 8 of credibility polish, still scoped in `docs/queued-slices.md`:
   the browser tab showing the build tool's logo, five scaffolding files, the lint
   wall (24 errors as counted on 14 August at the close of Slice 6, most of them
