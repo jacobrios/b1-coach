@@ -26,8 +26,8 @@ review, runs either way.
   generic best-practices list is a defect here. It is unfalsifiable, and it is
   the slop failure mode this project's rules name directly.
 - **The thesis sections are not touched.** The critical question, the coaching
-  access gap, TrackMan's downmarket opportunity and RAG as the moat have not aged
-  and need no rework.
+  access gap and retrieval as the next architectural step have not aged and need
+  no rework.
 - **The five writing rules from Slice 13 apply from the first draft**: do not
   undersell, lead with what was done, cut detail that needs setup, never talk
   down about the user, keep the measured cost attached to a decision.
@@ -97,9 +97,10 @@ appear in the session data at `:90` and `:170`.
 
 ### Task 3: write it
 
-Structure: what we built (short, pointing at the README), the critical question,
-why it matters, how we scoped it, the verdict, the nine lessons, what we would
-tell someone building the same thing, what we did not solve, what comes next.
+Structure: what I built (short, pointing at the README), the critical question,
+why it matters, how I scoped it, the verdict, the nine lessons, what I would
+tell someone building the same thing, what I did not solve, where I would take
+it next.
 
 The nine lessons, each with its evidence, are listed in the decision log entry
 for this slice. Do not write a tenth without an incident behind it.

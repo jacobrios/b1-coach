@@ -12,8 +12,11 @@ code as found, not as a design that was planned up front.
 
 ## What this is, and who it is for
 
-An AI coaching layer over TrackMan B1 baseball hitting data. TrackMan already
-does collection and visualization well; this is the interpretation layer. It
+An AI coaching layer over TrackMan B1 baseball hitting data. Collecting hitting
+data and interpreting it are two different jobs; this is the interpretation
+layer. *(Reworded 25 August 2026 in Slice 14. The old wording assessed what
+TrackMan does well, which is a claim about another company's product sitting in
+a public repo. See the confidentiality note on the What's Next list.)* It
 takes per-session hitting metrics and delivers them the way a coach would after
 batting practice: a few specific observations grounded in the real numbers, two
 concrete tips, and a conversational coach the player can ask follow-ups.
