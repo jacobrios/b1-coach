@@ -167,10 +167,12 @@ not because it is urgent.
 **Shipped 26 August 2026, as a micro-PR, after a same-day round trip worth
 recording.** Earlier that day the product manager closed this item the other
 way, deciding the Vite bolt should stay; he reversed it hours later and the swap
-was built. `public/favicon.svg` is now the app's own radar mark. Two details the
-scoping above did not anticipate: the mark had to be simplified for a 16x16 tab,
-losing its innermost arc, and it gained a dark plate so it looks the same on a
-light and a dark browser tab strip. The same change renamed `TrackManLogo`, so
+was built. The icon is now the app's own radar mark, at `public/radar-mark.svg`.
+Three details the scoping above did not anticipate: the mark had to be simplified
+for a 16x16 tab, losing its innermost arc; it gained a dark plate so it looks the
+same on a light and a dark browser tab strip; and it had to change filename,
+because Safari would otherwise have gone on showing the old bolt to anyone who
+had loaded the site before. The same change renamed `TrackManLogo`, so
 the `src/App.jsx:366` pointer above is stale; the mark is `RadarMark` and the
 badge that wraps it with the words "Powered by TrackMan" is `PoweredByTrackMan`.
 See CLAUDE.md's What's Next entry for the reversal.

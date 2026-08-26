@@ -3612,7 +3612,19 @@ that pass surfaced.*
   brightened. And the favicon carries a dark plate in the app's own background
   colour, so it renders the same on a light and a dark browser tab strip rather
   than depending on which chrome the visitor runs. Both are written out in
-  `public/favicon.svg`'s own comment.
+  `public/radar-mark.svg`'s own comment.
+
+  **And the file is no longer called `favicon.svg`, which is a fix rather than
+  a preference.** The product manager's own QA pass found Safari still showing
+  the Vite bolt, in a private window too. Safari keeps a favicon database apart
+  from its web cache, stores a rasterised copy keyed by the icon's URL, and
+  private windows read from that same database, so a private window proves
+  nothing about it. Confirmed by serving the identical file on a host and port
+  Safari had never seen, where the new mark appeared at once. Reusing the URL
+  would have left the bolt in the tab of every returning Safari visitor, which
+  on a portfolio piece is the audience that has already been sent the link. A
+  new filename is a new cache key. **Do not rename it back to `favicon.svg`,
+  and if the mark is ever redrawn again, change the filename with it.**
 
 *Added at the close of Slice 14, 25 August 2026:*
 

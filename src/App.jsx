@@ -365,8 +365,9 @@ function GoalCard({ goal, onNavigate, index, revealed }) {
 }
 
 // ── The app's own radar mark ───────────────────────────────────────────────
-// Original artwork for this project, not TrackMan branding. public/favicon.svg
-// draws the same mark; see that file's comment for what it changes at 16x16.
+// Original artwork for this project, not TrackMan branding.
+// public/radar-mark.svg draws the same mark in the browser tab; see that
+// file's comment for the five things it changes to survive 16x16.
 function RadarMark({ color }) {
   return (
     <svg width="26" height="26" viewBox="0 0 32 32" fill="none">

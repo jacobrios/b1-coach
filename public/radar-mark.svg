@@ -3,6 +3,12 @@
     The app's own radar mark, the same one RadarMark draws in src/App.jsx.
     Original artwork for this project. It is not TrackMan branding.
 
+    The filename is deliberately NOT favicon.svg. Safari keeps a favicon
+    database separate from its web cache, keyed by the icon's URL, and a
+    private window reads from it too, so anyone who had loaded this site
+    before would have kept seeing the old Vite bolt at the old URL for a
+    long time. A new filename is a new key. Do not rename this back.
+
     Everything below is heavier, brighter or further apart than the on-screen
     version, for one reason: a favicon renders at 16x16, where a 2.5-wide stroke
     on a 32 viewBox is 1.25 real pixels and anything faint or fine disappears.

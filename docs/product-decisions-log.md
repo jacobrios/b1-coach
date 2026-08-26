@@ -13,10 +13,10 @@ were written. No decision, number, finding or outcome was changed.*
 
 *No model calls, no spend. One image, one rename, three documents.*
 
-*What we built:* `public/favicon.svg` was Vite's own scaffolding logo, a purple
-lightning bolt, untouched since the first commit. It is now the radar mark this
-app already draws in its own header. The same change renamed the component that
-draws that mark.
+*What we built:* The browser tab showed Vite's own scaffolding logo, a purple
+lightning bolt, untouched since the first commit. It now shows the radar mark
+this app already draws in its own header, from `public/radar-mark.svg`. The same
+change renamed the component that draws that mark.
 
 *Key product decisions and the thinking behind them:*
 
@@ -48,6 +48,27 @@ browser engine, drawn to a 16 by 16 canvas, and its pixel values read back out.
 The row through the centre goes dot, dark gap, inner arc, dark gap, outer arc:
 three separate elements, with real unlit pixels between them.
 
+**The icon file changed its name too, and that came out of the product
+manager's QA pass rather than the plan.** He found Safari still showing the
+lightning bolt after the swap, and had already ruled out the obvious answer by
+trying a private window, where it also showed the bolt. That detail is what
+pointed at the cause instead of away from it: Safari keeps a favicon database
+separate from its ordinary web cache, stores a rasterised copy of the icon keyed
+by the icon's URL, and private windows read from that same database. So a
+private window gives a fresh web cache and a stale icon, which is exactly what
+he saw, and it means private browsing cannot be used to test a favicon at all.
+Confirmed rather than assumed: the identical file served on a host and port
+Safari had never seen showed the new mark immediately.
+
+**The reason that mattered is not the local annoyance.** This app has been live
+since April and its link has been sent to people. Every one of them who opened
+it in Safari has the bolt cached against the old URL, and those entries are
+long-lived. Keeping the filename would have meant the returning visitor, who on
+a portfolio piece is the audience that matters most, went on seeing the build
+tool's logo. A new filename is a new cache key. It also drops a name that Vite
+generated, which is the same scaffolding smell this whole change exists to
+remove. The file's own comment says not to rename it back.
+
 **The rename went one step further than asked, and the reason matters.** The
 component was called `TrackManLogo`, which was wrong about the artwork, since
 the radar mark is this project's own. But renaming the whole component to
@@ -57,13 +78,15 @@ draws the mark, and `PoweredByTrackMan` is the badge that pairs it with the
 wordmark. Identical output on screen, verified in a browser.
 
 *What we did not do, and the distinction is worth being precise about:* the
-16x16 rendering above was done by a real browser, and the rename was confirmed
-by loading the app and looking at the header. What does not exist is a
-photograph of the mark sitting in an actual browser tab strip, because the
+16x16 rendering above was done by a real browser, and the component rename was
+confirmed by loading the app and looking at the header. No photograph of the
+mark sitting in an actual browser tab strip was ever taken here, because the
 extension that drives a real Chrome window was not connected in this session and
-the screen capture tool had no permission. So the artwork is verified and its
-appearance in situ is not. That gap is named in the pull request and is the
-first item of the manual QA script.
+the screen capture tool had no permission. The product manager's own QA pass is
+what covered that gap, in Chrome and then in Safari, and it is what found the
+caching problem; the tab strip remains the one thing this session could not see
+for itself. **The filename fix in particular rests on his confirmation plus the
+mechanism above, not on anything measured here.**
 
 *One thing deliberately left alone:* `design/` still contains a frozen HTML
 prototype that defines its own `TrackManLogo`. It is a snapshot of the original
