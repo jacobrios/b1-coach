@@ -364,43 +364,52 @@ function GoalCard({ goal, onNavigate, index, revealed }) {
   )
 }
 
-// ── TrackMan logo mark ─────────────────────────────────────────────────────
-function TrackManLogo({ color }) {
+// ── The app's own radar mark ───────────────────────────────────────────────
+// Original artwork for this project, not TrackMan branding. public/favicon.svg
+// draws the same mark; see that file's comment for what it changes at 16x16.
+function RadarMark({ color }) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+      <path
+        d="M16 28C22.627 28 28 22.627 28 16S22.627 4 16 4"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        opacity="0.35"
+      />
+      <path
+        d="M16 23C19.866 23 23 19.866 23 16S19.866 9 16 9"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        opacity="0.6"
+      />
+      <path
+        d="M16 18C17.105 18 18 17.105 18 16S17.105 14 16 14"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <circle cx="16" cy="16" r="2" fill={color} />
+      <line
+        x1="4"
+        y1="28"
+        x2="16"
+        y2="16"
+        stroke={color}
+        strokeWidth="2"
+        strokeLinecap="round"
+        opacity="0.5"
+      />
+    </svg>
+  )
+}
+
+// ── The "Powered by TrackMan" badge in the header ──────────────────────────
+function PoweredByTrackMan({ color }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-      <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
-        <path
-          d="M16 28C22.627 28 28 22.627 28 16S22.627 4 16 4"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity="0.35"
-        />
-        <path
-          d="M16 23C19.866 23 23 19.866 23 16S19.866 9 16 9"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          opacity="0.6"
-        />
-        <path
-          d="M16 18C17.105 18 18 17.105 18 16S17.105 14 16 14"
-          stroke={color}
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <circle cx="16" cy="16" r="2" fill={color} />
-        <line
-          x1="4"
-          y1="28"
-          x2="16"
-          y2="16"
-          stroke={color}
-          strokeWidth="2"
-          strokeLinecap="round"
-          opacity="0.5"
-        />
-      </svg>
+      <RadarMark color={color} />
       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
         <span
           style={{
@@ -504,7 +513,7 @@ function GoalSelectionScreen({ player = null, onSelect }) {
           animation: revealed ? 'fadeUp 0.45s ease both' : 'none',
         }}
       >
-        <TrackManLogo color={accentColor} />
+        <PoweredByTrackMan color={accentColor} />
 
         <div
           style={{
@@ -881,7 +890,7 @@ export default function App() {
         alignItems: 'center', justifyContent: 'center',
         gap: 20,
       }}>
-        <TrackManLogo color={ACCENT} />
+        <PoweredByTrackMan color={ACCENT} />
         <div style={{ display: 'flex', gap: 6 }}>
           {[0, 1, 2].map((i) => (
             <div key={i} style={{
@@ -922,7 +931,7 @@ export default function App() {
         alignItems: 'center', justifyContent: 'center',
         gap: 24,
       }}>
-        <TrackManLogo color={ACCENT} />
+        <PoweredByTrackMan color={ACCENT} />
         <div style={{
           fontFamily: "'Barlow', sans-serif",
           fontSize: 18, color: 'rgba(255,255,255,0.72)',
