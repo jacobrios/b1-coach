@@ -163,7 +163,7 @@ function thresholdVerdict(claim, session, context) {
 }
 
 // One swing's own number, read straight out of the per-swing table.
-function swingValueVerdict(claim, session, context) {
+function swingValueVerdict(claim, session, _context) {
   const { swingNumber, metric, statedValue } = claim
   if (!Number.isFinite(swingNumber)) return unverifiable('no swing number given')
   if (!Number.isFinite(statedValue)) return unverifiable('no stated value given')
@@ -187,7 +187,7 @@ function swingValueVerdict(claim, session, context) {
 // "N of those [swings X, Y, Z] were under T". The one shape that needs a set
 // operation rather than a lookup, and the shape of fixture error #4, where the
 // list was handed to the coach and the subset count was not.
-function subsetVerdict(claim, session, context) {
+function subsetVerdict(claim, session, _context) {
   const { metric, threshold, comparison, ofSwings, statedCount } = claim
   if (!Array.isArray(ofSwings) || ofSwings.length === 0) return unverifiable('no subset swings given')
   if (!Number.isFinite(statedCount)) return unverifiable('no stated count given')
@@ -370,7 +370,7 @@ const STAT_UNIT_WORDS = {
 const UNIT_WORDS = /\b(?:mph|degrees?|feet|ft)\b/i
 
 // A whole-session number the debrief prompt already handed the coach.
-function sessionStatVerdict(claim, session, context) {
+function sessionStatVerdict(claim, session, _context) {
   const { statName, statedValue, quote } = claim
   if (!Number.isFinite(statedValue)) return unverifiable('no stated value given')
 

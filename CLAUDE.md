@@ -3563,6 +3563,40 @@ that pass surfaced.*
   cosmetic rather than dangerous, and it is the file the README now tells a
   stranger to copy. Recorded so nobody is surprised to find a third copy.
 
+*Added 26 August 2026, from the repo cleanup micro-PR:*
+
+- **The lint wall is closed at 3 errors, and the 3 are deliberate.** It was 30.
+  Twenty-seven were the linter's configuration being wrong rather than the code:
+  13 were Node files (`api/`, `scripts/`, `.claude/hooks/`, `vite.config.js`)
+  linted as browser code, so every `process` and `Buffer` read as undefined; 8
+  were in `design/`, which holds the original HTML mockups and is not part of the
+  app at all; 3 were an intentionally uniform handler signature in
+  `scripts/claimVerdict.js`, now marked with a leading underscore rather than
+  broken up to please a tool; and 3 were genuinely dead imports, removed. **Do
+  not chase the remaining 3.** One is the deliberate `GOALS` export from
+  `src/App.jsx`, already reviewed and judged proportionate on 14 August 2026. The
+  other two are real findings, not noise, and are recorded as such in the next
+  entry.
+- **Two React findings, deliberately not fixed, and they are findings rather
+  than lint noise.** `src/App.jsx:659` calls `Math.random()` during render to
+  pick the player's nickname, and `src/LiveSessionScreen.jsx:296` calls
+  `setState` synchronously inside an effect. Neither has ever produced a visible
+  bug. Both are shipped behaviour, so changing either is a behaviour change and
+  had no business riding along in a cleanup. Worth assessing on their own merits
+  if anyone opens those files; not worth a slice.
+- **`design/` stays, and the screenshot in it is fine.** The directory holds the
+  original HTML mockups (3.4 MB, 14 files) and
+  `trackman_original dashboard.png`. The product manager confirmed on 26 August
+  2026 that he pulled that screenshot from TrackMan's public site. Recorded so
+  the confidentiality pass of the same week does not get re-run against it.
+- **The Vite favicon stays, decided again on 26 August 2026** and for a better
+  reason than the first time. The product manager: a generic build-tool bolt
+  makes it obvious this is a personal project, and he would not want a real
+  company mark there. Note for anyone reading the older entry in
+  `docs/queued-slices.md`: that item never proposed using TrackMan's logo, it
+  proposed the radar mark the app already draws in its own header. The decision
+  is the same either way. **This item is now closed, not deferred.**
+
 *Added at the close of Slice 14, 25 August 2026:*
 
 - **The generator's launch-angle bend was DECLINED, 25 August 2026, and this is

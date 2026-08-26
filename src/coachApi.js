@@ -1,4 +1,4 @@
-import { goalTarget, meetsTarget } from './goalTargets'
+import { goalTarget } from './goalTargets'
 import { distanceDistributionLine } from './ballFlight'
 import { GOAL_COUNT_SPECS, goalCountValues } from './goalCountSpecs'
 import { swingCountPhrase } from './promptText'
