@@ -33,6 +33,13 @@ const { generateSwings } = await import('../src/swingGenerator.js')
 const { computeStats } = await import('../src/sessionStats.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
 
+// DATED NOTE, 27 August 2026, from the best-swing micro-PR's review. BEFORE is
+// still exactly Slice 14's prompt, which is what this round measured and is
+// correct for that purpose. It is no longer "the shipped prompt minus one
+// change": the shipped prompt has since gained the number-slot instruction AND
+// the best-swing rule. Do not reuse this script as a generic A/B harness
+// without rebuilding BEFORE from whatever you actually mean by it.
+//
 // BEFORE is the prompt as it stood at the close of Slice 14, rebuilt from its
 // own two exported pieces rather than copied, so it cannot drift from what
 // actually shipped. AFTER is the shipped constant as this slice leaves it.
