@@ -3720,6 +3720,15 @@ that pass surfaced.*
   wanted: a readability score over the committed debrief fixtures costs no live
   spend, since 96 real debriefs are already sitting in
   `docs/eval-fixtures/slice7-debriefs/`.
+- **THREE documents now make checkable claims that nothing tests, not two.**
+  `README.md` and `docs/proof-of-concept.md` both describe the number-slot
+  mechanism and the best-swing pick as of 27 August 2026, including the 89%
+  adoption figure and the twelve blind pairs. Same class of debt as the rest,
+  same answer: recorded rather than guarded, because guarding prose costs more
+  than it returns here. The practical version stays a line on this list: anyone
+  reopening `src/numberSlots.js` or `src/bestSwing.js` re-reads what those two
+  documents claim about it.
+
 - **Two documents now make checkable claims that nothing tests.** Same class of
   debt as the README's, doubled. The same answer applies: recorded rather than
   guarded, because guarding prose costs more than it returns here. The practical
