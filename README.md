@@ -38,10 +38,11 @@ The generator is built around one hitter, written down deliberately: **Bill, a s
 
 ## Keeping an AI coach honest
 
-A language model writing about numbers will confidently get them wrong. Four things push back:
+A language model writing about numbers will confidently get them wrong. Five things push back:
 
 - **The app counts, the model writes.** Every threshold the coaching prose names is pre-counted and handed over, because a model asked to count swings itself will miscount. Measured across 52 debriefs before and after, that error went from 8 occurrences to none.
-- **The app writes the per-swing numbers, and picks the swing worth praising.** When the coach cites a particular swing's exit velocity, angle or distance, it leaves a placeholder and the app fills in the real figure, so a number it hands over cannot come out wrong. The app also names the best swing for the chosen goal, after the coach was caught building its advice around the second-best one with every number in the sentence correct.
+- **The app writes the per-swing numbers.** The coach leaves a placeholder where a swing's exit velocity, angle or distance goes, and the app fills in the real figure, so a number it hands over cannot come out wrong.
+- **The app picks which swing to praise.** The coach was caught building its advice around the second-best swing with every number in the sentence correct, so the app now names the best one for the goal.
 - **The model's chart choices are validated.** Claude names which charts to render. An invented or duplicated name is rejected and replaced with a real chart on real data, so a bad pick cannot reach the screen.
 - **Failure messages say what actually failed.** A drained API balance, a timeout, trouble at the API end and an unreachable server are four different messages, because one vague apology is a guess presented as a fact.
 
