@@ -9,6 +9,60 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: the coach holds up the best swing, not the second best (August 27)
+
+*What this was.* The product manager's merge-gate QA pass on Slice 15 found the
+session 1 Power debrief building its whole headline tip around swing 13, at 89
+mph, 25 degrees and 311 feet, when swing 5 at 92, 27 and 346 beat it on all
+three and sat in the same target band. Every number the coach printed about
+swing 13 was correct, so nothing in this project could have caught it: it is not
+a miscount, it is the coach picking the wrong swing to praise. His reason for
+fixing it rather than recording it: not technically wrong, but enough to put
+doubt in somebody with expertise reading it, and a coach should look at the best
+swing.
+
+*The decision inside it was a product one, and it changed twice in the
+conversation.* The first proposal was one rule for every goal, the hardest hit
+among swings meeting the target. He asked what happens on goals other than
+Power, which is what exposed it as wrong in two of the three cases. Power is
+named for distance, so nominating the shorter ball there is the same quiet
+wrongness the QA pass had just caught. And Reduce Pop-Ups asks for nothing but
+launch angle, in its own words allowing that a softly hit ball at 15 degrees
+still counts, so ranking it by exit velocity would import a criterion the goal
+disclaims. What shipped is a per-goal table, the third in this project after the
+goal targets and the count specs: Power takes the longest ball, Contact and
+Pop-Ups take the hardest hit, and on Pop-Ups that is a tiebreak among swings
+that already met the goal rather than a requirement. The three goals with
+nothing to aim at get no line at all, and a session where nothing met the target
+gets none either, because the app must never name a swing that missed as the one
+to copy.
+
+*Two halves, because one would not have held.* The app names the swing in a
+per-session prompt line; a separate rule in both system prompts tells the coach
+to use it. That split is Slice 8b's finding rather than a guess: the pre-counted
+thresholds only changed behaviour once a rule told the coach to stop counting
+for itself. The selection filters through `meetsTarget`, the same function the
+launch angle and pitch location charts colour by, so the swing the coach praises
+can never be one the chart beside it draws as a miss.
+
+*Verification.* 734 tests to 751 across 26 files. Every new test seen failing
+first by mutation: collapsing the two metrics into one rule turns Power or
+Contact red, dropping the target filter turns three red, and reversing the tie
+rule turns one red. Confirmed on the exact screen the defect was found on: the
+summary now reads "swing 5 went 346 feet" and the tip reads "Your best swing,
+swing 5", with swing 13 absent.
+
+*What the review found and what was left.* Three real things fixed: a branch
+that could never fail, a curly apostrophe no other prompt constant in the file
+uses, and a genuine test gap, since every count-line test in this file uses a
+single-session fixture and a multi-session corruption would have passed. There
+are now four sessions with four different best swings pinned. Two things
+recorded rather than fixed, both needing approval on exact wording: the line
+does not name its own session, and the rule reaches three goals that never
+receive a line.
+
+---
+
 ## Slice 15: the app takes the pen for the coach's per-swing numbers (August 27)
 
 *What this was, and the rule that put it on the table.* Since Slice 8b the app

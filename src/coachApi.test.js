@@ -10,14 +10,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
   DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
-  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE, NUMBER_SLOT_LINES,
+  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE, NUMBER_SLOT_LINES, BEST_SWING_RULE,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 // Imported rather than hand-copied, unlike the distances the block below pins
 // as literals: these tests are about which swings the coach is told went
 // where, so they have to run against the real session 1, not a copy of it.
 import { SESSION_ONE_SWINGS } from './sessionOneSwings.js'
-import { sprayBreakdown, pitchZoneBreakdown } from './sessionStats.js'
+import { sprayBreakdown, pitchZoneBreakdown, computeStats } from './sessionStats.js'
 import { generateSwings } from './swingGenerator.js'
 
 const RETRY_DELAY_MS = 1500
@@ -189,7 +189,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
   // key. Swing 1 is -12 degrees (up the middle under the screen's own rule,
   // which is exactly the case the old "negative is pull side" wording got
   // wrong) and swing 2 is +18, opposite field.
-  const pinTail = `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings up the middle (direction -15 to +15 degrees, including both): 1 swing — numbers: 1\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing — numbers: 2\n- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
+  const pinTail = (bestSwingLine = '') => `- Top 3 exit velocities: 91, 74 mph\n- Distance distribution: Under 175ft: 1 swing, 175-225ft: 0 swings, 225-265ft: 0 swings, 265-305ft: 0 swings, 305+ft: 1 swing\n- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings up the middle (direction -15 to +15 degrees, including both): 1 swing — numbers: 1\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing — numbers: 2\n${bestSwingLine}- Direction key: below -15 degrees is pull side, above +15 degrees is opposite field, -15 to +15 is up the middle.\n- Individual swings: Swing 1: 91mph EV, 27° LA, -12° direction, 305ft distance, pitch height 2.1ft / pitch side 0.3ft | Swing 2: 74mph EV, 9° LA, 18° direction, 118ft distance, pitch height 1.8ft / pitch side -0.4ft\n\nCurrent session being debriefed: Session 1`
 
   it('renders the full debrief user message for a power session exactly as shipped', () => {
     const message = buildDebriefUserMessage({
@@ -199,7 +199,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swing — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swing\n${pinTail}`,
+      `Player: Jake\nGoal: Power & Distance\n${goalContext({ id: 'power' })}${pinTop}- Swings with launch angle strictly below 15 degrees (not including 15): 1 swing — numbers: 2\n- Swings in power zone (EV >= 88 mph AND launch angle 25-35 degrees): 1 swing\n${pinTail('- Best swing for this goal: swing 1, the longest ball among the swings that met the target.\n')}`,
     )
   })
 
@@ -211,7 +211,7 @@ describe('the rendered prompt strings, pinned byte for byte', () => {
       viewingSessionNumber: 1,
     })
     expect(message).toBe(
-      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing\n- Swings with exit velocity 82 mph or higher: 1 swing\n${pinTail}`,
+      `Player: Jake\nGoal: Hit to All Fields\n${goalContext({ id: 'allfields' })}${pinTop}- Swings pull side (direction strictly below -15 degrees, not including -15): 0 swings\n- Swings opposite field (direction strictly above +15 degrees, not including +15): 1 swing\n- Swings with exit velocity 82 mph or higher: 1 swing\n${pinTail()}`,
     )
   })
 })
@@ -1334,8 +1334,11 @@ describe('the length budget the coach was shipped with', () => {
   // turned this red, which is exactly the one kind of drift CLAUDE.md says it
   // can catch (something appended to or inlined into the shipped constant
   // instead of built from its pieces). The composition is now three parts.
-  it('DEBRIEF_SYSTEM is exactly the base prompt, the shipped budget and the number-slot instruction', () => {
-    expect(DEBRIEF_SYSTEM).toBe(`${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}`)
+  // Updated a second time by the best-swing micro-PR. Going red both times is
+  // this test's whole value: it is the one thing that notices something being
+  // appended to the shipped constant rather than built from its named pieces.
+  it('DEBRIEF_SYSTEM is exactly its four parts, in order', () => {
+    expect(DEBRIEF_SYSTEM).toBe(`${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}\n\n${BEST_SWING_RULE}`)
   })
 
   it('the shipped budget names all four fields at the numbers the bench picked', () => {
@@ -1531,7 +1534,7 @@ describe('the number-slot instruction and the filling that backs it', () => {
     )
     const extract = (t) => t.slice(t.indexOf("WRITING A SPECIFIC SWING'S NUMBERS."))
     expect(extract(debrief)).toBe(extract(chat))
-    expect(extract(debrief)).toBe(NUMBER_SLOT_LINES)
+    expect(extract(debrief)).toBe(`${NUMBER_SLOT_LINES}\n\n${BEST_SWING_RULE}`)
   })
 
   // The end-to-end claim, and the one that makes this slice worth anything: a
@@ -1589,5 +1592,100 @@ describe('the number-slot instruction and the filling that backs it', () => {
     )
     expect(reply.coachingSummary).toBe('Swing 1 hit 86 mph.')
     expect(reply.coachingSummary).not.toContain('{{')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The app names the swing to hold up, so the coach stops choosing
+// ─────────────────────────────────────────────────────────────────────────────
+describe('the best-swing line and the rule that makes it stick', () => {
+  const player = { firstName: 'Bill' }
+  const sessionOf = (swings) => ({
+    sessionNumber: 1,
+    swings,
+    stats: computeStats(swings),
+  })
+
+  const okRes = (text) => ({
+    ok: true, status: 200, headers: { get: () => null },
+    json: async () => ({ content: [{ text }] }),
+  })
+
+  async function promptFor(goal, which) {
+    const fetchMock = vi.fn(async () => okRes('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    const sessions = [sessionOf(SESSION_ONE_SWINGS)]
+    const call = which === 'chat'
+      ? sendChatMessage({ goal, player, sessions, viewingSessionNumber: 1, messages: [{ role: 'user', content: 'Which swing should I copy?' }] })
+      : generateDebrief({ goal, player, sessions, viewingSessionNumber: 1 })
+    await call.catch(() => {})
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body)
+    return { user: body.messages[0].content, system: body.system }
+  }
+
+  // The exact defect this closes, pinned to real session 1 data rather than a
+  // fixture. Swing 5 is 92 mph / 27 degrees / 346 feet; swing 13 is 89 / 25 /
+  // 311. Both meet Power's target and the coach built its headline tip around
+  // swing 13 on the screen the product manager was looking at.
+  it('names swing 5, not swing 13, on the Power screen where this was found', async () => {
+    const { user } = await promptFor({ id: 'power', label: 'Power & Distance' }, 'debrief')
+    expect(user).toContain('- Best swing for this goal: swing 5, the longest ball among the swings that met the target.')
+    expect(user).not.toContain('Best swing for this goal: swing 13')
+  })
+
+  it('names the hardest hit on Line Drives & Contact', async () => {
+    const { user } = await promptFor({ id: 'contact', label: 'Line Drives & Contact' }, 'debrief')
+    expect(user).toContain('- Best swing for this goal: swing 7, the hardest hit among the swings that met the target.')
+  })
+
+  it('writes no line at all for a goal with nothing to aim at', async () => {
+    const { user } = await promptFor({ id: 'allfields', label: 'Hit to All Fields' }, 'debrief')
+    expect(user).not.toContain('Best swing for this goal')
+  })
+
+  it('reaches the chat prompt too, with the same swing', async () => {
+    const { user } = await promptFor({ id: 'power', label: 'Power & Distance' }, 'chat')
+    expect(user).toContain('- Best swing for this goal: swing 5, the longest ball among the swings that met the target.')
+  })
+
+  // CLAUDE.md records that every count-line test in this file uses a
+  // single-session fixture, so a multi-session corruption of any of them passes
+  // the suite. This one does not repeat that: four sessions, four different
+  // best swings, so computing the line from the wrong session's swings or
+  // emitting one session's answer on every block both turn it red.
+  it('gives each session block its own best swing, not the first one repeated', async () => {
+    const sw = (ev, la, dist) => ({
+      hit: { launch: { exitSpeed: ev, angle: la, direction: 0 }, landing: { distance: dist } },
+      plateLocHeight: 2.5, plateLocSide: 0,
+    })
+    // Power ranks on distance among swings inside 25-35 degrees at 88+ mph.
+    // The winner is a different swing number in every session, on purpose.
+    const sessions = [
+      { sessionNumber: 1, swings: [sw(90, 27, 300), sw(70, 5, 80), sw(70, 5, 80)] },
+      { sessionNumber: 2, swings: [sw(70, 5, 80), sw(91, 28, 320), sw(70, 5, 80)] },
+      { sessionNumber: 3, swings: [sw(70, 5, 80), sw(70, 5, 80), sw(92, 30, 340)] },
+      { sessionNumber: 4, swings: [sw(89, 26, 310), sw(70, 5, 80), sw(93, 29, 360)] },
+    ].map((s) => ({ ...s, stats: computeStats(s.swings) }))
+
+    const fetchMock = vi.fn(async () => okRes('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await generateDebrief({
+      goal: { id: 'power', label: 'Power & Distance' }, player,
+      sessions, viewingSessionNumber: 4,
+    }).catch(() => {})
+    const user = JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content
+
+    const named = [...user.matchAll(/- Best swing for this goal: swing (\d+),/g)].map((m) => m[1])
+    expect(named).toEqual(['1', '2', '3', '3'])
+  })
+
+  // Slice 8b's lesson: a fact without a rule telling the coach to use it does
+  // not hold. The rule is the half that changes behaviour.
+  it('states the rule in both system prompts, as one identical string', async () => {
+    const debrief = await promptFor({ id: 'power', label: 'Power & Distance' }, 'debrief')
+    const chat = await promptFor({ id: 'power', label: 'Power & Distance' }, 'chat')
+    expect(debrief.system).toContain(BEST_SWING_RULE)
+    expect(chat.system).toContain(BEST_SWING_RULE)
+    expect(BEST_SWING_RULE).toContain("use the swing that session's data names as best for the goal")
   })
 })

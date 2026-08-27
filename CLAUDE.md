@@ -480,6 +480,26 @@ below is as Slice 10 left it and was not re-counted.
                              reorder it. The sentence splitter also refuses to
                              cut at "No. 9" or "Well...", which the naive version
                              did, handing a visitor a dangling fragment.
+    src/bestSwing.js          80 lines. Which swing the coach holds up as the
+                             example to copy. Added 27 August 2026 by the
+                             best-swing micro-PR, after the product manager's
+                             merge-gate QA pass on Slice 15 found the session 1
+                             Power tip built around swing 13 when swing 5 beat it
+                             on all three numbers in the same target band. Every
+                             number printed was CORRECT, so this is the coach
+                             choosing wrongly rather than miscounting, and no
+                             amount of handing it figures reaches it. Its per-goal
+                             table is a PRODUCT decision, not an implementation
+                             one: Power ranks on DISTANCE because the goal is
+                             named for distance, Contact and Pop-Ups rank on exit
+                             velocity, and on Pop-Ups that is a tiebreak among
+                             swings that already met the goal rather than a
+                             requirement, since that goal asks for nothing but
+                             launch angle. Do not collapse the three into one
+                             rule. It filters through `meetsTarget`, the same
+                             function the two charts colour by, so the swing the
+                             coach praises can never be one the chart beside it
+                             draws as a miss.
     src/promptText.js          6 lines. One rule of prompt grammar,
                              `swingCountPhrase`, so a count reads "1 swing"
                              rather than "1 swings." Added in Slice 8c; shared
@@ -1183,8 +1203,8 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and at the close of Slice 15 on 27 August 2026 it is **734 tests
-   across 25 files**, up from 695 across 24 at the close of Slice 13. The new
+   vitest, and at the close of the best-swing micro-PR on 27 August 2026 it is **751 tests
+   across 26 files**, up from 734 across 25 at the close of Slice 15, up from 695 across 24 at the close of Slice 13. The new
    file is `src/numberSlots.test.js`; the rest landed in `src/coachApi.test.js`.
    *(The 695 was measured again at the start of Slice 15 and matched, so no
    pre-existing failure was carried into that slice.)* *(Unchanged at the close of Slice 13 later the same day,
@@ -3836,6 +3856,20 @@ that pass surfaced.*
   handed every count, so it stops choosing. It is a prompt-wording change, so it
   needs approval on the exact sentence. Small, and it is on the screen a
   stranger is guaranteed to see.
+
+- **The best-swing line does not name its own session, and the rule telling the
+  coach to use it reaches three goals that never receive one.** Both found by
+  the review of the best-swing micro-PR, both left as recorded rather than
+  fixed. On a session 4 debrief the prompt carries four blocks, each with its
+  own correct best-swing line, and a test now pins that. What no test can settle
+  is whether the coach reads the right one, since the line says "swing 5" and
+  not "swing 5 of Session 2"; every other count line in the prompt omits the
+  session the same way, so adding it to this one only would be inconsistent.
+  Separately, `BEST_SWING_RULE` goes into both system prompts unconditionally,
+  so on Hit to All Fields, Open Session and Full Dashboard the coach is told to
+  use a line that is not there. Harmless as far as anyone can tell, and it keeps
+  the rule one shared string rather than a per-goal one. Both are prompt-wording
+  changes, so closing either needs approval on the exact sentence.
 
 - **A handed number attached to the wrong side of its own threshold is still
   live, and this slice does not touch it.** "Swings with exit velocity 85 mph or

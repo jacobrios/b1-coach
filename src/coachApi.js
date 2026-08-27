@@ -12,6 +12,7 @@ import { pitchZoneBreakdown, STRIKE_ZONE, sprayBreakdown, SPRAY_CUTOFFS } from '
 // the full reasoning.
 export { GOAL_COUNT_SPECS } from './goalCountSpecs'
 import { fillDebriefNumbers, fillChatNumbers } from './numberSlots'
+import { bestSwing } from './bestSwing'
 
 // These two are ALSO pinned at the top of api/coach.js, deliberately, and must be
 // kept in step. Production ignores whatever is sent here and uses its own copy.
@@ -158,6 +159,18 @@ export const DEBRIEF_BUDGET = lengthBudget({ summary: 45, means: 30, intro: 12, 
 // so the bench can keep measuring "no budget" and "the shipped budget" as two
 // distinct, honest conditions rather than one collapsing into the other.
 
+// Slice 15's merge gate found the coach building its headline tip around the
+// second-best swing: swing 13 on session 1 Power, where swing 5 beat it on exit
+// velocity, launch angle and distance and sat in the same band. Every number it
+// printed was right, so this is a choice rather than a miscount, and no amount
+// of handing over figures reaches it.
+//
+// The per-session line names the swing; THIS names the behaviour. Both halves
+// are needed, which is Slice 8b's finding and not a guess: the count lines only
+// held once a rule told the coach to stop counting for itself. Approved word for
+// word by the product manager on 27 August 2026; do not reword.
+export const BEST_SWING_RULE = 'When you single out one swing as the example to copy, use the swing that session\'s data names as best for the goal. Do not nominate a different swing as your headline example.'
+
 // Slice 15. The one instruction that moves a per-swing number out of the
 // coach's hands and into the app's. Interpolated into BOTH system prompts from
 // this single constant, on the DIRECTION_KEY_LINE precedent: this project has
@@ -195,7 +208,7 @@ Every other number you still write yourself, exactly as you do now: counts,
 averages, session totals, top-3 lists, targets, thresholds, and any number you
 work out for yourself.`
 
-export const DEBRIEF_SYSTEM = `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}`
+export const DEBRIEF_SYSTEM = `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}\n\n${BEST_SWING_RULE}`
 
 const CHAT_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You are in a conversation with a player reviewing their session data. Speak like an experienced high school or college hitting coach — direct, encouraging, plain-spoken. Never sound like a data analyst.
 
@@ -221,7 +234,9 @@ Respond ONLY with valid JSON matching this exact shape, no preamble, no markdown
 
 Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zone_breakdown, pitch_location. Only include a chart key if it directly helps answer the player's question. Otherwise set chart to null.
 
-${NUMBER_SLOT_LINES}`
+${NUMBER_SLOT_LINES}
+
+${BEST_SWING_RULE}`
 
 const RETRY_DELAY_MS = 1500
 
@@ -589,6 +604,17 @@ function sprayCountLines(swings) {
   ]
 }
 
+// Which swing to hold up, pre-chosen by the app. Null for the three goals with
+// nothing to aim at and for a session where nothing met the target, and a null
+// prints no line rather than an empty one, exactly as countLine drops its
+// trailing clause on a count of zero. The criterion travels in the sentence so
+// the coach cannot praise the swing for the wrong reason: Power's is the
+// longest ball, the other two are the hardest hit. See src/bestSwing.js.
+function bestSwingLine(goalId, swings) {
+  const best = bestSwing(goalId, swings)
+  return best === null ? null : `- Best swing for this goal: swing ${best.number}, ${best.phrase} among the swings that met the target.`
+}
+
 // Every swing's spray direction reaches the coach as a raw signed number, and
 // on five of the six goals nothing tells it which sign means which way. A live
 // Power debrief called a +29 degree ball (opposite field) "driven to the pull
@@ -639,7 +665,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 - Pitches in strike zone: ${s.stats.inZoneCount}/${s.stats.totalSwings} (strike zone = height 1.5–3.5ft, side –0.7 to 0.7ft — full per-swing pitch coordinates included above)
 ${zoneCountLines(s.swings).map((line) => `${line}\n`).join('')}${goalCountLines(goal.id, s.swings).map((line) => `${line}\n`).join('')}- Top 3 exit velocities: ${[...s.swings].sort((a, b) => b.hit.launch.exitSpeed - a.hit.launch.exitSpeed).slice(0, 3).map(sw => sw.hit.launch.exitSpeed).join(', ')} mph
 - Distance distribution: ${distanceDistributionLine(s.swings)}
-${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
+${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${[bestSwingLine(goal.id, s.swings)].filter(Boolean).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
 
@@ -687,7 +713,7 @@ ${filteredSessions.map((s) => `Session ${s.sessionNumber}:
 ${zoneCountLines(s.swings).map((line) => `${line}\n`).join('')}- Distance distribution: ${distanceDistributionLine(s.swings)}
 ${s.debrief?.coachingSummary ? `- Previously told player in session summary: ${s.debrief.coachingSummary}` : ''}
 ${s.debrief?.whatThisMeans ? `- Previously told player in what this means: ${s.debrief.whatThisMeans}` : ''}
-${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
+${sprayCountLines(s.swings).map((line) => `${line}\n`).join('')}${[bestSwingLine(goal.id, s.swings)].filter(Boolean).map((line) => `${line}\n`).join('')}${DIRECTION_KEY_LINE}
 - Individual swings: ${s.swings.map((sw, i) => `Swing ${i + 1}: ${sw.hit.launch.exitSpeed}mph EV, ${sw.hit.launch.angle}° LA, ${sw.hit.launch.direction}° direction, ${sw.hit.landing.distance}ft distance, pitch height ${sw.plateLocHeight}ft / pitch side ${sw.plateLocSide}ft`).join(' | ')}`
   ).join('\n\n')}
 
