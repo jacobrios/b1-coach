@@ -3821,6 +3821,22 @@ that pass surfaced.*
   forced rather than reasoned about, so a bad placeholder drops its sentence
   instead of showing braces, but the sample behind "the coach gets the form
   right" is small.
+- **The coach picks the wrong swing to praise, and no amount of handing it
+  numbers fixes that.** Found by the product manager's merge-gate QA pass on
+  27 August 2026, on the first screen a visitor sees. On session 1 Power, the
+  coach built its whole first tip around swing 13 (89 mph, 25 degrees, 311 feet)
+  when swing 5 (92 mph, 27 degrees, 346 feet) beats it on all three and sits in
+  the same target band. **Every number it printed about swing 13 was correct**,
+  so this is not a numeric error and Slice 15 cannot reach it: choosing the
+  exemplar happens in the judgment, upstream of the typing. He also noticed it
+  on BOTH sides of the blind A/B read, which independently confirms it is
+  pre-existing rather than introduced.
+  The cheap fix is the mechanism Slice 8b already proved: hand the coach the
+  best swing for the selected goal as a pre-computed line, the same way it is
+  handed every count, so it stops choosing. It is a prompt-wording change, so it
+  needs approval on the exact sentence. Small, and it is on the screen a
+  stranger is guaranteed to see.
+
 - **A handed number attached to the wrong side of its own threshold is still
   live, and this slice does not touch it.** "Swings with exit velocity 85 mph or
   higher: 6 swings" becoming "Six of your swings came in under 85 mph" copies
