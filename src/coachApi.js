@@ -661,7 +661,13 @@ export async function generateDebrief({ goal, player, sessions, viewingSessionNu
   // After callApi, not inside it: callApi is the shared choke point for both
   // calls and knows nothing about sessions, and the debrief and the chat reply
   // have different shapes to fill.
-  return fillDebriefNumbers(reply, sessions)
+  // Filtered, not the raw list, and the difference is not cosmetic. The PROMPT
+  // is built from sessions up to the one being viewed, so filling from the full
+  // list would let a slot naming a later session resolve to swings the player
+  // has not seen. Every caller in the app happens to pre-filter today, so this
+  // is a bug in waiting rather than a live one; found by review, closed here
+  // because the chat half already did it and an asymmetry is what gets missed.
+  return fillDebriefNumbers(reply, sessions.filter((s) => s.sessionNumber <= viewingSessionNumber))
 }
 
 export async function sendChatMessage({ goal, player, sessions, viewingSessionNumber, messages }) {

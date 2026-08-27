@@ -61,11 +61,33 @@ round was bought, deliberately. **So this slice makes no measured accuracy
 claim, and its expected benefit of roughly 30% is arithmetic over hand-checked
 data, not a result.**
 
+*The independent review found a regression the whole verification plan had
+missed, and where it hid is the useful part.* Filling the numbers meant
+rebuilding the coach's text, and the first version did that by splitting into
+sentences and rejoining with a space. That flattened every line break in every
+chat reply, whether it carried a placeholder or not, which collapses the
+bullet-per-session and paragraph structure the chat prompt explicitly asks for
+and react-markdown renders. Nothing caught it: the suite was green, the browser
+pass had asked the chat a question that happened to want plain prose, and the
+twelve-pair voice round was debrief-only, where the three fields are
+single-paragraph prose that renders identically either way. So the one condition
+that would have shown it was the one condition none of the evidence covered. The
+fix fills the whole string first and only rearranges anything if a placeholder
+is left unresolved, which is the rare path. Confirmed afterwards in a browser:
+three bullets render as three. The same review found four smaller things, all
+fixed: a placeholder whose dots carried spaces printed its braces to the
+visitor, a naive sentence split truncated "swing No. 9" and "Well...", the
+debrief filled from unfiltered sessions where the prompt was built from filtered
+ones, and the exported pattern was global, so a future reader calling .test() on
+it twice would get different answers.
+
 *Scope, spend, tests.* Extended to the chat prompt as well as the debrief,
 beyond the original description, because a shared rule living in one prompt and
 not the other is this repo's recurring bug and both of the last two QA gates
-caught chat defects. About $0.77 across 43 live calls. `npm test` 695 to 723,
-every new test seen failing first by mutation.
+caught chat defects. About $0.77 across 43 live calls. `npm test` 695 to 734,
+every new test seen failing first by mutation, including the eleven added after
+the review, which needed all three structure guards removed at once before they
+would go red.
 
 ---
 

@@ -33,7 +33,12 @@
 // carry an order, and getting a pair's order wrong is the single most common
 // transcription error this module exists to remove. Each slot carrying its own
 // swing number leaves a transposition nowhere to happen.
-export const NUMBER_SLOT_RE = /\{\{\s*s(\d+)\s*\.\s*sw(\d+)\s*\.\s*(\w+)\s*\}\}/g
+// NOT global on purpose, and a review is why. A /g regex carries lastIndex
+// between calls, so an exported one answers .test() true, then false, on the
+// identical input. The filling below makes its own global copy per call.
+export const NUMBER_SLOT_RE = /\{\{\s*s(\d+)\s*\.\s*sw(\d+)\s*\.\s*(\w+)\s*\}\}/
+
+const globalSlotPattern = () => new RegExp(NUMBER_SLOT_RE.source, 'g')
 
 // The six values a slot may name, and how each is read off a swing. Anything
 // not in this table is unresolvable by definition, which is what stops the coach
@@ -83,21 +88,47 @@ function readSlot(sessions, sessionNumber, swingNumber, field) {
 export function fillNumberSlots(text, sessions) {
   if (typeof text !== 'string' || !text) return text
 
-  const kept = []
-  for (const sentence of text.split(/(?<=[.!?])\s+/)) {
-    let dropped = false
-    const filled = sentence.replace(NUMBER_SLOT_RE, (raw, s, sw, field) => {
-      const value = readSlot(sessions, Number(s), Number(sw), field)
-      if (value === null) {
-        dropped = true
-        return raw
-      }
-      return value
-    })
-    if (!dropped && filled.trim()) kept.push(filled.trim())
-  }
+  // Pass one, and it is the one that runs almost every time: fill everything
+  // resolvable across the WHOLE string. No splitting, so every newline, bullet
+  // and blank line the coach wrote survives untouched.
+  //
+  // The first version split into sentences before matching, which did two
+  // things wrong at once and an independent review caught both. It flattened
+  // markdown structure on every reply, slots or none, and the chat prompt
+  // explicitly asks for a bullet per session and paragraphs on longer answers.
+  // And because ". sw1" reads as a sentence end, it printed the braces of any
+  // slot whose dots carried spaces, which is the exact outcome the drop policy
+  // below exists to prevent. Match first, restructure only if forced.
+  const filled = text.replace(globalSlotPattern(), (raw, session, swing, field) => {
+    const value = readSlot(sessions, Number(session), Number(swing), field)
+    return value === null ? raw : value
+  })
 
-  return kept.join(' ')
+  // The common case, and the whole point of doing it this way.
+  if (!filled.includes('{{')) return filled
+
+  // Pass two, rare: something is still machinery, either a slot naming a swing
+  // that does not exist or a brace the model never closed. Either way the
+  // sentence around it is already wrong, so it goes. Line by line, so a dropped
+  // bullet does not drag its neighbours onto one line.
+  const lines = filled.split('\n').map((line) => {
+    if (!line.includes('{{')) return line
+    return splitSentences(line).filter((sentence) => !sentence.includes('{{')).join(' ').trim()
+  })
+
+  // A line emptied by dropping is removed rather than left as a stray blank,
+  // but a blank line the coach wrote is a paragraph break and stays.
+  const kept = lines.filter((line, i) => line !== '' || filled.split('\n')[i] === '')
+  return kept.join('\n').replace(/\n{3,}/g, '\n\n').trim()
+}
+
+// A sentence ends at . ! or ? followed by whitespace and then something that
+// actually starts a new sentence. Requiring a capital or a quote is what stops
+// "swing No. 9" and "Well..." being cut in half, both of which a review
+// demonstrated handing a visitor a dangling fragment. It splits a real boundary
+// ("...86 mph. Swing 9...") and leaves a false one alone.
+function splitSentences(line) {
+  return line.split(/(?<=[.!?])\s+(?=["'\u201c\u2018]?[A-Z])/)
 }
 
 const DEBRIEF_TEXT_FIELDS = ['coachingSummary', 'whatThisMeans', 'tipsIntro']

@@ -454,7 +454,7 @@ below is as Slice 10 left it and was not re-counted.
                              `src/sessionStats.test.js` reads the screen file as
                              text and holds all four literals to
                              `SPRAY_CUTOFFS`, so a drift turns the suite red.)*
-    src/numberSlots.js       130 lines. Where the app writes the coach's per-swing
+    src/numberSlots.js       176 lines. Where the app writes the coach's per-swing
                              numbers instead of the coach typing them. Added in
                              Slice 15. Owns three things that move together: the
                              slot pattern, the rounding (pitch height and side to
@@ -469,6 +469,17 @@ below is as Slice 10 left it and was not re-counted.
                              arrives and cannot be used is classified respondedOk
                              and `isRetryable` deliberately refuses it, so it
                              would put a failure screen in front of a visitor.
+                             **It fills the whole string first and only
+                             restructures if something is still unresolved.** That
+                             order is load-bearing and was found by review, not
+                             by design: the first version split into sentences
+                             BEFORE matching, which flattened every newline in
+                             every chat reply whether it carried a slot or not,
+                             collapsing the bullet-per-session and paragraph
+                             structure `CHAT_SYSTEM` explicitly asks for. Do not
+                             reorder it. The sentence splitter also refuses to
+                             cut at "No. 9" or "Well...", which the naive version
+                             did, handing a visitor a dangling fragment.
     src/promptText.js          6 lines. One rule of prompt grammar,
                              `swingCountPhrase`, so a count reads "1 swing"
                              rather than "1 swings." Added in Slice 8c; shared
@@ -1172,7 +1183,7 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and at the close of Slice 15 on 27 August 2026 it is **723 tests
+   vitest, and at the close of Slice 15 on 27 August 2026 it is **734 tests
    across 25 files**, up from 695 across 24 at the close of Slice 13. The new
    file is `src/numberSlots.test.js`; the rest landed in `src/coachApi.test.js`.
    *(The 695 was measured again at the start of Slice 15 and matched, so no
