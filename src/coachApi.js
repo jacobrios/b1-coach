@@ -11,6 +11,7 @@ import { pitchZoneBreakdown, STRIKE_ZONE, sprayBreakdown, SPRAY_CUTOFFS } from '
 // cannot resolve this file's extensionless imports; the comment there has
 // the full reasoning.
 export { GOAL_COUNT_SPECS } from './goalCountSpecs'
+import { fillDebriefNumbers, fillChatNumbers } from './numberSlots'
 
 // These two are ALSO pinned at the top of api/coach.js, deliberately, and must be
 // kept in step. Production ignores whatever is sent here and uses its own copy.
@@ -156,7 +157,45 @@ export const DEBRIEF_BUDGET = lengthBudget({ summary: 45, means: 30, intro: 12, 
 // constant and nothing else; DEBRIEF_SYSTEM_BASE and DEBRIEF_BUDGET above exist
 // so the bench can keep measuring "no budget" and "the shipped budget" as two
 // distinct, honest conditions rather than one collapsing into the other.
-export const DEBRIEF_SYSTEM = `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}`
+
+// Slice 15. The one instruction that moves a per-swing number out of the
+// coach's hands and into the app's. Interpolated into BOTH system prompts from
+// this single constant, on the DIRECTION_KEY_LINE precedent: this project has
+// watched a shared rule live in three copies and the chat prompt be the one
+// that kept getting missed (DISTANCE_BUCKETS, before Slice 6).
+//
+// The two examples are not decoration. A 16-debrief probe measured 89% adoption
+// and every miss fell into one of exactly two shapes the first draft's single
+// example did not cover: a distance typed out while the exit velocity and
+// launch angle in the same sentence used placeholders, and a sentence running
+// value-first ("92 and 91 mph on swings 7 and 4"). One example of each shape is
+// here for that reason, and the distance sentence is spelled out again in
+// words because it was the more common of the two.
+export const NUMBER_SLOT_LINES = `WRITING A SPECIFIC SWING'S NUMBERS.
+When you give one of these six values for a swing you have named, do not type
+the number. Write a placeholder and the system fills in the exact figure before
+the player sees it.
+
+{{s<session>.sw<swing>.ev}}    exit velocity in mph
+{{s<session>.sw<swing>.la}}    launch angle in degrees
+{{s<session>.sw<swing>.dir}}   spray direction in degrees
+{{s<session>.sw<swing>.dist}}  distance in feet
+{{s<session>.sw<swing>.ht}}    pitch height in feet
+{{s<session>.sw<swing>.side}}  pitch side in feet
+
+Always name the session the swing belongs to. Use a placeholder every time, in
+every field including the tips, whichever way round the sentence runs:
+  "Swing 5 went {{s4.sw5.dist}} feet at {{s4.sw5.ev}} mph."
+  "{{s4.sw7.ev}} and {{s4.sw4.ev}} mph on swings 7 and 4 were your best."
+Distance counts too: never type out a distance for a swing you have named.
+
+A placeholder counts as one word against your length budget.
+
+Every other number you still write yourself, exactly as you do now: counts,
+averages, session totals, top-3 lists, targets, thresholds, and any number you
+work out for yourself.`
+
+export const DEBRIEF_SYSTEM = `${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}`
 
 const CHAT_SYSTEM = `You are B1 Coach, an AI hitting coach built into the TrackMan B1 practice system. You are in a conversation with a player reviewing their session data. Speak like an experienced high school or college hitting coach — direct, encouraging, plain-spoken. Never sound like a data analyst.
 
@@ -180,7 +219,9 @@ Respond ONLY with valid JSON matching this exact shape, no preamble, no markdown
   "chart": "chart_key or null"
 }
 
-Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zone_breakdown, pitch_location. Only include a chart key if it directly helps answer the player's question. Otherwise set chart to null.`
+Available chart keys: scatter_ev_la, bar_distance, spray_direction, trend_ev, zone_breakdown, pitch_location. Only include a chart key if it directly helps answer the player's question. Otherwise set chart to null.
+
+${NUMBER_SLOT_LINES}`
 
 const RETRY_DELAY_MS = 1500
 
@@ -606,7 +647,7 @@ Current session being debriefed: Session ${viewingSessionNumber}`
 }
 
 export async function generateDebrief({ goal, player, sessions, viewingSessionNumber, onRetry }) {
-  return callApi({
+  const reply = await callApi({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: DEBRIEF_SYSTEM,
@@ -615,6 +656,12 @@ export async function generateDebrief({ goal, player, sessions, viewingSessionNu
       content: buildDebriefUserMessage({ goal, player, sessions, viewingSessionNumber }),
     }],
   }, { onRetry })
+
+  // The app takes the pen for every per-swing figure the coach handed over.
+  // After callApi, not inside it: callApi is the shared choke point for both
+  // calls and knows nothing about sessions, and the debrief and the chat reply
+  // have different shapes to fill.
+  return fillDebriefNumbers(reply, sessions)
 }
 
 export async function sendChatMessage({ goal, player, sessions, viewingSessionNumber, messages }) {
@@ -658,10 +705,15 @@ ${messages.map((m) => `${m.role === 'user' ? 'Player' : 'Coach'}: ${m.content}`)
 
 Player's latest message: ${messages[messages.length - 1]?.content ?? ''}`
 
-  return callApi({
+  const reply = await callApi({
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system: CHAT_SYSTEM,
     messages: [{ role: 'user', content: userMessage }],
   })
+
+  // Same treatment as the debrief, deliberately. A chat reply sits on the same
+  // screen as the debrief text, so app-owned numbers in one and coach-typed
+  // numbers in the other would be worse than either alone.
+  return fillChatNumbers(reply, filteredSessions)
 }
