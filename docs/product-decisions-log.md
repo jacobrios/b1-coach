@@ -9,6 +9,66 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Slice 15: the app takes the pen for the coach's per-swing numbers (August 27)
+
+*What this was, and the rule that put it on the table.* Since Slice 8b the app
+has pre-counted every figure the coach's prose names and handed them over on a
+briefing sheet. The coach repeats them, at a high rate and never at exactly
+every time. A rule agreed in advance said that if it contradicted a handed
+number at around one debrief in fifty, the app should stop letting it write the
+figure at all. That trigger fired on 19 August at roughly one in 26, and the
+decision then sat with the product manager for eight days.
+
+*The decision was taken on a number that made the case weaker, not stronger.*
+Asked how much of the measured error rate this would actually remove, the
+honest answer came back as about a third, and under half on every reading:
+every genuine coach error across the three most recent rounds was classified by
+hand, and only transcription errors are reachable. Errors that happen in the
+thinking rather than the typing are not, including the two most recent live
+examples, a handed count attached to the wrong side of its own threshold and a
+cross-session sum of two plus two reported as five. The largest single error
+shape on the current app, the coach inventing a grouping and a threshold
+nobody pre-counted, is untouched and stays open.
+
+*The alternative named in the original rule turned out to have decayed.* That
+rule pointed the effort at the pitch-location gap instead. Pre-counting closed
+the simple half of that in Slice 8c, and what remains is an intersection of a
+handed group with a threshold the coach invents on the spot, which no table
+prepared in advance can answer. Fixing the grading tool was weighed as the other
+competitor and declined: its expensive half needs paid live rounds to validate,
+changing it breaks comparability with every committed round, and this slice is
+the one accuracy change that does not need it.
+
+*Two gates were set before any code, and both held.* A kill-switch probe asked
+whether the coach would cooperate with placeholders at all, because this
+project has twice measured that a prompt instruction is persuasion rather than
+a guarantee. It came back at 89% adoption over 16 live debriefs, with every
+placeholder naming a real swing in the right session, and it also produced the
+rounding defect that shipped as a fix: the raw stored pitch position put "a
+pitch at 2.82 feet" in front of a visitor, where a coach says 2.8. The second
+gate was the bar for shipping, written down while nobody was invested: it ships
+only if the product manager cannot tell the new debriefs from the old ones by
+voice. Twelve blind pairs on identical swings, labelled A and B with the key at
+the bottom, and he could not.
+
+*What is proven and what is estimated, kept apart on purpose.* Proven: for any
+value the coach hands over, a contradiction is now impossible rather than
+unlikely, held by tests and watched in a browser writing real numbers into real
+prose. Also proven by forcing it rather than describing it: a placeholder naming
+a swing that does not exist drops its sentence instead of showing a visitor the
+machinery. Estimated, and never measured: the overall error rate. No graded
+round was bought, deliberately. **So this slice makes no measured accuracy
+claim, and its expected benefit of roughly 30% is arithmetic over hand-checked
+data, not a result.**
+
+*Scope, spend, tests.* Extended to the chat prompt as well as the debrief,
+beyond the original description, because a shared rule living in one prompt and
+not the other is this repo's recurring bug and both of the last two QA gates
+caught chat defects. About $0.77 across 43 live calls. `npm test` 695 to 723,
+every new test seen failing first by mutation.
+
+---
+
 ## Micro-PR: the last of the scaffolding leaves the source folder (August 26)
 
 *No model calls, no spend. One file deleted.*

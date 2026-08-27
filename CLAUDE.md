@@ -454,6 +454,21 @@ below is as Slice 10 left it and was not re-counted.
                              `src/sessionStats.test.js` reads the screen file as
                              text and holds all four literals to
                              `SPRAY_CUTOFFS`, so a drift turns the suite red.)*
+    src/numberSlots.js       130 lines. Where the app writes the coach's per-swing
+                             numbers instead of the coach typing them. Added in
+                             Slice 15. Owns three things that move together: the
+                             slot pattern, the rounding (pitch height and side to
+                             one decimal, the four whole-number fields untouched),
+                             and what happens to a slot naming a swing that does
+                             not exist, which is that its SENTENCE is dropped. The
+                             unit of repair is the sentence and not the slot, on
+                             purpose: an unresolvable slot means the coach is
+                             talking about a swing that is not there, so the
+                             sentence is already false whatever goes in the gap.
+                             Do NOT reroute that to the retry path; a reply that
+                             arrives and cannot be used is classified respondedOk
+                             and `isRetryable` deliberately refuses it, so it
+                             would put a failure screen in front of a visitor.
     src/promptText.js          6 lines. One rule of prompt grammar,
                              `swingCountPhrase`, so a count reads "1 swing"
                              rather than "1 swings." Added in Slice 8c; shared
@@ -1157,8 +1172,11 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and at the close of Slice 12 on 25 August 2026 it is **695 tests
-   across 24 files**. *(Unchanged at the close of Slice 13 later the same day,
+   vitest, and at the close of Slice 15 on 27 August 2026 it is **723 tests
+   across 25 files**, up from 695 across 24 at the close of Slice 13. The new
+   file is `src/numberSlots.test.js`; the rest landed in `src/coachApi.test.js`.
+   *(The 695 was measured again at the start of Slice 15 and matched, so no
+   pre-existing failure was carried into that slice.)* *(Unchanged at the close of Slice 13 later the same day,
    which is the expected result rather than a missing update: that slice was
    documentation plus one template file, and Markdown cannot move the suite. A
    move would have meant something else was touched.)*
@@ -2743,8 +2761,20 @@ rewritten, per the append-only rule.
   trust a rate to one significant figure, and this measurement does not
   claim to. Full numbers in
   `docs/eval-fixtures/slice8c-strike-zone-counts/README.md`.
-- **Decided not to have the app write the coach's numbers itself, for now,
-  and the trigger for revisiting has now fired.** The one approach that
+- ~~**Decided not to have the app write the coach's numbers itself, for now,
+  and the trigger for revisiting has now fired.**~~ **DECIDED AND BUILT, 27
+  August 2026, as Slice 15.** The coach writes a placeholder for any of six
+  per-swing values and the app writes the digit. Read the decision log entry
+  for that date before quoting anything from it, because the two halves of the
+  result are deliberately unequal: it is PROVEN that a value the coach hands
+  over cannot be contradicted, by test and by a browser pass, and it is only
+  ESTIMATED that the overall error rate fell, at roughly 30%, by arithmetic
+  over hand-checked data rather than by a graded round. No graded round was
+  bought. **Do not report this slice as a measured accuracy improvement.** The
+  bar it had to clear was voice, set in writing before any code: twelve blind
+  paired debriefs, and the product manager could not tell which were new. The
+  original entry follows as written, because the reasoning that parked it is
+  the part worth keeping. The one approach that
   would make a contradicted count impossible is to let the coach write the
   sentence and have the app fill in the figure. It was deliberately parked
   on 19 August 2026, because it makes the coach's prose more rigid exactly
@@ -3755,6 +3785,38 @@ that pass surfaced.*
   looking for one. That is not a reason to skip it: every step of this item
   except reading the code happens outside the repo, which makes it the exact
   case the rule was written for.
+
+*Added at the close of Slice 15, 27 August 2026:*
+
+- **Adoption is 89%, not 100%, so this is a reduction and not a guarantee.**
+  The probe measured 89% of per-swing values coming back as placeholders across
+  16 live debriefs; the other 11% the coach typed itself and can still get
+  wrong. Every miss fell into one of two shapes the first draft's single example
+  did not cover, a distance typed while the other values in the same sentence
+  used placeholders, and a sentence running value-first, and the shipped wording
+  carries an example of each. **Nobody has re-measured adoption against the
+  shipped wording**, so whether those two examples closed the gap is unknown.
+  One more probe run would answer it for about $0.30.
+- **The mechanism composes prose around numbers the coach is not looking at,
+  and one sentence hints that matters.** A probe debrief read "swings like 8 and
+  3 came off at 92 and 92 mph", where a person writes "both at 92." The coach
+  can see both values on its briefing sheet, so this is not proof the mechanism
+  caused it, and there is no control round to check it against. One instance.
+  Worth watching rather than acting on.
+- **The slot vocabulary is one more thing a prompt edit can break, on the screen
+  a stranger sees first.** Six field names and a session-and-swing form the
+  coach has to get right. It has been exercised by roughly 40 live debriefs and
+  three browser calls, which is not many. The failure path is designed and was
+  forced rather than reasoned about, so a bad placeholder drops its sentence
+  instead of showing braces, but the sample behind "the coach gets the form
+  right" is small.
+- **A handed number attached to the wrong side of its own threshold is still
+  live, and this slice does not touch it.** "Swings with exit velocity 85 mph or
+  higher: 6 swings" becoming "Six of your swings came in under 85 mph" copies
+  the digit correctly and inverts the sentence. Filling the digit in cannot
+  reach it. Same for arithmetic between two figures that were each supplied
+  correctly. These were both named before the slice was approved, not
+  discovered after.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
