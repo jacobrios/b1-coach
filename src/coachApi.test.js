@@ -10,7 +10,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   callApi, goalContext, generateDebrief, sendChatMessage, CoachError,
   DEBRIEF_SYSTEM, DEBRIEF_SYSTEM_BASE, DEBRIEF_BUDGET, buildDebriefUserMessage,
-  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE,
+  DIRECTION_KEY_LINE, SETTING_LINE, SESSIONS_LINE, NUMBER_SLOT_LINES,
 } from './coachApi.js'
 import { distanceDistributionLine } from './ballFlight.js'
 // Imported rather than hand-copied, unlike the distances the block below pins
@@ -1329,8 +1329,13 @@ describe('the spray count lines both prompts state', () => {
 // that quietly reaches for a different set of numbers is caught here rather
 // than by someone re-reading the bench output from three weeks ago.
 describe('the length budget the coach was shipped with', () => {
-  it('DEBRIEF_SYSTEM is exactly the base prompt plus a blank line plus the shipped budget', () => {
-    expect(DEBRIEF_SYSTEM).toBe(`${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}`)
+  // Updated in Slice 15, and the update is itself the record of this test
+  // doing its job: adding the number-slot instruction to the shipped constant
+  // turned this red, which is exactly the one kind of drift CLAUDE.md says it
+  // can catch (something appended to or inlined into the shipped constant
+  // instead of built from its pieces). The composition is now three parts.
+  it('DEBRIEF_SYSTEM is exactly the base prompt, the shipped budget and the number-slot instruction', () => {
+    expect(DEBRIEF_SYSTEM).toBe(`${DEBRIEF_SYSTEM_BASE}\n\n${DEBRIEF_BUDGET}\n\n${NUMBER_SLOT_LINES}`)
   })
 
   it('the shipped budget names all four fields at the numbers the bench picked', () => {
@@ -1456,5 +1461,133 @@ describe('the setting and sessions lines both prompts state', () => {
       generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
     )
     expect(message).not.toContain('Note: All sessions shown here are consecutive rounds of batting practice')
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Slice 15: the app writes the coach's per-swing numbers
+// ─────────────────────────────────────────────────────────────────────────────
+describe('the number-slot instruction and the filling that backs it', () => {
+  const goal = { id: 'power', label: 'Power & Distance' }
+  const player = { firstName: 'Jake' }
+  const swing = (ev, la, dir, dist, ht, side) => ({
+    hit: { launch: { exitSpeed: ev, angle: la, direction: dir }, landing: { distance: dist } },
+    plateLocHeight: ht,
+    plateLocSide: side,
+  })
+  const session = {
+    sessionNumber: 1,
+    swings: [swing(86, 22, -22, 272, 2.8, 0.2), swing(72, 8, 5, 122, 1.24, -0.3)],
+    stats: { avgExitVelocity: 79, avgLaunchAngle: 15, inZoneCount: 2, totalSwings: 2 },
+  }
+
+  const okRes = (text) => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => null },
+    json: async () => ({ content: [{ text }] }),
+  })
+
+  async function systemFor(sendCall) {
+    const fetchMock = vi.fn(async () => okRes('{"ok":true}'))
+    vi.stubGlobal('fetch', fetchMock)
+    await sendCall().catch(() => {})
+    return JSON.parse(fetchMock.mock.calls[0][1].body).system
+  }
+
+  async function replyWith(text, sendCall) {
+    vi.stubGlobal('fetch', vi.fn(async () => okRes(text)))
+    return sendCall()
+  }
+
+  it('reaches the debrief prompt', async () => {
+    expect(await systemFor(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )).toContain(NUMBER_SLOT_LINES)
+  })
+
+  // The DIRECTION_KEY_LINE precedent. This project has watched a shared rule
+  // live in several copies with the chat prompt as the one that kept getting
+  // missed, and the last two browser QA gates both caught a defect in the chat
+  // coach specifically.
+  it('reaches the chat prompt too', async () => {
+    expect(await systemFor(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'Which ones did I pull?' }],
+      }),
+    )).toContain(NUMBER_SLOT_LINES)
+  })
+
+  it('is the same string in both, so the two cannot drift apart', async () => {
+    const debrief = await systemFor(() =>
+      generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    const chat = await systemFor(() =>
+      sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'Which ones did I pull?' }],
+      }),
+    )
+    const extract = (t) => t.slice(t.indexOf("WRITING A SPECIFIC SWING'S NUMBERS."))
+    expect(extract(debrief)).toBe(extract(chat))
+    expect(extract(debrief)).toBe(NUMBER_SLOT_LINES)
+  })
+
+  // The end-to-end claim, and the one that makes this slice worth anything: a
+  // figure the coach hands over comes back as the real value, not as whatever
+  // the model would have typed.
+  it('fills a debrief slot with the real value before the caller ever sees it', async () => {
+    const reply = await replyWith(
+      JSON.stringify({
+        coachingSummary: 'Swing 1 came off at {{s1.sw1.ev}} mph.',
+        whatThisMeans: 'Real bat speed.',
+        tipsIntro: 'Two things.',
+        nextSessionTips: ['Swing 2 sat at {{s1.sw2.la}} degrees on a pitch at {{s1.sw2.ht}} feet.'],
+        charts: ['scatter_ev_la', 'trend_ev'],
+      }),
+      () => generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(reply.coachingSummary).toBe('Swing 1 came off at 86 mph.')
+    // And the pitch height is rounded the way a coach writes it, not dumped at
+    // the two decimals the generator stores.
+    expect(reply.nextSessionTips[0]).toBe('Swing 2 sat at 8 degrees on a pitch at 1.2 feet.')
+  })
+
+  it('fills a chat slot too', async () => {
+    const reply = await replyWith(
+      JSON.stringify({ message: 'Swing 1 went {{s1.sw1.dist}} feet.', chart: null }),
+      () => sendChatMessage({
+        goal, player, sessions: [session], viewingSessionNumber: 1,
+        messages: [{ role: 'user', content: 'How far did swing 1 go?' }],
+      }),
+    )
+    expect(reply.message).toBe('Swing 1 went 272 feet.')
+  })
+
+  // A transposition has nowhere to happen once each slot carries its own swing
+  // number. This is the single most common transcription error this slice
+  // exists to remove, so it is pinned end to end rather than only in the unit.
+  it('cannot transpose a pair, because each slot names its own swing', async () => {
+    const reply = await replyWith(
+      JSON.stringify({
+        coachingSummary: 'Swings 1 and 2 hit {{s1.sw1.ev}} and {{s1.sw2.ev}} mph.',
+        whatThisMeans: 'x', tipsIntro: 'y', nextSessionTips: ['z'], charts: ['trend_ev', 'bar_distance'],
+      }),
+      () => generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(reply.coachingSummary).toBe('Swings 1 and 2 hit 86 and 72 mph.')
+  })
+
+  it('drops a sentence naming a swing that does not exist rather than showing the braces', async () => {
+    const reply = await replyWith(
+      JSON.stringify({
+        coachingSummary: 'Swing 1 hit {{s1.sw1.ev}} mph. Swing 9 hit {{s1.sw9.ev}} mph.',
+        whatThisMeans: 'x', tipsIntro: 'y', nextSessionTips: ['z'], charts: ['trend_ev', 'bar_distance'],
+      }),
+      () => generateDebrief({ goal, player, sessions: [session], viewingSessionNumber: 1 }),
+    )
+    expect(reply.coachingSummary).toBe('Swing 1 hit 86 mph.')
+    expect(reply.coachingSummary).not.toContain('{{')
   })
 })
