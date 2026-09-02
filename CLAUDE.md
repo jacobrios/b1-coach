@@ -3729,6 +3729,13 @@ that pass surfaced.*
   reopening `src/numberSlots.js` or `src/bestSwing.js` re-reads what those two
   documents claim about it.
 
+  **The drift class is no longer hypothetical, 1 September 2026.** PR #46 gave
+  `docs/proof-of-concept.md` a tenth lesson and updated its own heading, but
+  left the README calling it "nine things I learned" for five days. The cheapest
+  checkable claim in the repo, one document counting another's sections, went
+  stale inside the PR that caused it. Standing answer unchanged; editing either
+  document means re-reading what the other says about it.
+
 - **Two documents now make checkable claims that nothing tests.** Same class of
   debt as the README's, doubled. The same answer applies: recorded rather than
   guarded, because guarding prose costs more than it returns here. The practical

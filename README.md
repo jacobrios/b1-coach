@@ -86,5 +86,5 @@ I am not an engineer and this is not an engineering showcase. What it shows is t
 
 ## Documentation
 
-- [Proof of Concept](docs/proof-of-concept.md): the product thesis, the verdict, and nine things I learned about making an AI coach trustworthy enough to put in front of a player
+- [Proof of Concept](docs/proof-of-concept.md): the product thesis, the verdict, and ten things I learned about making an AI coach trustworthy enough to put in front of a player
 - [Product Decisions Log](docs/product-decisions-log.md): every decision and its reasoning, newest first
