@@ -36,8 +36,9 @@ lock and never will. What is false is only the report's implication that it
 ought to. That is a genuine difference rather than a hidden gap, which is the
 case the mechanism was built for.
 
-*What this cost and what it buys.* Two JSON entries and two documentation
-paragraphs. No code, no behaviour, no test. Each entry is pinned to the SHA of
+*What this cost and what it buys.* Two JSON entries, two CLAUDE.md paragraphs,
+and this entry, which is the longest of the three parts. No code, no behaviour,
+no test. Each entry is pinned to the SHA of
 the template file it was accepted against, so both go quiet now and ask again
 the moment the template's own copy changes, which is the intended behaviour
 rather than a permanent silencing. The count of recorded differences goes from
@@ -49,8 +50,10 @@ the decision travels with the project. Left uncommitted it would have been a
 decision that existed only on one machine, in one worktree, while every future
 session opening this project from the main checkout got the same report again
 and re-litigated it from scratch. That is the failure this repository has
-already recorded twice under a different name: work agreed in one session and
-invisible to every session that did not receive the paste.
+already recorded once, in August, under a different name: work agreed in one
+session and invisible to every session that did not receive the paste. Once
+rather than twice, checked rather than remembered; that entry names two
+downstream symptoms, which is not the same as two incidents.
 
 ---
 
