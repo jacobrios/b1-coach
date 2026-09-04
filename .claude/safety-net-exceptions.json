@@ -53,6 +53,18 @@
       "reason": "Adopted on 14 August 2026, but as protect-paths.test.js rather than .ts, because this project is plain JavaScript and has no TypeScript anywhere; a single .ts file would be the only one in the repo. The content is the template's, with every Prisma migration case dropped (this project has no database, and the hook itself drops that half for the same reason) and the stderr assertions retargeted at this project's wording. 18 tests, both directions, and both directions were seen failing against a deliberately broken guard before being committed. This line is recorded rather than left reporting because the report says the project has no test for its env guard, which is no longer true.",
       "acceptedOn": "2026-08-14",
       "templateSha256": "abf4bd26ab987f3281aeba51e6e6ced641c5d552097ebafe72ca34886b476019"
+    },
+    "suite-lock.mjs": {
+      "kind": "missing",
+      "reason": "This project has no database, so two concurrent suite runs cannot contend for one; the lock would guard nothing.",
+      "acceptedOn": "2026-09-03",
+      "templateSha256": "2c187007ab5167a216771bde13546d6acd5a7245408f60d1077eeab96cce39ac"
+    },
+    "suite-lock.test.ts": {
+      "kind": "missing",
+      "reason": "This project does not have suite-lock.mjs, so there is nothing for its test to cover.",
+      "acceptedOn": "2026-09-03",
+      "templateSha256": "51b3a649b98e837e2f584dcd3bf9acca3778039686a756bc4f7332a47cb65a26"
     }
   },
   "$comment": "Differences from ~/.claude/templates/project-safety-nets/ that this project has deliberately accepted. Written by `node ~/.claude/bin/accept-safety-net-difference.mjs`, read by ~/.claude/hooks/safety-net-drift.mjs. Each entry is pinned to the template file it was accepted against: when that template file changes, the acceptance expires and the difference is reported again."

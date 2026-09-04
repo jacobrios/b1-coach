@@ -238,6 +238,30 @@ in mind for any future line: silencing a real gap is a lie, recording a genuine
 difference is not, and the test for which one you are looking at is whether the
 report would still be true after you silence it.**
 
+**The count is now eleven, recorded 3 September 2026.** The template grew
+`suite-lock.mjs` and its `suite-lock.test.ts`, a lock that serializes test-suite
+runs so two of them cannot contend for one shared database. This project has no
+database, so nothing can contend and the lock would be machinery guarding
+nothing; the test is recorded on the narrower ground that there is no hook here
+for it to cover. Neither was recorded on a session's own initiative, which is
+the standing rule for this file: the product manager gave the reason and the
+exact command for the hook, and separately authorised recording the test after
+it was surfaced back to him. Those are two different acts and the decision log
+keeps them apart.
+
+**The test from the paragraph above was applied rather than assumed, and it
+gives a different answer here than it did for `protect-paths.test.js`.** Ask
+whether the report would still be true after silencing it: it would. This
+project genuinely does not have the lock, and will not while it has no shared
+resource to serialize. What is false is only the report's implication that it
+ought to. Note the conditional rather than a flat "never": the SHA pin exists
+precisely so this decision expires and gets re-made when the template moves, and
+a sentence closing the question would defeat the mechanism described two
+paragraphs above. That makes this a genuine difference
+rather than a silenced gap, which is the case the mechanism was built for. A
+future reader should not need to re-derive that; the distinction is the whole
+reason the file exists rather than a `.gitignore` line.
+
 ## Stack
 
 React 19.2 + Vite 8. Recharts 3.8 for all charts. react-markdown 10 for coach

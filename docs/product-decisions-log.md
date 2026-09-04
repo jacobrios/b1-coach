@@ -9,6 +9,54 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: this project records why it does without the suite lock (September 3)
+
+*What this was.* The safety-net template grew two files, `suite-lock.mjs` and
+its `suite-lock.test.ts`, and the drift check began reporting both as missing
+here every session. The lock serializes test-suite runs so two of them cannot
+contend for one shared database. This project has no database. Nothing can
+contend, so the file would be machinery guarding nothing, and the test is
+missing on the narrower ground that there is no hook here for it to cover. Both
+are now recorded as deliberate differences and the drift report is silent.
+
+*The decision was the product manager's, and that is the part worth recording.*
+The drift check exists to report and never to fix, and the standing rule is that
+a session does not adopt, copy or accept anything on its own initiative. He gave
+the reason and the exact command for the first file; the second was surfaced
+back to him rather than accepted on the pattern, because accepting a hook does
+not imply accepting its test, and the checker asks about them separately for
+that reason. He then authorised finishing the job.
+
+*The test this project already had on file was applied rather than skipped, and
+it gives a different answer here than the last time.* CLAUDE.md's own rule for
+this file asks whether the report would still be true after you silence it. For
+`protect-paths.test.js` in August it would not have been, so the gap was filled
+rather than silenced. Here it would: this project genuinely does not have the
+lock and never will. What is false is only the report's implication that it
+ought to. That is a genuine difference rather than a hidden gap, which is the
+case the mechanism was built for.
+
+*What this cost and what it buys.* Two JSON entries, two CLAUDE.md paragraphs,
+and this entry, which is the longest of the three parts. No code, no behaviour,
+no test. Each entry is pinned to the SHA of
+the template file it was accepted against, so both go quiet now and ask again
+the moment the template's own copy changes, which is the intended behaviour
+rather than a permanent silencing. The count of recorded differences goes from
+nine to eleven.
+
+*One thing nearly went unrecorded, and it is the reason this is a PR at all.*
+The acceptance script writes to the working tree and says to commit the file so
+the decision travels with the project. Left uncommitted it would have been a
+decision that existed only on one machine, in one worktree, while every future
+session opening this project from the main checkout got the same report again
+and re-litigated it from scratch. That is the failure this repository has
+already recorded once, in August, under a different name: work agreed in one
+session and invisible to every session that did not receive the paste. Once
+rather than twice, checked rather than remembered; that entry names two
+downstream symptoms, which is not the same as two incidents.
+
+---
+
 ## Micro-PR: the coach holds up the best swing, not the second best (August 27)
 
 *What this was.* The product manager's merge-gate QA pass on Slice 15 found the
