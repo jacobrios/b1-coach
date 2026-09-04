@@ -238,6 +238,24 @@ in mind for any future line: silencing a real gap is a lie, recording a genuine
 difference is not, and the test for which one you are looking at is whether the
 report would still be true after you silence it.**
 
+**The count is now eleven, recorded 3 September 2026.** The template grew
+`suite-lock.mjs` and its `suite-lock.test.ts`, a lock that serializes test-suite
+runs so two of them cannot contend for one shared database. This project has no
+database, so nothing can contend and the lock would be machinery guarding
+nothing; the test is recorded on the narrower ground that there is no hook here
+for it to cover. Both were recorded on the product manager's explicit
+instruction rather than on a session's own initiative, which is the standing
+rule for this file.
+
+**The test from the paragraph above was applied rather than assumed, and it
+gives a different answer here than it did for `protect-paths.test.js`.** Ask
+whether the report would still be true after silencing it: it would. This
+project genuinely does not have the lock and never will. What is false is only
+the report's implication that it ought to. That makes this a genuine difference
+rather than a silenced gap, which is the case the mechanism was built for. A
+future reader should not need to re-derive that; the distinction is the whole
+reason the file exists rather than a `.gitignore` line.
+
 ## Stack
 
 React 19.2 + Vite 8. Recharts 3.8 for all charts. react-markdown 10 for coach
