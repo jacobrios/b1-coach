@@ -16,17 +16,29 @@
   inline them as base64 data URIs before shooting. That is a rendering
   workaround, not part of the design.
 
-  TWO THINGS ABOUT THE MARK, both deliberate, neither a mistake to tidy up:
+  SIX DIFFERENCES FROM THE APP'S OWN MARK (RadarMark in src/App.jsx), all
+  deliberate, none a mistake to tidy up. They are enumerated in full because
+  public/radar-mark.svg enumerates its five and an unnamed difference is what
+  invites a future session to "fix" it. This is the same size-driven adaptation
+  that file documents in the OPPOSITE direction, where the innermost arc is
+  dropped entirely because it is invisible at 16px.
 
-  1. The arcs are at radius 4, 8 and 12, evenly spread. The app's own mark
-     (RadarMark in src/App.jsx) puts them at 2, 7 and 12. At 340px the
-     innermost arc at radius 2 collides with the centre dot and the three
-     rings stop reading as three rings. Only the inner two moved; the outer
-     arc is the app's geometry untouched. This is the same size-driven
-     adaptation public/radar-mark.svg documents in the other direction, where
-     the innermost arc is dropped entirely because it is invisible at 16px.
+  1. The arcs are at radius 4, 8 and 12, evenly spread; the app puts them at
+     2, 7 and 12. At 340px the innermost arc at radius 2 collides with the
+     centre dot and the three rings stop reading as three rings. Only the
+     inner two moved: the outer arc is the app's radius-12 path unchanged,
+     down to its digits.
   2. The opacities are 0.58 / 0.8 / 1, against the app's 0.35 / 0.6 / 1.
      #FF6B1A at 0.35 over #141518 resolves to a muddy brown at this size.
+  3. Arc stroke-width is 1.6, against the app's 2.5. The app's value is tuned
+     for a 26px render; carried to 340px it reads as a fat doughnut rather
+     than a radar sweep.
+  4. The centre dot is r=1.5, against the app's r=2, for the same reason and
+     to keep it clear of the radius-4 arc.
+  5. The sweep line is stroke-width 1.4 at opacity 0.62, against the app's 2
+     at 0.5. Thinner to match item 3; brighter because 0.5 goes brown here.
+  6. The sweep starts at 4.6,27.4 rather than 4,28, which pulls it off the
+     viewBox corner now that its cap is drawn large.
 
   DO NOT put the "Powered by TrackMan" badge here, even though it sits beside
   this same mark in the app header. This card goes on a personal LinkedIn
@@ -54,7 +66,7 @@
         color:rgba(255,255,255,0.42);margin-top:30px;letter-spacing:0.03em}
 </style></head><body><div class="card">
   <svg width="340" height="340" viewBox="0 0 32 32" fill="none">
-    <path d="M16 28C22.628 28 28 22.628 28 16S22.628 4 16 4"
+    <path d="M16 28C22.627 28 28 22.627 28 16S22.627 4 16 4"
       stroke="#FF6B1A" stroke-width="1.6" stroke-linecap="round" opacity="0.58"/>
     <path d="M16 24C20.418 24 24 20.418 24 16S20.418 8 16 8"
       stroke="#FF6B1A" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>

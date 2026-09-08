@@ -3919,6 +3919,39 @@ that pass surfaced.*
   correctly. These were both named before the slice was approved, not
   discovered after.
 
+*Added 8 September 2026, from the link-preview micro-PR:*
+
+- **This project describes itself in four places and NO TWO ARE WORDED THE
+  SAME**, which the link-preview micro-PR added a fourth to and its review then
+  measured. `index.html` now carries "An AI coaching layer **over** TrackMan B1
+  baseball hitting data, turning raw swing metrics into coaching a high school
+  player can act on", in three tags at once (`description`, `og:description`,
+  `twitter:description`). Beside it: `README.md:3` says "**for** TrackMan B1
+  baseball hitting data. Proof of concept"; this file's own opening says
+  "**over** TrackMan B1 baseball hitting data"; and `docs/proof-of-concept.md:9`
+  says "built on **a subset of** TrackMan B1 baseball hitting data". They agree
+  in substance and differ in every sentence, so **grepping for the sentence will
+  not find them and a first draft of this entry wrongly said it would.** Note the
+  new meta description is the only one that drops the "a subset of" hedge about
+  how much data this actually covers; that was not a decision, just the shortest
+  wording winning. Recorded rather than guarded, on the same reasoning as the
+  other prose-drift items above: a test over marketing copy costs more than it
+  returns here. The practical version is that anyone rewriting how this project
+  describes itself opens all four rather than trusting a search.
+- **Nobody has seen a real link preview of this page.** The tags and the card
+  are verified as far as a local machine can reach them: 14 tags in the served
+  document, `/share-card.png` returning 200 at 2400x1254. What cannot be checked
+  without a deploy is whether a scraper actually renders them, so the first item
+  on `docs/pre-deploy-checklist.md` is a LinkedIn Post Inspector pass. Until
+  that runs, treat the preview as built and unproven.
+- **The share card is a generated file with a committed source, at
+  `design/share-card/card.html`.** It is not part of the app and nothing imports
+  it; `npm run build` copies `public/share-card.png` and never reads the source.
+  Read that file's header before redrawing the mark at any size: it records why
+  the card's arc geometry deliberately differs from BOTH the app's on-screen
+  `RadarMark` and the favicon's version of the same artwork, which are already
+  two different drawings of one mark for two different sizes.
+
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app
 and `/api/coach`; the safety-net fixes went back to
@@ -3944,28 +3977,3 @@ more than either alone. This matches the convention in the owner's other
 projects. Corrected on 30 July 2026, after the Slice 1 plan was committed and
 then deleted, and after a standalone plan pull request was opened for Slice 2 and
 withdrawn.
-
-*Added 8 September 2026, from the link-preview micro-PR:*
-
-- **The project's one-line description now exists in a fourth place, and this
-  one is public markup.** `index.html` carries it in three tags (`description`,
-  `og:description`, `twitter:description`), beside the copies in `README.md`,
-  `docs/proof-of-concept.md` and this file's own opening. They agree today,
-  checked 8 September 2026. Same class as the prose-drift item already recorded
-  above and the same answer: recorded rather than guarded, because a test over
-  marketing copy costs more than it returns here. The practical version is a
-  line on this list, that anyone rewriting how this project describes itself
-  greps for the sentence rather than editing one copy.
-- **Nobody has seen a real link preview of this page.** The tags and the card
-  are verified as far as a local machine can reach them: 14 tags in the served
-  document, `/share-card.png` returning 200 at 2400x1254. What cannot be checked
-  without a deploy is whether a scraper actually renders them, so the first item
-  on `docs/pre-deploy-checklist.md` is a LinkedIn Post Inspector pass. Until
-  that runs, treat the preview as built and unproven.
-- **The share card is a generated file with a committed source, at
-  `design/share-card/card.html`.** It is not part of the app and nothing imports
-  it; `npm run build` copies `public/share-card.png` and never reads the source.
-  Read that file's header before redrawing the mark at any size: it records why
-  the card's arc geometry deliberately differs from BOTH the app's on-screen
-  `RadarMark` and the favicon's version of the same artwork, which are already
-  two different drawings of one mark for two different sizes.

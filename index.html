@@ -14,7 +14,8 @@
       Link-preview tags. Without these, anywhere this URL is pasted (LinkedIn,
       Slack, iMessage, X) shows a bare card with a grey placeholder where the
       image should be, because there is nothing on the page for the scraper to
-      read. That is what a stranger saw before 8 September 2026.
+      read. These tags do nothing until they are deployed AND the platform is made
+      to look at the page again; see docs/pre-deploy-checklist.md.
 
       og:image MUST be an absolute URL. A relative path fails silently, which
       is the usual way this ends up half-working. The image itself is a raster
@@ -54,6 +55,10 @@
       content="An AI coaching layer over TrackMan B1 baseball hitting data, turning raw swing metrics into coaching a high school player can act on."
     />
     <meta name="twitter:image" content="https://b1-coach.vercel.app/share-card.png" />
+    <meta
+      name="twitter:image:alt"
+      content="B1 Coach, an AI hitting coach for baseball swing data, on a dark card with an orange radar mark."
+    />
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

@@ -47,9 +47,12 @@ profile under one person's name and that pairing does not belong there.
 
 *What was verified.* The suite was 751 across 26 before and after, so nothing
 moved. The production build succeeds. The app itself was loaded in a browser
-after the change, because `index.html` is the app's entry file and rewriting it
-wholesale is the one way this could have broken the site; the goal picker
-renders and the console is clean. The served page was queried directly: 14
+after the change, because `index.html` is the app's entry file and a mistake in
+it takes the whole site down; the goal picker renders and the console is clean.
+*(A first draft of this sentence said the file was "rewritten wholesale". Review
+checked and the diff is purely additive, 50 insertions and zero deletions, so
+the browser pass was cheap insurance rather than the necessity that wording
+implied.)* The served page was queried directly: 14
 preview tags present, and `/share-card.png` returns 200 as `image/png` at
 2400x1254, a ratio of 1.914 against LinkedIn's 1.91. The card was also
 downscaled to 200px, the width it renders at in a feed, and read there: the
@@ -58,6 +61,22 @@ title and the mark hold, the byline does not, which is the intended hierarchy.
 tags until they are deployed, so nobody has yet seen a real LinkedIn preview of
 this page. That is the first item on the QA script and it is a check only the
 product manager can run.
+
+*What review caught, and it was mostly the prose.* Nothing in the markup or the
+image was wrong. Four documentation claims were: this entry's "rewritten
+wholesale" above; a note in `design/share-card/card.html` announcing "two"
+differences from the app's radar mark when there are six, which is exactly the
+unnamed-difference problem `public/radar-mark.svg` avoids by enumerating all
+five of its own; a claim in two files that the card's outer arc is the app's
+geometry untouched, when the path data differed in the last digit (`22.628`
+against `22.627`, about two hundredths of a pixel, invisible but not
+"untouched", now made true by matching the digit and re-rendering); and a
+CLAUDE.md entry saying the project's four self-descriptions are copies that a
+grep would find, when they are four different sentences. Two small real gaps
+were closed too, a missing `twitter:image:alt` and a comment written in the past
+tense about a fix that has not shipped yet. The review also confirmed something
+worth keeping: rendering `design/share-card/card.html` reproduces the committed
+PNG byte for byte, so the source is honest rather than decorative.
 
 ---
 
