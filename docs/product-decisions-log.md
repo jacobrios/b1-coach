@@ -62,6 +62,19 @@ tags until they are deployed, so nobody has yet seen a real LinkedIn preview of
 this page. That is the first item on the QA script and it is a check only the
 product manager can run.
 
+*The layout was the product manager's call, made against a rendered
+alternative.* The first version stacked "B1" over "COACH" on two lines with the
+mark near the middle. He had Claude Design produce a competing card, preferred
+its single-line title and its mark pushed to the left edge, and preferred this
+one's orange subheading, so the shipped card takes both. It is worth recording
+that this was decided by looking at two rendered images rather than by
+describing them, which is the only way a layout question ever actually gets
+settled. **One cost, measured and accepted:** fitting the subheading on one line
+took it from 45px to 37px, so it reads less well at the roughly 200px a feed
+thumbnail renders at. The title grew and reads better. On LinkedIn's Featured
+section, which is where this link is actually going and which renders larger
+than a feed card, both are comfortable.
+
 *What review caught, and it was mostly the prose.* Nothing in the markup or the
 image was wrong. Four documentation claims were: this entry's "rewritten
 wholesale" above; a note in `design/share-card/card.html` announcing "two"
