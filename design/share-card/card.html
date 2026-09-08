@@ -1,0 +1,102 @@
+<!doctype html>
+<!--
+  Source for public/share-card.png, the Open Graph link-preview image.
+
+  Open this file in a browser to see the card; it is 1200x627, the ratio
+  LinkedIn, Slack and X all use for a link preview. To regenerate the PNG:
+
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+      --headless --disable-gpu --hide-scrollbars \
+      --force-device-scale-factor=2 --window-size=1200,627 \
+      --virtual-time-budget=5000 \
+      --screenshot=../../public/share-card.png card.html
+
+  Headless Chrome races the Google Fonts request, so if the render comes back
+  in Helvetica rather than Barlow Condensed, download the three font files and
+  inline them as base64 data URIs before shooting. That is a rendering
+  workaround, not part of the design.
+
+  SIX DIFFERENCES FROM THE APP'S OWN MARK (RadarMark in src/App.jsx), all
+  deliberate, none a mistake to tidy up. They are enumerated in full because
+  public/radar-mark.svg enumerates its five and an unnamed difference is what
+  invites a future session to "fix" it. This is the same size-driven adaptation
+  that file documents in the OPPOSITE direction, where the innermost arc is
+  dropped entirely because it is invisible at 16px.
+
+  1. The arcs are at radius 4, 8 and 12, evenly spread; the app puts them at
+     2, 7 and 12. At this size the innermost arc at radius 2 collides with the
+     centre dot and the three rings stop reading as three rings. Only the
+     inner two moved: the outer arc is the app's radius-12 path unchanged,
+     down to its digits.
+  2. The opacities are 0.58 / 0.8 / 1, against the app's 0.35 / 0.6 / 1.
+     #FF6B1A at 0.35 over #141518 resolves to a muddy brown at this size.
+  3. Arc stroke-width is 1.6, against the app's 2.5. The app's value is tuned
+     for a 26px render; carried to 340px it reads as a fat doughnut rather
+     than a radar sweep.
+  4. The centre dot is r=1.5, against the app's r=2, for the same reason and
+     to keep it clear of the radius-4 arc.
+  5. The sweep line is stroke-width 1.4 at opacity 0.62, against the app's 2
+     at 0.5. Thinner to match item 3; brighter because 0.5 goes brown here.
+  6. The sweep starts at 4.6,27.4 rather than 4,28, which pulls it off the
+     viewBox corner now that its cap is drawn large.
+
+  THE LAYOUT IS THE PRODUCT MANAGER'S, decided 8 September 2026 against a
+  version that stacked "B1" over "COACH" on two lines with the mark closer to
+  centre. He asked for the mark pushed left and the title on ONE line, keeping
+  the orange subheading. The title and subheading are deliberately set to
+  near-identical ink widths (about 640 and 653 px, measured rather than
+  guessed) so the two read as one block; changing either font size breaks that
+  and the other has to be re-measured to match. The subheading is `nowrap` on
+  purpose and at 37px it only just fits, so lengthening that sentence by even a
+  couple of words will push it off the right edge silently.
+
+  ONE COST OF THE ONE-LINE VERSION, measured and accepted: the subheading
+  dropped from 45px to 37px to fit, so it is harder to read at the ~200px a
+  feed thumbnail renders at. The title got bigger and reads better, which is
+  the trade he chose. In LinkedIn's own Featured section, which renders larger
+  than a feed card, both are comfortable.
+
+  DO NOT put the "Powered by TrackMan" badge here, even though it sits beside
+  this same mark in the app header. This card goes on a personal LinkedIn
+  profile under one person's name; that pairing does not belong on it.
+
+  If this card is ever redrawn, change the FILENAME of the PNG as well.
+  Every platform that has scraped the page has cached the image at its URL,
+  and a new filename is a new cache key. Same reasoning as the note in
+  public/radar-mark.svg.
+-->
+<html><head><meta charset="utf-8"><title>B1 Coach share card</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500&family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:627px;background:#141518;overflow:hidden}
+  .card{width:1200px;height:627px;display:flex;align-items:center;
+        justify-content:flex-start;gap:66px;background:#141518;
+        padding:84px 76px 0 92px}
+  .type{display:flex;flex-direction:column}
+  h1{font-family:'Barlow Condensed';font-weight:900;font-size:186px;
+     line-height:0.86;color:#fff;letter-spacing:0.005em;
+     text-transform:uppercase;white-space:nowrap}
+  .sub{font-family:'Barlow Condensed';font-weight:700;font-size:37px;
+       line-height:1.1;color:#FF6B1A;letter-spacing:0.038em;
+       text-transform:uppercase;white-space:nowrap;margin-top:22px}
+  .foot{font-family:'Barlow';font-weight:500;font-size:25px;
+        color:rgba(255,255,255,0.42);margin-top:26px;letter-spacing:0.03em}
+</style></head><body><div class="card">
+  <svg width="286" height="286" viewBox="0 0 32 32" fill="none" style="flex:0 0 auto">
+    <path d="M16 28C22.627 28 28 22.627 28 16S22.627 4 16 4"
+      stroke="#FF6B1A" stroke-width="1.6" stroke-linecap="round" opacity="0.58"/>
+    <path d="M16 24C20.418 24 24 20.418 24 16S20.418 8 16 8"
+      stroke="#FF6B1A" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
+    <path d="M16 20C18.209 20 20 18.209 20 16S18.209 12 16 12"
+      stroke="#FF6B1A" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="16" cy="16" r="1.5" fill="#FF6B1A"/>
+    <line x1="4.6" y1="27.4" x2="16" y2="16"
+      stroke="#FF6B1A" stroke-width="1.4" stroke-linecap="round" opacity="0.62"/>
+  </svg>
+  <div class="type">
+    <h1>B1 Coach</h1>
+    <div class="sub">AI hitting coach for baseball swing data</div>
+    <div class="foot">Jacob Rios &nbsp;·&nbsp; Proof of concept</div>
+  </div>
+</div></body></html>
