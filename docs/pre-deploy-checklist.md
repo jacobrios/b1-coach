@@ -201,3 +201,40 @@ gone permanently.
   both projects was $0.06 in the cycle's first day, so $5 is a catastrophe
   backstop rather than a working limit. **On a downgrade to Hobby this setting
   disappears**, and that is fine: overspending becomes impossible again.
+
+---
+
+## 8 September 2026: the link preview, and the one thing deploying does not do
+
+The page now carries Open Graph tags and serves `public/share-card.png`. Adding
+them is a repo change and ships with any ordinary deploy. **Making them take
+effect on a platform that has already looked at this page is not**, and that is
+the obligation this entry exists to record.
+
+Every scraper caches. LinkedIn in particular stores what it found the first time
+it saw a URL and will keep serving that stale preview, the grey placeholder
+included, for a long time without being asked to look again. **B1 Coach has
+already been scraped by LinkedIn**, on 8 September 2026, while the product
+manager was adding it to his profile, at which point the page had no image. So
+the deploy alone changes nothing on his profile.
+
+- [ ] **After the deploy, force LinkedIn to re-fetch the page.** Paste
+      `https://b1-coach.vercel.app` into LinkedIn's Post Inspector
+      (`https://www.linkedin.com/post-inspector/`) and use its re-scrape option.
+      Confirms it worked: the inspector shows the card rather than a blank
+      thumbnail. Doing this **before** editing the profile entry saves a round
+      trip, because the Add media dialog reads the same cache.
+- [ ] **Sanity-check one other surface.** Paste the URL into a Slack DM to
+      yourself or an iMessage. Those caches are separate from LinkedIn's and
+      usually cold, so they show what a genuinely new visitor's preview looks
+      like without any inspector.
+
+**If the card is ever redrawn, change the PNG's filename as well**, not just its
+contents. Platforms cache the image at its URL independently of the page, so
+reusing `share-card.png` risks the old artwork persisting somewhere after the
+new one ships. This is the same reasoning that named the favicon
+`radar-mark.svg` rather than `favicon.svg`; see that file's own header.
+
+**No Vercel setting, environment variable or dashboard change is involved.** The
+image is a static file under `public/` and the tags are markup, so both are
+served by the CDN exactly like the rest of the app.

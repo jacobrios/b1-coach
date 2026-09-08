@@ -9,6 +9,58 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: a shared link to B1 Coach previews with its own card (September 8)
+
+*What this was.* The product manager was adding B1 Coach to his LinkedIn
+profile and found the thumbnail slot showing a grey placeholder. The cause was
+not LinkedIn: `index.html` carried no Open Graph tags at all, so a scraper
+fetching the page found a title and nothing else. Every place this link gets
+pasted, LinkedIn, Slack, iMessage, X, had been rendering the same empty card
+since the project went up. The page now carries the tags and serves a
+1200x627 share image built from the app's own radar mark.
+
+*The judgment worth recording is what "done" meant.* The first instinct, his and
+a reasonable one, was to have a design tool produce an image and upload it by
+hand. That fixes one slot on one profile. It does not fix the link, because the
+preview is generated from the page rather than from anything a person uploads,
+so the next person to paste the URL anywhere still sees the placeholder. The
+deliverable was therefore a repo change, not a picture. He can still upload
+manually into that particular LinkedIn dialog, and probably should today, since
+scrapers cache and the profile is being edited now; the tags are what make it
+correct everywhere else and permanently.
+
+*One design decision, made deliberately and disclosed rather than absorbed.* The
+card does not scale up `public/radar-mark.svg`. That file is drawn for a 16px
+favicon: the innermost of the three arcs is deleted outright, the opacities are
+raised, the strokes fattened, all documented in its own header. Enlarged to
+340px those compensations read as a clumsy mark with a ring missing. The card
+works from the app's on-screen `RadarMark` instead, with two size-driven changes
+of its own, the inner two arcs spread apart so they stop colliding with the
+centre dot, and the opacities raised because #FF6B1A at 0.35 over #141518
+resolves to brown at this size. The outer arc is the app's geometry untouched.
+Same principle as the favicon, applied in the opposite direction, and written
+into `design/share-card/card.html` beside the artwork.
+
+*What is deliberately not on the card:* the "Powered by TrackMan" badge, which
+sits beside this same mark in the app header. This image goes on a personal
+profile under one person's name and that pairing does not belong there.
+
+*What was verified.* The suite was 751 across 26 before and after, so nothing
+moved. The production build succeeds. The app itself was loaded in a browser
+after the change, because `index.html` is the app's entry file and rewriting it
+wholesale is the one way this could have broken the site; the goal picker
+renders and the console is clean. The served page was queried directly: 14
+preview tags present, and `/share-card.png` returns 200 as `image/png` at
+2400x1254, a ratio of 1.914 against LinkedIn's 1.91. The card was also
+downscaled to 200px, the width it renders at in a feed, and read there: the
+title and the mark hold, the byline does not, which is the intended hierarchy.
+**What could not be verified is the thing itself.** No scraper can read these
+tags until they are deployed, so nobody has yet seen a real LinkedIn preview of
+this page. That is the first item on the QA script and it is a check only the
+product manager can run.
+
+---
+
 ## Micro-PR: this project records why it does without the suite lock (September 3)
 
 *What this was.* The safety-net template grew two files, `suite-lock.mjs` and

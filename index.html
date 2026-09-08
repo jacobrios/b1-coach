@@ -5,6 +5,56 @@
     <link rel="icon" type="image/svg+xml" href="/radar-mark.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>B1 Coach</title>
+    <meta
+      name="description"
+      content="An AI coaching layer over TrackMan B1 baseball hitting data, turning raw swing metrics into coaching a high school player can act on."
+    />
+
+    <!--
+      Link-preview tags. Without these, anywhere this URL is pasted (LinkedIn,
+      Slack, iMessage, X) shows a bare card with a grey placeholder where the
+      image should be, because there is nothing on the page for the scraper to
+      read. That is what a stranger saw before 8 September 2026.
+
+      og:image MUST be an absolute URL. A relative path fails silently, which
+      is the usual way this ends up half-working. The image itself is a raster
+      PNG rather than the SVG the favicon uses, because LinkedIn does not
+      render SVG previews. Its source, and the reasoning behind how the radar
+      mark is drawn at this size, is design/share-card/card.html.
+
+      These tags hardcode the production origin. That is deliberate: a preview
+      deployment should still advertise the production card rather than its own
+      throwaway URL, and nothing here is environment-specific.
+
+      Scrapers cache aggressively. After changing any of this, a platform that
+      has already seen the page keeps showing the old preview until it is
+      forced to re-fetch; LinkedIn's Post Inspector is the tool for that.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="B1 Coach" />
+    <meta property="og:url" content="https://b1-coach.vercel.app/" />
+    <meta property="og:title" content="B1 Coach" />
+    <meta
+      property="og:description"
+      content="An AI coaching layer over TrackMan B1 baseball hitting data, turning raw swing metrics into coaching a high school player can act on."
+    />
+    <meta property="og:image" content="https://b1-coach.vercel.app/share-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="2400" />
+    <meta property="og:image:height" content="1254" />
+    <meta
+      property="og:image:alt"
+      content="B1 Coach, an AI hitting coach for baseball swing data, on a dark card with an orange radar mark."
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="B1 Coach" />
+    <meta
+      name="twitter:description"
+      content="An AI coaching layer over TrackMan B1 baseball hitting data, turning raw swing metrics into coaching a high school player can act on."
+    />
+    <meta name="twitter:image" content="https://b1-coach.vercel.app/share-card.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
