@@ -1765,6 +1765,14 @@ owner's own use explains. Do not build rate limiting without that signal.
 
 ## Deliberate decisions, do not "fix" these
 
+- **The app's TrackMan branding stays, with no in-app disclaimer.** "Powered by
+  TrackMan" and "TrackMan B1 is capturing every swing" are intentional: the
+  proof of concept is meant to read as one of their products. The README and
+  proof of concept carry the disclaimer. Owner, 30 September 2026.
+- **iPad portrait and chart axis ticks are declined.** The app targets desktop
+  and iPad landscape; portrait works but looks sparse. Odd tick values
+  (69/76/83/90/95, zone bottom labelled 1.6) are declined for now. Owner,
+  30 September 2026.
 - **Em-dashes in the coach's voice are accepted.** Both system prompts say
   "Never use em-dashes" and the model ignores it. The user-level ban governs the
   product manager's own writing, not B1's character voice. A stripping fix was
@@ -3868,6 +3876,10 @@ that pass surfaced.*
   carries an example of each. **Nobody has re-measured adoption against the
   shipped wording**, so whether those two examples closed the gap is unknown.
   One more probe run would answer it for about $0.30.
+  *(30 September 2026: the committed probe records give 85.3%, not 89%, and
+  nothing committed reproduces 89. Do not rerun the probe as is: it adds its
+  draft wording on top of the shipped wording and overwrites its own committed
+  records. The pre-visibility audit counts adoption from a bench round instead.)*
 - **The mechanism composes prose around numbers the coach is not looking at,
   and one sentence hints that matters.** A probe debrief read "swings like 8 and
   3 came off at 92 and 92 mph", where a person writes "both at 92." The coach
@@ -3929,7 +3941,9 @@ that pass surfaced.*
   `twitter:description`). Beside it: `README.md:3` says "**for** TrackMan B1
   baseball hitting data. Proof of concept"; this file's own opening says
   "**over** TrackMan B1 baseball hitting data"; and `docs/proof-of-concept.md:9`
-  says "built on **a subset of** TrackMan B1 baseball hitting data". They agree
+  says "built on **a subset of** TrackMan B1 baseball hitting data" *(now "for
+  TrackMan B1-style hitting data, demonstrated on synthetic sessions", 30
+  September 2026)*. They agree
   in substance and differ in every sentence, so **grepping for the sentence will
   not find them and a first draft of this entry wrongly said it would.** Note the
   new meta description is the only one that drops the "a subset of" hedge about

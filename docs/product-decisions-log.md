@@ -9,6 +9,22 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Pre-visibility audit, part 1: the documents describe the data honestly (September 30)
+
+*Why an audit.* TrackMan is about to post a principal PM role and this repo will be read by people who know the data. The audit checked every claim in the README, the proof of concept and the link preview, walked the live site, and is buying a fresh accuracy round (part 2, recorded when it lands).
+
+*What changed in the documents.* Of about 97 checkable claims, 17 needed a change. The substantive one: "integration would be a swap" overclaimed. The hit fields do follow TrackMan's public Practice Hit object, but pitch location lives on a separate record there and practice data carries no batter handedness, so both documents now say what integration would actually take, that the app assumes a right-hander, and that distance is computed carry. The rest were stale numbers (error range 12% to 25%, not 22%; tips 61 to 65 words, not 67 to 82; a debrief takes about ten seconds, measured 9 to 11 across 22 live calls), claims the record had already corrected ("did not move" was "barely moved"; the rejected pull definition never shipped), and one sentence about what TrackMan's product lacks, cut.
+
+*A number of our own that did not hold.* The Slice 15 entry below says placeholder adoption was 89%. Its committed probe records give 85.3% (64 placeholders, 11 typed values), and nothing committed reproduces 89. The documents now say 85%; part 2 re-measures on the shipped wording.
+
+*Decided, do not re-flag.*
+- **The TrackMan branding in the app stays.** "Powered by TrackMan" and "TrackMan B1 is capturing every swing" are intentional: the proof of concept is meant to be seen as one of their products. The documents carry the disclaimer; the app does not, on purpose.
+- **iPad portrait is declined.** The app is designed for desktop and iPad landscape. Portrait works but leaves the summary panel half empty and the charts small.
+- **Odd chart axis ticks are declined for now** (69/76/83/90/95; the zone bottom labelled 1.6 rather than 1.5).
+- **Coach errors seen on the live site wait for the accuracy round.** No prompt change before then.
+
+---
+
 ## Micro-PR: a shared link to B1 Coach previews with its own card (September 8)
 
 *What this was.* The product manager was adding B1 Coach to his LinkedIn
