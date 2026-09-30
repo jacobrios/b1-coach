@@ -104,6 +104,7 @@ const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
 const { contentWordOverlap } = await import('./contentWordOverlap.js')
 const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecord.js')
+const { fillForGrading } = await import('./benchFill.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
@@ -552,7 +553,7 @@ function dryRun(conditionKeys, seed, runs) {
   console.log('')
   const canned = {
     coachingSummary: 'You hit 92 mph and got it out to 305 feet on swing 4.',
-    whatThisMeans: 'That is real bat speed at 27 degrees, right where you want it.',
+    whatThisMeans: 'That is real bat speed at {{s1.sw5.la}} degrees, right where you want it.',
     tipsIntro: 'Two things before next round.',
     nextSessionTips: [
       'Swing 12 came off at 80 mph and 191 feet. You got on top of it. Stay back a half beat longer.',
@@ -588,7 +589,8 @@ function dryRun(conditionKeys, seed, runs) {
         sessions,
         viewingSessionNumber: cell.session,
       })
-      const graded = grade(canned, values, targets)
+      const { filled } = fillForGrading(canned, sessions)
+      const graded = grade(filled, values, targets)
       console.log(
         `  ${conditionKey.padEnd(9)} ${cell.key.padEnd(12)} ` +
         `system ${String(system.length).padStart(5)} chars, prompt ${String(userMessage.length).padStart(5)} chars, ` +
@@ -602,7 +604,8 @@ function dryRun(conditionKeys, seed, runs) {
   const sample = buildSessions({ goalId: CELLS[0].goal.id, upTo: CELLS[0].session, seed })
   const sampleValues = sessionValueSets(sample)
   const sampleTargets = goalTargetSet(CELLS[0].goal.id)
-  const cannedGraded = grade(canned, sampleValues, sampleTargets)
+  const { filled: cannedFilled, rawFields: cannedRaw } = fillForGrading(canned, sample)
+  const cannedGraded = grade(cannedFilled, sampleValues, sampleTargets)
   const brokenGraded = grade(broken, sampleValues, sampleTargets)
   console.log(
     `Missing-field self-check: complete reply -> ${cannedGraded.missing.length} missing (expect 0), ` +
@@ -610,6 +613,23 @@ function dryRun(conditionKeys, seed, runs) {
   )
   if (cannedGraded.missing.length !== 0 || brokenGraded.missing.length !== 2) {
     throw new Error('Missing-field self-check failed: see the two counts printed above.')
+  }
+
+  // Fill self-check: the canned reply carries one placeholder for session 1
+  // swing 5's launch angle. The graded text must hold the real number in its
+  // place and no braces, while the raw copy kept for the record still holds the
+  // placeholder. Proves the fill step ran rather than trusting the wiring.
+  const slotAngle = String(SESSION_1_BASELINE[4].hit.launch.angle)
+  const fillOk =
+    cannedFilled.whatThisMeans.includes(`at ${slotAngle} degrees`) &&
+    !cannedFilled.whatThisMeans.includes('{{') &&
+    cannedRaw.whatThisMeans.includes('{{s1.sw5.la}}')
+  console.log(
+    `Fill self-check: slot -> "${cannedFilled.whatThisMeans}" (expect ${slotAngle} degrees, no braces), ` +
+    `raw copy keeps the placeholder -> ${cannedRaw.whatThisMeans.includes('{{s1.sw5.la}}')}`,
+  )
+  if (!fillOk) {
+    throw new Error('Fill self-check failed: see the line printed above.')
   }
 
   // Overlap self-check, independent of the canned dry-run reply above (whose
@@ -728,8 +748,12 @@ async function main() {
           const { parsed, elapsedMs, usage } = await callCoach({ system, userMessage, apiKey })
           inputTokens += usage.input_tokens ?? 0
           outputTokens += usage.output_tokens ?? 0
-          const graded = grade(parsed, values, targets)
-          records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded })
+          // Fill the coach's number slots the way the app does before grading, so
+          // the grader reads what a visitor would. The raw reply is kept beside
+          // `fields` so slot adoption can be counted from these same calls.
+          const { filled, rawFields } = fillForGrading(parsed, sessions)
+          const graded = grade(filled, values, targets)
+          records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded, rawFields })
           console.log(`${graded.wordCounts.box} words in the box, ${Math.round(elapsedMs / 100) / 10}s`)
         } catch (err) {
           const ceilingNote = err instanceof CoachCallError && err.stopReason === 'max_tokens' ? ' (hit MAX_TOKENS)' : ''
