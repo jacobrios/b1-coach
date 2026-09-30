@@ -45,7 +45,8 @@ walk.
 remaining errors are claims about a group of pitches. The fix changes the
 prompt, so it waits until after 2 October, when nobody is likely to be
 evaluating the live app. It is the next accuracy slice. The public figures now
-say 95% adoption and add these rounds beside the older error range.
+say 95% adoption and give the like-for-like comparison (18% to 9% of debriefs
+with a flagged error) beside the older, non-comparable ones.
 
 ---
 
