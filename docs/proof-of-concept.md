@@ -42,7 +42,7 @@ The remaining 20% is trust, and it is unforgiving. A coach that is right ninetee
 
 **Be careful reading the numbers that follow, including mine.** The first time I measured this, on 96 saved debriefs, the coach was making a factual error in roughly **one debrief in twelve**. That figure is a baseline, not a before-and-after: I never re-ran it with the same instrument after the fixes. Later rounds, hand-checked claim by claim with a different tool on different sessions, put **12% to 25% of debriefs carrying at least one genuine error**. Those two numbers are not comparable, and I am not going to pretend they are. The latest two rounds, on today's prompt, put that share at 5% and 14%. Read those as newer measurements, not a before-and-after: the prompt and the grader both changed across this series.
 
-What I can say precisely is this. **Every error class I aimed at and measured got better, and the overall error rate never visibly moved.** Each fix closes one way of being wrong and reveals the next. That is the honest shape of the result, and it is more useful to anyone building this than a tidier one would be.
+What I can say precisely is this. **Every error class I aimed at and measured got better, and the overall error rate never visibly moved across the earlier rounds.** Each fix closes one way of being wrong and reveals the next. That is the honest shape of the result, and it is more useful to anyone building this than a tidier one would be.
 
 ## What it took: ten things I learned
 
