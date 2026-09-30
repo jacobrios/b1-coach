@@ -9,6 +9,34 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Pre-visibility audit, part 2: a current accuracy figure (September 30)
+
+*What was measured.* Two 64-debrief rounds on the shipped prompt at Slice 11's
+two seeds, graded and hand-checked. Same swings and same grader as Slice 11, so
+the comparison isolates the prompt changes since (number slots, best swing).
+The bench had to be fixed first (#51): it graded the coach's unfilled
+placeholders, which would have flattered the result.
+
+*Result.* 12 of 128 debriefs (9.4%) carried a hand-checked factual error,
+against 23 of 127 (18.1%) at Slice 11. The transcription errors number slots
+target went from 8 of Slice 11's 23 to none. Placeholder adoption on the shipped
+wording is 95.1%, up from the probe's 85.3% on the draft.
+
+*How far to trust it.* A likely improvement, not a proven one: one round sits
+inside Slice 11's noise band and the other below it, and two rounds cannot
+separate the two. Flagged claims only, as before; errors the grader misses are
+uncounted. The one-in-twelve baseline stays out, being a different instrument.
+
+*What is left.* 10 of the 12 errors are one shape: a blanket claim about a
+handed group of pitches that one member breaks. The owner accepted that shape
+in Slice 9; it is now nearly all that remains. Next to it, the grader itself:
+67 of 85 raw flags were it misreading a correctly rounded pitch height.
+
+*Spend.* $3.40 for the rounds, about $0.45 of the demo's balance for the live
+walk.
+
+---
+
 ## Pre-visibility audit, part 1: the documents catch up to today's numbers (September 30)
 
 *Why an audit.* This repo is about to be read by people who know the data. The
