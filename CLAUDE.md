@@ -3981,7 +3981,9 @@ that pass surfaced.*
 (`docs/eval-fixtures/audit-2026-09-30/README.md`):*
 
 - **Decide whether to act on group claims, now nearly all the coach's
-  remaining errors.** 11 of 12 genuine errors in the audit rounds are about a
+  remaining errors.** *(Decided 30 September 2026: yes, as the next slice,
+  starting after 2 October. Left live until then on purpose: no prompt change
+  right before TrackMan might look.)* 11 of 12 genuine errors in the audit rounds are about a
   handed pitch group: blanket claims one member breaks, and subset miscounts.
   One option is handing each group's per-swing values beside its swing list;
   the other is accepting it. A prompt change, so the owner's call.
