@@ -9,7 +9,7 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
-## Pre-visibility audit, part 1: the documents describe the data honestly (September 30)
+## Pre-visibility audit, part 1: the documents catch up to today's numbers (September 30)
 
 *Why an audit.* This repo is about to be read by people who know the data. The
 audit checked every claim in the README, the proof of concept and the link
