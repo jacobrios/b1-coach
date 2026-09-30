@@ -1,4 +1,6 @@
 # Browser pass notes (production, 30 Sep 2026, bundle index-BvV7lmZm.js, desktop 1440x900)
+
+Standard: stricter than HAND-CHECK.md. Zone characterisations ("middle of the zone at 3.2") and placeholder-as-boundary wording count here as GENUINE; under HAND-CHECK's standard the count below is 3 of 10 screens, not 4.
 ## Power s1 (debrief ~10s)
 - All numbers correct vs sessionOneSwings (92/89/89, swings 2,9,12 below zone, swing 12 2deg 78mph, swing 5 346ft 92mph 27deg pitch 2.6).
 - Judgment slip: summary "chasing low pitches and getting under the ball" vs What This Means "too flat". Getting under = too high. Contradiction a baseball person catches.

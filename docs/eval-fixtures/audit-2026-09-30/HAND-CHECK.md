@@ -87,16 +87,20 @@ group the coach assembled itself.
 Slice 11's document makes this split possible; every genuine claim there quotes
 the sentence and names its shape.
 
-**Every flagged genuine error in the audit rounds is a derivation, and ten of
-the twelve are one sentence shape: a statement about every member of a handed
-pitch-location group that one member breaks.** Seven are about session 1's
+**Every flagged genuine error in the audit rounds is a derivation, and eleven
+of the twelve concern a handed pitch-location group.** *(Corrected on review,
+same day: an earlier draft said ten of the twelve were one shape.)* Eight are
+blanket claims that one member breaks (A1, A3, A5, A6, A7, B1, B2, B3); three
+are miscounted subsets of the wide group (A9, A11, A13); A4 is the blanket
+shape over a launch-angle group. Seven are about session 1's
 three low pitches (swings 2, 9 and 12), which are handed verbatim as "Swings on
 pitches low (height below 1.5ft): 3 swings — numbers: 2, 9, 12", and swing 9
 (74 mph, 24 degrees, 201 feet) is the outlier every time. Three are about the
 four wide pitches in the shared `after-a` session 4 draw (swings 2, 3, 8, 12 at
 77, 84, 77, 84 mph), the identical group and near-identical sentence Slice 11
-recorded seven times. The flagged transcription class that made up 8 of Slice
-11's 23 genuine errors is absent. One unflagged transcription error was seen in
+recorded seven times. Of Slice 11's 8 transcription errors, the 6
+per-swing ones (the class slots target) are absent here; the 2 handed-count
+contradictions did not recur among flags either, but slots do not cover counts. One unflagged transcription error was seen in
 passing (section 6), and it is a handed prior-session count, which placeholders
 do not cover.
 
