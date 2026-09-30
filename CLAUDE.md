@@ -1227,7 +1227,10 @@ The user-level rules already require evidence over assertion. Two things are
 specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
-   vitest, and at the close of the best-swing micro-PR on 27 August 2026 it is **751 tests
+   vitest. *(30 September 2026: **789 across 28** after the bench micro-PR,
+   #51, which added `scripts/benchFill.test.js` and `scripts/slotAdoption.test.js`.
+   A git worktree under `.claude/worktrees/` is collected too and doubles the
+   count; the audit's start saw 1,502, which is 751 twice, before #51.)* At the close of the best-swing micro-PR on 27 August 2026 it is **751 tests
    across 26 files**, up from 734 across 25 at the close of Slice 15, up from 695 across 24 at the close of Slice 13. The new
    file is `src/numberSlots.test.js`; the rest landed in `src/coachApi.test.js`.
    *(The 695 was measured again at the start of Slice 15 and matched, so no
@@ -2987,6 +2990,11 @@ rewritten, per the append-only rule.
   again would restore the uniformity Slice 9 existed to remove. If anything
   about the coach's accuracy is worth a follow-up, it is this one sentence
   shape, not the aggregate rate.
+  *(30 September 2026, pre-visibility audit: of 12 genuine errors across two
+  rounds, 9 are this blanket shape (8 over a pitch group, 1 over a
+  launch-angle group) and 3 are subset miscounts over the wide pitches, which
+  the acceptance above does not cover. It stands until the owner decides
+  otherwise; see What's Next.)*
 - **Two test files hold their own copies of session 1's distances and cannot
   notice when session 1 changes.** `src/ballFlight.test.js:184` and
   `src/coachApi.test.js:831` each carry a hardcoded array rather than importing
@@ -3880,6 +3888,9 @@ that pass surfaced.*
   gives 85.3%; 89 most likely came from a per-debrief average (89.8%). Do not rerun the probe as is: it adds its
   draft wording on top of the shipped wording and overwrites its own committed
   records. The pre-visibility audit counts adoption from a bench round instead.)*
+  *(Re-measured 30 September 2026 on the shipped wording: **95.1%**, 635
+  placeholders to 33 typed values over 128 debriefs.
+  `docs/eval-fixtures/audit-2026-09-30/`.)*
 - **The mechanism composes prose around numbers the coach is not looking at,
   and one sentence hints that matters.** A probe debrief read "swings like 8 and
   3 came off at 92 and 92 mph", where a person writes "both at 92." The coach
@@ -3965,6 +3976,26 @@ that pass surfaced.*
   the card's arc geometry deliberately differs from BOTH the app's on-screen
   `RadarMark` and the favicon's version of the same artwork, which are already
   two different drawings of one mark for two different sizes.
+
+*Added 30 September 2026, from the pre-visibility audit
+(`docs/eval-fixtures/audit-2026-09-30/README.md`):*
+
+- **Decide whether to act on group claims, now nearly all the coach's
+  remaining errors.** 11 of 12 genuine errors in the audit rounds are about a
+  handed pitch group: blanket claims one member breaks, and subset miscounts.
+  One option is handing each group's per-swing values beside its swing list;
+  the other is accepting it. A prompt change, so the owner's call.
+- **The grader rules a correctly rounded pitch height or side false.** The app
+  fills 1.78 as 1.8; the fact sheet keeps 1.78 and the check is exact equality. 67 of
+  85 raw flags in the audit rounds. Deterministic and in the verdict path, so a
+  fix is free to validate by offline replay. Fix before the next paid round.
+- **The coach uses a placeholder as a threshold** ("below {{s1.sw9.ht}} feet"),
+  so the digit is right and the sentence false. Two of twelve genuine errors.
+- **Placeholders do not reach prior-session counts.** One misordered
+  "compared to 6, 5, and 4 in Sessions 1 through 3" was seen unflagged.
+- **Vitest collects any worktree under `.claude/worktrees/`**, doubling the
+  suite while one exists. No vitest config here; excluding that path would be
+  one. Small.
 
 Done and deliberately kept here for a while, so nobody re-proposes them: the
 uptime monitor was set up on Better Stack on 31 July 2026 against both the app

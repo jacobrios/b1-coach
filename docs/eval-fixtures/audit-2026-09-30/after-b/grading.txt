@@ -1,0 +1,267 @@
+B1 coach accuracy grader
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/audit-2026-09-30/after-b (directory) (builder: current)
+Handed era       current
+Seed             20260819 (from docs/eval-fixtures/audit-2026-09-30/after-b/BUILDER.txt)
+Provenance       docs/eval-fixtures/audit-2026-09-30/after-b/BUILDER.txt (builder current, handed era current, seed 20260819)
+Records to grade 64 of 64 available
+Rough cost       $0.64 at a rough ~1 cent/debrief guess; the real total prints at the end
+
+  shipped/power-s1/run1... 9 claims, flagged=true
+  shipped/power-s1/run2... 10 claims, flagged=true
+  shipped/power-s1/run3... 8 claims, flagged=false
+  shipped/power-s1/run4... 8 claims, flagged=false
+  shipped/power-s1/run5... 9 claims, flagged=true
+  shipped/power-s1/run6... 9 claims, flagged=false
+  shipped/power-s1/run7... 5 claims, flagged=false
+  shipped/power-s1/run8... 6 claims, flagged=false
+  shipped/power-s1/run9... 8 claims, flagged=false
+  shipped/power-s1/run10... 9 claims, flagged=false
+  shipped/power-s1/run11... 6 claims, flagged=false
+  shipped/power-s1/run12... 10 claims, flagged=false
+  shipped/power-s2/run1... 11 claims, flagged=false
+  shipped/power-s2/run2... 9 claims, flagged=false
+  shipped/power-s2/run3... 6 claims, flagged=false
+  shipped/power-s2/run4... 8 claims, flagged=false
+  shipped/power-s2/run5... 8 claims, flagged=false
+  shipped/power-s2/run6... 9 claims, flagged=false
+  shipped/power-s2/run7... 6 claims, flagged=false
+  shipped/power-s2/run8... 6 claims, flagged=false
+  shipped/contact-s1/run1... 9 claims, flagged=false
+  shipped/contact-s1/run2... 6 claims, flagged=false
+  shipped/contact-s1/run3... 8 claims, flagged=false
+  shipped/contact-s1/run4... 9 claims, flagged=false
+  shipped/contact-s1/run5... 10 claims, flagged=true
+  shipped/contact-s1/run6... 8 claims, flagged=false
+  shipped/contact-s1/run7... 7 claims, flagged=false
+  shipped/contact-s1/run8... 8 claims, flagged=false
+  shipped/contact-s1/run9... 8 claims, flagged=false
+  shipped/contact-s1/run10... 8 claims, flagged=false
+  shipped/contact-s1/run11... 7 claims, flagged=false
+  shipped/contact-s1/run12... 7 claims, flagged=false
+  shipped/contact-s4/run1... 11 claims, flagged=true
+  shipped/contact-s4/run2... 14 claims, flagged=true
+  shipped/contact-s4/run3... 13 claims, flagged=true
+  shipped/contact-s4/run4... 12 claims, flagged=false
+  shipped/contact-s4/run5... 11 claims, flagged=true
+  shipped/contact-s4/run6... 8 claims, flagged=true
+  shipped/contact-s4/run7... 10 claims, flagged=false
+  shipped/contact-s4/run8... 10 claims, flagged=true
+  shipped/open-s4/run1... 10 claims, flagged=true
+  shipped/open-s4/run2... 9 claims, flagged=true
+  shipped/open-s4/run3... 13 claims, flagged=true
+  shipped/open-s4/run4... 11 claims, flagged=true
+  shipped/open-s4/run5... 14 claims, flagged=true
+  shipped/open-s4/run6... 10 claims, flagged=true
+  shipped/open-s4/run7... 10 claims, flagged=true
+  shipped/open-s4/run8... 11 claims, flagged=true
+  shipped/allfields-s4/run1... 9 claims, flagged=false
+  shipped/allfields-s4/run2... 16 claims, flagged=false
+  shipped/allfields-s4/run3... 7 claims, flagged=false
+  shipped/allfields-s4/run4... 8 claims, flagged=false
+  shipped/allfields-s4/run5... 10 claims, flagged=true
+  shipped/allfields-s4/run6... 10 claims, flagged=false
+  shipped/allfields-s4/run7... 8 claims, flagged=false
+  shipped/allfields-s4/run8... 12 claims, flagged=false
+  shipped/popup-s4/run1... 11 claims, flagged=true
+  shipped/popup-s4/run2... 11 claims, flagged=true
+  shipped/popup-s4/run3... 8 claims, flagged=true
+  shipped/popup-s4/run4... 11 claims, flagged=true
+  shipped/popup-s4/run5... 11 claims, flagged=true
+  shipped/popup-s4/run6... 10 claims, flagged=true
+  shipped/popup-s4/run7... 10 claims, flagged=true
+  shipped/popup-s4/run8... 9 claims, flagged=true
+
+======================================================================
+GRADING REPORT
+======================================================================
+Model            claude-haiku-4-5-20251001
+Records source   docs/eval-fixtures/audit-2026-09-30/after-b (directory) (builder: current)
+Records graded   64
+
+Claims found     593 (TRUE 453, FALSE 46, UNVERIFIABLE 94)
+FALSE breakdown  42 contradicting a number the prompt handed the coach, 4 self-derived
+                 debriefs contradicting a handed number: 23 of 64
+Not reached      94 claim(s) the verdict code could not rule on (59 the extractor could not structure at all). Judge the run's coverage by this number, not just by the claim count.
+
+======================================================================
+FLAGGED DEBRIEFS: 27 of 64
+======================================================================
+This script does not know which records are known-wrong. It only
+reports what it flagged; comparing that list to ground truth is the
+controller's job, done blind, once.
+
+  shipped/power-s1/run1
+    [tip2] "none of them got above 8 degrees of launch angle" (self-derived)
+      actual: 1 of swings 2, 9, 12 are above 8 launchAngle (swings 9)
+      why: claimed 0, the intersection is 1
+  shipped/power-s1/run2
+    [tip1] "none of them broke 75 mph" (self-derived)
+      actual: 1 of swings 2, 9, 12 are above 75 exitVelocity (swings 12)
+      why: claimed 0, the intersection is 1
+  shipped/power-s1/run5
+    [tip1] "none of them got above 122 feet" (self-derived)
+      actual: 1 of swings 2, 9, 12 are above 122 distance (swings 9)
+      why: claimed 0, the intersection is 1
+  shipped/contact-s1/run5
+    [coachingSummary] "only 4 of 15 swings landed in the line drive window" (handed)
+      actual: inZoneCount: 9
+      why: claimed 4, the stats say 9
+  shipped/contact-s4/run1
+    [tip2] "swings 5 and 9 were both up at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "swings 5 and 9 were both up at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+  shipped/contact-s4/run2
+    [tip2] "swings 5 and 9 were up at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "swings 5 and 9 were up at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+  shipped/contact-s4/run3
+    [tip2] "swings 5 and 9 were both up at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "swings 5 and 9 were both up at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+  shipped/contact-s4/run5
+    [tip1] "that pitch was middle of the zone at 2.4 feet" (handed)
+      actual: swing 15 pitchHeight: 2.43
+      why: claimed 2.4, the table says 2.43
+    [tip2] "swings 5 and 9 were high at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "swings 5 and 9 were high at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+  shipped/contact-s4/run6
+    [tip2] "swing 5 at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "swing 10 at 1.4 feet" (handed)
+      actual: swing 10 pitchHeight: 1.42
+      why: claimed 1.4, the table says 1.42
+  shipped/contact-s4/run8
+    [tip2] "swings like 5 and 9 — both high at 3.8 and 3.7 feet — produced a 43-degree pop-up and a 23-degree fly ball under 80 mph" (self-derived)
+      actual: 2 of swings 5, 9 are below 80 exitVelocity (swings 5, 9)
+      why: claimed 1, the intersection is 2
+  shipped/open-s4/run1
+    [tip1] "Swing 5 was a pitch at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "on a pitch at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/open-s4/run2
+    [tip2] "Swing 5 came in at 3.8ft high" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+  shipped/open-s4/run3
+    [tip2] "both on pitches at 2 and 2.9 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+    [tip2] "both on pitches at 2 and 2.9 feet" (handed)
+      actual: swing 6 pitchHeight: 2.92
+      why: claimed 2.9, the table says 2.92
+  shipped/open-s4/run4
+    [tip1] "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+    [tip2] "on a pitch at 2 feet right in your wheelhouse" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/open-s4/run5
+    [tip1] "Swings 5 and 9 in Session 4 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "Swings 5 and 9 in Session 4 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+    [tip2] "on a pitch at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/open-s4/run6
+    [tip2] "a strike at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/open-s4/run7
+    [tip2] "on a pitch at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/open-s4/run8
+    [tip2] "swing 11 went 323 feet at 88 mph on a pitch at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/allfields-s4/run5
+    [tip2] "That pitch was at 2 feet" (handed)
+      actual: swing 11 pitchHeight: 1.96
+      why: claimed 2, the table says 1.96
+  shipped/popup-s4/run1
+    [tip1] "Swing 5 came in at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+  shipped/popup-s4/run2
+    [tip1] "that pitch was 3.8 feet high" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "a strike at 2.9 feet" (handed)
+      actual: swing 6 pitchHeight: 2.92
+      why: claimed 2.9, the table says 2.92
+  shipped/popup-s4/run3
+    [tip1] "on a pitch at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+  shipped/popup-s4/run4
+    [coachingSummary] "a high pitch at 3.8 ft" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "a pitch at 3.8 ft" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip2] "on a strike at 2.9 ft" (handed)
+      actual: swing 6 pitchHeight: 2.92
+      why: claimed 2.9, the table says 2.92
+  shipped/popup-s4/run5
+    [tip1] "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet" (handed)
+      actual: swing 9 pitchHeight: 3.66
+      why: claimed 3.7, the table says 3.66
+    [tip2] "You stayed through a pitch at 2.9 feet and drove it 298 feet" (handed)
+      actual: swing 6 pitchHeight: 2.92
+      why: claimed 2.9, the table says 2.92
+  shipped/popup-s4/run6
+    [tip1] "off a pitch at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+  shipped/popup-s4/run7
+    [whatThisMeans] "The pop-up came on a pitch at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "Swing 5 was your one pop-up — it left the bat at 43 degrees off a pitch at 3.8 feet" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+  shipped/popup-s4/run8
+    [whatThisMeans] "The pop-up on swing 5 came on a high pitch at 3.8 ft" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+    [tip1] "Swing 5 popped up at 43 degrees on a pitch at 3.8 ft" (handed)
+      actual: swing 5 pitchHeight: 3.82
+      why: claimed 3.8, the table says 3.82
+
+======================================================================
+COST
+======================================================================
+155031 input + 51675 output tokens = $0.4134
+  cache: none (expected; the blind extraction prompt is below the cacheable minimum)
+
+Raw results      docs/eval-fixtures/audit-2026-09-30/after-b/grading.json

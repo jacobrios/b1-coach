@@ -1,0 +1,25 @@
+# Which session data these debriefs were written about. Format and purpose:
+# ../../slice9-session-one/before/BUILDER.txt. Do not edit to make a command work.
+#
+# 64 debriefs, seven cells, condition "shipped", bought 30 September 2026 for
+# the pre-visibility audit, at HEAD 9204fd7 (main after PRs #50 and #51). Same seed,
+# generator and grader as ../../slice11-generator-realism/after-b; the only
+# differences are the prompt changes since (Slice 15 number slots, best swing),
+# and the bench now filling placeholders as the app does (#51).
+#
+#   bought   node --env-file=.env.local scripts/bench-coach-brevity.mjs
+#              --condition shipped --runs 8 --seed 20260819
+#              --out docs/eval-fixtures/audit-2026-09-30/after-b/shipped-64.json
+#   graded   node --env-file=.env.local scripts/grade-coach-accuracy.mjs --validate
+#              --input docs/eval-fixtures/audit-2026-09-30/after-b
+#              --out docs/eval-fixtures/audit-2026-09-30/after-b/grading.json
+#   pinned   generator src/swingGenerator.js at 42ff7ca; prompt src/coachApi.js
+#            as of HEAD 9204fd7
+#
+# Goes stale the same three ways the Slice 11 rounds do (generator, session 1,
+# computeStats): if any changes, freeze it before re-grading this as "current".
+# Flag counts in grading.json are leads, not findings; see ../HAND-CHECK.md.
+
+builder = current
+handed-era = current
+seed = 20260819
