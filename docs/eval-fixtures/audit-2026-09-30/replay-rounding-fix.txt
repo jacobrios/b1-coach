@@ -1,5 +1,5 @@
 REPLAY OF THE PITCH-POSITION ROUNDING FIX, 30 September 2026
-Verdict code compared: the parent of a9d0968 (before) against the working tree (after), on one rebuilt fact sheet per cell.
+Verdict code compared: the pre-fix code at main commit f16eba1 (before) against the working tree (after), on one rebuilt fact sheet per cell.
 "stored" is what the committed grading file recorded on the day; it is shown so the before column can be checked for faithfulness.
 No network, no API key, no spend.
 
@@ -246,7 +246,9 @@ NOTES
   empty-list fix and slice8c (1 and 8) the Slice 8d negated-exceedance guard, both earlier fixes already recorded in their own
   directories; they are not changes made by this fix and do not appear under EVERY CHANGED VERDICT.
   slice8c and slice8d files have no BUILDER.txt and carry session-1 swings and a generator that predate Slices 9 and 11, so they are
-  replayed through builder slice9-before; stored!=before confirms that choice reproduces their stored verdicts.
+  replayed through builder slice9-before. For the two slice8d files stored!=before of 0 shows that choice reproduces their stored verdicts
+  outright. For slice8c the 1 and 8 mismatches are fully explained by the Slice 8d negated-exceedance guard, recorded in
+  docs/eval-fixtures/slice8d-grader-fp/replay-8c-rounds.txt; that is an explanation of the mismatches, not a clean match.
 
 TOTAL CHANGES: 67
 VIOLATIONS (not FALSE->TRUE on pitchHeight/pitchSide with stated == true rounded to one decimal, or matched to a GENUINE hand-check block): 0

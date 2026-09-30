@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 //
 // Free, deterministic proof that the pitch-position rounding fix in
-// scripts/claimVerdict.js (commit a9d0968) removes only false flags.
+// scripts/claimVerdict.js (the fix commit on this branch) removes only false flags.
 //
 // Written 30 September 2026 for the grader-accepts-rounded-pitch micro-PR,
 // Task 2. scripts/replay-grading.mjs compares a saved grading file's STORED
@@ -9,7 +9,7 @@
 // earlier verdict-code fix made since the file was saved (the Slice 8d
 // negated-exceedance guard, the Slice 9 empty-list fix, and so on). This script
 // isolates this fix by running each stored claim through BOTH the verdict code
-// as it stood just before the fix (git show a9d0968^:scripts/claimVerdict.js)
+// as it stood just before the fix (git show f16eba1:scripts/claimVerdict.js)
 // and the code as it stands now, against one fact sheet rebuilt the same way
 // the replay tool rebuilds it, and listing only what differs between the two.
 //
@@ -40,7 +40,15 @@ import { CURRENT_CELLS, readBuilderMarker, resolveSessions } from '../../../scri
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const REPO = path.resolve(HERE, '../../..')
-const FIX_COMMIT = 'a9d0968'
+// The pre-fix verdict code is read from f16eba1, the main commit this branch
+// was cut from, and NOT from the fix commit's parent: a branch commit does not
+// survive a squash merge, so a reference to it would stop this script being
+// re-runnable once the PR lands. f16eba1 is on main and holds the identical
+// pre-fix scripts/claimVerdict.js. Checked 30 September 2026 with
+// `git diff f16eba1 <fix-commit>^ -- scripts/claimVerdict.js scripts/goalTargets.js
+// src/goalTargets.js`, which printed nothing (the script copies the working-tree
+// src/goalTargets.js beside the old verdict code, so that file had to match too).
+const BASE_COMMIT = 'f16eba1'
 
 // The verdict code as it stood immediately before the fix, materialised beside
 // a copy of the one module it imports so its relative import still resolves.
@@ -48,7 +56,7 @@ async function loadVerdictBeforeFix() {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'verdict-before-fix-'))
   mkdirSync(path.join(dir, 'scripts'))
   mkdirSync(path.join(dir, 'src'))
-  const old = execFileSync('git', ['show', `${FIX_COMMIT}^:scripts/claimVerdict.js`], { cwd: REPO, encoding: 'utf8' })
+  const old = execFileSync('git', ['show', `${BASE_COMMIT}:scripts/claimVerdict.js`], { cwd: REPO, encoding: 'utf8' })
   writeFileSync(path.join(dir, 'scripts', 'claimVerdict.js'), old)
   copyFileSync(path.join(REPO, 'src', 'goalTargets.js'), path.join(dir, 'src', 'goalTargets.js'))
   const mod = await import(pathToFileURL(path.join(dir, 'scripts', 'claimVerdict.js')).href)
@@ -76,7 +84,10 @@ const FILES = [
   // files carry meta naming builder "current", which was right on the day and
   // is stranded now that "current" means a different generator. The builder
   // used here is the one matching what the coach actually saw, and each row's
-  // faithfulness (stored versus before-fix verdicts) is printed beside it.
+  // faithfulness (stored versus before-fix verdicts) is printed beside it. That
+  // figure holds outright for the two 8d files (0 mismatches); for the two 8c
+  // files the 1 and 8 mismatches are fully explained by the Slice 8d guard
+  // recorded in slice8d-grader-fp/replay-8c-rounds.txt, not a clean match.
   { id: 'slice8c before', file: `${FX}/slice8c-strike-zone-counts/before-grading.json`, era: 'slice8b', builder: 'slice9-before', hand: [] },
   { id: 'slice8c after', file: `${FX}/slice8c-strike-zone-counts/after-grading.json`, era: 'current', builder: 'slice9-before', hand: [] },
   { id: 'slice8d regrade-8b-after', file: `${FX}/slice8d-grader-fp/regrade-8b-after.json`, builder: 'slice9-before', hand: [] },
@@ -224,7 +235,7 @@ async function main() {
   const say = (s = '') => { lines.push(s); console.log(s) }
 
   say('REPLAY OF THE PITCH-POSITION ROUNDING FIX, 30 September 2026')
-  say(`Verdict code compared: the parent of ${FIX_COMMIT} (before) against the working tree (after), on one rebuilt fact sheet per cell.`)
+  say(`Verdict code compared: the pre-fix code at main commit ${BASE_COMMIT} (before) against the working tree (after), on one rebuilt fact sheet per cell.`)
   say('"stored" is what the committed grading file recorded on the day; it is shown so the before column can be checked for faithfulness.')
   say('No network, no API key, no spend.')
   say()
@@ -275,11 +286,11 @@ async function main() {
           ? `entry ${h.label} (${h.field})${h.sameSentence ? ' quotes the same sentence' : ' is a different sentence in the same debrief'}: ${h.ruling}`
           : `MENTION only in ${h.doc} [${h.head}]`).join('; ')
         : 'no hand-check entry or mention for this debrief and sentence'
+      if (hits.some((h) => h.kind === 'entry' && h.sameSentence && h.ruling === 'GENUINE') && !r.violations.includes(c)) r.violations.push(c)
       const flag = r.violations.includes(c) ? '  ** VIOLATION **' : ''
       say(`  ${c.id} ${c.field} ${c.from}->${c.to} metric=${c.metric} session=${c.sessionNumber} swing=${c.swingNumber} stated=${c.stated} true=${c.trueValue} round1=${c.trueValue === null ? 'n/a' : round1(c.trueValue)}${flag}`)
       say(`      quote: "${c.quote.replace(/[\u2014\u2013]/g, '-')}"`)
       say(`      hand-check: ${hand}`)
-      if (hits.some((h) => h.kind === 'entry' && h.sameSentence && h.ruling === 'GENUINE')) r.violations.push({ ...c, genuine: true })
     }
     totalViolations += r.violations.length
   }
@@ -295,7 +306,9 @@ async function main() {
   say('  empty-list fix and slice8c (1 and 8) the Slice 8d negated-exceedance guard, both earlier fixes already recorded in their own')
   say('  directories; they are not changes made by this fix and do not appear under EVERY CHANGED VERDICT.')
   say('  slice8c and slice8d files have no BUILDER.txt and carry session-1 swings and a generator that predate Slices 9 and 11, so they are')
-  say('  replayed through builder slice9-before; stored!=before confirms that choice reproduces their stored verdicts.')
+  say('  replayed through builder slice9-before. For the two slice8d files stored!=before of 0 shows that choice reproduces their stored verdicts')
+  say('  outright. For slice8c the 1 and 8 mismatches are fully explained by the Slice 8d negated-exceedance guard, recorded in')
+  say('  docs/eval-fixtures/slice8d-grader-fp/replay-8c-rounds.txt; that is an explanation of the mismatches, not a clean match.')
   say()
   say(`TOTAL CHANGES: ${totalChanges}`)
   say(`VIOLATIONS (not FALSE->TRUE on pitchHeight/pitchSide with stated == true rounded to one decimal, or matched to a GENUINE hand-check block): ${totalViolations}`)
