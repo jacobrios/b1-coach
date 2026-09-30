@@ -49,6 +49,8 @@ const {
 const { generateSwings } = await import('../src/swingGenerator.js')
 const { computeStats } = await import('../src/sessionStats.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
+// The counting moved to its own tested module; see scripts/slotAdoption.js.
+const { analyseDebrief, adoptionPercent } = await import('./slotAdoption.js')
 
 // ─────────────────────────────────────────────────────────────────────────────
 // The instruction being probed
@@ -139,113 +141,10 @@ const CELLS = [
 // ─────────────────────────────────────────────────────────────────────────────
 // What gets counted
 // ─────────────────────────────────────────────────────────────────────────────
-
-const MARKER_RE = /\{\{\s*s(\d+)\s*\.\s*sw(\d+)\s*\.\s*(\w+)\s*\}\}/g
-
-function swingValues(swing) {
-  return {
-    ev: swing.hit.launch.exitSpeed,
-    la: swing.hit.launch.angle,
-    dir: swing.hit.launch.direction,
-    dist: swing.hit.landing.distance,
-    ht: swing.plateLocHeight,
-    side: swing.plateLocSide,
-  }
-}
-
-function findSession(sessions, n) {
-  return sessions.find((s) => s.sessionNumber === n) ?? null
-}
-
-// A bare recital is the thing a placeholder was supposed to replace: a number
-// typed out that exactly equals one of the six values of a swing named in the
-// same sentence. This is a PROXY and its limits are printed with the results:
-// it can miss a recital phrased across two sentences, and it can over-count a
-// coincidence, for example a count that happens to equal a launch angle. It is
-// good enough to answer "did the coach cooperate," which is all it is for.
-function analyseText(text, sessions, currentSessionNumber) {
-  const markers = []
-  const bareRecitals = []
-  if (typeof text !== 'string' || !text) return { markers, bareRecitals }
-
-  MARKER_RE.lastIndex = 0
-  let m
-  while ((m = MARKER_RE.exec(text)) !== null) {
-    const [raw, sessionStr, swingStr, field] = m
-    const session = findSession(sessions, Number(sessionStr))
-    const swing = session?.swings?.[Number(swingStr) - 1]
-    const known = Object.prototype.hasOwnProperty.call(SLOT_FIELDS, field)
-    markers.push({
-      raw,
-      resolvable: Boolean(session && swing && known),
-      why: !session ? 'no such session' : !swing ? 'no such swing' : !known ? 'unknown field' : null,
-      value: session && swing && known ? swingValues(swing)[field] : null,
-    })
-  }
-
-  // Strip markers before hunting bare numbers, so a filled-in-later figure is
-  // never counted as a number the coach typed.
-  const stripped = text.replace(MARKER_RE, ' @@MARKER@@ ')
-
-  for (const sentence of stripped.split(/(?<=[.!?])\s+|\n+/)) {
-    const swingRefRe = /swings?\s+(\d+(?:\s*(?:,|and|&|through|-|to)\s*\d+)*)/gi
-    const referenced = []
-    const refSpans = []
-    let r
-    while ((r = swingRefRe.exec(sentence)) !== null) {
-      refSpans.push([r.index, r.index + r[0].length])
-      for (const d of r[1].match(/\d+/g) ?? []) referenced.push(Number(d))
-    }
-    if (referenced.length === 0) continue
-
-    const sessionMatch = sentence.match(/session\s+(\d+)/i)
-    const sessionNumber = sessionMatch ? Number(sessionMatch[1]) : currentSessionNumber
-    const session = findSession(sessions, sessionNumber)
-    if (!session) continue
-
-    const candidates = new Set()
-    for (const idx of referenced) {
-      const swing = session.swings[idx - 1]
-      if (!swing) continue
-      for (const v of Object.values(swingValues(swing))) candidates.add(Number(v))
-    }
-    if (candidates.size === 0) continue
-
-    // Blank out the swing references themselves, so "swing 12" never counts as
-    // a recital of some other swing's 12-degree launch angle.
-    let hunting = sentence
-    for (const [start, end] of refSpans) {
-      hunting = hunting.slice(0, start) + ' '.repeat(end - start) + hunting.slice(end)
-    }
-
-    for (const numStr of hunting.match(/-?\d+(?:\.\d+)?/g) ?? []) {
-      if (candidates.has(Number(numStr))) {
-        bareRecitals.push({ number: numStr, sentence: sentence.trim().slice(0, 200) })
-      }
-    }
-  }
-
-  return { markers, bareRecitals }
-}
-
-const TEXT_FIELDS = ['coachingSummary', 'whatThisMeans', 'tipsIntro']
-
-function analyseDebrief(parsed, sessions, currentSessionNumber) {
-  const texts = []
-  for (const f of TEXT_FIELDS) if (parsed?.[f]) texts.push(parsed[f])
-  for (const tip of parsed?.nextSessionTips ?? []) {
-    if (typeof tip === 'string') texts.push(tip)
-    else if (tip && typeof tip === 'object') for (const v of Object.values(tip)) if (typeof v === 'string') texts.push(v)
-  }
-  const markers = []
-  const bareRecitals = []
-  for (const t of texts) {
-    const a = analyseText(t, sessions, currentSessionNumber)
-    markers.push(...a.markers)
-    bareRecitals.push(...a.bareRecitals)
-  }
-  return { markers, bareRecitals, texts }
-}
+//
+// Placeholders and bare recitals are counted by scripts/slotAdoption.js, moved
+// out of this file unchanged so the count could be tested and reused. The
+// limits of the bare-recital proxy are printed with the results below.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Running
@@ -379,8 +278,7 @@ const totalMarkers = ok.reduce((a, r) => a + r.markers, 0)
 const totalResolvable = ok.reduce((a, r) => a + r.resolvable, 0)
 const totalUnresolvable = ok.reduce((a, r) => a + r.unresolvable, 0)
 const totalBare = ok.reduce((a, r) => a + r.bareRecitals, 0)
-const denom = totalResolvable + totalBare
-const adoption = denom === 0 ? null : (totalResolvable / denom) * 100
+const adoption = adoptionPercent(totalResolvable, totalBare)
 
 console.log('\n─────────────────────────────────────────────')
 console.log('RESULT')

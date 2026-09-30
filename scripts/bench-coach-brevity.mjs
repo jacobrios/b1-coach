@@ -104,6 +104,7 @@ const { goalTarget, hasTarget } = await import('../src/goalTargets.js')
 const { SESSION_ONE_SWINGS } = await import('../src/sessionOneSwings.js')
 const { contentWordOverlap } = await import('./contentWordOverlap.js')
 const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecord.js')
+const { fillForGrading, fillOrFail } = await import('./benchFill.js')
 
 // A hard stop on how much one invocation can spend, not a budget. The realistic
 // accident here is a typo in --runs, and the balance behind this key is what
@@ -116,7 +117,8 @@ const { CoachCallError, buildFailureRecord } = await import('./coachFailureRecor
 // (12+8+12+8+8+8+8), so --condition all (5 conditions) now needs 320, above
 // this cap where it once needed 120. That is intentional, not an oversight:
 // --condition all was already a wasteful invocation before those cells existed
-// (B and shipped build byte-identical prompts) and this project's owner has
+// (B and shipped built byte-identical prompts until Slice 15; see the dated
+// note on the `shipped` condition) and this project's owner has
 // said it should never be run. Raising the cap to fit it would remove the one
 // thing stopping that command from working by default; the refusal message at
 // the call site explains this rather than reading as an arbitrary number. A
@@ -254,11 +256,17 @@ const CONDITIONS = {
   // this one for real.
   //
   // Since budget B was re-expressed as DEBRIEF_BUDGET, this condition and
-  // condition B now send byte-identical system prompts. Both stay defined
+  // condition B sent byte-identical system prompts. Both stay defined
   // because they answer different questions, but running them together
   // (--condition all) measures the same string twice for no reason, at the
   // cost of another 24 live calls. Use --condition shipped when the question
   // is what the app sends today.
+  //
+  // Dated note, 30 September 2026: the "byte-identical" claim here and in the
+  // two notes below stopped being true in Slice 15. DEBRIEF_SYSTEM now also
+  // carries NUMBER_SLOT_LINES and BEST_SWING_RULE, which B does not. Only
+  // `shipped` sends the real prompt, so a paid round must use
+  // --condition shipped; B now measures a prompt the app no longer sends.
   shipped: { label: 'shipped (DEBRIEF_SYSTEM exactly as the app sends it)', system: DEBRIEF_SYSTEM },
 }
 
@@ -552,7 +560,7 @@ function dryRun(conditionKeys, seed, runs) {
   console.log('')
   const canned = {
     coachingSummary: 'You hit 92 mph and got it out to 305 feet on swing 4.',
-    whatThisMeans: 'That is real bat speed at 27 degrees, right where you want it.',
+    whatThisMeans: 'That is real bat speed at {{s1.sw5.la}} degrees, right where you want it.',
     tipsIntro: 'Two things before next round.',
     nextSessionTips: [
       'Swing 12 came off at 80 mph and 191 feet. You got on top of it. Stay back a half beat longer.',
@@ -588,7 +596,8 @@ function dryRun(conditionKeys, seed, runs) {
         sessions,
         viewingSessionNumber: cell.session,
       })
-      const graded = grade(canned, values, targets)
+      const { filled } = fillForGrading(canned, sessions)
+      const graded = grade(filled, values, targets)
       console.log(
         `  ${conditionKey.padEnd(9)} ${cell.key.padEnd(12)} ` +
         `system ${String(system.length).padStart(5)} chars, prompt ${String(userMessage.length).padStart(5)} chars, ` +
@@ -602,7 +611,8 @@ function dryRun(conditionKeys, seed, runs) {
   const sample = buildSessions({ goalId: CELLS[0].goal.id, upTo: CELLS[0].session, seed })
   const sampleValues = sessionValueSets(sample)
   const sampleTargets = goalTargetSet(CELLS[0].goal.id)
-  const cannedGraded = grade(canned, sampleValues, sampleTargets)
+  const { filled: cannedFilled, rawFields: cannedRaw } = fillForGrading(canned, sample)
+  const cannedGraded = grade(cannedFilled, sampleValues, sampleTargets)
   const brokenGraded = grade(broken, sampleValues, sampleTargets)
   console.log(
     `Missing-field self-check: complete reply -> ${cannedGraded.missing.length} missing (expect 0), ` +
@@ -610,6 +620,23 @@ function dryRun(conditionKeys, seed, runs) {
   )
   if (cannedGraded.missing.length !== 0 || brokenGraded.missing.length !== 2) {
     throw new Error('Missing-field self-check failed: see the two counts printed above.')
+  }
+
+  // Fill self-check: the canned reply carries one placeholder for session 1
+  // swing 5's launch angle. The graded text must hold the real number in its
+  // place and no braces, while the raw copy kept for the record still holds the
+  // placeholder. Proves the fill step ran rather than trusting the wiring.
+  const slotAngle = String(SESSION_1_BASELINE[4].hit.launch.angle)
+  const fillOk =
+    cannedFilled.whatThisMeans.includes(`at ${slotAngle} degrees`) &&
+    !cannedFilled.whatThisMeans.includes('{{') &&
+    cannedRaw.whatThisMeans.includes('{{s1.sw5.la}}')
+  console.log(
+    `Fill self-check: slot -> "${cannedFilled.whatThisMeans}" (expect ${slotAngle} degrees, no braces), ` +
+    `raw copy keeps the placeholder -> ${cannedRaw.whatThisMeans.includes('{{s1.sw5.la}}')}`,
+  )
+  if (!fillOk) {
+    throw new Error('Fill self-check failed: see the line printed above.')
   }
 
   // Overlap self-check, independent of the canned dry-run reply above (whose
@@ -672,14 +699,15 @@ async function main() {
     // now needs 320 at the default --runs 8, far above the cap on its own.
     // That is not a bug to route around by raising the cap: --condition all
     // was already discouraged before those cells,
-    // since B and shipped send byte-identical system prompts and running
-    // both spends calls measuring the same string twice. This message exists
+    // since B and shipped sent byte-identical system prompts (until Slice 15,
+    // see the dated note on `shipped`) and running both spends calls on
+    // near-duplicate prompts. This message exists
     // so a future caller who hits the refusal understands why, rather than
     // reading it as an arbitrary number to push past.
     if (args.condition === 'all') {
       console.error(
-        '"all" runs every condition, including both B and shipped, which build ' +
-        'byte-identical system prompts — that duplication was already wasteful ' +
+        '"all" runs every condition, including both B and shipped, whose system ' +
+        'prompts were byte-identical until Slice 15; that duplication was already wasteful ' +
         'before this slice and is now what pushes the plan over the cap. Use ' +
         '--condition shipped (what the app sends today) unless you specifically ' +
         'need the historical A/B/C comparison, or name only the conditions you need.',
@@ -728,8 +756,14 @@ async function main() {
           const { parsed, elapsedMs, usage } = await callCoach({ system, userMessage, apiKey })
           inputTokens += usage.input_tokens ?? 0
           outputTokens += usage.output_tokens ?? 0
-          const graded = grade(parsed, values, targets)
-          records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded })
+          // Fill the coach's number slots the way the app does before grading, so
+          // the grader reads what a visitor would. The five raw text fields are
+          // kept beside `fields` so slot adoption can be counted from these same
+          // calls (charts and any tip beyond the first two are not kept). A fill
+          // that throws keeps the reply in its failure record via fillOrFail.
+          const { filled, rawFields } = fillOrFail(parsed, sessions, { outputTokens: usage.output_tokens ?? null })
+          const graded = grade(filled, values, targets)
+          records.push({ conditionKey, cell: cell.key, run, elapsedMs, ...graded, rawFields })
           console.log(`${graded.wordCounts.box} words in the box, ${Math.round(elapsedMs / 100) / 10}s`)
         } catch (err) {
           const ceilingNote = err instanceof CoachCallError && err.stopReason === 'max_tokens' ? ' (hit MAX_TOKENS)' : ''
