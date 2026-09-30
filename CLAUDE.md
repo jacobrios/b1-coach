@@ -3764,7 +3764,7 @@ that pass surfaced.*
 - **THREE documents now make checkable claims that nothing tests, not two.**
   `README.md` and `docs/proof-of-concept.md` both describe the number-slot
   mechanism and the best-swing pick as of 27 August 2026, including the 89%
-  adoption figure *(85% since 30 September 2026)* and the twelve blind pairs. Same class of debt as the rest,
+  adoption figure *(95% since 30 September 2026, over 128 debriefs)* and the twelve blind pairs. Same class of debt as the rest,
   same answer: recorded rather than guarded, because guarding prose costs more
   than it returns here. The practical version stays a line on this list: anyone
   reopening `src/numberSlots.js` or `src/bestSwing.js` re-reads what those two
@@ -3885,6 +3885,8 @@ that pass surfaced.*
   carries an example of each. **Nobody has re-measured adoption against the
   shipped wording**, so whether those two examples closed the gap is unknown.
   One more probe run would answer it for about $0.30.
+  *(Answered 30 September 2026 by the audit's bench rounds: 95.1% on the
+  shipped wording, 635 placeholders to 33 typed values over 128 debriefs.)*
   *(30 September 2026: the probe's own pooled count over its committed records
   gives 85.3%; 89 most likely came from a per-debrief average (89.8%). Do not rerun the probe as is: it adds its
   draft wording on top of the shipped wording and overwrites its own committed
@@ -3982,7 +3984,9 @@ that pass surfaced.*
 (`docs/eval-fixtures/audit-2026-09-30/README.md`):*
 
 - **Decide whether to act on group claims, now nearly all the coach's
-  remaining errors.** 11 of 12 genuine errors in the audit rounds are about a
+  remaining errors.** *(Decided 30 September 2026: yes, as the next slice,
+  starting after 2 October. Left live until then on purpose: no prompt change
+  right before the app is likely to be evaluated.)* 11 of 12 genuine errors in the audit rounds are about a
   handed pitch group: blanket claims one member breaks, and subset miscounts.
   One option is handing each group's per-swing values beside its swing list;
   the other is accepting it. A prompt change, so the owner's call.

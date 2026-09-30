@@ -59,6 +59,13 @@ call too.
 *Spend.* $3.40 for the rounds, about $0.45 of the demo's balance for the live
 walk.
 
+*Group-claim errors are known and deliberately left for now.* 11 of the 12
+remaining errors are claims about a group of pitches. The fix changes the
+prompt, so it waits until after 2 October, when nobody is likely to be
+evaluating the live app. It is the next accuracy slice. The public figures now
+say 95% adoption and give the like-for-like comparison (18% to 9% of debriefs
+with a flagged error) beside the older, non-comparable ones.
+
 ---
 
 ## Pre-visibility audit, part 1: the documents catch up to today's numbers (September 30)
