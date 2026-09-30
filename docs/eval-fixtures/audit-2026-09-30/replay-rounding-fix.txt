@@ -240,6 +240,13 @@ NOTES
   matched to an entry only when the round letter, cell and run all agree; it is "the same sentence" only when the entry quotes the changed
   claim's quote. The 67 audit rounding flags were never itemised one by one there (section 4 spot-checks 5 and says a script compared all
   67 to the rounded value), so most rows show no entry. A MENTION is the quote turning up in a prose section (4 or 6); those were read by hand.
+  The hand-check MENTION matching ignores cell and run: it finds the quote anywhere in a prose section. after-a popup-s4 run1 and run6 are
+  substring artefacts of HAND-CHECK section 6 item 2, which is about run8. Run8 and run2 do carry unflagged "middle of the zone" errors
+  (section 6 items 2 and 3) in sentences whose number is right, and whose only flag was the rounding one, so after this fix those two
+  debriefs read as unflagged in raw output although each still holds a genuine coach error.
+  The three bare-array files not replayed were checked from their stored "actual" fields instead: slice8 validate-96-before has 0 pitch
+  per-swing claims, validate-96-after has 27 and none would flip (none is FALSE with a stated value equal to the true value rounded), and
+  slice7 regrade-results holds no claims at all (only per-field candidate lists), so the grader's 8-of-8 validation is unaffected.
   Other documents: no verdict changes exist outside the audit rounds, so no other hand-check is consulted for a change. Coach em dashes in
   quotes are printed as hyphens.
   Faithfulness: rows with stored!=before of 0 replay the stored verdicts exactly with the pre-fix code. slice9 after-b (1) is the Slice 9

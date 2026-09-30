@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 //
 // Free, deterministic proof that the pitch-position rounding fix in
-// scripts/claimVerdict.js (the fix commit on this branch) removes only false flags.
+// scripts/claimVerdict.js (pitch height and side stated to one decimal are
+// accepted as the true value rounded) removes only false flags.
 //
 // Written 30 September 2026 for the grader-accepts-rounded-pitch micro-PR,
 // Task 2. scripts/replay-grading.mjs compares a saved grading file's STORED
@@ -27,7 +28,7 @@
 // where the choice came from. A file the tool cannot replay is printed with the
 // reason and skipped, never forced.
 
-import { readFileSync, writeFileSync, mkdirSync, copyFileSync, mkdtempSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, copyFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import os from 'node:os'
 import path from 'node:path'
@@ -44,16 +45,25 @@ const REPO = path.resolve(HERE, '../../..')
 // was cut from, and NOT from the fix commit's parent: a branch commit does not
 // survive a squash merge, so a reference to it would stop this script being
 // re-runnable once the PR lands. f16eba1 is on main and holds the identical
-// pre-fix scripts/claimVerdict.js. Checked 30 September 2026 with
-// `git diff f16eba1 <fix-commit>^ -- scripts/claimVerdict.js scripts/goalTargets.js
-// src/goalTargets.js`, which printed nothing (the script copies the working-tree
-// src/goalTargets.js beside the old verdict code, so that file had to match too).
+// pre-fix scripts/claimVerdict.js. The script copies the working-tree
+// src/goalTargets.js (the only module claimVerdict.js imports) beside the old
+// verdict code, so that file had to be unchanged since f16eba1. Checked 30
+// September 2026 with `git diff f16eba1 HEAD --stat -- scripts/claimVerdict.js
+// src/goalTargets.js`, which listed only scripts/claimVerdict.js.
 const BASE_COMMIT = 'f16eba1'
 
 // The verdict code as it stood immediately before the fix, materialised beside
 // a copy of the one module it imports so its relative import still resolves.
 async function loadVerdictBeforeFix() {
   const dir = mkdtempSync(path.join(os.tmpdir(), 'verdict-before-fix-'))
+  try {
+    return await materialiseAndLoad(dir)
+  } finally {
+    rmSync(dir, { recursive: true, force: true })
+  }
+}
+
+async function materialiseAndLoad(dir) {
   mkdirSync(path.join(dir, 'scripts'))
   mkdirSync(path.join(dir, 'src'))
   const old = execFileSync('git', ['show', `${BASE_COMMIT}:scripts/claimVerdict.js`], { cwd: REPO, encoding: 'utf8' })
@@ -99,7 +109,7 @@ const FILES = [
 
 const recordId = (r) => `${r.conditionKey}/${r.cell}/run${r.run}`
 
-function describeRefusal(cfg, raw, err) {
+function describeRefusal(err) {
   return err.message.split('\n')[0]
 }
 
@@ -246,7 +256,7 @@ async function main() {
     try {
       all.push(await replayFile(cfg, verdictOld))
     } catch (err) {
-      refused.push({ cfg, reason: describeRefusal(cfg, null, err) })
+      refused.push({ cfg, reason: describeRefusal(err) })
     }
   }
 
@@ -300,6 +310,13 @@ async function main() {
   say('  matched to an entry only when the round letter, cell and run all agree; it is "the same sentence" only when the entry quotes the changed')
   say('  claim\'s quote. The 67 audit rounding flags were never itemised one by one there (section 4 spot-checks 5 and says a script compared all')
   say('  67 to the rounded value), so most rows show no entry. A MENTION is the quote turning up in a prose section (4 or 6); those were read by hand.')
+  say('  The hand-check MENTION matching ignores cell and run: it finds the quote anywhere in a prose section. after-a popup-s4 run1 and run6 are')
+  say('  substring artefacts of HAND-CHECK section 6 item 2, which is about run8. Run8 and run2 do carry unflagged "middle of the zone" errors')
+  say('  (section 6 items 2 and 3) in sentences whose number is right, and whose only flag was the rounding one, so after this fix those two')
+  say('  debriefs read as unflagged in raw output although each still holds a genuine coach error.')
+  say('  The three bare-array files not replayed were checked from their stored "actual" fields instead: slice8 validate-96-before has 0 pitch')
+  say('  per-swing claims, validate-96-after has 27 and none would flip (none is FALSE with a stated value equal to the true value rounded), and')
+  say('  slice7 regrade-results holds no claims at all (only per-field candidate lists), so the grader\'s 8-of-8 validation is unaffected.')
   say('  Other documents: no verdict changes exist outside the audit rounds, so no other hand-check is consulted for a change. Coach em dashes in')
   say('  quotes are printed as hyphens.')
   say('  Faithfulness: rows with stored!=before of 0 replay the stored verdicts exactly with the pre-fix code. slice9 after-b (1) is the Slice 9')

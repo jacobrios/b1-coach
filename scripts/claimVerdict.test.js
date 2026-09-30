@@ -286,8 +286,12 @@ const TWO_DECIMAL_FACT_SHEET = {
       swings: [
         { n: 1, exitVelocity: 87.6, launchAngle: 18.4, distance: 300.5, pitchHeight: 1.78, pitchSide: -1.44 },
         { n: 2, exitVelocity: 90, launchAngle: 30, distance: 324, pitchHeight: 1.96, pitchSide: 0.2 },
+        // Two-decimal values on the three metrics the app does not round, so a
+        // one-decimal statement below IS the true value rounded and would pass if
+        // the tolerance leaked past the two pitch fields.
+        { n: 3, exitVelocity: 87.64, launchAngle: 18.44, distance: 300.54, pitchHeight: 1.5, pitchSide: 0 },
       ],
-      stats: { totalSwings: 2 },
+      stats: { totalSwings: 3 },
       thresholds: {},
     },
   ],
@@ -332,9 +336,9 @@ describe('pitch location claims stated at the app\'s one-decimal rounding', () =
   })
 
   it('gives no other metric the tolerance', () => {
-    expect(verdictForClaim(swingClaim(1, 'exitVelocity', 88), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
-    expect(verdictForClaim(swingClaim(1, 'launchAngle', 18), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
-    expect(verdictForClaim(swingClaim(1, 'distance', 301), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+    expect(verdictForClaim(swingClaim(3, 'exitVelocity', 87.6), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+    expect(verdictForClaim(swingClaim(3, 'launchAngle', 18.4), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+    expect(verdictForClaim(swingClaim(3, 'distance', 300.5), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
   })
 })
 
