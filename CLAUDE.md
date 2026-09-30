@@ -1765,6 +1765,14 @@ owner's own use explains. Do not build rate limiting without that signal.
 
 ## Deliberate decisions, do not "fix" these
 
+- **The app's TrackMan branding stays, with no in-app disclaimer**, link preview
+  included. It is intentional: the demo shows how the coach would sit inside
+  TrackMan's product. The README and proof of concept carry the disclaimer.
+  Owner, 30 September 2026.
+- **iPad portrait is declined.** The app targets desktop and iPad landscape.
+  Owner, 30 September 2026.
+- **Odd chart axis ticks are declined for now** (69/76/83/90/95, zone bottom
+  labelled 1.6). Owner, 30 September 2026.
 - **Em-dashes in the coach's voice are accepted.** Both system prompts say
   "Never use em-dashes" and the model ignores it. The user-level ban governs the
   product manager's own writing, not B1's character voice. A stripping fix was
@@ -3747,7 +3755,7 @@ that pass surfaced.*
 - **THREE documents now make checkable claims that nothing tests, not two.**
   `README.md` and `docs/proof-of-concept.md` both describe the number-slot
   mechanism and the best-swing pick as of 27 August 2026, including the 89%
-  adoption figure and the twelve blind pairs. Same class of debt as the rest,
+  adoption figure *(85% since 30 September 2026)* and the twelve blind pairs. Same class of debt as the rest,
   same answer: recorded rather than guarded, because guarding prose costs more
   than it returns here. The practical version stays a line on this list: anyone
   reopening `src/numberSlots.js` or `src/bestSwing.js` re-reads what those two
@@ -3868,6 +3876,10 @@ that pass surfaced.*
   carries an example of each. **Nobody has re-measured adoption against the
   shipped wording**, so whether those two examples closed the gap is unknown.
   One more probe run would answer it for about $0.30.
+  *(30 September 2026: the probe's own pooled count over its committed records
+  gives 85.3%; 89 most likely came from a per-debrief average (89.8%). Do not rerun the probe as is: it adds its
+  draft wording on top of the shipped wording and overwrites its own committed
+  records. The pre-visibility audit counts adoption from a bench round instead.)*
 - **The mechanism composes prose around numbers the coach is not looking at,
   and one sentence hints that matters.** A probe debrief read "swings like 8 and
   3 came off at 92 and 92 mph", where a person writes "both at 92." The coach
@@ -3929,7 +3941,9 @@ that pass surfaced.*
   `twitter:description`). Beside it: `README.md:3` says "**for** TrackMan B1
   baseball hitting data. Proof of concept"; this file's own opening says
   "**over** TrackMan B1 baseball hitting data"; and `docs/proof-of-concept.md:9`
-  says "built on **a subset of** TrackMan B1 baseball hitting data". They agree
+  says "built on **a subset of** TrackMan B1 baseball hitting data" *(now "for
+  TrackMan B1-style hitting data, demonstrated on synthetic sessions", 30
+  September 2026)*. They agree
   in substance and differ in every sentence, so **grepping for the sentence will
   not find them and a first draft of this entry wrongly said it would.** Note the
   new meta description is the only one that drops the "a subset of" hedge about

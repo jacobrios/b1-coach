@@ -177,8 +177,8 @@ export const BEST_SWING_RULE = 'When you single out one swing as the example to 
 // watched a shared rule live in three copies and the chat prompt be the one
 // that kept getting missed (DISTANCE_BUCKETS, before Slice 6).
 //
-// The two examples are not decoration. A 16-debrief probe measured 89% adoption
-// and every miss fell into one of exactly two shapes the first draft's single
+// The two examples are not decoration. A 16-debrief probe measured 85% adoption
+// (pooled) and every miss fell into one of exactly two shapes the first draft's single
 // example did not cover: a distance typed out while the exit velocity and
 // launch angle in the same sentence used placeholders, and a sentence running
 // value-first ("92 and 91 mph on swings 7 and 4"). One example of each shape is

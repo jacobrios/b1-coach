@@ -9,6 +9,46 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Pre-visibility audit, part 1: the documents catch up to today's numbers (September 30)
+
+*Why an audit.* This repo is about to be read by people who know the data. The
+audit checked every claim in the README, the proof of concept and the link
+preview, walked the live site, and is buying a fresh accuracy round (part 2,
+recorded when it lands, with the audit's notes and screenshots).
+
+*What changed in the documents.* Of about 97 checkable claims, 17 needed a
+change. The substantive one: "integration would be a swap" overclaimed. The hit
+fields do follow TrackMan's public Practice Hit object, but pitch location lives
+on a separate record there and practice data carries no batter handedness, so
+both documents now say what integration would take, that the app assumes a
+right-hander, and that distance is computed carry. The rest were stale numbers
+(error range 12% to 25%, not 22%; tips about 60 to 65 words, not 67 to 82; a
+debrief takes about ten seconds, measured at 9 to 11 across 22 live calls and
+matching the committed bench medians of 9.7 to 10.5), claims the record had
+already corrected ("did not move" was "barely moved"; the rejected pull
+definition never shipped), and one sentence about what TrackMan's product
+lacks, cut.
+
+*The adoption figure.* The Slice 15 entry below says 89% of per-swing values
+came back as placeholders. The probe's own pooled count over its committed
+records gives 85.3% (64 placeholders, 11 typed values); 89 most likely came from
+averaging per debrief (89.8%). The proof of concept now says 85% and the README
+"more than eight times in ten". Part 2 re-measures on the shipped wording.
+
+*Decided, do not re-flag.*
+- **The TrackMan branding in the app stays**, including the link preview's
+  wording. "Powered by TrackMan" and "TrackMan B1 is capturing every swing" are
+  intentional: the demo shows how the coach would sit inside TrackMan's
+  product. The documents carry the disclaimer; the app does not, on purpose.
+- **iPad portrait is declined.** The app is designed for desktop and iPad
+  landscape. Portrait works but leaves the summary panel half empty.
+- **Odd chart axis ticks are declined for now** (69/76/83/90/95; the zone bottom
+  labelled 1.6 rather than 1.5).
+- **Coach errors seen on the live site wait for the accuracy round.** No prompt
+  change before then.
+
+---
+
 ## Micro-PR: a shared link to B1 Coach previews with its own card (September 8)
 
 *What this was.* The product manager was adding B1 Coach to his LinkedIn

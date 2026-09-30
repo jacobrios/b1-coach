@@ -22,11 +22,12 @@
 // manager approved it on that basis.
 //
 // ADOPTION IS NOT 100%, WHICH IS WHY THIS IS NOT A GUARANTEE. The probe in
-// docs/eval-fixtures/slice15-number-slots/ measured 89% of per-swing values
-// coming back as slots across 16 live debriefs. The other 11% the coach typed
-// itself and can still get wrong. "A contradicted per-swing number becomes
+// docs/eval-fixtures/slice15-number-slots/ measured 85% of per-swing values
+// coming back as slots across 16 live debriefs (pooled; this read 89% until
+// 30 September 2026, likely a per-debrief average). The other 15% the coach
+// typed itself and can still get wrong. "A contradicted per-swing number becomes
 // impossible" is therefore FALSE as written; the true claim is that it becomes
-// impossible for the values the coach hands over, and those were 89% of them.
+// impossible for the values the coach hands over, and those were 85% of them.
 
 // One slot holds one value and names its own session and swing. That is
 // deliberate rather than terse for its own sake: a pair syntax would have to
