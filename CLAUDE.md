@@ -1228,6 +1228,7 @@ specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
    vitest. *(30 September 2026: **789 across 28** after the bench micro-PR,
+   then **796 across 28** after the grader rounding micro-PR,
    #51, which added `scripts/benchFill.test.js` and `scripts/slotAdoption.test.js`.
    A git worktree under `.claude/worktrees/` is collected too and doubles the
    count; the audit's start saw 1,502, which is 751 twice, before #51.)* At the close of the best-swing micro-PR on 27 August 2026 it is **751 tests
@@ -3989,6 +3990,9 @@ that pass surfaced.*
   fills 1.78 as 1.8; the fact sheet keeps 1.78 and the check is exact equality. 67 of
   85 raw flags in the audit rounds. Deterministic and in the verdict path, so a
   fix is free to validate by offline replay. Fix before the next paid round.
+  *(Closed 30 September 2026 by the grader rounding micro-PR. Replayed over
+  every saved round: 67 flags change, all these, none ruled genuine.
+  `docs/eval-fixtures/audit-2026-09-30/replay-rounding-fix.txt`.)*
 - **The coach uses a placeholder as a threshold** ("below {{s1.sw9.ht}} feet"),
   so the digit is right and the sentence false. Two of twelve genuine errors.
 - **Placeholders do not reach prior-session counts.** One misordered
