@@ -9,6 +9,24 @@ were written. No decision, number, finding or outcome was changed.*
 
 ---
 
+## Micro-PR: the grader accepts a correctly rounded pitch position (September 30)
+
+*Why.* The app writes pitch height and side to one decimal; the grader demanded
+the unrounded value, so it ruled a correct "1.8 feet" false. That was 67 of 85
+raw flags in the audit's two rounds, every one a grader mistake on hand-check.
+Left alone, the next paid round's raw output would be mostly noise again.
+
+*What.* For those two measures only, a value rounded the way the app rounds is
+now correct. Nothing else about the grader moved.
+
+*Evidence, not assertion.* Every saved round was replayed through the old and
+new rules: 67 verdicts changed, all of them these rounding cases in the audit
+rounds, none previously ruled a real coach error, and zero changes in any older
+round. So earlier rounds stay comparable. Free to rerun:
+`node docs/eval-fixtures/audit-2026-09-30/replay-rounding-fix.mjs`.
+
+---
+
 ## Pre-visibility audit, part 2: a current accuracy figure (September 30)
 
 *What was measured.* Two 64-debrief rounds on the shipped prompt at Slice 11's

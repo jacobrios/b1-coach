@@ -162,6 +162,8 @@ function thresholdVerdict(claim, session, context) {
   return ruled('TRUE', actual, 'count matches the precomputed row')
 }
 
+const ROUNDED_PITCH_METRICS = new Set(['pitchHeight', 'pitchSide'])
+
 // One swing's own number, read straight out of the per-swing table.
 function swingValueVerdict(claim, session, _context) {
   const { swingNumber, metric, statedValue } = claim
@@ -179,9 +181,17 @@ function swingValueVerdict(claim, session, _context) {
   if (!Number.isFinite(value)) return unverifiable(`swing ${swingNumber} carries no ${metric}`)
 
   const actual = `swing ${swingNumber} ${metric}: ${value}`
-  return value === statedValue
-    ? ruled('TRUE', actual, 'matches the per-swing table')
-    : ruled('FALSE', actual, `claimed ${statedValue}, the table says ${value}`)
+  if (value === statedValue) return ruled('TRUE', actual, 'matches the per-swing table')
+  // The app writes pitch height and side into the coach's text to one decimal
+  // (1.78 prints as 1.8), so a coach quoting what the visitor reads is stating
+  // the true value correctly. Only these two metrics, because they are the only
+  // fields the app rounds. The expression is a copy of the one in
+  // src/numberSlots.js (readSlot, line 73), which is inline there and not worth
+  // restructuring that module to export. If that rounding changes, change this.
+  if (ROUNDED_PITCH_METRICS.has(metric) && statedValue === Math.round(value * 10) / 10) {
+    return ruled('TRUE', actual, `matches the per-swing table when rounded to one decimal (${value} prints as ${statedValue})`)
+  }
+  return ruled('FALSE', actual, `claimed ${statedValue}, the table says ${value}`)
 }
 
 // "N of those [swings X, Y, Z] were under T". The one shape that needs a set

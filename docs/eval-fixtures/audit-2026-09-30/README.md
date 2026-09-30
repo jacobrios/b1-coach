@@ -67,3 +67,8 @@ coach saw.
   sessions 1 and 4, desktop and iPad) and screenshots.
 
 Spend: bench $2.59, grading $0.81, live site about $0.45 (estimated).
+
+*Postscript, 30 September 2026, later.* The grader now accepts a pitch height
+or side stated to one decimal. Replayed under it, these rounds hold 13 and 5
+raw flags, not 39 and 46; the hand-checked genuine counts are unchanged.
+`replay-rounding-fix.txt` shows every change.

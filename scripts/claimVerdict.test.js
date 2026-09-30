@@ -273,6 +273,75 @@ describe('pitch location claims', () => {
   })
 })
 
+// The app writes pitch height and side to one decimal (1.78 prints as 1.8,
+// src/numberSlots.js), so a coach quoting the printed value is stating the true
+// value correctly. The table keeps two decimals. These swings carry two-decimal
+// values so the rounding is actually exercised; the main fact sheet above holds
+// only one-decimal values and cannot tell the two rules apart.
+const TWO_DECIMAL_FACT_SHEET = {
+  viewingSessionNumber: 4,
+  sessions: [
+    {
+      sessionNumber: 4,
+      swings: [
+        { n: 1, exitVelocity: 87.6, launchAngle: 18.4, distance: 300.5, pitchHeight: 1.78, pitchSide: -1.44 },
+        { n: 2, exitVelocity: 90, launchAngle: 30, distance: 324, pitchHeight: 1.96, pitchSide: 0.2 },
+        // Two-decimal values on the three metrics the app does not round, so a
+        // one-decimal statement below IS the true value rounded and would pass if
+        // the tolerance leaked past the two pitch fields.
+        { n: 3, exitVelocity: 87.64, launchAngle: 18.44, distance: 300.54, pitchHeight: 1.5, pitchSide: 0 },
+      ],
+      stats: { totalSwings: 3 },
+      thresholds: {},
+    },
+  ],
+}
+
+function swingClaim(swingNumber, metric, statedValue) {
+  return { kind: 'swingValue', sessionNumber: 4, swingNumber, metric, statedValue }
+}
+
+describe('pitch location claims stated at the app\'s one-decimal rounding', () => {
+  it('is TRUE for a pitch height stated as the true value rounded to one decimal', () => {
+    const result = verdictForClaim(swingClaim(1, 'pitchHeight', 1.8), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('TRUE')
+    // The reason says which case this was, so a reader can tell it from an exact match.
+    expect(result.reasoning).toMatch(/rounded/)
+  })
+
+  it('is TRUE for a negative pitch side stated rounded to one decimal', () => {
+    const result = verdictForClaim(swingClaim(1, 'pitchSide', -1.4), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is TRUE when rounding lands on a whole number', () => {
+    const result = verdictForClaim(swingClaim(2, 'pitchHeight', 2), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('TRUE')
+  })
+
+  it('is FALSE for a one-decimal value the true value does not round to', () => {
+    const result = verdictForClaim(swingClaim(1, 'pitchHeight', 1.7), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('FALSE')
+  })
+
+  it('stays TRUE for the exact two-decimal value, with the original reason', () => {
+    const result = verdictForClaim(swingClaim(1, 'pitchHeight', 1.78), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('TRUE')
+    expect(result.reasoning).toBe('matches the per-swing table')
+  })
+
+  it('stays FALSE for a two-decimal value that is not the table value', () => {
+    const result = verdictForClaim(swingClaim(1, 'pitchHeight', 1.79), TWO_DECIMAL_FACT_SHEET)
+    expect(result.verdict).toBe('FALSE')
+  })
+
+  it('gives no other metric the tolerance', () => {
+    expect(verdictForClaim(swingClaim(3, 'exitVelocity', 87.6), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+    expect(verdictForClaim(swingClaim(3, 'launchAngle', 18.4), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+    expect(verdictForClaim(swingClaim(3, 'distance', 300.5), TWO_DECIMAL_FACT_SHEET).verdict).toBe('FALSE')
+  })
+})
+
 describe('subset claims', () => {
   // Fixture error #4: of swings 3, 8 and 12, "two of those came in under 84
   // mph" when only one was. The subset was derived mid-sentence by the coach.
