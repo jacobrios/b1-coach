@@ -2990,9 +2990,9 @@ rewritten, per the append-only rule.
   again would restore the uniformity Slice 9 existed to remove. If anything
   about the coach's accuracy is worth a follow-up, it is this one sentence
   shape, not the aggregate rate.
-  *(30 September 2026, pre-visibility audit: it is now 10 of the 12 genuine
-  errors across two rounds, a blanket claim about a handed group that one
-  member breaks; three more are subset miscounts over the wide pitches, which
+  *(30 September 2026, pre-visibility audit: of 12 genuine errors across two
+  rounds, 9 are this blanket shape (8 over a pitch group, 1 over a
+  launch-angle group) and 3 are subset miscounts over the wide pitches, which
   the acceptance above does not cover. It stands until the owner decides
   otherwise; see What's Next.)*
 - **Two test files hold their own copies of session 1's distances and cannot
