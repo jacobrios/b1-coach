@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { fillForGrading } from './benchFill.js'
+import { fillForGrading, fillOrFail } from './benchFill.js'
+import { CoachCallError, buildFailureRecord } from './coachFailureRecord.js'
+import { analyseFields } from './slotAdoption.js'
 import { SESSION_ONE_SWINGS } from '../src/sessionOneSwings.js'
 
 // See scripts/benchFill.js for why this is its own module: the bench runs
@@ -89,5 +91,52 @@ describe('fillForGrading: rawFields', () => {
     const { rawFields } = fillForGrading(reply({ nextSessionTips: ['Only one.'] }), sessions)
     expect(rawFields.tip1).toBe('Only one.')
     expect(rawFields.tip2).toBeUndefined()
+  })
+})
+
+describe('fillOrFail: a fill that throws keeps the evidence', () => {
+  it('wraps the throw as a CoachCallError carrying the raw reply and the token count', () => {
+    const parsed = reply({ coachingSummary: 'Swing 40 was {{s1.sw40.ev}} mph.' })
+    let caught
+    try {
+      fillOrFail(parsed, sessions, { outputTokens: 812 })
+    } catch (err) {
+      caught = err
+    }
+    expect(caught).toBeInstanceOf(CoachCallError)
+    expect(caught.message).toMatch(/emptied/)
+    expect(caught.rawText).toBe(JSON.stringify(parsed))
+    expect(caught.outputTokens).toBe(812)
+  })
+
+  it('reaches the failure record, which keeps the raw text', () => {
+    const parsed = reply({ coachingSummary: 'Swing 40 was {{s1.sw40.ev}} mph.' })
+    let caught
+    try {
+      fillOrFail(parsed, sessions)
+    } catch (err) {
+      caught = err
+    }
+    const record = buildFailureRecord({ conditionKey: 'shipped', cell: 'power-s1', run: 1 }, caught)
+    expect(record.rawText).toContain('{{s1.sw40.ev}}')
+    expect(record.outputTokens).toBeNull()
+  })
+
+  it('returns the same result as fillForGrading when the fill succeeds', () => {
+    expect(fillOrFail(reply(), sessions)).toEqual(fillForGrading(reply(), sessions))
+  })
+})
+
+describe('fillForGrading feeds slotAdoption', () => {
+  it('rawFields is the shape analyseFields reads, and its placeholders count as resolvable', () => {
+    const { rawFields } = fillForGrading(reply(), sessions)
+    const a = analyseFields(rawFields, sessions, 1)
+    expect(a.markers.map((m) => m.raw)).toEqual([
+      '{{s1.sw5.ev}}',
+      '{{s1.sw5.dist}}',
+      '{{s1.sw5.la}}',
+      '{{s1.sw1.ev}}',
+    ])
+    expect(a.markers.every((m) => m.resolvable)).toBe(true)
   })
 })

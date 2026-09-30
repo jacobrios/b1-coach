@@ -16,6 +16,7 @@
 // runs main() at import time and cannot be imported by a test without spending
 // money. Same reasoning as coachFailureRecord.js.
 import { fillDebriefNumbers } from '../src/numberSlots.js'
+import { CoachCallError } from './coachFailureRecord.js'
 
 // The five text fields in the shape the bench's grade() calls `fields`: the
 // first two tips are read out of nextSessionTips as tip1 and tip2. Taken from
@@ -38,11 +39,26 @@ function textFields(parsed) {
 // the slot reader uses, so no adapter sits between them.
 //
 // A fill that throws (a required prose field emptied because it named a swing
-// that does not exist) is left to throw. The bench's own catch turns it into a
-// failure record, which is what the app's failure path does with the same reply.
+// that does not exist) is left to throw here. fillOrFail below is what the bench
+// calls, so the throw carries the reply with it.
 export function fillForGrading(parsed, sessions) {
   return {
     filled: fillDebriefNumbers(parsed, sessions),
     rawFields: textFields(parsed),
+  }
+}
+
+// fillForGrading for the bench's main loop. A fill that throws arrives at the
+// bench's catch as a plain Error, and buildFailureRecord keeps evidence only
+// for a CoachCallError, so the reply that could not be used would be lost on
+// a paid call. This re-throws it as one, carrying the parsed reply as text
+// (the original text is gone by now, parsing happened in callCoach) and the
+// call's output token count when the caller has it. No stopReason: the call
+// itself ended normally.
+export function fillOrFail(parsed, sessions, { outputTokens = null } = {}) {
+  try {
+    return fillForGrading(parsed, sessions)
+  } catch (err) {
+    throw new CoachCallError(err.message, { rawText: JSON.stringify(parsed), outputTokens })
   }
 }

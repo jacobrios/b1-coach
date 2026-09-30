@@ -241,7 +241,8 @@ describe('adoptionPercent', () => {
 // The figure is 85.3 (64 resolvable placeholders, 11 typed recitals, 16 of 16
 // debriefs parsed). The Slice 15 decision log says "89%" for the probe. The
 // committed file does not produce 89 and this test does not pretend it does;
-// see the Task 2 report for the discrepancy.
+// the discrepancy is recorded in docs/product-decisions-log.md, the 30
+// September 2026 "Pre-visibility audit, part 1" entry (85.3% against 89%).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PROBE_FILE = fileURLToPath(

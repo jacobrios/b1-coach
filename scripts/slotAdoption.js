@@ -141,7 +141,8 @@ export function analyseDebrief(parsed, sessions, currentSessionNumber) {
 
 // The bench record shape: rawFields, the coach's text with placeholders
 // verbatim (see fillForGrading in benchFill.js). A thin adapter over the same
-// counting, so a bench round and a probe round are counted by one rule.
+// counting, so a bench round and a probe round are counted by one rule. A
+// bench-side count sees only tip1 and tip2, which matches what the grader sees.
 export function analyseFields(rawFields, sessions, currentSessionNumber) {
   const texts = []
   for (const f of [...TEXT_FIELDS, 'tip1', 'tip2']) if (typeof rawFields?.[f] === 'string' && rawFields[f]) texts.push(rawFields[f])
