@@ -1228,8 +1228,8 @@ specific to this repo:
 
 1. **There is a test suite as of Slice 3, and it is narrow.** `npm test` runs
    vitest. *(30 September 2026: **789 across 28** after the bench micro-PR,
-   then **796 across 28** after the grader rounding micro-PR,
-   #51, which added `scripts/benchFill.test.js` and `scripts/slotAdoption.test.js`.
+   #51, which added `scripts/benchFill.test.js` and `scripts/slotAdoption.test.js`;
+   then **796 across 28** after the grader rounding micro-PR.
    A git worktree under `.claude/worktrees/` is collected too and doubles the
    count; the audit's start saw 1,502, which is 751 twice, before #51.)* At the close of the best-swing micro-PR on 27 August 2026 it is **751 tests
    across 26 files**, up from 734 across 25 at the close of Slice 15, up from 695 across 24 at the close of Slice 13. The new
