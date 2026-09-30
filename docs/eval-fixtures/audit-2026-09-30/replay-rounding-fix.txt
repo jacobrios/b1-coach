@@ -1,0 +1,252 @@
+REPLAY OF THE PITCH-POSITION ROUNDING FIX, 30 September 2026
+Verdict code compared: the parent of a9d0968 (before) against the working tree (after), on one rebuilt fact sheet per cell.
+"stored" is what the committed grading file recorded on the day; it is shown so the before column can be checked for faithfulness.
+No network, no API key, no spend.
+
+PER-ROUND TOTALS (FALSE verdicts)
+  round                        records claims  stored-FALSE before-FALSE after-FALSE changed  stored!=before  builder
+  audit after-a                    64    557            39           39          13      26               0  current (current, seed 20260814)
+  audit after-b                    64    593            46           46           5      41               0  current (current, seed 20260819)
+  slice11 before                   64    544            19           19          19       0               0  slice11-before (current, seed 20260814)
+  slice11 after-a                  64    564            20           20          20       0               0  current (current, seed 20260814)
+  slice11 after-b                  64    624            25           25          25       0               0  current (current, seed 20260819)
+  slice10 after                    64    504            21           21          21       0               0  slice11-before (current, seed 20260814)
+  slice10 after-spray              64    543            23           23          23       0               0  slice11-before (current, seed 20260814)
+  slice9 before                    64    516            16           16          16       0               0  slice9-before (current, seed 20260814)
+  slice9 after-a                   64    542            29           29          29       0               0  slice11-before (current, seed 20260814)
+  slice9 after-b                   64    525            15           14          14       0               1  slice11-before (current, seed 20260819)
+  slice8c before                   52    430            26           25          25       0               1  slice9-before (slice8b, seed 20260814)
+  slice8c after                    52    434            26           18          18       0               8  slice9-before (current, seed 20260814)
+  slice8d regrade-8b-after         52    421            18           18          18       0               0  slice9-before (slice8b, seed 20260814)
+  slice8d regrade-8c-after         52    433            19           19          19       0               0  slice9-before (current, seed 20260814)
+
+  "stored!=before" counts claims where the before-fix code on the rebuilt fact sheet disagrees with the verdict stored on the day.
+  A nonzero count means something other than this fix separates the file from today (earlier verdict fixes, or a fact sheet that
+  does not match what the coach saw). The changes column is unaffected by it, since it compares before-fix with after-fix on the
+  same sheet, but a file with a large mismatch is not evidence about the real debriefs and is marked below.
+
+FILES NOT REPLAYED
+  docs/eval-fixtures/slice8-grader-validation/validate-96-before.json: no meta.handedEra (pre-metadata bare array) and no era recorded in the file; the replay tool also refuses it without --handed-era
+  docs/eval-fixtures/slice8-grader-validation/validate-96-after.json: no meta.handedEra (pre-metadata bare array) and no era recorded in the file; the replay tool also refuses it without --handed-era
+  docs/eval-fixtures/slice7-debriefs/regrade-results.json: no meta.handedEra (pre-metadata bare array) and no era recorded in the file; the replay tool also refuses it without --handed-era
+
+EVERY CHANGED VERDICT
+--- audit after-a  (docs/eval-fixtures/audit-2026-09-30/after-a/grading.json)  26 change(s)
+  shipped/power-s2/run1 tip1 FALSE->TRUE metric=pitchHeight session=2 swing=12 stated=4.2 true=4.19 round1=4.2
+      quote: "swing 12 was at 4.2 ft"
+      hand-check: MENTION only in audit-2026-09-30/HAND-CHECK.md [## 4. Spot-check of 5 rounding flags]
+  shipped/power-s2/run1 tip2 FALSE->TRUE metric=pitchHeight session=2 swing=4 stated=2.9 true=2.92 round1=2.9
+      quote: "Swing 4 was your best of the session - 88 mph, 29° launch angle, 316 feet on a pitch at 2.9 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/power-s2/run3 tip1 FALSE->TRUE metric=pitchHeight session=2 swing=12 stated=4.2 true=4.19 round1=4.2
+      quote: "swing 12 came in at 4.2 feet with just 69 mph off the bat"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/power-s2/run3 tip2 FALSE->TRUE metric=pitchHeight session=2 swing=4 stated=2.9 true=2.92 round1=2.9
+      quote: "That pitch was right in the middle of the zone at 2.9 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/power-s2/run7 tip2 FALSE->TRUE metric=pitchHeight session=2 swing=4 stated=2.9 true=2.92 round1=2.9
+      quote: "That pitch was at 2.9 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run6 tip1 FALSE->TRUE metric=pitchSide session=4 swing=12 stated=-1.4 true=-1.44 round1=-1.4
+      quote: "That one miss was swing 12, which came in at -1.4 feet wide"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run1 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "it came on a pitch right in the zone at 3.1 feet high"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "that pitch was right in the middle of the zone at 3.1 feet"
+      hand-check: entry A9 (tip1) is a different sentence in the same debrief: GENUINE; MENTION only in audit-2026-09-30/HAND-CHECK.md [## 6. Unflagged errors noticed in passing]
+  shipped/open-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=4 stated=2.8 true=2.82 round1=2.8
+      quote: "It was a strike at 2.8 feet high"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run4 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "it came on a strike at 3.1 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run5 tip1 FALSE->TRUE metric=pitchSide session=4 swing=2 stated=1.4 true=1.38 round1=1.4
+      quote: "swing 2 at 1.4 feet wide"
+      hand-check: entry A10 (tip2) is a different sentence in the same debrief: FALSE POSITIVE
+  shipped/open-s4/run5 tip1 FALSE->TRUE metric=pitchSide session=4 swing=8 stated=-0.8 true=-0.79 round1=-0.8
+      quote: "swing 8 at -0.8 feet wide"
+      hand-check: entry A10 (tip2) is a different sentence in the same debrief: FALSE POSITIVE
+  shipped/open-s4/run6 whatThisMeans FALSE->TRUE metric=pitchSide session=4 swing=2 stated=1.4 true=1.38 round1=1.4
+      quote: "a pitch 1.4ft wide"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run8 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "That pitch was at 3.1 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run2 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=4 stated=2.8 true=2.82 round1=2.8
+      quote: "it came on a strike right in the heart of the zone at 2.8 feet high"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run4 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "it came on a pitch right in the zone at 3.1 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run6 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "on a pitch at 3.1 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run7 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=7 stated=3.1 true=3.07 round1=3.1
+      quote: "Swing 7 was your best swing this session - 92 mph at 28 degrees going 353 feet on a pitch at 3.1 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run8 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=4 stated=2.8 true=2.82 round1=2.8
+      quote: "You got that pitch at 2.8 feet"
+      hand-check: entry A13 (tip1) is a different sentence in the same debrief: GENUINE
+  shipped/popup-s4/run1 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "That pitch was at 1.8 feet"
+      hand-check: MENTION only in audit-2026-09-30/HAND-CHECK.md [## 6. Unflagged errors noticed in passing]
+  shipped/popup-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "it came on a pitch at 1.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "a clean, line-drive swing on a pitch at 1.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run4 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "You stayed on a pitch at 1.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "That pitch was down at 1.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run6 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "That pitch was at 1.8 feet"
+      hand-check: MENTION only in audit-2026-09-30/HAND-CHECK.md [## 6. Unflagged errors noticed in passing]
+  shipped/popup-s4/run8 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=13 stated=1.8 true=1.78 round1=1.8
+      quote: "That pitch was at 1.8 feet, middle of the zone"
+      hand-check: MENTION only in audit-2026-09-30/HAND-CHECK.md [## 6. Unflagged errors noticed in passing]
+--- audit after-b  (docs/eval-fixtures/audit-2026-09-30/after-b/grading.json)  41 change(s)
+  shipped/contact-s4/run1 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "swings 5 and 9 were both up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run1 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "swings 5 and 9 were both up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "swings 5 and 9 were up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "swings 5 and 9 were up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "swings 5 and 9 were both up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "swings 5 and 9 were both up at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run5 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=15 stated=2.4 true=2.43 round1=2.4
+      quote: "that pitch was middle of the zone at 2.4 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "swings 5 and 9 were high at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "swings 5 and 9 were high at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run6 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "swing 5 at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/contact-s4/run6 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=10 stated=1.4 true=1.42 round1=1.4
+      quote: "swing 10 at 1.4 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run1 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swing 5 was a pitch at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run1 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "on a pitch at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swing 5 came in at 3.8ft high"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "both on pitches at 2 and 2.9 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run3 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=6 stated=2.9 true=2.92 round1=2.9
+      quote: "both on pitches at 2 and 2.9 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run4 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run4 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run4 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "on a pitch at 2 feet right in your wheelhouse"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run5 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swings 5 and 9 in Session 4 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run5 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "Swings 5 and 9 in Session 4 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "on a pitch at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run6 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "a strike at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run7 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "on a pitch at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/open-s4/run8 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "swing 11 went 323 feet at 88 mph on a pitch at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/allfields-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=11 stated=2 true=1.96 round1=2
+      quote: "That pitch was at 2 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run1 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swing 5 came in at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run2 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "that pitch was 3.8 feet high"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run2 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=6 stated=2.9 true=2.92 round1=2.9
+      quote: "a strike at 2.9 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run3 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "on a pitch at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run4 coachingSummary FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "a high pitch at 3.8 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run4 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "a pitch at 3.8 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run4 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=6 stated=2.9 true=2.92 round1=2.9
+      quote: "on a strike at 2.9 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run5 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run5 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=9 stated=3.7 true=3.66 round1=3.7
+      quote: "Swings 5 and 9 were on pitches at 3.8 and 3.7 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run5 tip2 FALSE->TRUE metric=pitchHeight session=4 swing=6 stated=2.9 true=2.92 round1=2.9
+      quote: "You stayed through a pitch at 2.9 feet and drove it 298 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run6 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "off a pitch at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run7 whatThisMeans FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "The pop-up came on a pitch at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run7 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swing 5 was your one pop-up - it left the bat at 43 degrees off a pitch at 3.8 feet"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run8 whatThisMeans FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "The pop-up on swing 5 came on a high pitch at 3.8 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+  shipped/popup-s4/run8 tip1 FALSE->TRUE metric=pitchHeight session=4 swing=5 stated=3.8 true=3.82 round1=3.8
+      quote: "Swing 5 popped up at 43 degrees on a pitch at 3.8 ft"
+      hand-check: no hand-check entry or mention for this debrief and sentence
+
+NOTES
+  Hand-check matching: the audit hand-check labels claims A1.. (after-a) and B1.. (after-b) with cell, run and field. A changed claim is
+  matched to an entry only when the round letter, cell and run all agree; it is "the same sentence" only when the entry quotes the changed
+  claim's quote. The 67 audit rounding flags were never itemised one by one there (section 4 spot-checks 5 and says a script compared all
+  67 to the rounded value), so most rows show no entry. A MENTION is the quote turning up in a prose section (4 or 6); those were read by hand.
+  Other documents: no verdict changes exist outside the audit rounds, so no other hand-check is consulted for a change. Coach em dashes in
+  quotes are printed as hyphens.
+  Faithfulness: rows with stored!=before of 0 replay the stored verdicts exactly with the pre-fix code. slice9 after-b (1) is the Slice 9
+  empty-list fix and slice8c (1 and 8) the Slice 8d negated-exceedance guard, both earlier fixes already recorded in their own
+  directories; they are not changes made by this fix and do not appear under EVERY CHANGED VERDICT.
+  slice8c and slice8d files have no BUILDER.txt and carry session-1 swings and a generator that predate Slices 9 and 11, so they are
+  replayed through builder slice9-before; stored!=before confirms that choice reproduces their stored verdicts.
+
+TOTAL CHANGES: 67
+VIOLATIONS (not FALSE->TRUE on pitchHeight/pitchSide with stated == true rounded to one decimal, or matched to a GENUINE hand-check block): 0
